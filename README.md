@@ -3,7 +3,8 @@
 </p>
 <h1 align="center"> Swanix Diagrams </h1>
 <p align="center">
-    Experimental diagrams library
+    Experimental diagrams library <br>
+    https://www.figma.com/community/file/869068117151819803
 </p>
 
 <p align="center">
@@ -13,7 +14,3 @@
 </p>
 
 ---
-
-### Figma file
-
-https://www.figma.com/community/file/869068117151819803

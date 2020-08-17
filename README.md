@@ -12,7 +12,6 @@
     <img alt="Swanix" title="Swanix Brand" src="https://img.shields.io/github/license/swanix/ui?color=blue">
 </p>
 
-
 ---
 
 ### Figma file

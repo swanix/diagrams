@@ -1,0 +1,26 @@
+{
+  "name": "swanix-diagrams",
+  "version": "0.1.0",
+  "description": "Experimental diagrams",
+  "main": "index.js",
+  "scripts": {
+    "serve": "browser-sync start --server './docs' --files ./**/*"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/swanix/diagrams"
+  },
+  "author": "Sebastian Serna <jsebastianserna@gmail.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/swanix/diagrams/issues"
+  },
+  "homepage": "https://github.com/swanix/diagrams#readme",
+  "engines": {
+    "node": ">= 4.0.0",
+    "npm": ">= 2.14.2"
+  },
+  "devDependencies": {
+    "browser-sync": "2.26.7"
+  }
+}

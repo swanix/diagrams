@@ -1,0 +1,18 @@
+# ignore os/app generated files
+*.esproj
+*.project
+*.sublime-project
+*.sublime-workspac
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+*.scssc
+
+# Ignore Node files
+
+node_modules/*
+package-lock.json

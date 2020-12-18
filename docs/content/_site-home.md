@@ -2,7 +2,7 @@
 
 ### Iframe external app
 
-<div style="width: 640px; height: 480px; margin: 10px; position: relative;"><iframe allowfullscreen frameborder="0" style="width:640px; height:480px" src="https://lucid.app/documents/embeddedchart/4e0d6c6b-8d72-403a-b201-4b6f1af90350" id="uacY4.nWRmoE"></iframe></div>
+<div style="width: 780px; height: 580px; margin: 10px; position: relative;"><iframe allowfullscreen frameborder="0" style="width:780px; height:480px" src="https://lucid.app/documents/embeddedchart/4e0d6c6b-8d72-403a-b201-4b6f1af90350" id="uacY4.nWRmoE"></iframe></div>
 
 ### Iframe SVG File
 

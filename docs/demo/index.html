@@ -9,9 +9,11 @@
   <!-- Favicon -->
   <link rel="shortcut icon" href="assets/images/favicon.ico">
  <!-- Styles -->
- <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+ <link href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" rel="stylesheet" />
+ <link href='https://api.mapbox.com/mapbox.js/plugins/leaflet-fullscreen/v1.0.1/leaflet.fullscreen.css' rel='stylesheet' />
 <!-- Scripts -->
 <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+<script src='https://api.mapbox.com/mapbox.js/plugins/leaflet-fullscreen/v1.0.1/Leaflet.fullscreen.min.js'></script>
 </head>
 <body>
 <div id="map"></div>
@@ -30,31 +32,33 @@
 </style>
 <script>
     // Based on https://kempe.net/blog/2014/06/14/leaflet-pan-zoom-image.html
+    // Using Fullscreen plugin https://github.com/Leaflet/Leaflet.fullscreen
 
-    // create the slippy map
+    // Create the map
     var map = L.map('map', {
     minZoom: 1,
     maxZoom: 4,
     center: [0, 0],
     zoom: 1,
-    crs: L.CRS.Simple
+    crs: L.CRS.Simple,
+    fullscreenControl: true
     });
 
-    // dimensions of the image 1211 × 2450
+    // Dimensions of the image
     var w = 1211,
         h = 2450,
         url = 'https://upload.wikimedia.org/wikipedia/commons/c/c7/The_540_Shuowen_Seal_Radicals.svg';
 
-    // calculate the edges of the image, in coordinate space
+    // Calculate the edges of the image, in coordinate space
     var southWest = map.unproject([0, h], map.getMaxZoom()-1);
     var northEast = map.unproject([w, 0], map.getMaxZoom()-1);
     var bounds = new L.LatLngBounds(southWest, northEast);
 
-    // add the image overlay, 
+    // Add the image overlay, 
     // so that it covers the entire map
     L.imageOverlay(url, bounds).addTo(map);
 
-    // tell leaflet that the map is exactly as big as the image
+    // Tell leaflet that the map is exactly as big as the image
     map.setMaxBounds(bounds);
 </script>
 

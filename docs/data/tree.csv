@@ -1,14 +1,14 @@
-name           ,parent         ,position
-Alan Roberts   ,null           ,CEO
-Tim Watson     ,Alan Roberts   ,CTO
-Carl Reynolds  ,Tim Watson     ,Developer
-Kelsie Weeks   ,Tim Watson     ,Developer
-Kathie Maxwell ,Alan Roberts   ,Product Director
-Richard River  ,Kathie Maxwell ,Product Leader
-Angela Duke    ,Kathie Maxwell ,Product Leader
-Simon Fox      ,Alan Roberts   ,Design Director
-Karina Newman  ,Simon Fox      ,Designer
-Ryan Duran     ,Simon Fox      ,Designer
-Mia Winters    ,Alan Roberts   ,Marketing Director
-Sarah Bartlett ,Mia Winters    ,Marketing Leader
-Lauren Wilkins ,Mia Winters    ,PR Leader
+name           ,parent
+Alan Roberts   ,null
+Tim Watson     ,Alan Roberts
+Carl Reynolds  ,Tim Watson
+Kelsie Weeks   ,Tim Watson
+Kathie Maxwell ,Alan Roberts
+Richard River  ,Kathie Maxwell
+Angela Duke    ,Kathie Maxwell
+Simon Fox      ,Alan Roberts
+Karina Newman  ,Simon Fox
+Ryan Duran     ,Simon Fox
+Mia Winters    ,Alan Roberts
+Sarah Bartlett ,Mia Winters
+Lauren Wilkins ,Mia Winters

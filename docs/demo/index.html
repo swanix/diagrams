@@ -41,7 +41,11 @@
     center: [0, 0],
     zoom: 1,
     crs: L.CRS.Simple,
-    fullscreenControl: true
+    attributionControl: false,
+    //fullscreenControl: true
+    fullscreenControl: {
+        pseudoFullscreen: true // if true, fullscreen to page width and height
+    }
     });
 
     // Dimensions of the image

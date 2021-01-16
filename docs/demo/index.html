@@ -12,32 +12,50 @@
  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
 <!-- Scripts -->
 <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
- <style>
+</head>
+<body>
+<div id="map"></div>
+<style>
     body {
     padding: 0;
     margin: 0;
     }
-
     #map {
     width: 100vw;
     height: 100vh;
-    }     
- </style>
-</head>
-<body>
-<div id="map"></div>
+    }
+    .leaflet-container {
+    background: #E0FFFF !important;
+    }
+</style>
 <script>
-    var map = L.map('map', {
-    center: [40.75, -74.2],
-    zoom: 13
-    });
-    var imageUrl = 'https://source.unsplash.com/T7K4aEPoGGk/5600x4000',
-    imageBounds = [
-        [40.712216, -74.22655],
-        [40.773941, -74.12544]
-    ];
+    // Based on https://kempe.net/blog/2014/06/14/leaflet-pan-zoom-image.html
 
-    L.imageOverlay(imageUrl, imageBounds).addTo(map);
+    // create the slippy map
+    var map = L.map('map', {
+    minZoom: 1,
+    maxZoom: 4,
+    center: [0, 0],
+    zoom: 1,
+    crs: L.CRS.Simple
+    });
+
+    // dimensions of the image 1211 × 2450
+    var w = 1211,
+        h = 2450,
+        url = 'https://upload.wikimedia.org/wikipedia/commons/c/c7/The_540_Shuowen_Seal_Radicals.svg';
+
+    // calculate the edges of the image, in coordinate space
+    var southWest = map.unproject([0, h], map.getMaxZoom()-1);
+    var northEast = map.unproject([w, 0], map.getMaxZoom()-1);
+    var bounds = new L.LatLngBounds(southWest, northEast);
+
+    // add the image overlay, 
+    // so that it covers the entire map
+    L.imageOverlay(url, bounds).addTo(map);
+
+    // tell leaflet that the map is exactly as big as the image
+    map.setMaxBounds(bounds);
 </script>
 
 </body>

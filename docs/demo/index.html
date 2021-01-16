@@ -10,6 +10,8 @@
   <link rel="shortcut icon" href="assets/images/favicon.ico">
  <!-- Styles -->
  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+<!-- Scripts -->
+<script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
  <style>
     body {
     padding: 0;
@@ -25,22 +27,18 @@
 <body>
 <div id="map"></div>
 <script>
-    let imageUrl = 'https://source.unsplash.com/T7K4aEPoGGk/5600x4000',
+    var map = L.map('map', {
+    center: [40.75, -74.2],
+    zoom: 13
+    });
+    var imageUrl = 'https://source.unsplash.com/T7K4aEPoGGk/5600x4000',
     imageBounds = [
         [40.712216, -74.22655],
         [40.773941, -74.12544]
     ];
 
-    let map = L.map('map', {
-    center: [40.75, -74.2],
-    zoom: 13
-    });
-
     L.imageOverlay(imageUrl, imageBounds).addTo(map);
 </script>
-</script>
 
-<!-- Docsify -->
-<script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
 </body>
 </html>

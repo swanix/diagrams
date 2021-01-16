@@ -1,14 +1,14 @@
 name           ,parent         ,position           ,location
-Alan Roberts   ,null           ,CEO                ,USA      ,
-Tim Watson     ,Alan Roberts   ,CTO                ,USA      ,
-Carl Reynolds  ,Tim Watson     ,Developer          ,USA      ,
-Kelsie Weeks   ,Tim Watson     ,Developer          ,USA      ,
-Kathie Maxwell ,Alan Roberts   ,Product Director   ,USA      ,
-Richard River  ,Kathie Maxwell ,Product Leader     ,USA      ,
-Angela Duke    ,Kathie Maxwell ,Product Leader     ,USA      ,
-Simon Fox      ,Alan Roberts   ,Design Director    ,USA      ,
-Karina Newman  ,Simon Fox      ,Designer           ,USA      ,
-Ryan Duran     ,Simon Fox      ,Designer           ,USA      ,
-Mia Winters    ,Alan Roberts   ,Marketing Director ,USA      ,
-Sarah Bartlett ,Mia Winters    ,Marketing Leader   ,USA      ,
-Lauren Wilkins ,Mia Winters    ,PR Leader          ,USA      ,
+Alan Roberts   ,null           ,CEO                ,USA
+Tim Watson     ,Alan Roberts   ,CTO                ,USA
+Carl Reynolds  ,Tim Watson     ,Developer          ,USA
+Kelsie Weeks   ,Tim Watson     ,Developer          ,USA
+Kathie Maxwell ,Alan Roberts   ,Product Director   ,USA
+Richard River  ,Kathie Maxwell ,Product Leader     ,USA
+Angela Duke    ,Kathie Maxwell ,Product Leader     ,USA
+Simon Fox      ,Alan Roberts   ,Design Director    ,USA
+Karina Newman  ,Simon Fox      ,Designer           ,USA
+Ryan Duran     ,Simon Fox      ,Designer           ,USA
+Mia Winters    ,Alan Roberts   ,Marketing Director ,USA
+Sarah Bartlett ,Mia Winters    ,Marketing Leader   ,USA
+Lauren Wilkins ,Mia Winters    ,PR Leader          ,USA

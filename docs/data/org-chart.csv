@@ -1,4 +1,4 @@
-name           ,manager        ,role               ,location ,photo
+person         ,manager        ,role               ,location ,photo
 Alan Roberts   ,               ,CEO                ,USA      ,
 Tim Watson     ,Alan Roberts   ,CTO                ,USA      ,
 Carl Reynolds  ,Tim Watson     ,Developer          ,USA      ,

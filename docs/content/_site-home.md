@@ -2,7 +2,7 @@
 
 ### Iframe external file
 
-<div style="width: 780px; height: 580px; margin: 10px; position: relative;"><iframe allowfullscreen frameborder="0" style="width:780px; height:480px" src="https://swanix.org/diagrams/demo"></iframe></div>
+<div style="width: 780px; height: 580px; margin: 10px; position: relative;"><iframe allowfullscreen frameborder="0" style="width:780px; height:480px" src="https://swanix.org/diagrams/demo/leaflet"></iframe></div>
 
 ### Iframe SVG File
 

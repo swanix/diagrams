@@ -95,4 +95,4 @@ function showDiagram(el, offsetX = 0, offsetY = 0) {
   });
 }
 
-showDiagram(diagram, 30);
+document.addEventListener("DOMContentLoaded", showDiagram(diagram, 30));

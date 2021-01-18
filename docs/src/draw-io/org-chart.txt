@@ -4,13 +4,13 @@
 # connect: {"from": "manager", "to": "name", "invert": true, "label": "", \
 #          "style": "orthogonal=1;endArrow=none;endFill=1;fontSize=11;edgeStyle=elbowEdgeStyle;elbow=vertical;strokeColor=#C2C9D6;"}
 # connect: {"from": "refs", "to": "id", "style": "orthogonal=1;fontSize=11;strokeColor=#C2C9D6;"}
-# label: %name%<br>%position%<br><small style="color:gray;">%location%</small>
+# label: %name%<br><small style="color:gray;font-size:7;font-weight:normal">%position%<br>%location%</small>
 # style: label;whiteSpace=wrap;html=1;align=center;spacingTop=68;spacingLeft=0;spacingBottom=8;imageAlign=center;imageVerticalAlign=top;image=%image%;rounded=1;arcSize=8;shadow=0;fillColor=%fill%;strokeColor=#C2C9D6;imageWidth=64;imageHeight=64;resizable=0;
 # parentstyle: swimlane;whiteSpace=wrap;html=1;childLayout=stackLayout;horizontal=0;horizontalStack=0;resizeParent=1;resizeLast=0;collapsible=1;
 # width: 160
 # height: 140
 # padding: 16
-# link: url
+# link: 
 # nodespacing: 80
 # levelspacing: 100
 # edgespacing: 40

@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Swanix Diagrams - Demo</title>
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <!-- Favicon -->
+  <link rel="shortcut icon" href="assets/images/favicon.ico">
+  <!-- Scripts -->
+  <script src="https://unpkg.com/@svgdotjs/svg.js@3.0.16/dist/svg.min.js"></script>
+  <script src='https://unpkg.com/@svgdotjs/svg.panzoom.js@2.1.1/dist/svg.panzoom.min.js'></script>
+  <!-- Styles -->
+  <style> html, body { padding: 0; margin: 0; } </style>
+</head>
+<body>
+
+<div id="viewer"></div>
+
+<script>
+
+// load SVG file
+fetch('https://swanix.org/diagrams/src/draw-io/org-chart.svg')
+
+// Get the raw text of SVG file as a string
+.then(response => response.text())
+.then((image) => {
+  // Workaround for a strange behavior (a bug?) of svg.js 
+  let startOfSvg = image.indexOf('<svg')
+  startOfSvg = startOfSvg >= 0 ? startOfSvg : 0
+  // Draw SVG file
+  const draw = SVG(image.slice(startOfSvg))
+  .addTo('#viewer')
+  .size('100vw', '100vh')
+  .zoom(0.2) // uses center of viewport by default
+  .panZoom({ zoomMin: 0.1, zoomMax: 1.5 })
+  //.animate()
+  //.zoom(2, { x: 100, y: 100 }) // zoom into specified point
+})
+</script>
+
+</body>
+</html>

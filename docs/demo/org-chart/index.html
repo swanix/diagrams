@@ -12,16 +12,16 @@
   <script src="https://unpkg.com/@svgdotjs/svg.js@3.0.16/dist/svg.min.js"></script>
   <script src='https://unpkg.com/@svgdotjs/svg.panzoom.js@2.1.1/dist/svg.panzoom.min.js'></script>
   <!-- Styles -->
-  <style> html, body { padding: 0; margin: 0; } </style>
+  <style> html, body { padding: 0; margin: 0; overflow: hidden } </style>
 </head>
 <body>
 
-<div id="viewer"></div>
+<div id="canvas"></div>
 
 <script>
 
 // load SVG file
-fetch('https://swanix.org/diagrams/src/draw-io/org-chart.svg')
+fetch('org-chart.svg')
 
 // Get the raw text of SVG file as a string
 .then(response => response.text())
@@ -30,14 +30,28 @@ fetch('https://swanix.org/diagrams/src/draw-io/org-chart.svg')
   let startOfSvg = image.indexOf('<svg')
   startOfSvg = startOfSvg >= 0 ? startOfSvg : 0
   // Draw SVG file
-  const draw = SVG(image.slice(startOfSvg))
-  .addTo('#viewer')
+  const canvas = SVG(image.slice(startOfSvg))
+  .addTo('#canvas')
   .size('100vw', '100vh')
-  .zoom(0.2) // uses center of viewport by default
-  .panZoom({ zoomMin: 0.1, zoomMax: 1.5 })
-  //.animate()
-  //.zoom(2, { x: 100, y: 100 }) // zoom into specified point
+  .zoom(0.08) // uses center of viewport by default
+  .panZoom({ zoomMin: 0.05, zoomMax: 1.5 })
+
+  // Prevent click on panning
+  canvas.on('panning', function (ev) {
+    let links = document.getElementsByTagName("a");
+    for (let i = 0; i < links.length; i++) {
+      links[i].onclick = function() {return false;};
+    }
+  })
+  canvas.on('click', function (ev) {
+    let links = document.getElementsByTagName("a");
+    for (let i = 0; i < links.length; i++) {
+      links[i].setAttribute('target', '_blank');
+      links[i].onclick = function() {return true;};
+    }
+  })
 })
+
 </script>
 
 </body>

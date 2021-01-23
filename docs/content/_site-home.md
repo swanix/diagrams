@@ -2,9 +2,9 @@
 
 ### Iframe external SVG - SVG.js
 
-<div style="width: 780px; height: 580px; margin: 10px; position: relative;"><iframe allowfullscreen frameborder="0" style="width:780px; height:480px" src="./demo/svgjs"></iframe></div>
+<div style="width: 780px; height: 580px; margin: 10px; position: relative;"><iframe allowfullscreen frameborder="0" style="width:780px; height:480px" src="./demo/org-chart"></iframe></div>
 
-[View Fullscreen](https://swanix.org/diagrams/demo/svgjs/)
+[View Fullscreen](https://swanix.org/diagrams/demo/org-chart/)
 
 ### Iframe external SVG - D3
 

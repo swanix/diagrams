@@ -12,11 +12,31 @@
   <script src="https://unpkg.com/@svgdotjs/svg.js@3.0.16/dist/svg.min.js"></script>
   <script src='https://unpkg.com/@svgdotjs/svg.panzoom.js@2.1.1/dist/svg.panzoom.min.js'></script>
   <!-- Styles -->
-  <style> html, body { padding: 0; margin: 0; overflow: hidden } </style>
+  <style> 
+  html, body { padding: 0; margin: 0; overflow: hidden }
+
+  button {
+  padding: 6px 8px;
+  border-radius: 6px;
+  background: #FFF;
+  border: 2px solid #EDEDED;
+  outline: none;
+  cursor: pointer;
+  position: absolute;
+  font-size: 16px;
+  }
+
+  button:hover {
+    background: #FAFAFA;
+  }
+ 
+  </style>
 </head>
 <body>
 
-<div id="canvas"></div>
+<div id="canvas">
+  <button onclick="toggleFullScreen();">⤡</button>
+</div>
 
 <script>
 
@@ -51,6 +71,19 @@ fetch('org-chart.svg')
     }
   })
 })
+
+// Fullscreen Mode
+// Based on https://developer.mozilla.org/es/docs/Web/API/Fullscreen_API
+
+function toggleFullScreen() {
+  if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen();
+  } else {
+    if (document.exitFullscreen) {
+      document.exitFullscreen();
+    }
+  }
+}
 
 </script>
 

@@ -1,17 +1,17 @@
 # Overview
 
-### Iframe external SVG - Org Chart
-
-<iframe allowfullscreen frameborder="0" style="width:780px; height:480px" src="./demo/org-chart"></iframe>
-
-[View Fullscreen](https://swanix.org/diagrams/demo/org-chart/)
-
 
 ### Iframe external SVG - Sitemap
 
 <iframe allowfullscreen frameborder="0" style="width:780px; height:480px" src="./demo/sitemap"></iframe>
 
 [View Fullscreen](https://swanix.org/diagrams/demo/sitemap/)
+
+### Iframe external SVG - Org Chart
+
+<iframe allowfullscreen frameborder="0" style="width:780px; height:480px" src="./demo/org-chart"></iframe>
+
+[View Fullscreen](https://swanix.org/diagrams/demo/org-chart/)
 
 
 ## Legacy versions

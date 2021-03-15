@@ -8,38 +8,32 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <!-- Favicon -->
   <link rel="shortcut icon" href="assets/images/favicon.ico">
- <!-- Styles -->
- <link rel="stylesheet" href="https://swanix.org/assets/styles/docsify-custom.css">
+  <!-- Styles -->
+  <link href="https://cdn.jsdelivr.net/gh/swanix/tool-docs@latest/dist/tool-docs.css" rel="stylesheet">
 </head>
 <body>
-<div class="menu-container"></div>
 <div id="app"></div>
 <script>
   window.$docsify = {
     name: "Diagrams",
-    themeColor: '#000',
+    repo: 'swanix/diagrams',
+    // themeColor: 'royalblue',
     basePath: 'content/',
     homepage: '_site-home.md',
     loadSidebar: '_site-menu.md',
     subMaxLevel: 1,
     auto2top: true,
-    plugins: [
-      function(hook, vm) {
-        hook.doneEach(function() {
-          loadCss = ["https://swanix.org/ui/dist/swanix.min.css"];
-          loadJs =  ["https://cdnjs.cloudflare.com/ajax/libs/vue/2.6.11/vue.min.js",];
-          setTimeout(initCodeEditor, 300);
-        });
-      }
-    ]
+    notFoundPage: false,
+    pagination: {
+      previousText: 'Previous',
+      nextText: 'Next',
+      crossChapter: true
+    }
   };
 </script>
 </script>
-
-<!-- Docsify -->
-<script src="https://cdn.jsdelivr.net/gh/swanix/docsix/dist/docsix.min.js"></script>
-<link href="https://cdn.jsdelivr.net/gh/swanix/coderix/dist/coderix.min.css" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/gh/swanix/coderix/dist/coderix.min.js"></script>
-<script>createMenuGlobal()</script>
+<!-- Tool Docs -->
+<script src="https://swanix.org/menu.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/swanix/tool-docs@latest/dist/tool-docs.js"></script>
 </body>
 </html>

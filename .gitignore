@@ -11,8 +11,11 @@
 ehthumbs.db
 Thumbs.db
 *.scssc
+*.blend1
+*.jpg~
+*.kra~
+*.png~
 
 # Ignore Node files
-
 node_modules/*
 package-lock.json

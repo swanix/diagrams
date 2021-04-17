@@ -1,0 +1,45 @@
+#
+# namespace: sitemap-
+# ignore: id,image,fill,stroke,refs,parent
+# connect: {"from": "parent", "to": "name", "invert": true, "label": "", \
+#          "style": "orthogonal=1;endArrow=none;endFill=1;fontSize=11;edgeStyle=elbowEdgeStyle;elbow=vertical;strokeColor=#A3ADC2;strokeWidth=4;"}
+# connect: {"from": "refs", "to": "name", "style": "orthogonal=1;edgeStyle=orthogonalEdgeStyle;elbow=vertical;endArrow=none;fontSize=11;strokeColor=#A3ADC2;strokeWidth=4;"}
+# label: %name%
+# style: label;whiteSpace=wrap;html=1;align=center;spacingTop=198;;spacingRight=16;spacingLeft=16;spacingBottom=16;fontSize=16;fontWeight=normal;fontColor=#47536B;imageAlign=center;imageVerticalAlign=top;image=%image%;rounded=0;shadow=0;fillColor=%fill%;strokeColor=#C2C9D6;strokeWidth=4;imageWidth=200;imageHeight=180;resizable=0;
+# parentstyle: swimlane;html=1;startSize=20;horizontal=1;childLayout=treeLayout;horizontalTree=0;resizable=0;containerType=tree;
+# width: 204
+# height: 240
+# padding: 16
+# link: url
+# nodespacing: 80
+# levelspacing: 100
+# edgespacing: 40
+# layout: verticaltree
+#
+## ---- CSV below this line. First line are column names. ----
+name,parent,url,image,fill,stroke,refs
+SITE,,,https://swanix.org/diagrams/lib/cover-home-circle.svg,#FFFFFF,#B3B3B3,
+Home,SITE,#,https://swanix.org/diagrams/lib/mosaic.svg,#FFFFFF,#B3B3B3,
+News,Home,#,https://swanix.org/diagrams/lib/list.svg,#FFFFFF,#B3B3B3,
+Projects,SITE,#,https://swanix.org/diagrams/lib/list.svg,#FFFFFF,#B3B3B3,
+New project,Projects,#,https://swanix.org/diagrams/lib/form.svg,#FFFFFF,#B3B3B3,
+Project,New project,#,https://swanix.org/diagrams/lib/detail.svg,#FFFFFF,#B3B3B3,
+Galleries,SITE,#,https://swanix.org/diagrams/lib/mosaic.svg,#FFFFFF,#B3B3B3,
+New gallery,Galleries,,https://swanix.org/diagrams/lib/form.svg,#FFFFFF,#B3B3B3,
+Gallery,New gallery,#,https://swanix.org/diagrams/lib/mosaic.svg,#FFFFFF,#B3B3B3,
+Articles,SITE,#,https://swanix.org/diagrams/lib/list.svg,#FFFFFF,#B3B3B3,
+New article,Articles,#,https://swanix.org/diagrams/lib/form.svg,#FFFFFF,#B3B3B3,
+Article,New article,#,https://swanix.org/diagrams/lib/document.svg,#FFFFFF,#B3B3B3,
+Article (PDF),Article,#,https://swanix.org/diagrams/lib/file-pdf.svg,#FFFFFF,#B3B3B3,
+Charts,SITE,#,https://swanix.org/diagrams/lib/mosaic.svg,#FFFFFF,#B3B3B3,
+New chart,Charts,,https://swanix.org/diagrams/lib/form.svg,#FFFFFF,#B3B3B3,
+Chart,New chart,#,https://swanix.org/diagrams/lib/report.svg,#FFFFFF,#B3B3B3,
+Chart (XLS),Chart,#,https://swanix.org/diagrams/lib/file-xls.svg,#FFFFFF,#B3B3B3,
+Contact,SITE,#,https://swanix.org/diagrams/lib/detail.svg,#FFFFFF,#B3B3B3,
+New message,Contact,#,https://swanix.org/diagrams/lib/modal.svg,#FFFFFF,#B3B3B3,
+Message,New message,,https://swanix.org/diagrams/lib/detail.svg,#FFFFFF,#B3B3B3,
+My account,SITE,#,https://swanix.org/diagrams/lib/detail.svg,#FFFFFF,#B3B3B3,
+Edit profile,My account,#,https://swanix.org/diagrams/lib/form.svg,#FFFFFF,#B3B3B3,
+Profile,Edit profile,#,https://swanix.org/diagrams/lib/detail.svg,#FFFFFF,#B3B3B3,
+Settings,SITE,#,https://swanix.org/diagrams/lib/settings.svg,#FFFFFF,#B3B3B3,
+General info,Settings,#,https://swanix.org/diagrams/lib/form.svg,#FFFFFF,#B3B3B3,

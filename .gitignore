@@ -1,4 +1,5 @@
 # ignore os/app generated files
+.vscode/settings.json
 *.esproj
 *.project
 *.sublime-project

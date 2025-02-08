@@ -2,6 +2,16 @@
 
 # Swanix Diagrams
 
+
+### D3 - Tree Diagram
+
+<div style="width: 780px; height: 580px; margin: 10px; position: relative;"><iframe allowfullscreen frameborder="0" style="width:780px; height:480px" src="./demo/d3-next"></iframe></div>
+
+[View Fullscreen](https://swanix.org/diagrams/demo/d3-next/)
+
+
+## Legacy versions
+
 ### Figma Diagram (FigJam)
 
 <iframe style="border: 1px solid rgba(0, 0, 0, 0.1);" width="780" height="450" src="https://www.figma.com/embed?embed_host=share&url=https%3A%2F%2Fwww.figma.com%2Ffile%2FtXIftcAyNTX7OpF2Obh9zX%2FSite-Map%3Fnode-id%3D0%253A1" allowfullscreen></iframe>
@@ -19,8 +29,6 @@
 
 [View Fullscreen](https://swanix.org/diagrams/demo/org-chart/)
 
-
-## Legacy versions
 
 ### Iframe external SVG - D3
 

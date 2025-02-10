@@ -19,3 +19,36 @@ D3 diagram with a tree structure. Data is dynamically loaded from a [Google Shee
 )
 
 [View Fullscreen](https://swanix.org/diagrams/demo/d3-next/gsheets)
+
+
+## Thumbnail types
+
+You can change the thumbnail of a node in the `type` column of your CSV file. If you leave the cell empty, the default thumbnail applied is the `detail` one.
+
+### Generic
+
+- home
+- list
+- form
+- detail
+- document
+- report
+- modal
+- settings
+- pdf
+- xml
+- csv
+- xls
+- mosaic
+
+### Covers
+
+- cover-home
+- cover-home-circle
+- cover-menu
+- cover-message
+- cover-search
+- cover-settings
+
+
+*Note:* if you use an image URL in the `img` column, this has priority over the thumbnail.

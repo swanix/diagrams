@@ -1,4 +1,5 @@
-/* Swanix Diagrams based on D3.js */
+/* Swanix Diagrams v0.1.0 */
+/* Based on D3.js */
 
 function initDiagram(csvUrl) {
   // Show the loading indicator
@@ -45,8 +46,9 @@ function buildMultipleHierarchies(data) {
     let img = d.img?.trim() || "";
     let parent = d.parent?.trim() || "";
     let url = d.url?.trim() || "";
+    let type = d.type?.trim() || "";
 
-    let node = { name, subtitle, img, url, children: [] };
+    let node = { name, subtitle, img, url, type, children: [] };
     nodeMap.set(id, node);
 
     if (parent && nodeMap.has(parent)) {
@@ -104,10 +106,23 @@ function drawMultipleTrees(trees) {
       .style("stroke-width", "var(--node-bg-stroke)");
 
     node.append("image")
-      .attr("xlink:href", d => d.data.img || "https://via.placeholder.com/80")
+      .attr("xlink:href", d => {
+        // Verificar si hay una URL en la columna 'img'
+        const imgUrl = d.data.img?.trim(); // Obtener la URL de la columna 'img'
+        if (imgUrl) {
+          return imgUrl; // Si hay una URL, usarla
+        }
+        
+        // Si no hay URL en 'img', usar la clase CSS desde 'type'
+        const className = d.data.type; // Suponiendo que 'type' contiene el nombre de la clase
+        return className ? getComputedStyle(document.documentElement).getPropertyValue(`--${className}`) : "https://swanix.org/diagrams/lib/detail.svg"; // Obtener la URL de la clase CSS
+      })
       .attr("x", parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--image-x')))
       .attr("y", parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--image-y')))
-      .attr("class", "image-filter")
+      .attr("class", d => {
+        // Aplicar el filtro solo si se usa la imagen de la columna 'type'
+        return d.data.img ? "image-base" : "image-base image-filter"; // Cambia 'image-base' por la clase que desees
+      })
       .attr("width", parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--image-width')))
       .attr("height", parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--image-height')));
 

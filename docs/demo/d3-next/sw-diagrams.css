@@ -1,5 +1,6 @@
-/* Swanix Diagrams based on D3.js */
-/* CSS Styles */
+/* Swanix Diagrams v0.1.0 - Styles */
+/* Based on D3.js */
+
 :root {
 
     /* Layout */
@@ -48,6 +49,26 @@
     /* Error message */
     --error-message-color: #999999;
 
+    /* Images */
+    --cover-home: https://swanix.org/diagrams/lib/cover-home.svg;
+    --cover-home-circle: https://swanix.org/diagrams/lib/cover-home-circle.svg;
+    --cover-menu: https://swanix.org/diagrams/lib/cover-menu.svg;
+    --cover-message: https://swanix.org/diagrams/lib/cover-message.svg;
+    --cover-search: https://swanix.org/diagrams/lib/cover-search.svg;
+    --cover-settings: https://swanix.org/diagrams/lib/cover-settings.svg;
+    --home: https://swanix.org/diagrams/lib/cover-home.svg;
+    --list: https://swanix.org/diagrams/lib/list.svg;
+    --form: https://swanix.org/diagrams/lib/form.svg;
+    --detail: https://swanix.org/diagrams/lib/detail.svg;
+    --document: https://swanix.org/diagrams/lib/document.svg;
+    --report: https://swanix.org/diagrams/lib/report.svg;
+    --modal: https://swanix.org/diagrams/lib/modal.svg;
+    --settings: https://swanix.org/diagrams/lib/settings.svg;
+    --pdf: https://swanix.org/diagrams/lib/file-pdf.svg;
+    --xml: https://swanix.org/diagrams/lib/file-xml.svg;
+    --csv: https://swanix.org/diagrams/lib/file-csv.svg;
+    --xls: https://swanix.org/diagrams/lib/file-xls.svg;
+    --mosaic: https://swanix.org/diagrams/lib/mosaic.svg;
   }
 
 
@@ -108,10 +129,18 @@
     ry: 6px;
   }
 
-  .image-filter {
-    filter: var(--image-filter);
+ 
+  .image-base {
+    width: var(--image-width); 
+    height: var(--image-height); 
+    position: relative; 
+    object-fit: cover; 
   }
 
+  .image-filter {
+    filter: var(--image-filter); 
+  }
+ 
   .label-text {
     font-size: var(--label-font-size);
     fill: var(--text-color);
@@ -153,11 +182,12 @@
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    background: var(--loading-bg); /* Variable de CSS para el fondo */
+    background: var(--loading-bg); 
     padding: 10px;
     border-radius: 5px;
     z-index: 10;
-    animation: fadeIn 0.5s ease-in-out; /* Animación de entrada */
+    animation: fadeIn 0.5s ease-in-out; 
+
 }
 
 @keyframes fadeIn {
@@ -171,13 +201,14 @@
 
 .spinner {
     border: 4px solid rgba(255, 255, 255, 0.3);
-    border-top: 4px solid var(--loading-color); /* Color del spinner */
-    
+    border-top: 4px solid var(--loading-color); 
+
 
     border-radius: 50%;
     width: 30px;
     height: 30px;
-    animation: spin 1s linear infinite; /* Animación de giro */
+    animation: spin 1s linear infinite; 
+
 }
 
 @keyframes spin {
@@ -186,7 +217,7 @@
 }
 
 .error-message {
-    color: var(--error-message-color); /* Color controlado por una variable */
+    color: var(--error-message-color); 
     font-size: 11px;
     position: absolute;
     top: 16px;

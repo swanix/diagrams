@@ -16,7 +16,7 @@
       --svg-height: 100vh;
 
       /* Base colors */
-      --bg-color: #ededed;
+      --bg-color: #4e4e4e;
       --text-color: #000;
       --node-fill: rgb(255, 255, 255);
       --label-border: #bdbdbd;
@@ -148,7 +148,7 @@
   <!-- <button class="toggle-btn" onclick="toggleDarkMode()">Mode</button>-->
   <svg></svg>
   <script>
-    const googleSheetCsvUrl = "data.csv";
+    const googleSheetCsvUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTQZfZhC3cWHg0QkqRoY9i3alinAnSHab5DJtWzsm_xAhLKKJdHri8fBMUawh-DhpvCkm-G1vBeWPFq/pub?gid=466976322&single=true&output=csv";
 
     Papa.parse(googleSheetCsvUrl, {
       download: true,

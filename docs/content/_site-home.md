@@ -8,7 +8,6 @@
 <div style="width: 780px; height: 500px; margin: 10px; position: relative;"><iframe allowfullscreen frameborder="0" style="width:780px; height:480px" src="./demo/d3-next"></iframe></div>
 
 D3 diagram with a tree structure. Data is dynamically loaded from a [CSV file](https://swanix.org/diagrams/demo/d3-next/data/data.csv)
-)
 
 [View Fullscreen](https://swanix.org/diagrams/demo/d3-next/)
 

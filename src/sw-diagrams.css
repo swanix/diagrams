@@ -7,6 +7,9 @@
     --svg-width: 100vw;
     --svg-height: 100vh;
 
+    /* Node stroke colors */
+    --node-stroke-focus: #000;
+
     /* Base colors */
     --bg-color: #4e4e4e;
     --text-color: #000;
@@ -28,12 +31,28 @@
     --image-height: 65px;
     --image-filter: grayscale(100%);
 
+    /* Label ID text */
+    --label-id-text-color: #888888;
+    --label-id-font-size: 5px;
+    --label-id-dy: .25em;
+    --label-id-x: -6px;
+    --label-id-y: -67px;
+    --label-id-anchor: end;
+   
     /* Label text */
     --label-font-size: 6px;
     --label-dy: .25em;
     --label-dy-single: .85em;
     --label-x: -2px;  
     --label-y: 20px;
+
+    /* Subtitle text */
+    --text-subtitle-color: #888888;
+    --subtitle-font-size: 6px;
+    --subtitle-dy: .25em;
+    --subtitle-x: -35px;
+    --subtitle-y: -50px;
+    --subtitle-anchor: start;
 
     /* Button */
     --btn-stroke: 1px;
@@ -75,6 +94,7 @@
 
   @media (prefers-color-scheme: dark) {
     :root {
+      --node-stroke-focus: #fff;
       --bg-color: #121212;
       --text-color: #fff;
       --node-fill: #333;
@@ -87,6 +107,8 @@
       --btn-text-hover: #000;
       --loading-color: #ffffff;
       --loading-bg: var(--bg-color);
+      --label-id-text-color: #5c5c5c;
+      --text-subtitle-color: #5c5c5c;
     }
   }
 

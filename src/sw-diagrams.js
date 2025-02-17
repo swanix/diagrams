@@ -1,6 +1,7 @@
 /* Swanix Diagrams v0.1.0 */
 /* Based on D3.js */
 
+
 function initDiagram(csvUrl) {
   // Show the loading indicator
   document.getElementById("loading").style.display = "block";
@@ -125,6 +126,14 @@ function drawMultipleTrees(trees) {
       })
       .attr("width", parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--image-width')))
       .attr("height", parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--image-height')));
+
+    /* Insertar SVG
+    d3.select(this).append("svg")
+      .attr("width", 80) // Ajusta el ancho según sea necesario
+      .attr("height", 100) // Ajusta la altura según sea necesario
+      .append("xhtml:div")
+      .html(svgContent); // Inserta el contenido del SVG
+    */
 
     // Agregar etiqueta para el Name
     node.append("text")

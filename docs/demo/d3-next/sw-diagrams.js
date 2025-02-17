@@ -1,6 +1,7 @@
 /* Swanix Diagrams v0.1.0 */
 /* Based on D3.js */
 
+
 function initDiagram(csvUrl) {
   // Show the loading indicator
   document.getElementById("loading").style.display = "block";
@@ -13,9 +14,11 @@ function initDiagram(csvUrl) {
       const trees = buildMultipleHierarchies(data);
       drawMultipleTrees(trees);
 
+      // Crear el dropdown para las opciones de type
+      createTypeDropdown(data);
+
       // Hide the loading indicator
       document.getElementById("loading").style.display = "none";
-
     },
     error: function(err) {
       console.error("CSV File:", err);
@@ -23,7 +26,6 @@ function initDiagram(csvUrl) {
       // Hide the loading indicator
       document.getElementById("loading").style.display = "none";
     }
-
   });
 }
 
@@ -48,7 +50,7 @@ function buildMultipleHierarchies(data) {
     let url = d.url?.trim() || "";
     let type = d.type?.trim() || "";
 
-    let node = { name, subtitle, img, url, type, children: [] };
+    let node = { id, name, subtitle, img, url, type, children: [] };
     nodeMap.set(id, node);
 
     if (parent && nodeMap.has(parent)) {
@@ -99,11 +101,11 @@ function drawMultipleTrees(trees) {
       .attr("transform", d => `translate(${d.x},${d.y})`);
 
     node.append("rect")
+      .style("stroke-width", "var(--node-bg-stroke)")
       .attr("x", parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--node-bg-x')))
       .attr("y", parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--node-bg-y')))
       .attr("width", parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--node-bg-width')))
-      .attr("height", parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--node-bg-height')))
-      .style("stroke-width", "var(--node-bg-stroke)");
+      .attr("height", parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--node-bg-height')));
 
     node.append("image")
       .attr("xlink:href", d => {
@@ -112,7 +114,6 @@ function drawMultipleTrees(trees) {
         if (imgUrl) {
           return imgUrl; // Si hay una URL, usarla
         }
-        
         // Si no hay URL en 'img', usar la clase CSS desde 'type'
         const className = d.data.type; // Suponiendo que 'type' contiene el nombre de la clase
         return className ? getComputedStyle(document.documentElement).getPropertyValue(`--${className}`) : "https://swanix.org/diagrams/lib/detail.svg"; // Obtener la URL de la clase CSS
@@ -126,17 +127,49 @@ function drawMultipleTrees(trees) {
       .attr("width", parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--image-width')))
       .attr("height", parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--image-height')));
 
+    /* Insertar SVG
+    d3.select(this).append("svg")
+      .attr("width", 80) // Ajusta el ancho según sea necesario
+      .attr("height", 100) // Ajusta la altura según sea necesario
+      .append("xhtml:div")
+      .html(svgContent); // Inserta el contenido del SVG
+    */
+
+    // Agregar etiqueta para el Name
     node.append("text")
-      .attr("class", "custom-text")
-      .attr("dy", parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--label-dy')))
-      .attr("font-size", parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--label-font-size')))
       .text(d => d.data.name)
+      .attr("class", "custom-text")
       .attr("text-anchor", "middle")
+      .style("fill", "var(--text-color)")
+      .attr("font-size", parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--label-font-size')))
+      .attr("dy", parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--label-dy')))
       .attr("x", parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--label-x')))
       .attr("y", parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--label-y')))
-      .style("fill", "var(--text-color)")
       .call(wrap, parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--label-width')));
 
+    // Agregar etiqueta para el ID
+    node.append("text")
+      .text(d => d.data.id || "No ID") // Mostrar el ID o un mensaje si está vacío
+      .attr("class", "id-text")
+      .style("fill", "var(--label-id-text-color)")
+      .attr("text-anchor", getComputedStyle(document.documentElement).getPropertyValue('--label-id-anchor')) // Convertir text-anchor en variable de CSS
+      .attr("font-size", parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--label-id-font-size')))
+      .attr("dy", parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--label-id-dy')))
+      .attr("x", parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--label-id-x')))
+      .attr("y", parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--label-id-y'))); 
+
+
+    // Agregar etiqueta para el subtítulo
+    node.append("text")
+      .text(d => d.data.subtitle) // Mostrar el subtítulo
+      .attr("class", "subtitle-text")
+      .attr("transform", "rotate(270)") // Rotar el texto 90 grados
+      .style("fill", "var(--text-subtitle-color)")
+      .attr("text-anchor", getComputedStyle(document.documentElement).getPropertyValue('--subtitle-anchor')) // Convertir text-anchor en variable de CSS
+      .attr("dy", parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--subtitle-dy'))) // Ajustar la posición vertical
+      .attr("font-size", parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--subtitle-font-size'))) // Tamaño de fuente
+      .attr("x", parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--subtitle-x'))) // Centrar horizontalmente
+      .attr("y", parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--subtitle-y'))); // Ajustar la posición vertical
 
     // Add a button with a link
     const link = node.append("a")
@@ -247,7 +280,7 @@ function applyAutoZoom() {
   }, 100);
 }
 
-const zoom = d3.zoom().scaleExtent([0.1, 2]).on("zoom", event => {
+const zoom = d3.zoom().scaleExtent([0.1, 4]).on("zoom", event => {
   d3.select("svg g").attr("transform", event.transform);
 });
 
@@ -296,3 +329,106 @@ function wrap(text, width) {
 
   });
 }
+
+function createTypeDropdown(data) {
+  // Crear un dropdown para las opciones de type
+  const typeDropdown = document.createElement("select");
+  typeDropdown.setAttribute("id", "type-dropdown");
+  typeDropdown.style.position = "absolute";
+  typeDropdown.style.top = "50px"; // Distancia desde la parte superior
+  typeDropdown.style.left = "10px"; // Distancia desde la izquierda
+  typeDropdown.style.zIndex = "10"; // Asegurarse de que esté por encima del SVG
+
+  // Agregar opción por defecto "All" con contador
+  const allCount = data.length; // Contar todos los nodos
+  const allOption = document.createElement("option");
+  allOption.value = "all";
+  allOption.textContent = `All (${allCount})`; // Opción para mostrar todos los nodos con contador
+  typeDropdown.appendChild(allOption);
+
+  // Obtener las opciones únicas de type
+  const types = [...new Set(data.map(d => d.type))]; // Suponiendo que 'data' es accesible aquí
+  types.forEach(type => {
+    const count = data.filter(d => d.type === type).length; // Contar nodos que coinciden con el tipo
+    const option = document.createElement("option");
+    option.value = type;
+    option.textContent = `${type || "No type"} (${count})`; // Mostrar el tipo y el contador
+    typeDropdown.appendChild(option);
+  });
+
+  document.body.appendChild(typeDropdown);
+
+  // Evento para seleccionar tipo
+  typeDropdown.addEventListener("change", function() {
+    const selectedType = this.value;
+
+    d3.selectAll(".node")
+      .select("rect") // Seleccionar solo el rectángulo base del nodo
+      .style("stroke", d => {
+        const strokeColor = getComputedStyle(document.documentElement).getPropertyValue('--node-stroke-focus');
+        return d.data.type === selectedType ? strokeColor : "none"; // Resaltar nodos coincidentes
+      })
+      .style("stroke-width", d => d.data.type === selectedType ? "4px" : "none"); // Cambiar el ancho del borde
+  });
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  // Agregar un campo de entrada para el buscador
+  const searchInput = document.createElement("input");
+  searchInput.setAttribute("id", "search-input");
+  searchInput.setAttribute("placeholder", "Search node..."); // Placeholder en inglés
+  
+  // Estilos para el input
+  searchInput.style.position = "absolute"; // Posicionamiento absoluto
+  searchInput.style.top = "10px"; // Distancia desde la parte superior
+  searchInput.style.left = "10px"; // Distancia desde la izquierda
+  searchInput.style.zIndex = "10"; // Asegurarse de que esté por encima del SVG
+
+  document.body.appendChild(searchInput);
+
+  // Evento para buscar nodos
+  searchInput.addEventListener("input", function() {
+    const searchTerm = this.value.toLowerCase();
+    
+    if (searchTerm) {
+      d3.selectAll(".node")
+        .select("rect") // Seleccionar solo el rectángulo base del nodo
+        .style("stroke", d => d.data.name.toLowerCase().includes(searchTerm) ? "white" : "none") // Resaltar nodos coincidentes
+        .style("stroke-width", d => d.data.name.toLowerCase().includes(searchTerm) ? "4px" : "none"); // Cambiar el ancho del borde
+    } else {
+      // Restablecer el estilo de todos los nodos si el campo de búsqueda está vacío
+      d3.selectAll(".node")
+        .select("rect")
+        .style("stroke", "none") // Quitar el borde
+        .style("stroke-width", "none"); // Restablecer el ancho del borde
+    }
+  });
+
+  // Agregar evento para presionar "Enter"
+  searchInput.addEventListener("keydown", function(event) {
+    if (event.key === "Enter") {
+      const searchTerm = this.value.toLowerCase();
+      const foundNode = d3.selectAll(".node").filter(d => d.data.name.toLowerCase().includes(searchTerm));
+
+      if (!foundNode.empty()) {
+        const bounds = foundNode.node().getBBox();
+        const svg = d3.select("svg");
+        const svgWidth = window.innerWidth;
+        const svgHeight = window.innerHeight;
+
+        // Calcular la escala y la traducción para centrar el nodo
+        const scale = Math.min(svgWidth / bounds.width, svgHeight / bounds.height) * 0.9;
+        const translateX = (svgWidth / 2) - (bounds.x + bounds.width / 2) * scale;
+        const translateY = (svgHeight / 2) - (bounds.y + bounds.height / 2) * scale;
+
+        // Crear la transformación inicial
+        const transform = d3.zoomIdentity.translate(translateX, translateY).scale(scale);
+
+        // Aplicar la transformación con una transición suave
+        svg.transition()
+          .duration(800)
+          .call(zoom.transform, transform);
+      }
+    }
+  });
+});

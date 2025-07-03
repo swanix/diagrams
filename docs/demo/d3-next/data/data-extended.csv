@@ -1,0 +1,11 @@
+id,parent,name,subtitle,type,url,img,description,status,priority,created_date,owner,department
+1,,Sistema Principal,Sistema de gestión central,home,https://swanix.org,https://swanix.org/diagrams/lib/cover-home.svg,Sistema principal de gestión empresarial,Activo,Alta,2024-01-15,Admin,IT
+2,1,Usuarios,Gestión de usuarios,form,https://swanix.org/users,https://swanix.org/diagrams/lib/form.svg,Módulo para administrar usuarios del sistema,Activo,Alta,2024-01-16,Admin,IT
+3,1,Reportes,Generación de reportes,report,https://swanix.org/reports,https://swanix.org/diagrams/lib/report.svg,Sistema de generación de reportes y analytics,Activo,Media,2024-01-17,Admin,IT
+4,2,Perfiles,Perfiles de usuario,detail,https://swanix.org/profiles,https://swanix.org/diagrams/lib/detail.svg,Configuración de perfiles y permisos,Activo,Alta,2024-01-18,Admin,IT
+5,2,Autenticación,Login y seguridad,settings,https://swanix.org/auth,https://swanix.org/diagrams/lib/settings.svg,Sistema de autenticación y autorización,Activo,Crítica,2024-01-19,Admin,IT
+6,3,Dashboard,Panel principal,home,https://swanix.org/dashboard,https://swanix.org/diagrams/lib/cover-home.svg,Dashboard principal con métricas,Activo,Alta,2024-01-20,Admin,IT
+7,3,Exportar,Exportación de datos,pdf,https://swanix.org/export,https://swanix.org/diagrams/lib/file-pdf.svg,Exportación de reportes en PDF,Activo,Media,2024-01-21,Admin,IT
+8,4,Permisos,Configuración de permisos,settings,https://swanix.org/permissions,https://swanix.org/diagrams/lib/settings.svg,Gestión de permisos y roles,Activo,Alta,2024-01-22,Admin,IT
+9,4,Preferencias,Preferencias de usuario,settings,https://swanix.org/preferences,https://swanix.org/diagrams/lib/settings.svg,Configuración de preferencias personales,Activo,Baja,2024-01-23,Admin,IT
+10,5,2FA,Autenticación de dos factores,settings,https://swanix.org/2fa,https://swanix.org/diagrams/lib/settings.svg,Configuración de autenticación de dos factores,Activo,Crítica,2024-01-24,Admin,IT 

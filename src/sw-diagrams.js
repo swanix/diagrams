@@ -3,7 +3,6 @@
 
 
 function initDiagram(csvUrl) {
-  // Show the loading indicator
   document.getElementById("loading").style.display = "block";
 
   Papa.parse(csvUrl, {
@@ -13,17 +12,13 @@ function initDiagram(csvUrl) {
       const data = results.data;
       const trees = buildMultipleHierarchies(data);
       drawMultipleTrees(trees);
-
-      // Crear el dropdown para las opciones de type
       createTypeDropdown(data);
-
-      // Hide the loading indicator
+      createSidePanel();
       document.getElementById("loading").style.display = "none";
     },
     error: function(err) {
       console.error("CSV File:", err);
       document.getElementById("error-message").innerText = `CSV File ${err.message}`;
-      // Hide the loading indicator
       document.getElementById("loading").style.display = "none";
     }
   });
@@ -50,7 +45,7 @@ function buildMultipleHierarchies(data) {
     let url = d.url?.trim() || "";
     let type = d.type?.trim() || "";
 
-    let node = { id, name, subtitle, img, url, type, children: [] };
+    let node = { id, name, subtitle, img, url, type, children: [], parent: parent };
     nodeMap.set(id, node);
 
     if (parent && nodeMap.has(parent)) {
@@ -97,8 +92,15 @@ function drawMultipleTrees(trees) {
     const node = treeGroup.selectAll(".node")
       .data(root.descendants())
       .enter().append("g")
-      .attr("class", "node")
-      .attr("transform", d => `translate(${d.x},${d.y})`);
+      .attr("class", "node node-clickable")
+      .attr("data-id", d => d.data.id)
+      .attr("transform", d => `translate(${d.x},${d.y})`)
+      .on("click", function(event, d) {
+        // Prevenir que el clic se propague al zoom
+        event.stopPropagation();
+        // Abrir el panel lateral con los datos del nodo
+        openSidePanel(d.data);
+      });
 
     node.append("rect")
       .style("stroke-width", "var(--node-bg-stroke)")
@@ -431,4 +433,246 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     }
   });
+
+  setupClosePanelOnSvgClick();
 });
+
+// Funciones para el panel lateral
+function createSidePanel() {
+  // No crear overlay
+
+  // Crear el panel lateral
+  const sidePanel = document.createElement('div');
+  sidePanel.className = 'side-panel';
+  sidePanel.id = 'side-panel';
+  
+  sidePanel.innerHTML = `
+    <div class="side-panel-header">
+      <h3 class="side-panel-title">Detalles del Nodo</h3>
+      <button class="side-panel-close" onclick="closeSidePanel()">×</button>
+    </div>
+    <div class="side-panel-content" id="side-panel-content">
+      <!-- El contenido se llenará dinámicamente -->
+    </div>
+  `;
+  
+  document.body.appendChild(sidePanel);
+
+  // Agregar event listener para enlaces de subnodos
+  sidePanel.addEventListener('click', function(e) {
+    if (e.target.classList.contains('subnode-link')) {
+      e.preventDefault();
+      const nodeId = e.target.getAttribute('data-node-id');
+      if (nodeId) {
+        // Buscar y seleccionar el nodo correspondiente
+        const targetNode = d3.select(`[data-id="${nodeId}"]`);
+        if (!targetNode.empty()) {
+          // Simular clic en el nodo
+          targetNode.dispatch('click');
+        }
+      }
+    }
+  });
+
+  // Añadir evento para tecla Escape
+  document.addEventListener('keydown', function(event) {
+    if (event.key === 'Escape') {
+      closeSidePanel();
+    }
+  });
+}
+
+function openSidePanel(nodeData) {
+  const sidePanel = document.getElementById('side-panel');
+  const content = document.getElementById('side-panel-content');
+
+  // Quitar selección previa
+  d3.selectAll('.node.node-selected').classed('node-selected', false);
+  // Seleccionar el nodo actual por ID
+  if (nodeData && nodeData.id) {
+    d3.selectAll('.node').filter(d => d.data.id == nodeData.id).classed('node-selected', true);
+  }
+
+  // Llenar el contenido del panel
+  content.innerHTML = generateSidePanelContent(nodeData);
+
+  // Abrir el panel
+  sidePanel.classList.add('open');
+
+  // Prevenir el scroll del body
+  document.body.style.overflow = 'hidden';
+}
+
+function closeSidePanel() {
+  const sidePanel = document.getElementById('side-panel');
+
+  // Quitar selección de nodo
+  d3.selectAll('.node.node-selected').classed('node-selected', false);
+
+  // Cerrar el panel
+  sidePanel.classList.remove('open');
+
+  // Restaurar el scroll del body
+  document.body.style.overflow = '';
+}
+
+function generateSidePanelContent(nodeData) {
+  const fields = [
+    { key: 'id', label: 'ID', type: 'text' },
+    { key: 'name', label: 'Nombre', type: 'text' },
+    { key: 'subtitle', label: 'Subtítulo', type: 'text' },
+    { key: 'type', label: 'Tipo', type: 'text' },
+    { key: 'url', label: 'URL', type: 'url' },
+    { key: 'img', label: 'Imagen', type: 'image' },
+    { key: 'description', label: 'Descripción', type: 'text' },
+    { key: 'status', label: 'Estado', type: 'status' },
+    { key: 'priority', label: 'Prioridad', type: 'priority' },
+    { key: 'created_date', label: 'Fecha de Creación', type: 'text' },
+    { key: 'owner', label: 'Propietario', type: 'text' },
+    { key: 'department', label: 'Departamento', type: 'text' },
+  ];
+
+  let html = '<div class="side-panel-fields-table">';
+  
+  // Mostrar todos los campos predefinidos, tengan contenido o no
+  fields.forEach(field => {
+    html += `<div class="side-panel-field"><div class="side-panel-label">${field.label}</div><div class="side-panel-value">`;
+    
+    if (nodeData[field.key] && nodeData[field.key] !== '') {
+      if (field.type === 'url') {
+        html += `<a class="side-panel-url" href="${nodeData[field.key]}" target="_blank">${nodeData[field.key]}</a>`;
+      } else if (field.type === 'image') {
+        html += `<img class="side-panel-image" src="${nodeData[field.key]}" alt="Imagen"/>`;
+      } else if (field.type === 'status') {
+        html += `<span class="status-${nodeData[field.key].toLowerCase()}">${nodeData[field.key]}</span>`;
+      } else if (field.type === 'priority') {
+        html += `<span class="priority-${nodeData[field.key].toLowerCase()}">${nodeData[field.key]}</span>`;
+      } else {
+        html += nodeData[field.key];
+      }
+    } else {
+      html += '<span class="side-panel-value empty">No especificado</span>';
+    }
+    
+    html += '</div></div>';
+  });
+  
+  // Mostrar campos adicionales que no están en la lista predefinida
+  const additionalFields = Object.keys(nodeData).filter(key => 
+    !fields.some(field => field.key === key) && 
+    key !== 'children' &&
+    key !== 'parent'
+  );
+  
+  additionalFields.forEach(key => {
+    html += `<div class="side-panel-field"><div class="side-panel-label">${key}</div><div class="side-panel-value">`;
+    if (nodeData[key] && nodeData[key] !== '') {
+      html += nodeData[key];
+    } else {
+      html += '<span class="side-panel-value empty">No especificado</span>';
+    }
+    html += '</div></div>';
+  });
+
+  // Nodos padre como campo adicional
+  html += `<div class="side-panel-field"><div class="side-panel-label">Nodos Padre</div><div class="side-panel-value">`;
+  if (nodeData.parent && nodeData.parent !== '') {
+    // Buscar el nodo padre en el mapa global de nodos
+    const parentNode = findNodeById(nodeData.parent);
+    if (parentNode) {
+      const parentName = parentNode.name || '[Sin nombre]';
+      html += `<a href="#" class="subnode-link" data-node-id="${nodeData.parent}">${parentName}</a>`;
+    } else {
+      html += `<span class="side-panel-value empty">${nodeData.parent} (no encontrado)</span>`;
+    }
+  } else {
+    html += '<span class="side-panel-value empty">No especificado</span>';
+  }
+  html += '</div></div>';
+
+  // Subnodos (hijos) como campo adicional
+  html += `<div class="side-panel-field"><div class="side-panel-label">Subnodos</div><div class="side-panel-value">`;
+  if (nodeData.children && Array.isArray(nodeData.children) && nodeData.children.length > 0) {
+    const nombresHijos = nodeData.children.map(child => {
+      const name = child.name || (child.data && child.data.name) || '[Sin nombre]';
+      const childId = child.id || (child.data && child.data.id) || '';
+      if (childId) {
+        return `<a href="#" class="subnode-link" data-node-id="${childId}">${name}</a>`;
+      } else {
+        return name;
+      }
+    }).join(', ');
+    html += nombresHijos;
+  } else {
+    html += '<span class="side-panel-value empty">No especificado</span>';
+  }
+  html += '</div></div>';
+  
+  html += '</div>';
+
+  return html;
+}
+
+function getPriorityClass(priority) {
+  const priorityLower = priority.toLowerCase();
+  switch (priorityLower) {
+    case 'crítica':
+    case 'critical':
+      return 'priority-critical';
+    case 'alta':
+    case 'high':
+      return 'priority-high';
+    case 'media':
+    case 'medium':
+      return 'priority-medium';
+    case 'baja':
+    case 'low':
+      return 'priority-low';
+    default:
+      return '';
+  }
+}
+
+function formatDate(dateString) {
+  try {
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) {
+      return dateString; // Retornar el string original si no es una fecha válida
+    }
+    return date.toLocaleDateString('es-ES', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+  } catch (error) {
+    return dateString; // Retornar el string original si hay error
+  }
+}
+
+// Función para buscar un nodo por ID en toda la jerarquía
+function findNodeById(nodeId) {
+  // Buscar en todos los nodos del SVG
+  const allNodes = d3.selectAll('.node').data();
+  for (let node of allNodes) {
+    if (node.data && node.data.id === nodeId) {
+      return node.data;
+    }
+  }
+  return null;
+}
+
+// Hacer las funciones globales
+window.openSidePanel = openSidePanel;
+window.closeSidePanel = closeSidePanel;
+
+// Evento global para cerrar el panel al hacer clic fuera de los nodos
+function setupClosePanelOnSvgClick() {
+  const svg = document.querySelector('svg');
+  if (!svg) return;
+  svg.addEventListener('click', function(event) {
+    // Si el clic NO es sobre un nodo ni un descendiente de nodo
+    if (!event.target.closest('.node')) {
+      closeSidePanel();
+    }
+  });
+}

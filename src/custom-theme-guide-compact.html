@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Guía - Tema Custom Compacto</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f8f9fa;
+        }
+        
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            color: #1976d2;
+            border-bottom: 3px solid #1976d2;
+            padding-bottom: 10px;
+        }
+        
+        h2 {
+            color: #333;
+            margin-top: 30px;
+        }
+        
+        h3 {
+            color: #555;
+            margin-top: 20px;
+        }
+        
+        .code-block {
+            background: #f5f5f5;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 15px;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 14px;
+            overflow-x: auto;
+            margin: 15px 0;
+        }
+        
+        .highlight {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 5px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+        
+        .example {
+            background: #e8f5e8;
+            border: 1px solid #c8e6c9;
+            border-radius: 5px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+        
+        .warning {
+            background: #ffebee;
+            border: 1px solid #ffcdd2;
+            border-radius: 5px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+        
+        .variable-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        
+        .variable-item {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 5px;
+            padding: 15px;
+        }
+        
+        .variable-name {
+            font-family: monospace;
+            font-weight: bold;
+            color: #1976d2;
+        }
+        
+        .variable-description {
+            color: #666;
+            font-size: 14px;
+            margin-top: 5px;
+        }
+        
+        .btn {
+            display: inline-block;
+            padding: 10px 20px;
+            background: #1976d2;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            margin: 10px 5px;
+            transition: background 0.3s;
+        }
+        
+        .btn:hover {
+            background: #1565c0;
+        }
+        
+        .btn-secondary {
+            background: #6c757d;
+        }
+        
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+        
+        .compact-code {
+            background: #f8f9fa;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        
+        .compact-code h4 {
+            margin-top: 0;
+            color: #1976d2;
+            font-size: 16px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎨 Guía del Tema Custom Compacto</h1>
+        
+        <div class="highlight">
+            <strong>💡 Concepto:</strong> El tema custom compacto incluye solo las variables CSS esenciales, haciendo el archivo mucho más pequeño y fácil de mantener.
+        </div>
+        
+        <h2>📋 Ventajas de la Versión Compacta</h2>
+        <ul>
+            <li><strong>Archivo más pequeño:</strong> Solo ~50 líneas vs ~300 líneas</li>
+            <li><strong>Fácil mantenimiento:</strong> Menos código duplicado</li>
+            <li><strong>Mejor rendimiento:</strong> CSS más eficiente</li>
+            <li><strong>Actualizaciones automáticas:</strong> Usa el CSS principal</li>
+            <li><strong>Menos errores:</strong> Menos código que mantener</li>
+        </ul>
+        
+        <h2>🚀 Cómo Usar</h2>
+        
+        <h3>1. Abrir el Tema Custom Compacto</h3>
+        <p>Abre el archivo <code>index-custom-compact.html</code> en tu navegador:</p>
+        <div class="code-block">
+            http://localhost:8000/index-custom-compact.html
+        </div>
+        
+        <h3>2. Personalizar el Tema</h3>
+        <p>Edita solo las variables CSS en el archivo HTML:</p>
+        
+        <div class="compact-code">
+            <h4>📝 Estructura del Tema Custom Compacto</h4>
+            <div class="code-block">
+&lt;style&gt;
+    .theme-custom {
+        /* Colores Base */
+        --bg-color: #f6f7f9;
+        --text-color: #222;
+        --node-fill: #fff;
+        --label-border: #bdbdbd;
+        --link-color: #999;
+        --node-stroke-focus: #1976d2;
+
+        /* Panel Lateral */
+        --side-panel-bg: #fff;
+        --side-panel-text: #222;
+        --side-panel-header-bg: #f8f9fa;
+        --side-panel-header-border: #dee2e6;
+        --side-panel-border: #e0e0e0;
+        --side-panel-label: #666;
+        --side-panel-value: #222;
+
+        /* Selección de Nodos */
+        --node-selection-border: #e0e0e0;
+        --node-selection-focus: #1976d2;
+        --node-selection-hover: #bdbdbd;
+        --node-selection-selected: #1976d2;
+
+        /* Imágenes y Filtros */
+        --image-filter: grayscale(30%);
+
+        /* Loading */
+        --loading-color: #1976d2;
+        --loading-bg: #ffffff;
+
+        /* Fondo */
+        --bg-image: none;
+        --bg-opacity: 1;
+
+        /* Mensajes */
+        --error-message-color: #999999;
+    }
+&lt;/style&gt;
+            </div>
+        </div>
+        
+        <h2>🎯 Variables Incluidas</h2>
+        
+        <div class="variable-list">
+            <div class="variable-item">
+                <div class="variable-name">--bg-color</div>
+                <div class="variable-description">Color de fondo principal</div>
+            </div>
+            
+            <div class="variable-item">
+                <div class="variable-name">--text-color</div>
+                <div class="variable-description">Color del texto principal</div>
+            </div>
+            
+            <div class="variable-item">
+                <div class="variable-name">--node-fill</div>
+                <div class="variable-description">Fondo de los nodos</div>
+            </div>
+            
+            <div class="variable-item">
+                <div class="variable-name">--label-border</div>
+                <div class="variable-description">Borde de los nodos</div>
+            </div>
+            
+            <div class="variable-item">
+                <div class="variable-name">--link-color</div>
+                <div class="variable-description">Color de las conexiones</div>
+            </div>
+            
+            <div class="variable-item">
+                <div class="variable-name">--node-stroke-focus</div>
+                <div class="variable-description">Color de enfoque de nodos</div>
+            </div>
+            
+            <div class="variable-item">
+                <div class="variable-name">--side-panel-bg</div>
+                <div class="variable-description">Fondo del panel lateral</div>
+            </div>
+            
+            <div class="variable-item">
+                <div class="variable-name">--side-panel-text</div>
+                <div class="variable-description">Texto del panel lateral</div>
+            </div>
+            
+            <div class="variable-item">
+                <div class="variable-name">--node-selection-focus</div>
+                <div class="variable-description">Color de selección de nodos</div>
+            </div>
+            
+            <div class="variable-item">
+                <div class="variable-name">--image-filter</div>
+                <div class="variable-description">Filtro para thumbnails</div>
+            </div>
+            
+            <div class="variable-item">
+                <div class="variable-name">--loading-color</div>
+                <div class="variable-description">Color del spinner</div>
+            </div>
+            
+            <div class="variable-item">
+                <div class="variable-name">--bg-image</div>
+                <div class="variable-description">Imagen de fondo (opcional)</div>
+            </div>
+            
+            <div class="variable-item">
+                <div class="variable-name">--bg-opacity</div>
+                <div class="variable-description">Opacidad del fondo</div>
+            </div>
+        </div>
+        
+        <h2>🎨 Ejemplos de Personalización</h2>
+        
+        <h3>Ejemplo 1: Tema Azul Corporativo</h3>
+        <div class="example">
+            <div class="code-block">
+.theme-custom {
+    --bg-color: #f5f7fa;
+    --text-color: #2c3e50;
+    --node-fill: #ffffff;
+    --label-border: #3498db;
+    --link-color: #3498db;
+    --node-stroke-focus: #2980b9;
+    --side-panel-bg: #ffffff;
+    --side-panel-text: #2c3e50;
+    --node-selection-focus: #2980b9;
+    --loading-color: #3498db;
+}
+            </div>
+        </div>
+        
+        <h3>Ejemplo 2: Tema con Imagen de Fondo</h3>
+        <div class="example">
+            <div class="code-block">
+.theme-custom {
+    --bg-color: #1a1a1a;
+    --text-color: #ffffff;
+    --node-fill: rgba(255, 255, 255, 0.9);
+    --label-border: #ffffff;
+    --link-color: #ffffff;
+    --node-selection-focus: #00ff88;
+    --side-panel-bg: rgba(0, 0, 0, 0.8);
+    --side-panel-text: #ffffff;
+    --bg-image: url('https://images.unsplash.com/photo-1632059368252-be6d65abc4e2?w=1920&q=80');
+    --bg-opacity: 0.3;
+    --loading-color: #00ff88;
+}
+            </div>
+        </div>
+        
+        <h3>Ejemplo 3: Tema Minimalista</h3>
+        <div class="example">
+            <div class="code-block">
+.theme-custom {
+    --bg-color: #ffffff;
+    --text-color: #000000;
+    --node-fill: #fafafa;
+    --label-border: #e0e0e0;
+    --link-color: #bdbdbd;
+    --node-stroke-focus: #000000;
+    --side-panel-bg: #ffffff;
+    --side-panel-text: #000000;
+    --node-selection-focus: #000000;
+    --image-filter: none;
+    --loading-color: #000000;
+}
+            </div>
+        </div>
+        
+        <h2>📊 Comparación: Compacto vs Completo</h2>
+        
+        <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
+            <thead>
+                <tr style="background: #f8f9fa;">
+                    <th style="padding: 12px; border: 1px solid #dee2e6; text-align: left;">Aspecto</th>
+                    <th style="padding: 12px; border: 1px solid #dee2e6; text-align: left;">Versión Compacta</th>
+                    <th style="padding: 12px; border: 1px solid #dee2e6; text-align: left;">Versión Completa</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td style="padding: 12px; border: 1px solid #dee2e6;"><strong>Tamaño del archivo</strong></td>
+                    <td style="padding: 12px; border: 1px solid #dee2e6;">~50 líneas</td>
+                    <td style="padding: 12px; border: 1px solid #dee2e6;">~300 líneas</td>
+                </tr>
+                <tr style="background: #f8f9fa;">
+                    <td style="padding: 12px; border: 1px solid #dee2e6;"><strong>Mantenimiento</strong></td>
+                    <td style="padding: 12px; border: 1px solid #dee2e6;">Fácil</td>
+                    <td style="padding: 12px; border: 1px solid #dee2e6;">Complejo</td>
+                </tr>
+                <tr>
+                    <td style="padding: 12px; border: 1px solid #dee2e6;"><strong>Actualizaciones</strong></td>
+                    <td style="padding: 12px; border: 1px solid #dee2e6;">Automáticas</td>
+                    <td style="padding: 12px; border: 1px solid #dee2e6;">Manuales</td>
+                </tr>
+                <tr style="background: #f8f9fa;">
+                    <td style="padding: 12px; border: 1px solid #dee2e6;"><strong>Rendimiento</strong></td>
+                    <td style="padding: 12px; border: 1px solid #dee2e6;">Mejor</td>
+                    <td style="padding: 12px; border: 1px solid #dee2e6;">Normal</td>
+                </tr>
+                <tr>
+                    <td style="padding: 12px; border: 1px solid #dee2e6;"><strong>Flexibilidad</strong></td>
+                    <td style="padding: 12px; border: 1px solid #dee2e6;">Alta</td>
+                    <td style="padding: 12px; border: 1px solid #dee2e6;">Máxima</td>
+                </tr>
+            </tbody>
+        </table>
+        
+        <h2>⚠️ Consideraciones</h2>
+        
+        <div class="warning">
+            <strong>Nota:</strong> La versión compacta:
+            <ul>
+                <li>Depende del archivo <code>sw-diagrams.css</code> principal</li>
+                <li>Se actualiza automáticamente con mejoras del CSS principal</li>
+                <li>Es más fácil de mantener y menos propensa a errores</li>
+                <li>Recomendada para la mayoría de casos de uso</li>
+            </ul>
+        </div>
+        
+        <h2>🔗 Enlaces Útiles</h2>
+        <a href="index-custom-compact.html" class="btn">🚀 Probar Tema Custom Compacto</a>
+        <a href="index-custom.html" class="btn btn-secondary">📄 Versión Completa</a>
+        <a href="theme-creator.html" class="btn btn-secondary">🎨 Theme Creator</a>
+        <a href="index.html" class="btn btn-secondary">📊 Diagrama Principal</a>
+        
+        <h2>📝 Resumen</h2>
+        <p>El tema custom compacto es la versión recomendada que:</p>
+        <ul>
+            <li>✅ Incluye solo las variables CSS esenciales</li>
+            <li>✅ Es mucho más pequeño y fácil de mantener</li>
+            <li>✅ Se actualiza automáticamente con el CSS principal</li>
+            <li>✅ Mantiene toda la funcionalidad</li>
+            <li>✅ Es más eficiente en rendimiento</li>
+            <li>✅ Menos propenso a errores</li>
+        </ul>
+    </div>
+</body>
+</html> 

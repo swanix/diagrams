@@ -9,13 +9,41 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
     <script src="sw-diagrams.js"></script>
     <link href="sw-diagrams.css" rel="stylesheet">
+    <link rel="icon" href="https://swanix.org/assets/images/favicon.ico" type="image/x-icon">
 </head>
 <body>
-    <svg class="diagram"></svg>
+    <!-- Topbar moderno -->
+    <div class="topbar">
+      <div class="topbar-left">
+        <div class="controls-container">
+          <select id="type-dropdown" class="control-item">
+            <!-- Se llena dinámicamente -->
+          </select>
+          <input type="text" id="search-input" class="control-item" placeholder="Buscar nodo...">
+        </div>
+      </div>
+      
+      <div class="topbar-center">
+        <h1 class="diagram-title">Swanix Diagrams</h1>
+      </div>
+      
+      <div class="topbar-right">
+        <select id="theme-selector" class="theme-selector">
+          <option value="light">Light</option>
+          <option value="dark">Dark</option>
+          <option value="vintage">Vintage</option>
+          <option value="pastel">Pastel</option>
+          <option value="cyberpunk">Cyberpunk</option>
+          <option value="neon">Neon</option>
+        </select>
+      </div>
+    </div>
+
+    <svg></svg>
     <div id="loading" class="loading"><div class="spinner"></div></div>
     <small id="error-message" class="error-message"></small>
     <script>
-        initDiagram("data/data.csv");
+        initDiagram("https://docs.google.com/spreadsheets/d/e/2PACX-1vTQZfZhC3cWHg0QkqRoY9i3alinAnSHab5DJtWzsm_xAhLKKJdHri8fBMUawh-DhpvCkm-G1vBeWPFq/pub?gid=466976322&single=true&output=csv");
     </script>
 </body>
 </html>

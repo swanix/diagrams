@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en" translate="no">
+<head>
+    <meta charset="UTF-8">
+    <meta name="google" content="notranslate">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Swanix Diagrams - Custom Theme</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+    <script src="sw-diagrams.js"></script>
+    <link href="sw-diagrams.css" rel="stylesheet">
+    <link rel="icon" href="https://swanix.org/assets/images/favicon.ico" type="image/x-icon">
+    
+    <!-- Tema Custom - Solo Variables CSS -->
+    <style>
+        /* === TEMA CUSTOM COMPACTO === */
+        /* Basado en el tema Light pero completamente personalizable */
+        .theme-custom {
+            /* Colores Base */
+            --bg-color: #ecf2fd;
+            --text-color: #222;
+            --node-fill: #fff;
+            --label-border: #bdbdbd;
+            --link-color: #999;
+            --node-stroke-focus: #1976d2;
+
+            /* Panel Lateral */
+            --side-panel-bg: #fff;
+            --side-panel-text: #222;
+            --side-panel-header-bg: #f8f9fa;
+            --side-panel-header-border: #dee2e6;
+            --side-panel-border: #e0e0e0;
+            --side-panel-label: #666;
+            --side-panel-value: #222;
+
+            /* Selección de Nodos */
+            --node-selection-border: #e0e0e0;
+            --node-selection-focus: #1976d2;
+            --node-selection-hover: #bdbdbd;
+            --node-selection-selected: #1976d2;
+
+            /* Imágenes y Filtros */
+            --image-filter: grayscale(30%);
+
+            /* Loading */
+            --loading-color: #1976d2;
+            --loading-bg: #ffffff;
+
+            /* Fondo */
+            --bg-image: none;
+            --bg-opacity: 1;
+
+            /* Mensajes */
+            --error-message-color: #999999;
+        }
+    </style>
+</head>
+<body class="theme-custom">
+    <!-- Topbar moderno -->
+    <div class="topbar">
+      <div class="topbar-left">
+        <div class="controls-container">
+          <select id="type-dropdown" class="control-item">
+            <!-- Se llena dinámicamente -->
+          </select>
+          <input type="text" id="search-input" class="control-item" placeholder="Buscar nodo...">
+        </div>
+      </div>
+      
+      <div class="topbar-center">
+        <h1 class="diagram-title">Swanix Diagrams - Custom Theme</h1>
+      </div>
+      
+      <div class="topbar-right">
+        <select id="theme-selector" class="theme-selector" onchange="setTheme(this.value)">
+          <option value="custom" selected>Custom</option>
+          <option value="light">Light</option>
+          <option value="dark">Dark</option>
+          <option value="vintage">Vintage</option>
+          <option value="pastel">Pastel</option>
+          <option value="cyberpunk">Cyberpunk</option>
+          <option value="neon">Neon</option>
+        </select>
+      </div>
+    </div>
+
+    <svg></svg>
+    <div id="loading" class="loading"><div class="spinner"></div></div>
+    <small id="error-message" class="error-message"></small>
+    
+    <script>
+        // Función para cambiar tema
+        function setTheme(themeId) {
+            // Remover todas las clases de tema
+            document.body.classList.remove(
+                'theme-custom', 'theme-light', 'theme-dark', 'theme-vintage', 
+                'theme-pastel', 'theme-cyberpunk', 'theme-neon'
+            );
+            
+            // Agregar la nueva clase
+            if (themeId === 'custom') {
+                document.body.classList.add('theme-custom');
+            } else {
+                document.body.classList.add('theme-' + themeId);
+            }
+            
+            // Guardar en localStorage
+            localStorage.setItem('selectedTheme', themeId);
+            
+            console.log('Tema cambiado a:', themeId);
+        }
+        
+        // Cargar tema guardado al iniciar
+        function loadSavedTheme() {
+            const savedTheme = localStorage.getItem('selectedTheme');
+            if (savedTheme) {
+                setTheme(savedTheme);
+                // Actualizar el selector
+                document.getElementById('theme-selector').value = savedTheme;
+            } else {
+                // Por defecto usar custom
+                setTheme('custom');
+            }
+        }
+        
+        // Inicializar
+        loadSavedTheme();
+        
+        // Cargar el diagrama
+        initDiagram("https://docs.google.com/spreadsheets/d/e/2PACX-1vTQZfZhC3cWHg0QkqRoY9i3alinAnSHab5DJtWzsm_xAhLKKJdHri8fBMUawh-DhpvCkm-G1vBeWPFq/pub?gid=466976322&single=true&output=csv");
+    </script>
+</body>
+</html> 

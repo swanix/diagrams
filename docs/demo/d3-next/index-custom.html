@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="en" translate="no">
+<head>
+    <meta charset="UTF-8">
+    <meta name="google" content="notranslate">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Swanix Diagrams - Custom Theme</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+    <script src="sw-diagrams.js"></script>
+    <link href="sw-diagrams.css" rel="stylesheet">
+    <link rel="icon" href="https://swanix.org/assets/images/favicon.ico" type="image/x-icon">
+    
+    <!-- Tema Custom - Se puede editar directamente aquí -->
+    <style>
+        /* === TEMA CUSTOM === */
+        /* Basado en el tema Light pero completamente personalizable */
+        .theme-custom {
+            /* Layout */
+            --svg-width: 100vw;
+            --svg-height: 100vh;
+
+            /* Node stroke colors */
+            --node-stroke-focus: #1976d2;
+
+            /* Base colors */
+            --bg-color: #f6f7f9;
+            --text-color: #222;
+            --node-fill: #fff;
+            --label-border: #bdbdbd;
+            --link-color: #999;
+
+            /* Node dimensions */
+            --node-bg-width: 80px;
+            --node-bg-height: 100px;
+            --node-bg-x: -42px;
+            --node-bg-y: -62px;
+            --node-bg-stroke: 1px;
+
+            /* Image dimensions and position */
+            --image-x: -38px;
+            --image-y: -54px;
+            --image-width: 72px;
+            --image-height: 65px;
+            --image-filter: grayscale(30%);
+
+            /* Label ID text */
+            --label-id-text-color: #888888;
+            --label-id-font-size: 5px;
+            --label-id-dy: .25em;
+            --label-id-x: -6px;
+            --label-id-y: -67px;
+            --label-id-anchor: end;
+           
+            /* Label text */
+            --label-font-size: 6px;
+            --label-dy: .25em;
+            --label-dy-single: .85em;
+            --label-x: -2px;  
+            --label-y: 20px;
+
+            /* Subtitle text */
+            --text-subtitle-color: #888888;
+            --subtitle-font-size: 6px;
+            --subtitle-dy: .25em;
+            --subtitle-x: -35px;
+            --subtitle-y: -50px;
+            --subtitle-anchor: start;
+
+            /* Button */
+            --btn-stroke: 1px;
+            --btn-bg: #FFF;
+            --btn-bg-hover: #000;
+            --btn-text: #000;
+            --btn-text-hover: #FFF;
+
+            /* Loading */
+            --loading-color: #1976d2;
+            --loading-bg: #ffffff;
+
+            /* Background Image */
+            --bg-image: none;
+            --bg-opacity: 1;
+
+            /* Error message */
+            --error-message-color: #999999;
+
+            /* Side Panel */
+            --side-panel-width: 350px;
+            --side-panel-bg: #fff;
+            --side-panel-border: #e0e0e0;
+            --side-panel-shadow: rgba(0, 0, 0, 0.1);
+            --side-panel-header-bg: #f8f9fa;
+            --side-panel-header-border: #dee2e6;
+            --side-panel-text: #222;
+            --side-panel-label: #666;
+            --side-panel-value: #222;
+            --side-panel-close-bg: #dc3545;
+            --side-panel-close-hover: #c82333;
+
+            /* Node Selection States */
+            --node-selection-border: #e0e0e0;
+            --node-selection-focus: #1976d2;
+            --node-selection-hover: #bdbdbd;
+            --node-selection-selected: #1976d2;
+        }
+
+        /* Aplicar tema custom por defecto */
+        body {
+            font-family: sans-serif;
+            text-align: center;
+            background-color: var(--bg-color);
+            background-image: var(--bg-image);
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+            color: var(--text-color);
+            position: relative;
+        }
+        
+        /* Overlay para controlar la opacidad del color de fondo */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: var(--bg-color);
+            opacity: var(--bg-opacity);
+            z-index: -2;
+            pointer-events: none;
+        }
+
+        body, html {
+            height: 100%;
+            width: 100%;
+            overflow: hidden;
+        }
+
+        svg {
+            background-color: transparent;
+            display: block;
+            margin: auto;
+            cursor: grab;
+            width: var(--svg-width);
+            height: var(--svg-height);
+            opacity: 0;
+        }
+
+        .link {
+            fill: none;
+            stroke: var(--link-color);
+            stroke-width: 2px;
+        }
+
+        .node rect {
+            stroke: var(--label-border);
+            fill: var(--node-fill);
+            rx: 6px;
+            ry: 6px;
+        }
+
+        .node {
+            transition: opacity 0.3s ease;
+        }
+
+        .image-base {
+            width: var(--image-width); 
+            height: var(--image-height); 
+            position: relative; 
+            object-fit: cover; 
+        }
+
+        .image-filter {
+            filter: var(--image-filter) !important; 
+        }
+        
+        svg .image-filter {
+            filter: var(--image-filter) !important;
+        }
+        
+        svg image.image-filter {
+            filter: var(--image-filter) !important;
+        }
+        
+        svg image.image-base.image-filter {
+            filter: var(--image-filter) !important;
+        }
+         
+        .label-text {
+            font-size: var(--label-font-size);
+            fill: var(--text-color);
+            text-anchor: middle;
+            font-weight: bold;
+            pointer-events: none;
+        }
+
+        .custom-text {
+            font-size: var(--label-font-size);
+        }
+
+        .node-link {
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+
+        .node:hover .node-link {
+            opacity: 1;
+        }
+
+        #loading {
+            display: none;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: var(--loading-bg); 
+            padding: 10px;
+            border-radius: 5px;
+            z-index: 10;
+            animation: fadeIn 0.5s ease-in-out; 
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .spinner {
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top: 4px solid var(--loading-color);
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite; 
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error-message {
+            color: var(--error-message-color); 
+            font-size: 11px;
+            position: fixed;
+            top: 76px;
+            left: 16px;
+            z-index: 998;
+        }
+
+        /* Side Panel Styles */
+        .side-panel {
+            position: fixed;
+            top: 60px;
+            right: -400px;
+            width: var(--side-panel-width);
+            height: calc(100vh - 60px);
+            background-color: var(--side-panel-bg);
+            border-left: 1px solid var(--side-panel-border);
+            border-top: 1px solid var(--side-panel-border);
+            box-shadow: -2px 0 10px var(--side-panel-shadow);
+            z-index: 999;
+            transition: right 0.3s ease-in-out;
+            overflow-y: auto;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+
+        .side-panel.open {
+            right: 0;
+        }
+
+        .side-panel-header {
+            background-color: var(--side-panel-header-bg);
+            border-bottom: 1px solid var(--side-panel-header-border);
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .side-panel-title {
+            margin: 0;
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--side-panel-text);
+        }
+
+        .side-panel-close {
+            background-color: #000 !important;
+            color: #fff !important;
+            border: none;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            transition: background-color 0.2s ease;
+        }
+
+        .side-panel-close:hover {
+            background-color: #222 !important;
+            color: #fff !important;
+        }
+
+        .side-panel-content {
+            padding: 20px;
+        }
+
+        .side-panel-field {
+            margin-bottom: 15px;
+        }
+
+        .side-panel-label {
+            font-weight: 600;
+            color: var(--side-panel-label);
+            margin-bottom: 5px;
+            font-size: 14px;
+        }
+
+        .side-panel-value {
+            color: var(--side-panel-value);
+            font-size: 14px;
+            line-height: 1.4;
+        }
+
+        .side-panel-value.empty {
+            color: #999;
+            font-style: italic;
+        }
+
+        .node.node-selected {
+            z-index: 2000;
+        }
+
+        svg .node.node-selected {
+            filter: drop-shadow(0 0 8px var(--node-selection-focus)cc);
+        }
+
+        .node-clickable {
+            cursor: pointer;
+        }
+
+        .node-clickable:hover rect {
+            stroke: var(--node-selection-hover);
+            stroke-width: 2px;
+        }
+
+        .node.node-selected rect {
+            stroke: var(--node-selection-focus) !important;
+            stroke-width: 5px !important;
+            filter: drop-shadow(0 0 6px var(--node-selection-focus)aa) !important;
+            animation: node-pulse 1.2s infinite alternate !important;
+        }
+
+        @keyframes node-pulse {
+            0% {
+                filter: drop-shadow(0 0 6px var(--node-selection-focus)aa);
+                stroke-width: 5px;
+                opacity: 1;
+            }
+            60% {
+                filter: drop-shadow(0 0 18px var(--node-selection-focus)cc);
+                stroke-width: 8px;
+                opacity: 1;
+            }
+            100% {
+                filter: drop-shadow(0 0 6px var(--node-selection-focus)aa);
+                stroke-width: 5px;
+                opacity: 1;
+            }
+        }
+
+        .node-button {
+            fill: var(--btn-bg);
+            stroke: var(--btn-text);
+            stroke-width: var(--btn-stroke);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .node-link:hover .node-button,
+        .node-selected .node-button {
+            fill: var(--btn-bg-hover);
+            stroke: var(--btn-text-hover);
+        }
+
+        /* Topbar */
+        .topbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 60px;
+            background: var(--side-panel-bg);
+            border-bottom: 1px solid var(--side-panel-border);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 20px;
+            z-index: 1000;
+        }
+
+        .topbar-left {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+        }
+
+        .topbar-center {
+            flex: 2;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .topbar-right {
+            flex: 1;
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+        }
+
+        .diagram-title {
+            margin: 0;
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--side-panel-text);
+        }
+
+        .controls-container {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            justify-content: flex-start;
+        }
+
+        .control-item {
+            background: var(--side-panel-bg);
+            color: var(--side-panel-text);
+            border: 1px solid var(--side-panel-border);
+            border-radius: 6px;
+            padding: 8px 12px;
+            font-size: 14px;
+            outline: none;
+            transition: border-color 0.2s ease;
+        }
+
+        .control-item:hover {
+            border-color: var(--side-panel-header-border);
+        }
+
+        .control-item:focus {
+            border-color: var(--node-stroke-focus);
+            box-shadow: 0 0 0 2px rgba(25, 118, 210, 0.2);
+        }
+
+        .control-item::placeholder {
+            color: #999;
+        }
+
+        .theme-selector {
+            background: var(--side-panel-bg);
+            color: var(--side-panel-text);
+            border: 1px solid var(--side-panel-border);
+            border-radius: 6px;
+            font-size: 14px;
+            padding: 4px 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+        }
+    </style>
+</head>
+<body class="theme-custom">
+    <!-- Topbar moderno -->
+    <div class="topbar">
+      <div class="topbar-left">
+        <div class="controls-container">
+          <select id="type-dropdown" class="control-item">
+            <!-- Se llena dinámicamente -->
+          </select>
+          <input type="text" id="search-input" class="control-item" placeholder="Buscar nodo...">
+        </div>
+      </div>
+      
+      <div class="topbar-center">
+        <h1 class="diagram-title">Swanix Diagrams - Custom Theme</h1>
+      </div>
+      
+      <div class="topbar-right">
+        <select id="theme-selector" class="theme-selector" onchange="setTheme(this.value)">
+          <option value="custom" selected>Custom</option>
+          <option value="light">Light</option>
+          <option value="dark">Dark</option>
+          <option value="vintage">Vintage</option>
+          <option value="pastel">Pastel</option>
+          <option value="cyberpunk">Cyberpunk</option>
+          <option value="neon">Neon</option>
+        </select>
+      </div>
+    </div>
+
+    <svg></svg>
+    <div id="loading" class="loading"><div class="spinner"></div></div>
+    <small id="error-message" class="error-message"></small>
+    
+    <script>
+        // Función para cambiar tema
+        function setTheme(themeId) {
+            // Remover todas las clases de tema
+            document.body.classList.remove(
+                'theme-custom', 'theme-light', 'theme-dark', 'theme-vintage', 
+                'theme-pastel', 'theme-cyberpunk', 'theme-neon'
+            );
+            
+            // Agregar la nueva clase
+            if (themeId === 'custom') {
+                document.body.classList.add('theme-custom');
+            } else {
+                document.body.classList.add('theme-' + themeId);
+            }
+            
+            // Guardar en localStorage
+            localStorage.setItem('selectedTheme', themeId);
+            
+            console.log('Tema cambiado a:', themeId);
+        }
+        
+        // Cargar tema guardado al iniciar
+        function loadSavedTheme() {
+            const savedTheme = localStorage.getItem('selectedTheme');
+            if (savedTheme) {
+                setTheme(savedTheme);
+                // Actualizar el selector
+                document.getElementById('theme-selector').value = savedTheme;
+            } else {
+                // Por defecto usar custom
+                setTheme('custom');
+            }
+        }
+        
+        // Inicializar
+        loadSavedTheme();
+        
+        // Cargar el diagrama
+        initDiagram("https://docs.google.com/spreadsheets/d/e/2PACX-1vTQZfZhC3cWHg0QkqRoY9i3alinAnSHab5DJtWzsm_xAhLKKJdHri8fBMUawh-DhpvCkm-G1vBeWPFq/pub?gid=466976322&single=true&output=csv");
+    </script>
+</body>
+</html> 

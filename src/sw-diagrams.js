@@ -3,21 +3,44 @@
 
 
 function initDiagram(csvUrl) {
+  console.log("Iniciando carga del diagrama...");
   document.getElementById("loading").style.display = "block";
 
   Papa.parse(csvUrl, {
     download: true,
     header: true,
     complete: function(results) {
+      console.log("CSV cargado exitosamente:", results.data.length, "filas");
       const data = results.data;
-      const trees = buildMultipleHierarchies(data);
-      drawMultipleTrees(trees);
-      createTypeDropdown(data);
-      createSidePanel();
-      document.getElementById("loading").style.display = "none";
+      
+      try {
+        console.log("Construyendo jerarquías...");
+        const trees = buildMultipleHierarchies(data);
+        console.log("Jerarquías construidas:", trees.length, "árboles");
+        
+        console.log("Dibujando árboles...");
+        drawMultipleTrees(trees);
+        console.log("Árboles dibujados");
+        
+        console.log("Creando panel lateral...");
+        createSidePanel();
+        console.log("Panel lateral creado");
+        
+        console.log("Creando dropdown de tipos...");
+        createTypeDropdown(data);
+        console.log("Dropdown creado");
+        
+        console.log("Ocultando loading...");
+        document.getElementById("loading").style.display = "none";
+        console.log("Diagrama cargado completamente");
+      } catch (error) {
+        console.error("Error durante la inicialización:", error);
+        document.getElementById("error-message").innerText = `Error: ${error.message}`;
+        document.getElementById("loading").style.display = "none";
+      }
     },
     error: function(err) {
-      console.error("CSV File:", err);
+      console.error("Error al cargar CSV:", err);
       document.getElementById("error-message").innerText = `CSV File ${err.message}`;
       document.getElementById("loading").style.display = "none";
     }
@@ -26,6 +49,7 @@ function initDiagram(csvUrl) {
 
 // Export the function to make it globally accessible
 window.initDiagram = initDiagram;
+
 
 
 function toggleDarkMode() {
@@ -96,6 +120,7 @@ function drawMultipleTrees(trees) {
       .attr("data-id", d => d.data.id)
       .attr("transform", d => `translate(${d.x},${d.y})`)
       .on("click", function(event, d) {
+        console.log("Nodo clickeado:", d.data);
         // Prevenir que el clic se propague al zoom
         event.stopPropagation();
         // Abrir el panel lateral con los datos del nodo
@@ -109,33 +134,35 @@ function drawMultipleTrees(trees) {
       .attr("width", parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--node-bg-width')))
       .attr("height", parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--node-bg-height')));
 
-    node.append("image")
-      .attr("xlink:href", d => {
-        // Verificar si hay una URL en la columna 'img'
-        const imgUrl = d.data.img?.trim(); // Obtener la URL de la columna 'img'
-        if (imgUrl) {
-          return imgUrl; // Si hay una URL, usarla
-        }
-        // Si no hay URL en 'img', usar la clase CSS desde 'type'
-        const className = d.data.type; // Suponiendo que 'type' contiene el nombre de la clase
-        return className ? getComputedStyle(document.documentElement).getPropertyValue(`--${className}`) : "https://swanix.org/diagrams/lib/detail.svg"; // Obtener la URL de la clase CSS
-      })
-      .attr("x", parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--image-x')))
-      .attr("y", parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--image-y')))
-      .attr("class", d => {
-        // Aplicar el filtro solo si se usa la imagen de la columna 'type'
-        return d.data.img ? "image-base" : "image-base image-filter"; // Cambia 'image-base' por la clase que desees
-      })
-      .attr("width", parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--image-width')))
-      .attr("height", parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--image-height')));
+    // Renderizar thumbnails o imagen por nodo
+    node.each(function(d) {
+      const nodeSel = d3.select(this);
+      // Elimina thumbnail anterior si existe
+      nodeSel.select('.thumbnail-container').remove();
+      nodeSel.select('image').remove();
 
-    /* Insertar SVG
-    d3.select(this).append("svg")
-      .attr("width", 80) // Ajusta el ancho según sea necesario
-      .attr("height", 100) // Ajusta la altura según sea necesario
-      .append("xhtml:div")
-      .html(svgContent); // Inserta el contenido del SVG
-    */
+      // Obtener el tipo del nodo y asegurar que existe, si no usar 'detail' como fallback
+      const type = d.data.type || 'detail';
+      
+      // Intentar cargar el SVG correspondiente al tipo
+      const svgPath = `img/${type}.svg?v=${Date.now()}`;
+
+      // Agregar la imagen SVG con manejo de errores
+      const imageElement = nodeSel.append("image")
+        .attr("xlink:href", svgPath)
+        .attr("x", parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--image-x')))
+        .attr("y", parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--image-y')))
+        .attr("class", "image-base image-filter")
+        .attr("width", parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--image-width')))
+        .attr("height", parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--image-height')))
+        .on("error", function() {
+          // Si hay error al cargar el SVG específico, cambiar al SVG por defecto
+          d3.select(this)
+            .attr("xlink:href", `img/detail.svg?v=${Date.now()}`);
+        });
+      
+
+    });
 
     // Agregar etiqueta para el Name
     node.append("text")
@@ -333,77 +360,130 @@ function wrap(text, width) {
 }
 
 function createTypeDropdown(data) {
-  // Crear un dropdown para las opciones de type
-  const typeDropdown = document.createElement("select");
-  typeDropdown.setAttribute("id", "type-dropdown");
-  typeDropdown.style.position = "absolute";
-  typeDropdown.style.top = "50px"; // Distancia desde la parte superior
-  typeDropdown.style.left = "10px"; // Distancia desde la izquierda
-  typeDropdown.style.zIndex = "10"; // Asegurarse de que esté por encima del SVG
-
+  // Obtener el dropdown del topbar
+  const typeDropdown = document.getElementById("type-dropdown");
+  
   // Agregar opción por defecto "All" con contador
-  const allCount = data.length; // Contar todos los nodos
+  const allCount = data.length;
   const allOption = document.createElement("option");
   allOption.value = "all";
-  allOption.textContent = `All (${allCount})`; // Opción para mostrar todos los nodos con contador
+  allOption.textContent = `Todos los tipos (${allCount})`;
   typeDropdown.appendChild(allOption);
 
   // Obtener las opciones únicas de type
-  const types = [...new Set(data.map(d => d.type))]; // Suponiendo que 'data' es accesible aquí
+  const types = [...new Set(data.map(d => d.type))];
   types.forEach(type => {
-    const count = data.filter(d => d.type === type).length; // Contar nodos que coinciden con el tipo
+    const count = data.filter(d => d.type === type).length;
     const option = document.createElement("option");
     option.value = type;
-    option.textContent = `${type || "No type"} (${count})`; // Mostrar el tipo y el contador
+    option.textContent = `${type || "Sin tipo"} (${count})`;
     typeDropdown.appendChild(option);
   });
-
-  document.body.appendChild(typeDropdown);
 
   // Evento para seleccionar tipo
   typeDropdown.addEventListener("change", function() {
     const selectedType = this.value;
+    const searchTerm = document.getElementById("search-input").value.toLowerCase();
 
-    d3.selectAll(".node")
-      .select("rect") // Seleccionar solo el rectángulo base del nodo
-      .style("stroke", d => {
-        const strokeColor = getComputedStyle(document.documentElement).getPropertyValue('--node-stroke-focus');
-        return d.data.type === selectedType ? strokeColor : "none"; // Resaltar nodos coincidentes
-      })
-      .style("stroke-width", d => d.data.type === selectedType ? "4px" : "none"); // Cambiar el ancho del borde
+    d3.selectAll(".node").each(function(d) {
+      const node = d3.select(this);
+      const nodeGroup = node.node().parentNode;
+      const matchesSearch = !searchTerm || d.data.name.toLowerCase().includes(searchTerm);
+      const matchesType = selectedType === "all" || d.data.type === selectedType;
+      
+      if (matchesSearch && matchesType) {
+        // Mostrar el nodo
+        nodeGroup.style.opacity = "1";
+        nodeGroup.style.pointerEvents = "auto";
+        // Resaltar según el criterio activo
+        if (searchTerm && d.data.name.toLowerCase().includes(searchTerm)) {
+          // Resaltar por búsqueda
+          applyNodeSelectionStyle(node, 'search');
+        } else if (selectedType !== "all" && d.data.type === selectedType) {
+          // Resaltar por tipo con el mismo estilo que nodos seleccionados
+          applyNodeSelectionStyle(node, 'type-filter');
+        } else {
+          // Sin resaltado
+          applyNodeSelectionStyle(node, 'none');
+        }
+      } else {
+        // Ocultar el nodo pero mantenerlo clickeable
+        nodeGroup.style.opacity = "0.3";
+        nodeGroup.style.pointerEvents = "none";
+      }
+    });
   });
+
+  // Función para crear el botón de zoom hacia el nodo seleccionado
+  // createZoomToNodeButton(); // Comentado temporalmente
+}
+
+// Función helper para aplicar estilos de selección consistentes
+function applyNodeSelectionStyle(node, styleType) {
+  const rect = node.select("rect");
+  
+  // Limpiar estilos previos
+  rect.style("stroke", "none")
+      .style("stroke-width", "none")
+      .style("filter", "none")
+      .style("animation", "none");
+  
+  switch (styleType) {
+    case 'type-filter':
+      // Estilo para filtro por tipo (igual que nodos seleccionados)
+      const focusColor = getComputedStyle(document.documentElement).getPropertyValue('--node-selection-focus');
+      rect.style("stroke", focusColor)
+          .style("stroke-width", "5px")
+          .style("filter", `drop-shadow(0 0 6px ${focusColor}aa)`)
+          .style("animation", "node-pulse 1.2s infinite alternate");
+      break;
+      
+    case 'search':
+      // Estilo para búsqueda (blanco con sombra)
+      rect.style("stroke", "white")
+          .style("stroke-width", "4px")
+          .style("filter", "drop-shadow(0 0 6px rgba(255,255,255,0.6))");
+      break;
+      
+    case 'none':
+    default:
+      // Sin estilos
+      break;
+  }
 }
 
 document.addEventListener("DOMContentLoaded", () => {
-  // Agregar un campo de entrada para el buscador
-  const searchInput = document.createElement("input");
-  searchInput.setAttribute("id", "search-input");
-  searchInput.setAttribute("placeholder", "Search node..."); // Placeholder en inglés
-  
-  // Estilos para el input
-  searchInput.style.position = "absolute"; // Posicionamiento absoluto
-  searchInput.style.top = "10px"; // Distancia desde la parte superior
-  searchInput.style.left = "10px"; // Distancia desde la izquierda
-  searchInput.style.zIndex = "10"; // Asegurarse de que esté por encima del SVG
-
-  document.body.appendChild(searchInput);
+  // Obtener el campo de búsqueda del topbar
+  const searchInput = document.getElementById("search-input");
 
   // Evento para buscar nodos
   searchInput.addEventListener("input", function() {
     const searchTerm = this.value.toLowerCase();
+    const selectedType = document.getElementById("type-dropdown").value;
     
-    if (searchTerm) {
-      d3.selectAll(".node")
-        .select("rect") // Seleccionar solo el rectángulo base del nodo
-        .style("stroke", d => d.data.name.toLowerCase().includes(searchTerm) ? "white" : "none") // Resaltar nodos coincidentes
-        .style("stroke-width", d => d.data.name.toLowerCase().includes(searchTerm) ? "4px" : "none"); // Cambiar el ancho del borde
-    } else {
-      // Restablecer el estilo de todos los nodos si el campo de búsqueda está vacío
-      d3.selectAll(".node")
-        .select("rect")
-        .style("stroke", "none") // Quitar el borde
-        .style("stroke-width", "none"); // Restablecer el ancho del borde
-    }
+    d3.selectAll(".node").each(function(d) {
+      const node = d3.select(this);
+      const nodeGroup = node.node().parentNode;
+      const matchesSearch = !searchTerm || d.data.name.toLowerCase().includes(searchTerm);
+      const matchesType = selectedType === "all" || d.data.type === selectedType;
+      
+      if (matchesSearch && matchesType) {
+        // Mostrar el nodo
+        nodeGroup.style.opacity = "1";
+        nodeGroup.style.pointerEvents = "auto";
+        // Resaltar si coincide con la búsqueda
+        if (searchTerm) {
+          applyNodeSelectionStyle(node, 'search');
+        } else {
+          // Quitar resaltado si no hay término de búsqueda
+          applyNodeSelectionStyle(node, 'none');
+        }
+      } else {
+        // Ocultar el nodo pero mantenerlo clickeable
+        nodeGroup.style.opacity = "0.3";
+        nodeGroup.style.pointerEvents = "none";
+      }
+    });
   });
 
   // Agregar evento para presionar "Enter"
@@ -439,6 +519,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
 // Funciones para el panel lateral
 function createSidePanel() {
+  console.log("Creando panel lateral...");
   // No crear overlay
 
   // Crear el panel lateral
@@ -474,23 +555,68 @@ function createSidePanel() {
     }
   });
 
+  // Agregar event listener para el dropdown de thumbnails (cambios persistentes)
+  sidePanel.addEventListener('change', function(e) {
+    if (e.target.classList.contains('thumbnail-selector-dropdown')) {
+      const nodeId = e.target.getAttribute('data-node-id');
+      const newThumbnailType = e.target.value;
+      
+      if (nodeId) {
+        // Buscar el nodo en el DOM
+        const targetNode = d3.select(`[data-id="${nodeId}"]`);
+        if (!targetNode.empty()) {
+          // Cambiar visualmente el thumbnail (persiste hasta recargar página)
+          const nodeSel = targetNode;
+          nodeSel.select('image').remove();
+
+          // Usar el tipo seleccionado temporalmente
+          const timestamp = Date.now();
+          nodeSel.append("image")
+            .attr("href", newThumbnailType ? `img/${newThumbnailType}.svg?v=${timestamp}` : `img/detail.svg?v=${timestamp}`)
+            .attr("x", parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--image-x')))
+            .attr("y", parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--image-y')))
+            .attr("class", "image-base image-filter")
+            .attr("width", parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--image-width')))
+            .attr("height", parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--image-height')))
+            .on("error", function() {
+              // Si hay error al cargar el SVG específico, cambiar al SVG por defecto
+              d3.select(this)
+                .attr("xlink:href", `img/detail.svg?v=${timestamp}`);
+            });
+        }
+      }
+    }
+  });
+
   // Añadir evento para tecla Escape
   document.addEventListener('keydown', function(event) {
     if (event.key === 'Escape') {
       closeSidePanel();
     }
   });
+  
+  console.log("Panel lateral creado exitosamente");
 }
 
 function openSidePanel(nodeData) {
+  console.log("Abriendo panel lateral para:", nodeData);
   const sidePanel = document.getElementById('side-panel');
   const content = document.getElementById('side-panel-content');
+
+  if (!sidePanel || !content) {
+    console.error("No se encontró el panel lateral o su contenido");
+    return;
+  }
 
   // Quitar selección previa
   d3.selectAll('.node.node-selected').classed('node-selected', false);
   // Seleccionar el nodo actual por ID
   if (nodeData && nodeData.id) {
     d3.selectAll('.node').filter(d => d.data.id == nodeData.id).classed('node-selected', true);
+    
+    // Log temporal para verificar las variables CSS
+    const nodeSelectionFocus = getComputedStyle(document.documentElement).getPropertyValue('--node-selection-focus');
+    console.log("Variable --node-selection-focus:", nodeSelectionFocus);
   }
 
   // Llenar el contenido del panel
@@ -506,8 +632,16 @@ function openSidePanel(nodeData) {
 function closeSidePanel() {
   const sidePanel = document.getElementById('side-panel');
 
+  if (!sidePanel) {
+    console.warn("Panel lateral no encontrado al intentar cerrar");
+    return;
+  }
+
   // Quitar selección de nodo
   d3.selectAll('.node.node-selected').classed('node-selected', false);
+
+  // NO restaurar thumbnails al cerrar el panel - mantener los cambios del dropdown
+  // Los thumbnails solo se resetean al recargar la página
 
   // Cerrar el panel
   sidePanel.classList.remove('open');
@@ -521,7 +655,7 @@ function generateSidePanelContent(nodeData) {
     { key: 'id', label: 'ID', type: 'text' },
     { key: 'name', label: 'Nombre', type: 'text' },
     { key: 'subtitle', label: 'Subtítulo', type: 'text' },
-    { key: 'type', label: 'Tipo', type: 'text' },
+    { key: 'type', label: 'Tipo', type: 'thumbnail-selector' },
     { key: 'url', label: 'URL', type: 'url' },
     { key: 'img', label: 'Imagen', type: 'image' },
     { key: 'description', label: 'Descripción', type: 'text' },
@@ -538,7 +672,22 @@ function generateSidePanelContent(nodeData) {
   fields.forEach(field => {
     html += `<div class="side-panel-field"><div class="side-panel-label">${field.label}</div><div class="side-panel-value">`;
     
-    if (nodeData[field.key] && nodeData[field.key] !== '') {
+    if (field.type === 'thumbnail-selector') {
+      // Crear dropdown para seleccionar thumbnail (persiste hasta recargar página)
+      html += `<select class="thumbnail-selector-dropdown" data-node-id="${nodeData.id}" title="Cambio persistente - se resetea al recargar">`;
+      html += `<option value="">Sin thumbnail</option>`;
+      
+      // Lista de thumbnails disponibles
+      const thumbnails = ['document', 'settings', 'form', 'list', 'modal', 'mosaic', 'report', 'detail', 'file-csv', 'file-pdf', 'file-xls', 'file-xml'];
+      
+      thumbnails.forEach(thumbName => {
+        // Siempre usar el valor original del CSV, no el valor temporal del dropdown
+        const selected = nodeData.type === thumbName ? 'selected' : '';
+        html += `<option value="${thumbName}" ${selected}>${thumbName}</option>`;
+      });
+      
+      html += `</select>`;
+    } else if (nodeData[field.key] && nodeData[field.key] !== '') {
       if (field.type === 'url') {
         html += `<a class="side-panel-url" href="${nodeData[field.key]}" target="_blank">${nodeData[field.key]}</a>`;
       } else if (field.type === 'image') {
@@ -661,6 +810,31 @@ function findNodeById(nodeId) {
   return null;
 }
 
+// Función para actualizar todos los dropdowns de thumbnails
+function updateThumbnailDropdowns() {
+  const dropdowns = document.querySelectorAll('.thumbnail-selector-dropdown');
+  dropdowns.forEach(dropdown => {
+    const currentValue = dropdown.value;
+    const nodeId = dropdown.getAttribute('data-node-id');
+    
+    // Limpiar opciones existentes
+    dropdown.innerHTML = '<option value="">Sin thumbnail</option>';
+    
+    // Lista de thumbnails disponibles
+    const thumbnails = ['document', 'settings', 'form', 'list', 'modal', 'mosaic', 'report', 'detail', 'file-csv', 'file-pdf', 'file-xls', 'file-xml'];
+    
+    thumbnails.forEach(thumbName => {
+      const option = document.createElement('option');
+      option.value = thumbName;
+      option.textContent = thumbName;
+      if (thumbName === currentValue) {
+        option.selected = true;
+      }
+      dropdown.appendChild(option);
+    });
+  });
+}
+
 // Hacer las funciones globales
 window.openSidePanel = openSidePanel;
 window.closeSidePanel = closeSidePanel;
@@ -676,3 +850,38 @@ function setupClosePanelOnSvgClick() {
     }
   });
 }
+
+// === SISTEMA DE THEMES ===
+function setTheme(themeId) {
+  document.body.classList.remove(
+    'theme-light', 'theme-dark', 'theme-vintage', 'theme-pastel', 'theme-cyberpunk', 'theme-neon'
+  );
+  document.body.classList.add('theme-' + themeId);
+  localStorage.setItem('selectedTheme', themeId);
+  
+  // Log temporal para verificar que las variables se aplican
+  const nodeSelectionFocus = getComputedStyle(document.documentElement).getPropertyValue('--node-selection-focus');
+  console.log(`Tema ${themeId} - Variable --node-selection-focus:`, nodeSelectionFocus);
+  
+  // Verificar que los filtros se aplican correctamente
+  const imageElements = document.querySelectorAll('image.image-filter');
+  if (imageElements.length > 0) {
+    const computedFilter = getComputedStyle(imageElements[0]).filter;
+    console.log(`Tema ${themeId} - Filtro aplicado:`, computedFilter);
+  }
+  
+
+  
+
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  const selector = document.getElementById('theme-selector');
+  // Restaurar tema guardado
+  const saved = localStorage.getItem('selectedTheme') || 'light';
+  selector.value = saved;
+  setTheme(saved);
+  selector.addEventListener('change', function() {
+    setTheme(this.value);
+  });
+});

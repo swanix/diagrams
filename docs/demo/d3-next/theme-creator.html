@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="es" translate="no">
+<head>
+    <meta charset="UTF-8">
+    <meta name="google" content="notranslate">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Theme Creator - Swanix Diagrams</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+    <script src="sw-diagrams.js"></script>
+    <link href="sw-diagrams.css" rel="stylesheet">
+    <style>
+        /* Estilos para el Theme Creator */
+        .theme-creator-container {
+            display: flex;
+            height: 100vh;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+
+        .sidebar {
+            width: 500px;
+            background: #f8f9fa;
+            border-right: 1px solid #dee2e6;
+            overflow-y: auto;
+            padding: 20px;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+            flex-shrink: 0;
+        }
+
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+        }
+
+        .toolbar {
+            background: #fff;
+            border-bottom: 1px solid #dee2e6;
+            padding: 15px 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .diagram-container {
+            flex: 1;
+            position: relative;
+            overflow: hidden;
+            background: var(--bg-color);
+        }
+
+        .sidebar h2 {
+            margin: 0 0 20px 0;
+            color: #333;
+            font-size: 24px;
+            border-bottom: 2px solid #007bff;
+            padding-bottom: 10px;
+        }
+
+        .variable-group {
+            margin-bottom: 25px;
+            background: white;
+            border-radius: 8px;
+            padding: 15px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .variable-group h3 {
+            margin: 0 0 15px 0;
+            color: #495057;
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .variable-item {
+            margin-bottom: 15px;
+        }
+
+        .variable-label {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 12px;
+            font-weight: 500;
+            color: #6c757d;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .variable-controls {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .color-picker {
+            width: 40px;
+            height: 40px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            background: none;
+        }
+
+        .text-input {
+            flex: 1;
+            padding: 8px 12px;
+            border: 1px solid #ced4da;
+            border-radius: 6px;
+            font-size: 14px;
+            font-family: 'Monaco', 'Menlo', monospace;
+        }
+
+        .text-input:focus {
+            outline: none;
+            border-color: #007bff;
+            box-shadow: 0 0 0 2px rgba(0,123,255,0.25);
+        }
+
+        .preview-box {
+            width: 40px;
+            height: 40px;
+            border: 2px solid #dee2e6;
+            border-radius: 6px;
+            background: var(--preview-color, #fff);
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: #007bff;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #0056b3;
+        }
+
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #1e7e34;
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #545b62;
+        }
+
+        .theme-name-input {
+            padding: 8px 12px;
+            border: 1px solid #ced4da;
+            border-radius: 6px;
+            font-size: 14px;
+            width: 200px;
+        }
+
+        .copy-feedback {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #28a745;
+            color: white;
+            padding: 12px 20px;
+            border-radius: 6px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            transform: translateX(400px);
+            transition: transform 0.3s ease;
+            z-index: 1000;
+        }
+
+        .copy-feedback.show {
+            transform: translateX(0);
+        }
+
+        .filter-preview {
+            width: 40px;
+            height: 40px;
+            border: 2px solid #dee2e6;
+            border-radius: 6px;
+            background: linear-gradient(45deg, #ff6b6b, #4ecdc4, #45b7d1, #96ceb4);
+            filter: var(--preview-filter, none);
+        }
+
+        .filter-input {
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 12px;
+        }
+
+        .reset-btn {
+            background: #dc3545;
+            color: white;
+            font-size: 12px;
+            padding: 4px 8px;
+        }
+
+        .reset-btn:hover {
+            background: #c82333;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .theme-creator-container {
+                flex-direction: column;
+            }
+            
+            .sidebar {
+                width: 100%;
+                height: 300px;
+            }
+        }
+
+        /* Asegurar que el SVG se vea correctamente */
+        svg {
+            width: 100% !important;
+            height: 100% !important;
+        }
+    </style>
+</head>
+<body>
+    <div class="theme-creator-container">
+        <!-- Sidebar con controles -->
+        <div class="sidebar">
+            <h2>🎨 Theme Creator</h2>
+            
+            <!-- Nombre del tema -->
+            <div class="variable-group">
+                <h3>📝 Información del Tema</h3>
+                <div class="variable-item">
+                    <label class="variable-label">Nombre del Tema</label>
+                    <input type="text" id="theme-name" class="theme-name-input" placeholder="mi-tema-personalizado" value="custom-theme">
+                </div>
+            </div>
+
+            <!-- Colores base -->
+            <div class="variable-group">
+                <h3>🎨 Colores Base</h3>
+                <div class="variable-item">
+                    <label class="variable-label">Color de Fondo</label>
+                    <div class="variable-controls">
+                        <input type="color" class="color-picker" data-var="--bg-color" value="#ffffff">
+                        <input type="text" class="text-input" data-var="--bg-color" value="#ffffff">
+                        <div class="preview-box" style="--preview-color: #ffffff"></div>
+                    </div>
+                </div>
+                <div class="variable-item">
+                    <label class="variable-label">Color de Texto</label>
+                    <div class="variable-controls">
+                        <input type="color" class="color-picker" data-var="--text-color" value="#333333">
+                        <input type="text" class="text-input" data-var="--text-color" value="#333333">
+                        <div class="preview-box" style="--preview-color: #333333"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Nodos -->
+            <div class="variable-group">
+                <h3>🔲 Nodos</h3>
+                <div class="variable-item">
+                    <label class="variable-label">Fondo del Nodo</label>
+                    <div class="variable-controls">
+                        <input type="color" class="color-picker" data-var="--node-fill" value="#f8f9fa">
+                        <input type="text" class="text-input" data-var="--node-fill" value="#f8f9fa">
+                        <div class="preview-box" style="--preview-color: #f8f9fa"></div>
+                    </div>
+                </div>
+                <div class="variable-item">
+                    <label class="variable-label">Borde del Nodo</label>
+                    <div class="variable-controls">
+                        <input type="color" class="color-picker" data-var="--label-border" value="#dee2e6">
+                        <input type="text" class="text-input" data-var="--label-border" value="#dee2e6">
+                        <div class="preview-box" style="--preview-color: #dee2e6"></div>
+                    </div>
+                </div>
+                <div class="variable-item">
+                    <label class="variable-label">Nodo Seleccionado</label>
+                    <div class="variable-controls">
+                        <input type="color" class="color-picker" data-var="--node-selection-focus" value="#007bff">
+                        <input type="text" class="text-input" data-var="--node-selection-focus" value="#007bff">
+                        <div class="preview-box" style="--preview-color: #007bff"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Enlaces -->
+            <div class="variable-group">
+                <h3>🔗 Enlaces</h3>
+                <div class="variable-item">
+                    <label class="variable-label">Color de Enlaces</label>
+                    <div class="variable-controls">
+                        <input type="color" class="color-picker" data-var="--link-color" value="#6c757d">
+                        <input type="text" class="text-input" data-var="--link-color" value="#6c757d">
+                        <div class="preview-box" style="--preview-color: #6c757d"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Botones -->
+            <div class="variable-group">
+                <h3>🔘 Botones</h3>
+                <div class="variable-item">
+                    <label class="variable-label">Fondo del Botón</label>
+                    <div class="variable-controls">
+                        <input type="color" class="color-picker" data-var="--btn-bg" value="#ffffff">
+                        <input type="text" class="text-input" data-var="--btn-bg" value="#ffffff">
+                        <div class="preview-box" style="--preview-color: #ffffff"></div>
+                    </div>
+                </div>
+                <div class="variable-item">
+                    <label class="variable-label">Fondo Hover</label>
+                    <div class="variable-controls">
+                        <input type="color" class="color-picker" data-var="--btn-bg-hover" value="#e9ecef">
+                        <input type="text" class="text-input" data-var="--btn-bg-hover" value="#e9ecef">
+                        <div class="preview-box" style="--preview-color: #e9ecef"></div>
+                    </div>
+                </div>
+                <div class="variable-item">
+                    <label class="variable-label">Texto del Botón</label>
+                    <div class="variable-controls">
+                        <input type="color" class="color-picker" data-var="--btn-text" value="#495057">
+                        <input type="text" class="text-input" data-var="--btn-text" value="#495057">
+                        <div class="preview-box" style="--preview-color: #495057"></div>
+                    </div>
+                </div>
+                <div class="variable-item">
+                    <label class="variable-label">Texto Hover</label>
+                    <div class="variable-controls">
+                        <input type="color" class="color-picker" data-var="--btn-text-hover" value="#212529">
+                        <input type="text" class="text-input" data-var="--btn-text-hover" value="#212529">
+                        <div class="preview-box" style="--preview-color: #212529"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Textos secundarios -->
+            <div class="variable-group">
+                <h3>📝 Textos Secundarios</h3>
+                <div class="variable-item">
+                    <label class="variable-label">Texto ID</label>
+                    <div class="variable-controls">
+                        <input type="color" class="color-picker" data-var="--label-id-text-color" value="#6c757d">
+                        <input type="text" class="text-input" data-var="--label-id-text-color" value="#6c757d">
+                        <div class="preview-box" style="--preview-color: #6c757d"></div>
+                    </div>
+                </div>
+                <div class="variable-item">
+                    <label class="variable-label">Texto Subtítulo</label>
+                    <div class="variable-controls">
+                        <input type="color" class="color-picker" data-var="--text-subtitle-color" value="#6c757d">
+                        <input type="text" class="text-input" data-var="--text-subtitle-color" value="#6c757d">
+                        <div class="preview-box" style="--preview-color: #6c757d"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Filtros de imagen -->
+            <div class="variable-group">
+                <h3>🖼️ Filtros de Imagen</h3>
+                <div class="variable-item">
+                    <label class="variable-label">Filtro de Thumbnails</label>
+                    <div class="variable-controls">
+                        <input type="text" class="text-input filter-input" data-var="--image-filter" value="grayscale(30%)" placeholder="grayscale(30%)">
+                        <div class="filter-preview" style="--preview-filter: grayscale(30%)"></div>
+                        <button class="btn reset-btn" onclick="resetFilter()">Reset</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Acciones -->
+            <div class="variable-group">
+                <h3>⚡ Acciones</h3>
+                <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                    <button class="btn btn-primary" onclick="copyTheme()">📋 Copiar Tema</button>
+                    <button class="btn btn-secondary" onclick="resetToDefault()">🔄 Reset</button>
+                    <button class="btn btn-success" onclick="applyTheme()">✅ Aplicar</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Contenido principal -->
+        <div class="main-content">
+            <div class="toolbar">
+                <h3 style="margin: 0;">Diagrama de Vista Previa</h3>
+                <span style="color: #6c757d; font-size: 14px;">Los cambios se aplican en tiempo real</span>
+            </div>
+            <div class="diagram-container">
+                <svg class="diagram"></svg>
+                <div id="loading" class="loading"><div class="spinner"></div></div>
+                <small id="error-message" class="error-message"></small>
+            </div>
+        </div>
+    </div>
+
+    <!-- Feedback de copiado -->
+    <div id="copy-feedback" class="copy-feedback">
+        ✅ Tema copiado al portapapeles
+    </div>
+
+    <script>
+        // Inicializar el diagrama
+        initDiagram("data/data.csv");
+
+        // Variables CSS por defecto
+        const defaultValues = {
+            '--bg-color': '#ffffff',
+            '--text-color': '#333333',
+            '--node-fill': '#f8f9fa',
+            '--label-border': '#dee2e6',
+            '--node-selection-focus': '#007bff',
+            '--link-color': '#6c757d',
+            '--btn-bg': '#ffffff',
+            '--btn-bg-hover': '#e9ecef',
+            '--btn-text': '#495057',
+            '--btn-text-hover': '#212529',
+            '--label-id-text-color': '#6c757d',
+            '--text-subtitle-color': '#6c757d',
+            '--image-filter': 'grayscale(30%)'
+        };
+
+        // Función para actualizar variable CSS
+        function updateCSSVariable(varName, value) {
+            document.documentElement.style.setProperty(varName, value);
+            
+            // Actualizar preview boxes
+            const previewBoxes = document.querySelectorAll(`[data-var="${varName}"] + .text-input + .preview-box`);
+            previewBoxes.forEach(box => {
+                if (varName === '--image-filter') {
+                    box.style.setProperty('--preview-filter', value);
+                } else {
+                    box.style.setProperty('--preview-color', value);
+                }
+            });
+        }
+
+        // Event listeners para color pickers
+        document.querySelectorAll('.color-picker').forEach(picker => {
+            picker.addEventListener('input', function() {
+                const varName = this.getAttribute('data-var');
+                const value = this.value;
+                updateCSSVariable(varName, value);
+                
+                // Actualizar input de texto
+                const textInput = this.parentNode.querySelector('.text-input');
+                textInput.value = value;
+            });
+        });
+
+        // Event listeners para text inputs
+        document.querySelectorAll('.text-input').forEach(input => {
+            input.addEventListener('input', function() {
+                const varName = this.getAttribute('data-var');
+                const value = this.value;
+                updateCSSVariable(varName, value);
+                
+                // Actualizar color picker si es un color
+                if (varName !== '--image-filter') {
+                    const colorPicker = this.parentNode.querySelector('.color-picker');
+                    if (colorPicker && value.match(/^#[0-9A-F]{6}$/i)) {
+                        colorPicker.value = value;
+                    }
+                }
+            });
+        });
+
+        // Función para resetear filtro
+        function resetFilter() {
+            const filterInput = document.querySelector('[data-var="--image-filter"]');
+            filterInput.value = 'none';
+            updateCSSVariable('--image-filter', 'none');
+        }
+
+        // Función para resetear a valores por defecto
+        function resetToDefault() {
+            Object.entries(defaultValues).forEach(([varName, value]) => {
+                updateCSSVariable(varName, value);
+                
+                // Actualizar controles
+                const colorPicker = document.querySelector(`[data-var="${varName}"].color-picker`);
+                const textInput = document.querySelector(`[data-var="${varName}"].text-input`);
+                
+                if (colorPicker) colorPicker.value = value;
+                if (textInput) textInput.value = value;
+            });
+        }
+
+        // Función para copiar tema
+        function copyTheme() {
+            const themeName = document.getElementById('theme-name').value;
+            const variables = {};
+            
+            document.querySelectorAll('[data-var]').forEach(element => {
+                const varName = element.getAttribute('data-var');
+                const value = element.value;
+                if (!variables[varName]) {
+                    variables[varName] = value;
+                }
+            });
+
+            const cssCode = `/* Tema: ${themeName} */
+body.theme-${themeName.replace(/[^a-zA-Z0-9]/g, '-')} {
+${Object.entries(variables).map(([var, value]) => `  ${var}: ${value};`).join('\n')}
+}`;
+
+            navigator.clipboard.writeText(cssCode).then(() => {
+                showCopyFeedback();
+            });
+        }
+
+        // Función para mostrar feedback de copiado
+        function showCopyFeedback() {
+            const feedback = document.getElementById('copy-feedback');
+            feedback.classList.add('show');
+            setTimeout(() => {
+                feedback.classList.remove('show');
+            }, 3000);
+        }
+
+        // Función para aplicar tema
+        function applyTheme() {
+            const themeName = document.getElementById('theme-name').value;
+            const themeClass = `theme-${themeName.replace(/[^a-zA-Z0-9]/g, '-')}`;
+            
+            // Remover temas existentes
+            document.body.classList.remove(
+                'theme-light', 'theme-dark', 'theme-vintage', 
+                'theme-pastel', 'theme-cyberpunk', 'theme-neon'
+            );
+            
+            // Aplicar tema personalizado
+            document.body.classList.add(themeClass);
+            
+            // Crear estilos dinámicamente
+            const variables = {};
+            document.querySelectorAll('[data-var]').forEach(element => {
+                const varName = element.getAttribute('data-var');
+                const value = element.value;
+                if (!variables[varName]) {
+                    variables[varName] = value;
+                }
+            });
+
+            const cssCode = `${Object.entries(variables).map(([var, value]) => `  ${var}: ${value};`).join('\n')}`;
+            
+            // Aplicar estilos directamente
+            Object.entries(variables).forEach(([var, value]) => {
+                document.documentElement.style.setProperty(var, value);
+            });
+        }
+
+        // Inicializar valores por defecto
+        document.addEventListener('DOMContentLoaded', function() {
+            resetToDefault();
+        });
+    </script>
+</body>
+</html> 

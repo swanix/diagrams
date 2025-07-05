@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100">
+  <defs>
+    <pattern id="pastel-dots" x="0" y="0" width="25" height="25" patternUnits="userSpaceOnUse">
+      <circle cx="12.5" cy="12.5" r="3" fill="#e0b1cb" opacity="0.2"/>
+      <circle cx="6" cy="6" r="2" fill="#b6b6f7" opacity="0.15"/>
+      <circle cx="19" cy="19" r="1.5" fill="#f7b6d9" opacity="0.1"/>
+    </pattern>
+  </defs>
+  <rect width="100" height="100" fill="url(#pastel-dots)"/>
+</svg> 

@@ -1,0 +1,17 @@
+id,parent,name,description,type,thumbnail,color
+1,,Sistema Principal,Sistema central de gestión,root,detail.svg,#4a90e2
+2,1,Usuarios,Gestión de usuarios del sistema,node,list.svg,#f39c12
+3,1,Configuración,Configuración del sistema,node,settings.svg,#e74c3c
+4,1,Reportes,Generación de reportes,node,report.svg,#27ae60
+5,2,Perfiles,Perfiles de usuario,node,form.svg,#9b59b6
+6,2,Permisos,Permisos y roles,node,modal.svg,#34495e
+7,3,General,Configuración general,node,document.svg,#1abc9c
+8,3,Avanzada,Configuración avanzada,node,file-pdf.svg,#e67e22
+9,4,Diarios,Reportes diarios,node,file-csv.svg,#3498db
+10,4,Mensuales,Reportes mensuales,node,file-xls.svg,#95a5a6
+11,5,Administrador,Perfil de administrador,node,detail.svg,#8e44ad
+12,5,Usuario,Perfil de usuario básico,node,list.svg,#16a085
+13,6,Lectura,Permisos de lectura,node,form.svg,#d35400
+14,6,Escritura,Permisos de escritura,node,modal.svg,#c0392b
+15,7,Interfaz,Configuración de interfaz,node,document.svg,#2980b9
+16,7,Sistema,Configuración del sistema,node,file-pdf.svg,#f1c40f 

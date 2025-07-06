@@ -4,7 +4,11 @@
 
 function initDiagram(csvUrl) {
   console.log("Iniciando carga del diagrama...");
-  document.getElementById("loading").style.display = "block";
+  const loadingElement = document.querySelector(".diagram-container #loading");
+  const errorElement = document.querySelector(".diagram-container #error-message");
+  
+  if (loadingElement) loadingElement.style.display = "block";
+  if (errorElement) errorElement.style.display = "none";
 
   Papa.parse(csvUrl, {
     download: true,
@@ -31,18 +35,18 @@ function initDiagram(csvUrl) {
         console.log("Dropdown creado");
         
         console.log("Ocultando loading...");
-        document.getElementById("loading").style.display = "none";
+        if (loadingElement) loadingElement.style.display = "none";
         console.log("Diagrama cargado completamente");
       } catch (error) {
         console.error("Error durante la inicialización:", error);
-        document.getElementById("error-message").innerText = `Error: ${error.message}`;
-        document.getElementById("loading").style.display = "none";
+        if (errorElement) errorElement.innerText = `Error: ${error.message}`;
+        if (loadingElement) loadingElement.style.display = "none";
       }
     },
     error: function(err) {
       console.error("Error al cargar CSV:", err);
-      document.getElementById("error-message").innerText = `CSV File ${err.message}`;
-      document.getElementById("loading").style.display = "none";
+      if (errorElement) errorElement.innerText = `CSV File ${err.message}`;
+      if (loadingElement) loadingElement.style.display = "none";
     }
   });
 }
@@ -61,13 +65,14 @@ function buildMultipleHierarchies(data) {
   let nodeMap = new Map();
 
   data.forEach(d => {
-    let id = d.id?.trim() || "";
-    let name = d.name?.trim() || "Nodo sin nombre";
-    let subtitle = d.subtitle?.trim() || "";
-    let img = d.img?.trim() || "";
-    let parent = d.parent?.trim() || "";
+    // Mapear columnas genéricas del Google Sheets a las que espera el código
+    let id = d.Node?.trim() || d.id?.trim() || "";
+    let name = d.Name?.trim() || d.name?.trim() || "Nodo sin nombre";
+    let subtitle = d.Description?.trim() || d.subtitle?.trim() || "";
+    let img = d.Thumbnail?.trim() || d.img?.trim() || "";
+    let parent = d.Parent?.trim() || d.parent?.trim() || "";
     let url = d.url?.trim() || "";
-    let type = d.type?.trim() || "";
+    let type = d.Type?.trim() || d.type?.trim() || "";
 
     let node = { id, name, subtitle, img, url, type, children: [], parent: parent };
     nodeMap.set(id, node);
@@ -84,8 +89,24 @@ function buildMultipleHierarchies(data) {
 
 function drawMultipleTrees(trees) {
   
-  const svg = d3.select("svg");
-  const g = svg.append("g");
+  // Asegurar que solo trabajamos con el SVG del contenedor del diagrama
+  const diagramContainer = document.querySelector(".diagram-container");
+  if (!diagramContainer) {
+    console.error("No se encontró el contenedor del diagrama");
+    return;
+  }
+  
+  let svg = diagramContainer.querySelector("svg");
+  if (!svg) {
+    console.error("No se encontró el SVG en el contenedor del diagrama");
+    return;
+  }
+  
+  // Limpiar cualquier contenido previo del SVG
+  svg.innerHTML = "";
+  console.log("SVG seleccionado:", svg);
+  
+  const g = d3.select(svg).append("g");
 
   let xOffset = 150; // Initial margin from left edge
   let treeSpacingX = 3400; // Minimum space between trees
@@ -284,7 +305,7 @@ function applyAutoZoom() {
       }
 
       // Calculate the final scale
-      const scale = Math.min(svgWidth / bounds.width, svgHeight / bounds.height) * 0.9;
+      const scale = Math.min(svgWidth / bounds.width, svgHeight / bounds.height) * 0.75;
       const translateX = svgWidth / 2 - (bounds.x + bounds.width / 2) * scale;
       const translateY = svgHeight / 2 - (bounds.y + bounds.height / 2) * scale;
 
@@ -595,6 +616,9 @@ function createSidePanel() {
     }
   });
   
+  // Aplicar el tema actual al panel lateral
+  updateSidePanelTheme();
+  
   console.log("Panel lateral creado exitosamente");
 }
 
@@ -624,6 +648,9 @@ function openSidePanel(nodeData) {
 
   // Abrir el panel
   sidePanel.classList.add('open');
+
+  // Aplicar el tema actual al panel lateral
+  updateSidePanelTheme();
 
   // Prevenir el scroll del body
   document.body.style.overflow = 'hidden';
@@ -870,10 +897,96 @@ function setTheme(themeId) {
     console.log(`Tema ${themeId} - Filtro aplicado:`, computedFilter);
   }
   
-
+  // Verificar variables del panel lateral
+  const sidePanelBg = getComputedStyle(document.documentElement).getPropertyValue('--side-panel-bg');
+  const sidePanelText = getComputedStyle(document.documentElement).getPropertyValue('--side-panel-text');
+  console.log(`Tema ${themeId} - Variables del panel:`, { sidePanelBg, sidePanelText });
   
-
+  // Actualizar el SVG dinámicamente
+  updateSVGColors();
+  
+  // Actualizar el panel lateral si está abierto
+  updateSidePanelTheme();
 }
+
+// Función para actualizar colores del SVG dinámicamente
+function updateSVGColors() {
+  console.log('Actualizando colores del SVG...');
+  
+  // Actualizar colores de texto
+  d3.selectAll('.custom-text')
+    .style('fill', getComputedStyle(document.documentElement).getPropertyValue('--text-color'));
+  
+  d3.selectAll('.id-text')
+    .style('fill', getComputedStyle(document.documentElement).getPropertyValue('--label-id-text-color'));
+  
+  d3.selectAll('.subtitle-text')
+    .style('fill', getComputedStyle(document.documentElement).getPropertyValue('--text-subtitle-color'));
+  
+  // Actualizar colores de enlaces
+  d3.selectAll('.link')
+    .style('stroke', getComputedStyle(document.documentElement).getPropertyValue('--link-color'));
+  
+  // Actualizar filtros de imágenes
+  const imageFilter = getComputedStyle(document.documentElement).getPropertyValue('--image-filter');
+  d3.selectAll('.image-filter')
+    .style('filter', imageFilter);
+  
+  // Actualizar colores de fondo de nodos
+  d3.selectAll('.node rect')
+    .style('fill', getComputedStyle(document.documentElement).getPropertyValue('--node-fill'))
+    .style('stroke', getComputedStyle(document.documentElement).getPropertyValue('--label-border'));
+  
+  console.log('Colores del SVG actualizados');
+}
+
+// Función para actualizar el tema del panel lateral
+function updateSidePanelTheme() {
+  console.log('Actualizando tema del panel lateral...');
+  
+  const sidePanel = document.querySelector('.side-panel');
+  if (!sidePanel) {
+    console.log('Panel lateral no encontrado');
+    return;
+  }
+  
+  // Obtener las variables CSS del tema actual
+  const computedStyle = getComputedStyle(document.documentElement);
+  
+  // Log de depuración para verificar las variables
+  const sidePanelBg = computedStyle.getPropertyValue('--side-panel-bg');
+  const sidePanelText = computedStyle.getPropertyValue('--side-panel-text');
+  const sidePanelHeaderBg = computedStyle.getPropertyValue('--side-panel-header-bg');
+  
+  console.log('Variables CSS del tema:', {
+    '--side-panel-bg': sidePanelBg,
+    '--side-panel-text': sidePanelText,
+    '--side-panel-header-bg': sidePanelHeaderBg
+  });
+  
+  // NO aplicar estilos en línea al panel, header, título y contenido
+  // Dejar que las variables CSS hagan el trabajo automáticamente
+  
+  // Solo actualizar dropdowns de thumbnails (necesario en algunos navegadores)
+  const dropdowns = sidePanel.querySelectorAll('.thumbnail-selector-dropdown');
+  dropdowns.forEach(dropdown => {
+    dropdown.style.backgroundColor = sidePanelBg;
+    dropdown.style.color = sidePanelText;
+    dropdown.style.borderColor = computedStyle.getPropertyValue('--side-panel-border');
+  });
+  
+  // Actualizar opciones de los dropdowns
+  const options = sidePanel.querySelectorAll('.thumbnail-selector-dropdown option');
+  options.forEach(option => {
+    option.style.backgroundColor = sidePanelBg;
+    option.style.color = sidePanelText;
+  });
+  
+  console.log('Tema del panel lateral actualizado');
+}
+
+// Hacer la función global para que el theme creator pueda usarla
+window.updateSVGColors = updateSVGColors;
 
 document.addEventListener('DOMContentLoaded', function() {
   const selector = document.getElementById('theme-selector');

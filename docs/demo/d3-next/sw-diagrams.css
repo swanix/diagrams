@@ -359,8 +359,8 @@
 }
 
 .side-panel-header {
-  background-color: var(--side-panel-header-bg);
-  border-bottom: 1px solid var(--side-panel-header-border);
+  background-color: var(--side-panel-header-bg) !important;
+  border-bottom: 1px solid var(--side-panel-header-border) !important;
   padding: 20px;
   display: flex;
   justify-content: space-between;
@@ -371,7 +371,7 @@
   margin: 0;
   font-size: 18px;
   font-weight: 600;
-  color: var(--side-panel-text);
+  color: var(--side-panel-text) !important;
 }
 
 .side-panel-close {

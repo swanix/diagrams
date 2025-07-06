@@ -1,201 +1,272 @@
 <!DOCTYPE html>
-<html lang="es" translate="no">
+<html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="google" content="notranslate">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Theme Creator - Swanix Diagrams</title>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
     <script src="sw-diagrams.js"></script>
     <link href="sw-diagrams.css" rel="stylesheet">
+    
+
     <style>
-        /* Estilos para el Theme Creator */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f8f9fa;
+            overflow: hidden;
+        }
+
         .theme-creator-container {
             display: flex;
             height: 100vh;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-        }
-
-        .sidebar {
-            width: 500px;
-            background: #f8f9fa;
-            border-right: 1px solid #dee2e6;
-            overflow-y: auto;
-            padding: 20px;
-            box-shadow: 2px 0 10px rgba(0,0,0,0.1);
-            flex-shrink: 0;
-        }
-
-        .main-content {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            min-width: 0;
-        }
-
-        .toolbar {
             background: #fff;
-            border-bottom: 1px solid #dee2e6;
-            padding: 15px 20px;
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-
-        .diagram-container {
-            flex: 1;
-            position: relative;
+            width: 100vw;
             overflow: hidden;
-            background: var(--bg-color);
         }
 
-        .sidebar h2 {
-            margin: 0 0 20px 0;
-            color: #333;
+
+
+        .sidebar-header {
+            padding: 20px 20px 15px;
+            background: #0f0f0f;
+            border-bottom: 1px solid #333;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .sidebar-header h2 {
             font-size: 24px;
-            border-bottom: 2px solid #007bff;
-            padding-bottom: 10px;
+            font-weight: 600;
+            margin-bottom: 5px;
+            color: #ffffff;
+        }
+
+        .sidebar-header p {
+            opacity: 0.8;
+            font-size: 13px;
+            color: #b0b0b0;
+        }
+
+        .sidebar-content {
+            padding: 10px 20px;
+            padding-bottom: 80px;
+            height: calc(100vh - 140px);
+            overflow-y: auto;
         }
 
         .variable-group {
-            margin-bottom: 25px;
-            background: white;
-            border-radius: 8px;
-            padding: 15px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 15px;
+        }
+        
+        .variable-group:first-child h3 {
+            margin-top: 0;
         }
 
         .variable-group h3 {
-            margin: 0 0 15px 0;
-            color: #495057;
-            font-size: 16px;
+            font-size: 10px;
             font-weight: 600;
+            margin-bottom: 10px;
+            margin-top: 15px;
+            color: #ffffff;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 1px solid #333;
+            padding-bottom: 5px;
+            text-align: left;
         }
 
         .variable-item {
-            margin-bottom: 15px;
+            margin-bottom: 8px;
+            display: grid;
+            grid-template-columns: 90px 1fr 32px 28px;
+            align-items: center;
+            gap: 8px;
+            min-height: 28px;
+        }
+
+        .variable-item:last-child {
+            margin-bottom: 0;
         }
 
         .variable-label {
-            display: block;
-            margin-bottom: 5px;
-            font-size: 12px;
+            font-size: 9px;
             font-weight: 500;
-            color: #6c757d;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
+            letter-spacing: 0.3px;
+            color: #b0b0b0;
+            width: 90px;
+            flex-shrink: 0;
+            line-height: 1.2;
         }
 
-        .variable-controls {
-            display: flex;
-            gap: 10px;
-            align-items: center;
-        }
+
 
         .color-picker {
-            width: 40px;
-            height: 40px;
+            width: 28px;
+            height: 28px;
+            border: 1px solid #444;
+            border-radius: 4px;
+            cursor: pointer;
+            background: var(--picker-color, #ffffff);
+            box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .color-picker:hover {
+            transform: scale(1.05);
+            border-color: #666;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+        }
+
+        .color-picker::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(45deg, transparent 30%, rgba(255,255,255,0.1) 50%, transparent 70%);
+            pointer-events: none;
+        }
+
+        .color-picker::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 10px;
+            height: 10px;
+            background: var(--picker-color, #ffffff);
+            border-radius: 2px;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        /* Estilos para el input de color nativo */
+        .color-picker input[type="color"] {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
             border: none;
             border-radius: 6px;
             cursor: pointer;
-            background: none;
+            opacity: 0;
+            z-index: 2;
         }
 
-        .text-input {
-            flex: 1;
-            padding: 8px 12px;
-            border: 1px solid #ced4da;
+        .color-picker input[type="color"]::-webkit-color-swatch-wrapper {
+            padding: 0;
+        }
+
+        .color-picker input[type="color"]::-webkit-color-swatch {
+            border: none;
             border-radius: 6px;
-            font-size: 14px;
+        }
+
+        .color-picker input[type="color"]::-moz-color-swatch {
+            border: none;
+            border-radius: 6px;
+        }
+
+
+
+        .text-input {
+            width: 100%;
+            padding: 6px 8px;
+            border: 1px solid #444;
+            border-radius: 4px;
+            font-size: 11px;
             font-family: 'Monaco', 'Menlo', monospace;
+            background: #2a2a2a;
+            color: #e0e0e0;
+            height: 28px;
+            max-width: 120px;
+        }
+
+        .text-input::placeholder {
+            color: #888;
         }
 
         .text-input:focus {
             outline: none;
-            border-color: #007bff;
-            box-shadow: 0 0 0 2px rgba(0,123,255,0.25);
+            border-color: #666;
+            box-shadow: 0 0 0 2px rgba(102, 102, 102, 0.2);
         }
 
-        .preview-box {
-            width: 40px;
-            height: 40px;
-            border: 2px solid #dee2e6;
-            border-radius: 6px;
-            background: var(--preview-color, #fff);
-        }
+
 
         .btn {
-            padding: 8px 16px;
+            padding: 12px 20px;
             border: none;
-            border-radius: 6px;
+            border-radius: 8px;
             font-size: 14px;
-            font-weight: 500;
+            font-weight: 600;
             cursor: pointer;
-            transition: all 0.2s;
+            transition: all 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.25);
         }
 
         .btn-primary {
-            background: #007bff;
-            color: white;
-        }
-
-        .btn-primary:hover {
-            background: #0056b3;
+            background: #333;
+            color: #e0e0e0;
+            border: 1px solid #444;
         }
 
         .btn-success {
-            background: #28a745;
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
             color: white;
-        }
-
-        .btn-success:hover {
-            background: #1e7e34;
         }
 
         .btn-secondary {
-            background: #6c757d;
-            color: white;
+            background: #333;
+            color: #e0e0e0;
+            border: 1px solid #444;
         }
 
-        .btn-secondary:hover {
-            background: #545b62;
+        .btn-danger {
+            background: #f8f9fa;
+            color: #333;
+            border: 1px solid #ddd;
         }
-
-        .theme-name-input {
-            padding: 8px 12px;
-            border: 1px solid #ced4da;
-            border-radius: 6px;
-            font-size: 14px;
-            width: 200px;
-        }
-
-        .copy-feedback {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            background: #28a745;
-            color: white;
-            padding: 12px 20px;
-            border-radius: 6px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-            transform: translateX(400px);
-            transition: transform 0.3s ease;
-            z-index: 1000;
-        }
-
-        .copy-feedback.show {
-            transform: translateX(0);
+        
+        .btn-warning {
+            background: linear-gradient(135deg, #ffc107 0%, #ff8f00 100%);
+            color: #212529;
         }
 
         .filter-preview {
-            width: 40px;
-            height: 40px;
-            border: 2px solid #dee2e6;
-            border-radius: 6px;
+            width: 28px;
+            height: 28px;
+            border: 1px solid rgba(255,255,255,0.3);
+            border-radius: 4px;
             background: linear-gradient(45deg, #ff6b6b, #4ecdc4, #45b7d1, #96ceb4);
             filter: var(--preview-filter, none);
+            box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+            flex-shrink: 0;
         }
 
         .filter-input {
@@ -203,280 +274,589 @@
             font-size: 12px;
         }
 
-        .reset-btn {
-            background: #dc3545;
+
+
+        .theme-name-input {
+            padding: 6px 8px;
+            border: 1px solid #444;
+            border-radius: 4px;
+            font-size: 11px;
+            width: 100%;
+            background: #2a2a2a;
+            color: #e0e0e0;
+            height: 28px;
+        }
+
+        .theme-name-input::placeholder {
+            color: #888;
+        }
+
+        .theme-name-input:focus {
+            outline: none;
+            border-color: #666;
+            box-shadow: 0 0 0 2px rgba(102, 102, 102, 0.2);
+        }
+
+        .theme-selector-input {
+            padding: 6px 8px;
+            border: 1px solid #444;
+            border-radius: 4px;
+            font-size: 11px;
+            width: 100%;
+            background: #2a2a2a;
+            color: #e0e0e0;
+            cursor: pointer;
+            height: 28px;
+        }
+
+        .theme-selector-input option {
+            background: #1a1a1a;
+            color: #e0e0e0;
+        }
+
+        .theme-selector-input:focus {
+            outline: none;
+            border-color: #666;
+            box-shadow: 0 0 0 2px rgba(102, 102, 102, 0.2);
+        }
+
+
+
+
+
+        .copy-feedback {
+            position: fixed;
+            top: 30px;
+            right: 30px;
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
             color: white;
-            font-size: 12px;
-            padding: 4px 8px;
+            padding: 16px 24px;
+            border-radius: 12px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+            transform: translateX(400px);
+            transition: transform 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            z-index: 1000;
+            font-weight: 600;
         }
 
-        .reset-btn:hover {
-            background: #c82333;
+        .copy-feedback.show {
+            transform: translateX(0);
         }
 
-        /* Responsive */
-        @media (max-width: 768px) {
-            .theme-creator-container {
-                flex-direction: column;
-            }
-            
-            .sidebar {
-                width: 100%;
-                height: 300px;
-            }
-        }
 
-        /* Asegurar que el SVG se vea correctamente */
-        svg {
+
+        .diagram-container svg {
             width: 100% !important;
             height: 100% !important;
+            display: block;
+            min-height: 400px;
+        }
+
+        .loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error-message {
+            color: #dc3545;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .actions-section {
+            padding: 15px 20px;
+            background: #0f0f0f;
+            border-top: 1px solid #333;
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            z-index: 10;
+        }
+
+        .actions-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 8px;
+        }
+
+        .actions-grid .btn {
+            font-size: 11px;
+            padding: 8px 12px;
+        }
+
+        /* Layout con panel lateral de altura completa */
+        body {
+            margin: 0;
+            padding: 0;
+        }
+        
+            .theme-creator-container {
+            display: flex;
+            height: 100vh;
+            background: #fff;
+            }
+            
+        /* Panel lateral con altura completa */
+            .sidebar {
+            width: 360px;
+            background: #1a1a1a;
+            color: #e0e0e0;
+            overflow-y: auto;
+            padding: 0;
+            flex-shrink: 0;
+            position: relative;
+            height: 100vh;
+        }
+        
+        /* Topbar solo en el área del diagrama */
+        .topbar {
+            position: absolute;
+            top: 0;
+            left: 360px; /* Empezar después del panel lateral */
+            right: 0;
+            z-index: 1000;
+            background: var(--bg-color, #fff) !important;
+            color: var(--text-color, #333) !important;
+        }
+        
+        /* Asegurar que los elementos del topbar usen las variables CSS */
+        .topbar {
+            background: var(--topbar-bg, var(--bg-color, #fff)) !important;
+            color: var(--topbar-text, var(--text-color, #333)) !important;
+        }
+        
+        .topbar .control-item,
+        .topbar .theme-selector,
+        .topbar .diagram-title {
+            background: var(--node-fill, #fff) !important;
+            color: var(--topbar-text, var(--text-color, #333)) !important;
+            border-color: var(--label-border, #ddd) !important;
+        }
+        
+        /* Panel lateral del diagrama (el que se abre al hacer clic en nodos) */
+        .side-panel {
+            background: var(--sidepanel-bg, var(--bg-color, #fff)) !important;
+            color: var(--sidepanel-text, var(--text-color, #333)) !important;
+            border-left: 1px solid var(--sidepanel-border, var(--label-border, #ddd)) !important;
+        }
+        
+        .side-panel .panel-header {
+            background: var(--node-fill, #f8f9fa) !important;
+            border-bottom: 1px solid var(--sidepanel-border, var(--label-border, #ddd)) !important;
+            color: var(--sidepanel-text, var(--text-color, #333)) !important;
+        }
+        
+        .side-panel .panel-content {
+            background: var(--sidepanel-bg, var(--bg-color, #fff)) !important;
+            color: var(--sidepanel-text, var(--text-color, #333)) !important;
+        }
+        
+        /* Contenedor principal del diagrama */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+            background: #f8f9fa;
+            height: 100vh;
+            position: relative;
+            z-index: 1;
+            width: calc(100vw - 360px); /* Full width menos el sidebar */
+        }
+        
+        /* Contenedor del diagrama con espacio para el topbar */
+        .diagram-container {
+            flex: 1;
+            position: relative;
+            overflow: hidden;
+            background: var(--bg-color, #ffffff);
+            padding: 0;
+            margin-top: 0;
+            height: 100vh;
+                width: 100%;
+            min-height: 400px;
+        }
+        
+
+
+        /* Botón de reset individual */
+        .reset-individual-btn {
+            background: #333;
+            color: #e0e0e0;
+            font-size: 9px;
+            padding: 4px 6px;
+            border: 1px solid #444;
+            border-radius: 3px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 500;
+            width: 32px;
+            height: 28px;
+            flex-shrink: 0;
+        }
+
+        .reset-individual-btn:hover {
+            background: #444;
+            transform: scale(1.05);
+            box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+        }
+
+        .reset-individual-btn:active {
+            transform: scale(0.95);
         }
     </style>
 </head>
 <body>
+
+
+    <!-- Topbar moderno -->
+    <div class="topbar">
+      <div class="topbar-left">
+        <div class="controls-container">
+          <select id="type-dropdown" class="control-item">
+            <!-- Se llena dinámicamente -->
+          </select>
+          <input type="text" id="search-input" class="control-item" placeholder="Buscar nodo...">
+        </div>
+      </div>
+      
+      <div class="topbar-center">
+        <h1 class="diagram-title">Swanix Diagrams</h1>
+      </div>
+      
+      <div class="topbar-right">
+        <select id="theme-selector" class="theme-selector">
+          <option value="light">Light</option>
+          <option value="dark">Dark</option>
+          <option value="vintage">Vintage</option>
+          <option value="pastel">Pastel</option>
+          <option value="cyberpunk">Cyberpunk</option>
+          <option value="neon">Neon</option>
+        </select>
+      </div>
+    </div>
+
     <div class="theme-creator-container">
-        <!-- Sidebar con controles -->
         <div class="sidebar">
-            <h2>🎨 Theme Creator</h2>
-            
-            <!-- Nombre del tema -->
+            <div class="sidebar-header">
+                <h2>Theme Creator</h2>
+                <p>Crea y personaliza temas para tus diagramas</p>
+            </div>
+            <div class="sidebar-content">
+                <div class="variable-group">
+                    <h3>Seleccionar Tema Base</h3>
+                    <div class="variable-item">
+                        <label class="variable-label">Tema Predefinido</label>
+                        <select id="theme-selector-visible" class="theme-selector-input">
+                            <option value="light">Light</option>
+                            <option value="dark">Dark</option>
+                            <option value="vintage">Vintage</option>
+                            <option value="pastel">Pastel</option>
+                            <option value="cyberpunk">Cyberpunk</option>
+                            <option value="neon">Neon</option>
+                        </select>
+                    </div>
+                </div>
+
             <div class="variable-group">
-                <h3>📝 Información del Tema</h3>
+                <h3>Información del Tema</h3>
                 <div class="variable-item">
                     <label class="variable-label">Nombre del Tema</label>
                     <input type="text" id="theme-name" class="theme-name-input" placeholder="mi-tema-personalizado" value="custom-theme">
                 </div>
             </div>
 
-            <!-- Colores base -->
             <div class="variable-group">
-                <h3>🎨 Colores Base</h3>
+                <h3>Colores Base</h3>
                 <div class="variable-item">
                     <label class="variable-label">Color de Fondo</label>
-                    <div class="variable-controls">
-                        <input type="color" class="color-picker" data-var="--bg-color" value="#ffffff">
-                        <input type="text" class="text-input" data-var="--bg-color" value="#ffffff">
-                        <div class="preview-box" style="--preview-color: #ffffff"></div>
+                    <input type="text" class="text-input" data-var="--bg-color" value="#ecf2fd">
+                    <button class="reset-individual-btn" onclick="resetIndividualValue('--bg-color', '#ecf2fd')" title="Resetear a valor original">↺</button>
+                    <div class="color-picker" data-var="--bg-color" data-color="#ecf2fd" style="--picker-color: #ecf2fd; background-color: #ecf2fd;">
+                        <input type="color" value="#ecf2fd">
                     </div>
                 </div>
                 <div class="variable-item">
                     <label class="variable-label">Color de Texto</label>
-                    <div class="variable-controls">
-                        <input type="color" class="color-picker" data-var="--text-color" value="#333333">
-                        <input type="text" class="text-input" data-var="--text-color" value="#333333">
-                        <div class="preview-box" style="--preview-color: #333333"></div>
+                    <input type="text" class="text-input" data-var="--text-color" value="#222">
+                    <button class="reset-individual-btn" onclick="resetIndividualValue('--text-color', '#222')" title="Resetear a valor original">↺</button>
+                    <div class="color-picker" data-var="--text-color" data-color="#222" style="--picker-color: #222; background-color: #222;">
+                        <input type="color" value="#222">
                     </div>
                 </div>
             </div>
 
-            <!-- Nodos -->
             <div class="variable-group">
-                <h3>🔲 Nodos</h3>
+                <h3>Nodos</h3>
                 <div class="variable-item">
                     <label class="variable-label">Fondo del Nodo</label>
-                    <div class="variable-controls">
-                        <input type="color" class="color-picker" data-var="--node-fill" value="#f8f9fa">
-                        <input type="text" class="text-input" data-var="--node-fill" value="#f8f9fa">
-                        <div class="preview-box" style="--preview-color: #f8f9fa"></div>
+                    <input type="text" class="text-input" data-var="--node-fill" value="#fff">
+                    <button class="reset-individual-btn" onclick="resetIndividualValue('--node-fill', '#fff')" title="Resetear a valor original">↺</button>
+                    <div class="color-picker" data-var="--node-fill" data-color="#fff" style="--picker-color: #fff; background-color: #fff;">
+                        <input type="color" value="#fff">
                     </div>
                 </div>
                 <div class="variable-item">
                     <label class="variable-label">Borde del Nodo</label>
-                    <div class="variable-controls">
-                        <input type="color" class="color-picker" data-var="--label-border" value="#dee2e6">
-                        <input type="text" class="text-input" data-var="--label-border" value="#dee2e6">
-                        <div class="preview-box" style="--preview-color: #dee2e6"></div>
+                    <input type="text" class="text-input" data-var="--label-border" value="#bdbdbd">
+                    <button class="reset-individual-btn" onclick="resetIndividualValue('--label-border', '#bdbdbd')" title="Resetear a valor original">↺</button>
+                    <div class="color-picker" data-var="--label-border" data-color="#bdbdbd" style="--picker-color: #bdbdbd; background-color: #bdbdbd;">
+                        <input type="color" value="#bdbdbd">
                     </div>
                 </div>
                 <div class="variable-item">
                     <label class="variable-label">Nodo Seleccionado</label>
-                    <div class="variable-controls">
-                        <input type="color" class="color-picker" data-var="--node-selection-focus" value="#007bff">
-                        <input type="text" class="text-input" data-var="--node-selection-focus" value="#007bff">
-                        <div class="preview-box" style="--preview-color: #007bff"></div>
+                    <input type="text" class="text-input" data-var="--node-selection-focus" value="#1976d2">
+                    <button class="reset-individual-btn" onclick="resetIndividualValue('--node-selection-focus', '#1976d2')" title="Resetear a valor original">↺</button>
+                    <div class="color-picker" data-var="--node-selection-focus" data-color="#1976d2" style="--picker-color: #1976d2; background-color: #1976d2;">
+                        <input type="color" value="#1976d2">
                     </div>
                 </div>
             </div>
 
-            <!-- Enlaces -->
             <div class="variable-group">
-                <h3>🔗 Enlaces</h3>
+                <h3>Enlaces</h3>
                 <div class="variable-item">
                     <label class="variable-label">Color de Enlaces</label>
-                    <div class="variable-controls">
-                        <input type="color" class="color-picker" data-var="--link-color" value="#6c757d">
-                        <input type="text" class="text-input" data-var="--link-color" value="#6c757d">
-                        <div class="preview-box" style="--preview-color: #6c757d"></div>
+                    <input type="text" class="text-input" data-var="--link-color" value="#999">
+                    <button class="reset-individual-btn" onclick="resetIndividualValue('--link-color', '#999')" title="Resetear a valor original">↺</button>
+                    <div class="color-picker" data-var="--link-color" data-color="#999" style="--picker-color: #999; background-color: #999;">
+                        <input type="color" value="#999">
                     </div>
                 </div>
             </div>
 
-            <!-- Botones -->
-            <div class="variable-group">
-                <h3>🔘 Botones</h3>
-                <div class="variable-item">
-                    <label class="variable-label">Fondo del Botón</label>
-                    <div class="variable-controls">
-                        <input type="color" class="color-picker" data-var="--btn-bg" value="#ffffff">
-                        <input type="text" class="text-input" data-var="--btn-bg" value="#ffffff">
-                        <div class="preview-box" style="--preview-color: #ffffff"></div>
-                    </div>
-                </div>
-                <div class="variable-item">
-                    <label class="variable-label">Fondo Hover</label>
-                    <div class="variable-controls">
-                        <input type="color" class="color-picker" data-var="--btn-bg-hover" value="#e9ecef">
-                        <input type="text" class="text-input" data-var="--btn-bg-hover" value="#e9ecef">
-                        <div class="preview-box" style="--preview-color: #e9ecef"></div>
-                    </div>
-                </div>
-                <div class="variable-item">
-                    <label class="variable-label">Texto del Botón</label>
-                    <div class="variable-controls">
-                        <input type="color" class="color-picker" data-var="--btn-text" value="#495057">
-                        <input type="text" class="text-input" data-var="--btn-text" value="#495057">
-                        <div class="preview-box" style="--preview-color: #495057"></div>
-                    </div>
-                </div>
-                <div class="variable-item">
-                    <label class="variable-label">Texto Hover</label>
-                    <div class="variable-controls">
-                        <input type="color" class="color-picker" data-var="--btn-text-hover" value="#212529">
-                        <input type="text" class="text-input" data-var="--btn-text-hover" value="#212529">
-                        <div class="preview-box" style="--preview-color: #212529"></div>
-                    </div>
-                </div>
-            </div>
 
-            <!-- Textos secundarios -->
-            <div class="variable-group">
-                <h3>📝 Textos Secundarios</h3>
-                <div class="variable-item">
-                    <label class="variable-label">Texto ID</label>
-                    <div class="variable-controls">
-                        <input type="color" class="color-picker" data-var="--label-id-text-color" value="#6c757d">
-                        <input type="text" class="text-input" data-var="--label-id-text-color" value="#6c757d">
-                        <div class="preview-box" style="--preview-color: #6c757d"></div>
-                    </div>
-                </div>
-                <div class="variable-item">
-                    <label class="variable-label">Texto Subtítulo</label>
-                    <div class="variable-controls">
-                        <input type="color" class="color-picker" data-var="--text-subtitle-color" value="#6c757d">
-                        <input type="text" class="text-input" data-var="--text-subtitle-color" value="#6c757d">
-                        <div class="preview-box" style="--preview-color: #6c757d"></div>
-                    </div>
-                </div>
-            </div>
 
-            <!-- Filtros de imagen -->
             <div class="variable-group">
-                <h3>🖼️ Filtros de Imagen</h3>
-                <div class="variable-item">
+                <h3>Filtros de Imagen</h3>
+                <div class="variable-item" style="grid-template-columns: 90px 1fr 32px 28px;">
                     <label class="variable-label">Filtro de Thumbnails</label>
-                    <div class="variable-controls">
-                        <input type="text" class="text-input filter-input" data-var="--image-filter" value="grayscale(30%)" placeholder="grayscale(30%)">
-                        <div class="filter-preview" style="--preview-filter: grayscale(30%)"></div>
-                        <button class="btn reset-btn" onclick="resetFilter()">Reset</button>
+                    <input type="text" class="text-input filter-input" data-var="--image-filter" value="grayscale(30%)" placeholder="grayscale(30%)" style="max-width: none;">
+                    <button class="reset-individual-btn" onclick="resetFilter()" title="Resetear a valor original">↺</button>
+                    <div class="filter-preview" style="--preview-filter: grayscale(30%)"></div>
+                    </div>
+                </div>
+
+            <div class="variable-group">
+                <h3>Topbar</h3>
+                <div class="variable-item">
+                    <label class="variable-label">Fondo del Topbar</label>
+                    <input type="text" class="text-input" data-var="--topbar-bg" value="#ffffff">
+                    <button class="reset-individual-btn" onclick="resetIndividualValue('--topbar-bg', '#ffffff')" title="Resetear a valor original">↺</button>
+                    <div class="color-picker" data-var="--topbar-bg" data-color="#ffffff" style="--picker-color: #ffffff; background-color: #ffffff;">
+                        <input type="color" value="#ffffff">
+                    </div>
+                </div>
+                <div class="variable-item">
+                    <label class="variable-label">Texto del Topbar</label>
+                    <input type="text" class="text-input" data-var="--topbar-text" value="#333333">
+                    <button class="reset-individual-btn" onclick="resetIndividualValue('--topbar-text', '#333333')" title="Resetear a valor original">↺</button>
+                    <div class="color-picker" data-var="--topbar-text" data-color="#333333" style="--picker-color: #333333; background-color: #333333;">
+                        <input type="color" value="#333333">
                     </div>
                 </div>
             </div>
 
-            <!-- Acciones -->
             <div class="variable-group">
-                <h3>⚡ Acciones</h3>
-                <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-                    <button class="btn btn-primary" onclick="copyTheme()">📋 Copiar Tema</button>
-                    <button class="btn btn-secondary" onclick="resetToDefault()">🔄 Reset</button>
-                    <button class="btn btn-success" onclick="applyTheme()">✅ Aplicar</button>
+                <h3>Panel Lateral del Diagrama</h3>
+                <div class="variable-item">
+                    <label class="variable-label">Fondo del Panel</label>
+                    <input type="text" class="text-input" data-var="--sidepanel-bg" value="#ffffff">
+                    <button class="reset-individual-btn" onclick="resetIndividualValue('--sidepanel-bg', '#ffffff')" title="Resetear a valor original">↺</button>
+                    <div class="color-picker" data-var="--sidepanel-bg" data-color="#ffffff" style="--picker-color: #ffffff; background-color: #ffffff;">
+                        <input type="color" value="#ffffff">
+                    </div>
+                </div>
+                <div class="variable-item">
+                    <label class="variable-label">Texto del Panel</label>
+                    <input type="text" class="text-input" data-var="--sidepanel-text" value="#333333">
+                    <button class="reset-individual-btn" onclick="resetIndividualValue('--sidepanel-text', '#333333')" title="Resetear a valor original">↺</button>
+                    <div class="color-picker" data-var="--sidepanel-text" data-color="#333333" style="--picker-color: #333333; background-color: #333333;">
+                        <input type="color" value="#333333">
+                    </div>
+                </div>
+                <div class="variable-item">
+                    <label class="variable-label">Borde del Panel</label>
+                    <input type="text" class="text-input" data-var="--sidepanel-border" value="#dddddd">
+                    <button class="reset-individual-btn" onclick="resetIndividualValue('--sidepanel-border', '#dddddd')" title="Resetear a valor original">↺</button>
+                    <div class="color-picker" data-var="--sidepanel-border" data-color="#dddddd" style="--picker-color: #dddddd; background-color: #dddddd;">
+                        <input type="color" value="#dddddd">
+                    </div>
+                </div>
+            </div>
+
+            <div class="actions-section">
+                <div class="actions-grid">
+                    <button class="btn btn-primary" onclick="copyTheme()">Copiar</button>
+                    <button class="btn btn-secondary" onclick="resetToDefault()">Reset</button>
+                    <button class="btn btn-danger" onclick="exportTheme()">Exportar</button>
                 </div>
             </div>
         </div>
-
-        <!-- Contenido principal -->
-        <div class="main-content">
-            <div class="toolbar">
-                <h3 style="margin: 0;">Diagrama de Vista Previa</h3>
-                <span style="color: #6c757d; font-size: 14px;">Los cambios se aplican en tiempo real</span>
             </div>
+    <div class="main-content">
             <div class="diagram-container">
-                <svg class="diagram"></svg>
-                <div id="loading" class="loading"><div class="spinner"></div></div>
-                <small id="error-message" class="error-message"></small>
+            <svg></svg>
+            <div id="loading" class="loading">
+                <div class="spinner"></div>
+                <div>Cargando diagrama principal...</div>
             </div>
+                <small id="error-message" class="error-message"></small>
         </div>
     </div>
 
-    <!-- Feedback de copiado -->
     <div id="copy-feedback" class="copy-feedback">
         ✅ Tema copiado al portapapeles
     </div>
 
     <script>
-        // Inicializar el diagrama
-        initDiagram("data/data.csv");
+        // Inicializar el diagrama principal
+        initDiagram("data/tree-simple.csv");
 
-        // Variables CSS por defecto
+        // Variables CSS por defecto (usando las variables exactas del CSS)
         const defaultValues = {
-            '--bg-color': '#ffffff',
-            '--text-color': '#333333',
-            '--node-fill': '#f8f9fa',
-            '--label-border': '#dee2e6',
-            '--node-selection-focus': '#007bff',
-            '--link-color': '#6c757d',
-            '--btn-bg': '#ffffff',
-            '--btn-bg-hover': '#e9ecef',
-            '--btn-text': '#495057',
-            '--btn-text-hover': '#212529',
-            '--label-id-text-color': '#6c757d',
-            '--text-subtitle-color': '#6c757d',
-            '--image-filter': 'grayscale(30%)'
+            '--bg-color': '#ecf2fd',
+            '--text-color': '#222',
+            '--node-fill': '#fff',
+            '--label-border': '#bdbdbd',
+            '--node-selection-focus': '#1976d2',
+            '--link-color': '#999',
+            '--image-filter': 'grayscale(30%)',
+            '--topbar-bg': '#ffffff',
+            '--topbar-text': '#333333',
+            '--sidepanel-bg': '#ffffff',
+            '--sidepanel-text': '#333333',
+            '--sidepanel-border': '#dddddd'
+        };
+
+        // Valores de los temas predefinidos
+        const themeValues = {
+            'light': {
+                '--bg-color': '#ecf2fd',
+                '--text-color': '#222',
+                '--node-fill': '#fff',
+                '--label-border': '#bdbdbd',
+                '--node-selection-focus': '#1976d2',
+                '--link-color': '#999',
+                '--image-filter': 'grayscale(30%)',
+                '--topbar-bg': '#ffffff',
+                '--topbar-text': '#333333',
+                '--sidepanel-bg': '#ffffff',
+                '--sidepanel-text': '#333333',
+                '--sidepanel-border': '#dddddd'
+            },
+            'dark': {
+                '--bg-color': '#181c24',
+                '--text-color': '#f6f7f9',
+                '--node-fill': '#23272f',
+                '--label-border': '#444',
+                '--node-selection-focus': '#00eaff',
+                '--link-color': '#666',
+                '--image-filter': 'invert(100%) brightness(3.5) contrast(200%)',
+                '--topbar-bg': '#23272f',
+                '--topbar-text': '#f6f7f9',
+                '--sidepanel-bg': '#23272f',
+                '--sidepanel-text': '#f6f7f9',
+                '--sidepanel-border': '#333'
+            },
+            'vintage': {
+                '--bg-color': '#f5e9da',
+                '--text-color': '#7c4f20',
+                '--node-fill': '#fffbe6',
+                '--label-border': '#b97a56',
+                '--node-selection-focus': '#8b4513',
+                '--link-color': '#b97a56',
+                '--image-filter': 'sepia(40%) brightness(1.1)',
+                '--topbar-bg': '#fffbe6',
+                '--topbar-text': '#7c4f20',
+                '--sidepanel-bg': '#fffbe6',
+                '--sidepanel-text': '#7c4f20',
+                '--sidepanel-border': '#b97a56'
+            },
+            'pastel': {
+                '--bg-color': '#fdf6fb',
+                '--text-color': '#7a7a7a',
+                '--node-fill': '#fff',
+                '--label-border': '#e0b1cb',
+                '--node-selection-focus': '#b6b6f7',
+                '--link-color': '#b6b6f7',
+                '--image-filter': 'hue-rotate(15deg) saturate(0.8)',
+                '--topbar-bg': '#fff',
+                '--topbar-text': '#7a7a7a',
+                '--sidepanel-bg': '#fff',
+                '--sidepanel-text': '#7a7a7a',
+                '--sidepanel-border': '#e0b1cb'
+            },
+            'cyberpunk': {
+                '--bg-color': '#0f0026',
+                '--text-color': '#00ffe7',
+                '--node-fill': '#1a0033',
+                '--label-border': '#00ffe7',
+                '--node-selection-focus': '#00ffe7',
+                '--link-color': '#ff00c8',
+                '--image-filter': 'invert(100%) brightness(3.5) contrast(200%)',
+                '--topbar-bg': '#1a0033',
+                '--topbar-text': '#00ffe7',
+                '--sidepanel-bg': '#1a0033',
+                '--sidepanel-text': '#00ffe7',
+                '--sidepanel-border': '#ff00c8'
+            },
+            'neon': {
+                '--bg-color': '#000',
+                '--text-color': '#39ff14',
+                '--node-fill': '#111',
+                '--label-border': '#ff00de',
+                '--node-selection-focus': '#39ff14',
+                '--link-color': '#39ff14',
+                '--image-filter': 'invert(100%) brightness(3.5) contrast(200%)',
+                '--topbar-bg': '#111',
+                '--topbar-text': '#39ff14',
+                '--sidepanel-bg': '#111',
+                '--sidepanel-text': '#39ff14',
+                '--sidepanel-border': '#ff00de'
+            }
         };
 
         // Función para actualizar variable CSS
         function updateCSSVariable(varName, value) {
             document.documentElement.style.setProperty(varName, value);
+            document.body.style.setProperty(varName, value);
             
-            // Actualizar preview boxes
-            const previewBoxes = document.querySelectorAll(`[data-var="${varName}"] + .text-input + .preview-box`);
-            previewBoxes.forEach(box => {
-                if (varName === '--image-filter') {
-                    box.style.setProperty('--preview-filter', value);
-                } else {
-                    box.style.setProperty('--preview-color', value);
-                }
-            });
+            // Aplicar también al topbar y sidebar para que reciban los estilos
+            const topbar = document.querySelector('.topbar');
+            const sidebar = document.querySelector('.sidebar');
+            const mainContent = document.querySelector('.main-content');
+            
+            if (topbar) topbar.style.setProperty(varName, value);
+            if (sidebar) sidebar.style.setProperty(varName, value);
+            if (mainContent) mainContent.style.setProperty(varName, value);
         }
 
-        // Event listeners para color pickers
-        document.querySelectorAll('.color-picker').forEach(picker => {
-            picker.addEventListener('input', function() {
-                const varName = this.getAttribute('data-var');
-                const value = this.value;
-                updateCSSVariable(varName, value);
-                
-                // Actualizar input de texto
-                const textInput = this.parentNode.querySelector('.text-input');
-                textInput.value = value;
-            });
-        });
-
-        // Event listeners para text inputs
-        document.querySelectorAll('.text-input').forEach(input => {
-            input.addEventListener('input', function() {
-                const varName = this.getAttribute('data-var');
-                const value = this.value;
-                updateCSSVariable(varName, value);
-                
-                // Actualizar color picker si es un color
-                if (varName !== '--image-filter') {
-                    const colorPicker = this.parentNode.querySelector('.color-picker');
-                    if (colorPicker && value.match(/^#[0-9A-F]{6}$/i)) {
-                        colorPicker.value = value;
-                    }
-                }
-            });
-        });
+        
 
         // Función para resetear filtro
         function resetFilter() {
@@ -485,18 +865,76 @@
             updateCSSVariable('--image-filter', 'none');
         }
 
-        // Función para resetear a valores por defecto
+        // Función para resetear un valor individual
+        function resetIndividualValue(varName, originalValue) {
+            console.log('Reseteando valor individual:', varName, 'a', originalValue);
+            
+            // Actualizar variable CSS
+            updateCSSVariable(varName, originalValue);
+                
+                // Actualizar input de texto
+            const textInput = document.querySelector('[data-var="' + varName + '"].text-input');
+            if (textInput) {
+                textInput.value = originalValue;
+            }
+                
+                // Actualizar color picker si es un color
+                if (varName !== '--image-filter') {
+                const pickerElement = document.querySelector('[data-var="' + varName + '"].color-picker');
+                const colorInput = pickerElement ? pickerElement.querySelector('input[type="color"]') : null;
+                
+                if (colorInput) {
+                    colorInput.value = originalValue;
+                }
+                
+                // Actualizar color del picker visual
+                if (pickerElement) {
+                    pickerElement.style.setProperty('--picker-color', originalValue);
+                    pickerElement.style.backgroundColor = originalValue;
+                }
+            }
+            
+            // Actualizar SVG dinámicamente
+            setTimeout(function() {
+                if (window.updateSVGColors) {
+                    window.updateSVGColors();
+                }
+            }, 50);
+            
+            console.log('Valor individual reseteado:', varName, '=', originalValue);
+        }
+
+        // Función para resetear a valores del tema seleccionado
         function resetToDefault() {
-            Object.entries(defaultValues).forEach(([varName, value]) => {
+            // Obtener el tema seleccionado actualmente
+            const selectedTheme = document.getElementById('theme-selector-visible').value;
+            const themeToReset = themeValues[selectedTheme] || defaultValues;
+            
+            Object.keys(themeToReset).forEach(function(varName) {
+                const value = themeToReset[varName];
                 updateCSSVariable(varName, value);
                 
                 // Actualizar controles
-                const colorPicker = document.querySelector(`[data-var="${varName}"].color-picker`);
-                const textInput = document.querySelector(`[data-var="${varName}"].text-input`);
+                const textInput = document.querySelector('[data-var="' + varName + '"].text-input');
+                const pickerElement = document.querySelector('[data-var="' + varName + '"].color-picker');
+                const colorInput = pickerElement ? pickerElement.querySelector('input[type="color"]') : null;
                 
-                if (colorPicker) colorPicker.value = value;
                 if (textInput) textInput.value = value;
+                if (colorInput) colorInput.value = value;
+                if (pickerElement && varName !== '--image-filter') {
+                    pickerElement.style.setProperty('--picker-color', value);
+                    pickerElement.style.backgroundColor = value;
+                }
             });
+            
+            // Actualizar SVG dinámicamente
+            setTimeout(function() {
+                if (window.updateSVGColors) {
+                    window.updateSVGColors();
+                }
+            }, 50);
+            
+            console.log('Reseteado a valores del tema:', selectedTheme);
         }
 
         // Función para copiar tema
@@ -504,7 +942,7 @@
             const themeName = document.getElementById('theme-name').value;
             const variables = {};
             
-            document.querySelectorAll('[data-var]').forEach(element => {
+            document.querySelectorAll('[data-var]').forEach(function(element) {
                 const varName = element.getAttribute('data-var');
                 const value = element.value;
                 if (!variables[varName]) {
@@ -512,12 +950,13 @@
                 }
             });
 
-            const cssCode = `/* Tema: ${themeName} */
-body.theme-${themeName.replace(/[^a-zA-Z0-9]/g, '-')} {
-${Object.entries(variables).map(([var, value]) => `  ${var}: ${value};`).join('\n')}
-}`;
+            const cssCode = '/* Tema: ' + themeName + ' */\n' +
+                'body.theme-' + themeName.replace(/[^a-zA-Z0-9]/g, '-') + ' {\n' +
+                Object.keys(variables).map(function(varName) {
+                    return '  ' + varName + ': ' + variables[varName] + ';';
+                }).join('\n') + '\n}';
 
-            navigator.clipboard.writeText(cssCode).then(() => {
+            navigator.clipboard.writeText(cssCode).then(function() {
                 showCopyFeedback();
             });
         }
@@ -526,15 +965,15 @@ ${Object.entries(variables).map(([var, value]) => `  ${var}: ${value};`).join('\
         function showCopyFeedback() {
             const feedback = document.getElementById('copy-feedback');
             feedback.classList.add('show');
-            setTimeout(() => {
+            setTimeout(function() {
                 feedback.classList.remove('show');
             }, 3000);
         }
 
         // Función para aplicar tema
-        function applyTheme() {
+        function applyTheme(showFeedback = true) {
             const themeName = document.getElementById('theme-name').value;
-            const themeClass = `theme-${themeName.replace(/[^a-zA-Z0-9]/g, '-')}`;
+            const themeClass = 'theme-' + themeName.replace(/[^a-zA-Z0-9]/g, '-');
             
             // Remover temas existentes
             document.body.classList.remove(
@@ -547,7 +986,7 @@ ${Object.entries(variables).map(([var, value]) => `  ${var}: ${value};`).join('\
             
             // Crear estilos dinámicamente
             const variables = {};
-            document.querySelectorAll('[data-var]').forEach(element => {
+            document.querySelectorAll('[data-var]').forEach(function(element) {
                 const varName = element.getAttribute('data-var');
                 const value = element.value;
                 if (!variables[varName]) {
@@ -555,18 +994,627 @@ ${Object.entries(variables).map(([var, value]) => `  ${var}: ${value};`).join('\
                 }
             });
 
-            const cssCode = `${Object.entries(variables).map(([var, value]) => `  ${var}: ${value};`).join('\n')}`;
+            // Aplicar estilos directamente a todos los elementos principales
+            Object.keys(variables).forEach(function(varName) {
+                document.documentElement.style.setProperty(varName, variables[varName]);
+                document.body.style.setProperty(varName, variables[varName]);
+                
+                // Aplicar también al topbar y sidebar para que reciban los estilos
+                const topbar = document.querySelector('.topbar');
+                const sidebar = document.querySelector('.sidebar');
+                const mainContent = document.querySelector('.main-content');
+                
+                if (topbar) topbar.style.setProperty(varName, variables[varName]);
+                if (sidebar) sidebar.style.setProperty(varName, variables[varName]);
+                if (mainContent) mainContent.style.setProperty(varName, variables[varName]);
+            });
+
+            // Actualizar SVG dinámicamente
+            if (window.updateSVGColors) {
+                window.updateSVGColors();
+            }
+
+            // Solo mostrar feedback si se solicita explícitamente
+            if (showFeedback) {
+                showCopyFeedback();
+            }
+        }
+
+        // Función para exportar tema
+        function exportTheme() {
+            const themeName = document.getElementById('theme-name').value;
+            const variables = {};
             
-            // Aplicar estilos directamente
-            Object.entries(variables).forEach(([var, value]) => {
-                document.documentElement.style.setProperty(var, value);
+            document.querySelectorAll('[data-var]').forEach(function(element) {
+                const varName = element.getAttribute('data-var');
+                const value = element.value;
+                if (!variables[varName]) {
+                    variables[varName] = value;
+                }
+            });
+
+            // Crear modal para seleccionar formato
+            const modal = document.createElement('div');
+            modal.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0,0,0,0.8);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                z-index: 10000;
+            `;
+
+            const modalContent = document.createElement('div');
+            modalContent.style.cssText = `
+                background: #1a1a1a;
+                color: #e0e0e0;
+                padding: 30px;
+                border-radius: 8px;
+                border: 1px solid #444;
+                min-width: 300px;
+                text-align: center;
+            `;
+
+            modalContent.innerHTML = `
+                <h3 style="margin: 0 0 20px 0; font-size: 16px;">Seleccionar formato de exportación</h3>
+                <div style="display: flex; gap: 10px; justify-content: center;">
+                    <button id="export-json" style="
+                        background: #333;
+                        color: #e0e0e0;
+                        border: 1px solid #444;
+                        padding: 10px 20px;
+                        border-radius: 4px;
+                        cursor: pointer;
+                        font-size: 12px;
+                    ">JSON</button>
+                    <button id="export-css" style="
+                        background: #333;
+                        color: #e0e0e0;
+                        border: 1px solid #444;
+                        padding: 10px 20px;
+                        border-radius: 4px;
+                        cursor: pointer;
+                        font-size: 12px;
+                    ">CSS</button>
+                    <button id="cancel-export" style="
+                        background: #555;
+                        color: #e0e0e0;
+                        border: 1px solid #666;
+                        padding: 10px 20px;
+                        border-radius: 4px;
+                        cursor: pointer;
+                        font-size: 12px;
+                    ">Cancelar</button>
+                </div>
+            `;
+
+            modal.appendChild(modalContent);
+            document.body.appendChild(modal);
+
+            // Event listeners
+            document.getElementById('export-json').addEventListener('click', function() {
+                exportAsJSON(themeName, variables);
+                document.body.removeChild(modal);
+            });
+
+            document.getElementById('export-css').addEventListener('click', function() {
+                exportAsCSS(themeName, variables);
+                document.body.removeChild(modal);
+            });
+
+            document.getElementById('cancel-export').addEventListener('click', function() {
+                document.body.removeChild(modal);
+            });
+
+            // Cerrar modal al hacer clic fuera
+            modal.addEventListener('click', function(e) {
+                if (e.target === modal) {
+                    document.body.removeChild(modal);
+                }
             });
         }
 
-        // Inicializar valores por defecto
+        // Función para exportar como JSON
+        function exportAsJSON(themeName, variables) {
+            const themeData = {
+                name: themeName,
+                variables: variables,
+                timestamp: new Date().toISOString()
+            };
+
+            const dataStr = JSON.stringify(themeData, null, 2);
+            const dataBlob = new Blob([dataStr], {type: 'application/json'});
+            
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(dataBlob);
+            link.download = themeName + '.json';
+            link.click();
+        }
+
+        // Función para exportar como CSS
+        function exportAsCSS(themeName, variables) {
+            let cssContent = `/* Tema: ${themeName} */\n`;
+            cssContent += `/* Generado el: ${new Date().toLocaleString()} */\n\n`;
+            cssContent += `:root {\n`;
+            
+            Object.keys(variables).forEach(function(varName) {
+                cssContent += `    ${varName}: ${variables[varName]};\n`;
+            });
+            
+            cssContent += `}\n\n`;
+            cssContent += `/* Para aplicar este tema, agrega la clase 'theme-${themeName}' al body */\n`;
+            cssContent += `.theme-${themeName} {\n`;
+            
+            Object.keys(variables).forEach(function(varName) {
+                cssContent += `    ${varName}: ${variables[varName]};\n`;
+            });
+            
+            cssContent += `}\n`;
+
+            const dataBlob = new Blob([cssContent], {type: 'text/css'});
+            
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(dataBlob);
+            link.download = themeName + '.css';
+            link.click();
+        }
+
+
+
+        // Definir los temas predefinidos (usando las variables exactas del CSS)
+        const predefinedThemes = {
+            light: {
+                '--bg-color': '#ecf2fd',
+                '--text-color': '#222',
+                '--node-fill': '#fff',
+                '--label-border': '#bdbdbd',
+                '--node-selection-focus': '#1976d2',
+                '--link-color': '#999',
+                '--image-filter': 'grayscale(30%)',
+                '--topbar-bg': '#ffffff',
+                '--topbar-text': '#333333',
+                '--sidepanel-bg': '#ffffff',
+                '--sidepanel-text': '#333333',
+                '--sidepanel-border': '#dddddd'
+            },
+            dark: {
+                '--bg-color': '#181c24',
+                '--text-color': '#f6f7f9',
+                '--node-fill': '#23272f',
+                '--label-border': '#444',
+                '--node-selection-focus': '#00eaff',
+                '--link-color': '#666',
+                '--image-filter': 'invert(100%) brightness(3.5) contrast(200%)',
+                '--topbar-bg': '#23272f',
+                '--topbar-text': '#f6f7f9',
+                '--sidepanel-bg': '#23272f',
+                '--sidepanel-text': '#f6f7f9',
+                '--sidepanel-border': '#444'
+            },
+            vintage: {
+                '--bg-color': '#f5e9da',
+                '--text-color': '#7c4f20',
+                '--node-fill': '#fffbe6',
+                '--label-border': '#b97a56',
+                '--node-selection-focus': '#8b4513',
+                '--link-color': '#b97a56',
+                '--image-filter': 'sepia(40%) brightness(1.1)',
+                '--topbar-bg': '#fffbe6',
+                '--topbar-text': '#7c4f20',
+                '--sidepanel-bg': '#fffbe6',
+                '--sidepanel-text': '#7c4f20',
+                '--sidepanel-border': '#b97a56'
+            },
+            pastel: {
+                '--bg-color': '#fdf6fb',
+                '--text-color': '#7a7a7a',
+                '--node-fill': '#fff',
+                '--label-border': '#e0b1cb',
+                '--node-selection-focus': '#b6b6f7',
+                '--link-color': '#b6b6f7',
+                '--image-filter': 'hue-rotate(15deg) saturate(0.8)',
+                '--topbar-bg': '#ffffff',
+                '--topbar-text': '#7a7a7a',
+                '--sidepanel-bg': '#ffffff',
+                '--sidepanel-text': '#7a7a7a',
+                '--sidepanel-border': '#e0b1cb'
+            },
+            cyberpunk: {
+                '--bg-color': '#0f0026',
+                '--text-color': '#00ffe7',
+                '--node-fill': '#1a0033',
+                '--label-border': '#00ffe7',
+                '--node-selection-focus': '#00ffe7',
+                '--link-color': '#ff00c8',
+                '--image-filter': 'invert(100%) brightness(3.5) contrast(200%)',
+                '--topbar-bg': '#1a0033',
+                '--topbar-text': '#00ffe7',
+                '--sidepanel-bg': '#1a0033',
+                '--sidepanel-text': '#00ffe7',
+                '--sidepanel-border': '#00ffe7'
+            },
+            neon: {
+                '--bg-color': '#000',
+                '--text-color': '#39ff14',
+                '--node-fill': '#111',
+                '--label-border': '#ff00de',
+                '--node-selection-focus': '#39ff14',
+                '--link-color': '#39ff14',
+                '--image-filter': 'invert(100%) brightness(3.5) contrast(200%)',
+                '--topbar-bg': '#111',
+                '--topbar-text': '#39ff14',
+                '--sidepanel-bg': '#111',
+                '--sidepanel-text': '#39ff14',
+                '--sidepanel-border': '#ff00de'
+            }
+        };
+
+        // Función para cargar un tema predefinido
+        function loadPredefinedTheme(themeName) {
+            const theme = predefinedThemes[themeName];
+            if (!theme) return;
+
+            console.log('Cargando tema predefinido:', themeName);
+
+            // Primero aplicar la clase de tema al body
+            document.body.classList.remove('theme-light', 'theme-dark', 'theme-vintage', 'theme-pastel', 'theme-cyberpunk', 'theme-neon');
+            document.body.classList.add('theme-' + themeName);
+
+                    // Aplicar variables CSS y actualizar TODOS los controles
+        Object.keys(theme).forEach(function(varName) {
+            const value = theme[varName];
+            
+            // Aplicar variable CSS al document.documentElement, body y todos los elementos principales
+            document.documentElement.style.setProperty(varName, value);
+            document.body.style.setProperty(varName, value);
+            
+            // Aplicar también al topbar y sidebar para que reciban los estilos
+            const topbar = document.querySelector('.topbar');
+            const sidebar = document.querySelector('.sidebar');
+            const mainContent = document.querySelector('.main-content');
+            
+            if (topbar) topbar.style.setProperty(varName, value);
+            if (sidebar) sidebar.style.setProperty(varName, value);
+            if (mainContent) mainContent.style.setProperty(varName, value);
+                
+                // Actualizar input de texto
+                const textInput = document.querySelector('[data-var="' + varName + '"].text-input');
+                if (textInput) {
+                    textInput.value = value;
+                    console.log('Input de texto actualizado:', varName, '=', value);
+                }
+                
+                // Actualizar color picker (solo para colores, no para filtros)
+                if (varName !== '--image-filter') {
+                    const pickerElement = document.querySelector('[data-var="' + varName + '"].color-picker');
+                    if (pickerElement) {
+                        const colorInput = pickerElement.querySelector('input[type="color"]');
+                        if (colorInput) {
+                            colorInput.value = value;
+                        }
+                        // Actualizar color visual del picker
+                        pickerElement.style.setProperty('--picker-color', value);
+                        pickerElement.style.backgroundColor = value;
+                        console.log('Color picker actualizado:', varName, '=', value);
+                    }
+                }
+                
+                // Actualizar botón de reset individual con el nuevo valor original
+                const resetBtn = document.querySelector('[onclick*="resetIndividualValue(\'' + varName + '\'"]');
+                if (resetBtn) {
+                    resetBtn.setAttribute('onclick', 'resetIndividualValue(\'' + varName + '\', \'' + value + '\')');
+                    console.log('Botón de reset actualizado para:', varName, '=', value);
+                }
+            });
+
+            // Actualizar nombre del tema
+            document.getElementById('theme-name').value = themeName + '-custom';
+            
+            // Forzar la actualización del SVG con un pequeño delay
+            setTimeout(function() {
+                if (window.updateSVGColors) {
+                    window.updateSVGColors();
+                }
+                // Aplicar tema para asegurar que los color pickers funcionen
+                applyTheme(false); // Sin mostrar toast
+            }, 100);
+            
+            console.log('Tema', themeName, 'cargado completamente');
+        }
+
+        // Event listener para el selector de temas visible
         document.addEventListener('DOMContentLoaded', function() {
-            resetToDefault();
+            console.log('DOM Content Loaded');
+            
+            // Función para inicializar color pickers nativos
+            function initializeColorPickers() {
+                console.log('Inicializando color pickers nativos...');
+                
+                const colorPickers = document.querySelectorAll('.color-picker');
+                console.log('Encontrados', colorPickers.length, 'color pickers');
+                
+                colorPickers.forEach(function(pickerElement, index) {
+                    console.log('Procesando color picker', index, ':', pickerElement);
+                    const varName = pickerElement.getAttribute('data-var');
+                    const initialColor = pickerElement.getAttribute('data-color');
+                    const colorInput = pickerElement.querySelector('input[type="color"]');
+                    const textInput = pickerElement.parentElement.querySelector('.text-input');
+                    
+                    if (!varName || !initialColor || !colorInput) {
+                        console.warn('Color picker sin atributos requeridos:', pickerElement);
+                        return;
+                    }
+                    
+                    // Configurar el input de color
+                    colorInput.value = initialColor;
+                    
+                    // Event listener para el input de color (input y change para máxima compatibilidad)
+                    colorInput.addEventListener('input', function(e) {
+                        const hexColor = e.target.value;
+                        
+                        // Actualizar variable CSS inmediatamente
+                        document.documentElement.style.setProperty(varName, hexColor);
+                        document.body.style.setProperty(varName, hexColor);
+                        
+                        // Aplicar también al topbar y sidebar
+                        const topbar = document.querySelector('.topbar');
+                        const sidebar = document.querySelector('.sidebar');
+                        const mainContent = document.querySelector('.main-content');
+                        
+                        if (topbar) topbar.style.setProperty(varName, hexColor);
+                        if (sidebar) sidebar.style.setProperty(varName, hexColor);
+                        if (mainContent) mainContent.style.setProperty(varName, hexColor);
+                        
+                        // Actualizar input de texto
+                        if (textInput) {
+                            textInput.value = hexColor;
+                        }
+                        
+                        // Actualizar color del picker visual
+                        pickerElement.style.setProperty('--picker-color', hexColor);
+                        pickerElement.style.backgroundColor = hexColor;
+                        
+                        // Actualizar SVG dinámicamente (con delay para evitar conflictos)
+                        setTimeout(function() {
+                            if (window.updateSVGColors) {
+                                window.updateSVGColors();
+                            }
+                        }, 50);
+                        
+                        console.log('Color actualizado:', varName, '=', hexColor);
+                    });
+                    
+                    // También escuchar el evento change para asegurar que se aplique
+                    colorInput.addEventListener('change', function(e) {
+                        const hexColor = e.target.value;
+                        
+                        // Actualizar variable CSS inmediatamente
+                        document.documentElement.style.setProperty(varName, hexColor);
+                        document.body.style.setProperty(varName, hexColor);
+                        
+                        // Aplicar también al topbar y sidebar
+                        const topbar = document.querySelector('.topbar');
+                        const sidebar = document.querySelector('.sidebar');
+                        const mainContent = document.querySelector('.main-content');
+                        
+                        if (topbar) topbar.style.setProperty(varName, hexColor);
+                        if (sidebar) sidebar.style.setProperty(varName, hexColor);
+                        if (mainContent) mainContent.style.setProperty(varName, hexColor);
+                        
+                        // Actualizar input de texto
+                        if (textInput) {
+                            textInput.value = hexColor;
+                        }
+                        
+                        // Actualizar color del picker visual
+                        pickerElement.style.setProperty('--picker-color', hexColor);
+                        pickerElement.style.backgroundColor = hexColor;
+                        
+                        // Actualizar SVG dinámicamente (con delay para evitar conflictos)
+                        setTimeout(function() {
+                            if (window.updateSVGColors) {
+                                window.updateSVGColors();
+                            }
+                        }, 50);
+                        
+                        console.log('Color aplicado (change):', varName, '=', hexColor);
+                    });
+                    
+                    // Event listener para el input de texto
+                    if (textInput) {
+                        textInput.addEventListener('input', function(e) {
+                            const newColor = e.target.value;
+                            if (/^#[0-9A-F]{6}$/i.test(newColor)) {
+                                colorInput.value = newColor;
+                                
+                                // Actualizar variable CSS inmediatamente
+                                document.documentElement.style.setProperty(varName, newColor);
+                                document.body.style.setProperty(varName, newColor);
+                                
+                                // Actualizar color del picker visual
+                                pickerElement.style.setProperty('--picker-color', newColor);
+                                pickerElement.style.backgroundColor = newColor;
+                                
+                                // Actualizar SVG dinámicamente (con delay para evitar conflictos)
+                                setTimeout(function() {
+                                    if (window.updateSVGColors) {
+                                        window.updateSVGColors();
+                                    }
+                                }, 50);
+                                
+                                console.log('Color actualizado desde texto:', varName, '=', newColor);
+                            }
+                        });
+                    }
+                    
+                    console.log('Color picker nativo inicializado para:', varName);
+                });
+            }
+            
+            // Función para limpiar y reinicializar color pickers
+            function reinitializeColorPickers() {
+                // Limpiar event listeners existentes
+                document.querySelectorAll('.color-picker input[type="color"]').forEach(function(input) {
+                    input.replaceWith(input.cloneNode(true));
+                });
+                
+                // Reinicializar
+                initializeColorPickers();
+                
+                // Mostrar feedback
+                showCopyFeedback();
+            }
+            
+            // Función para prevenir bloqueo de color pickers
+            function preventColorPickerBlocking() {
+                // Agregar event listener global para detectar cuando un color picker se abre
+                document.addEventListener('click', function(e) {
+                    if (e.target.type === 'color') {
+                        // Limpiar cualquier estado bloqueado
+                        setTimeout(function() {
+                            if (e.target.style.pointerEvents === 'none') {
+                                e.target.style.pointerEvents = 'auto';
+                            }
+                        }, 100);
+                    }
+                });
+            }
+            
+            // Inicializar color pickers inmediatamente
+            initializeColorPickers();
+            
+            // Activar prevención de bloqueo
+            preventColorPickerBlocking();
+            
+            // Aplicar tema después de inicializar los color pickers
+            setTimeout(function() {
+                applyTheme(false); // Sin mostrar toast
+                console.log('Tema aplicado después de inicializar color pickers');
+            }, 300);
+            
+            // Event listeners para text inputs
+            document.querySelectorAll('.text-input').forEach(function(input) {
+                input.addEventListener('input', function() {
+                    const varName = this.getAttribute('data-var');
+                    const value = this.value;
+                    
+                    // Actualizar variable CSS inmediatamente
+                    document.documentElement.style.setProperty(varName, value);
+                    document.body.style.setProperty(varName, value);
+                    
+                    // Aplicar también al topbar y sidebar
+                    const topbar = document.querySelector('.topbar');
+                    const sidebar = document.querySelector('.sidebar');
+                    const mainContent = document.querySelector('.main-content');
+                    
+                    if (topbar) topbar.style.setProperty(varName, value);
+                    if (sidebar) sidebar.style.setProperty(varName, value);
+                    if (mainContent) mainContent.style.setProperty(varName, value);
+                    
+                    // Actualizar color picker si es un color
+                    if (varName !== '--image-filter') {
+                        const pickerElement = document.querySelector('[data-var="' + varName + '"].color-picker');
+                        const colorInput = pickerElement ? pickerElement.querySelector('input[type="color"]') : null;
+                        
+                        if (colorInput && value.match(/^#[0-9A-F]{6}$/i)) {
+                            colorInput.value = value;
+                        }
+                        
+                        // Actualizar color del picker visual
+                        if (pickerElement) {
+                            pickerElement.style.setProperty('--picker-color', value);
+                            pickerElement.style.backgroundColor = value;
+                        }
+                    }
+                    
+                    // Actualizar SVG dinámicamente (con delay para evitar conflictos)
+                    setTimeout(function() {
+                        if (window.updateSVGColors) {
+                            window.updateSVGColors();
+                        }
+                    }, 50);
+                    
+                    console.log('Variable CSS actualizada:', varName, '=', value);
+                });
+                
+                // Evento para cuando se presiona Enter
+                input.addEventListener('keydown', function(e) {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        this.blur(); // Quitar el foco para disparar el evento change
+                    }
+                });
+                
+                // También escuchar el evento change para inputs de texto
+                input.addEventListener('change', function() {
+                    const varName = this.getAttribute('data-var');
+                    const value = this.value;
+                    
+                    // Actualizar variable CSS inmediatamente
+                    document.documentElement.style.setProperty(varName, value);
+                    document.body.style.setProperty(varName, value);
+                    
+                    // Aplicar también al topbar y sidebar
+                    const topbar = document.querySelector('.topbar');
+                    const sidebar = document.querySelector('.sidebar');
+                    const mainContent = document.querySelector('.main-content');
+                    
+                    if (topbar) topbar.style.setProperty(varName, value);
+                    if (sidebar) sidebar.style.setProperty(varName, value);
+                    if (mainContent) mainContent.style.setProperty(varName, value);
+                    
+                    // Actualizar SVG dinámicamente (con delay para evitar conflictos)
+                    setTimeout(function() {
+                        if (window.updateSVGColors) {
+                            window.updateSVGColors();
+                        }
+                    }, 50);
+                    
+                    console.log('Variable CSS aplicada (change):', varName, '=', value);
+                });
+            });
+            
+            const themeSelector = document.getElementById('theme-selector-visible');
+            const hiddenThemeSelector = document.getElementById('theme-selector');
+            
+            // Sincronizar selectores
+            themeSelector.addEventListener('change', function() {
+                const selectedTheme = this.value;
+                hiddenThemeSelector.value = selectedTheme;
+                loadPredefinedTheme(selectedTheme);
+            });
+
+            // Sincronizar con el selector oculto (para compatibilidad con sw-diagrams.js)
+            hiddenThemeSelector.addEventListener('change', function() {
+                const selectedTheme = this.value;
+                themeSelector.value = selectedTheme;
+                loadPredefinedTheme(selectedTheme);
+            });
+
+            // Inicializar con tema light después de que los color pickers estén listos
+            setTimeout(function() {
+                // Establecer tema light como seleccionado por defecto
+                themeSelector.value = 'light';
+                hiddenThemeSelector.value = 'light';
+                
+                // Cargar tema light por defecto en lugar de resetear
+                loadPredefinedTheme('light');
+                
+                // Aplicar tema inmediatamente para que los color pickers funcionen desde el inicio
+                setTimeout(function() {
+                    applyTheme(false); // Sin mostrar toast
+                    console.log('Tema aplicado automáticamente al cargar la página');
+                }, 200);
+                
+                console.log('Tema light cargado automáticamente al cargar la página');
+            }, 100);
         });
+
+
     </script>
 </body>
 </html> 

@@ -1,0 +1,16 @@
+Node,Parent,Name,Description,Type,Thumbnail,Color
+NODE2,,Tim Watson,CTO - Chief Technology Officer,detail,detail.svg,#f39c12
+NODE6,NODE2,Development Team,Web development,detail,detail.svg,#3498db
+NODE7,NODE2,Design Team,UX/UI design,detail,detail.svg,#e67e22
+NODE11,NODE6,Frontend Development,React development,detail,detail.svg,#16a085
+NODE12,NODE6,Backend Development,Node.js development,detail,detail.svg,#d35400
+NODE13,NODE7,UI Design,Interface design,detail,detail.svg,#c0392b
+NODE14,NODE7,UX Research,User research,detail,detail.svg,#2980b9
+NODE18,NODE11,Homepage,Main page,detail,detail.svg,#34495e
+NODE19,NODE11,About Us,Company info,detail,detail.svg,#27ae60
+NODE20,NODE12,Contact Form,Contact page,detail,detail.svg,#e67e22
+NODE21,NODE12,User Dashboard,User panel,detail,detail.svg,#3498db
+NODE22,NODE13,Product Catalog,Product catalog,detail,detail.svg,#95a5a6
+NODE23,NODE13,Services Page,Services page,detail,detail.svg,#1abc9c
+NODE24,NODE14,Blog Section,Blog section,detail,detail.svg,#8e44ad
+NODE25,NODE14,FAQ Page,FAQ page,detail,detail.svg,#16a085 

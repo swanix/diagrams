@@ -168,7 +168,6 @@
 
   body {
     font-family: sans-serif;
-    text-align: center;
     background-color: var(--bg-color);
     background-image: var(--bg-image);
     background-size: cover;
@@ -177,6 +176,8 @@
     background-attachment: fixed;
     color: var(--text-color);
     position: relative;
+    margin: 0;
+    padding: 0;
   }
   
   /* Overlay para controlar la opacidad del color de fondo */
@@ -202,7 +203,7 @@
   svg {
     background-color: transparent; /* Cambiar a transparente para que se vea la imagen de fondo */
     display: block;
-    margin: auto;
+    margin: 0;
     cursor: grab;
     width: var(--svg-width);
     height: var(--svg-height);
@@ -677,7 +678,7 @@ svg .node.node-selected {
   --loading-color: #00eaff; /* Cyan brillante para el spinner */
   --loading-bg: #23272f; /* Fondo oscuro para el loading */
   --bg-image: url('https://images.unsplash.com/photo-1632059368252-be6d65abc4e2?w=1920&q=80'); /* Imagen de fondo oscura */
-  --bg-opacity: 0.9; /* Opacidad muy baja para ver la imagen claramente */
+  --bg-opacity: 0.3; /* Opacidad reducida para ver la imagen claramente */
   /* Variables específicas para controles */
   --control-bg: #2d3748;
   --control-text: #e2e8f0;
@@ -776,7 +777,7 @@ svg .node.node-selected {
   --loading-color: #00ffe7; /* Cyan cyberpunk para el spinner */
   --loading-bg: #1a0033; /* Fondo púrpura oscuro para el loading */
   --bg-image: url('https://images.unsplash.com/photo-1632059368252-be6d65abc4e2?w=1920&q=80'); /* Imagen de fondo oscura */
-  --bg-opacity: 0.9; /* Opacidad muy baja para ver la imagen claramente */
+  --bg-opacity: 0.3; /* Opacidad reducida para ver la imagen claramente */
   /* Variables específicas para controles */
   --control-bg: #2a0040;
   --control-text: #00ffe7;
@@ -821,8 +822,8 @@ svg .node.node-selected {
   --control-shadow-focus: rgba(57, 255, 20, 0.4);
 }
 
-/* Selector de tema compacto */
-.theme-selector {
+/* Selector de tema compacto (para uso fuera del topbar) */
+.theme-selector-compact {
   position: fixed;
   top: 10px;
   right: 10px;
@@ -837,22 +838,20 @@ svg .node.node-selected {
   transition: all 0.2s ease;
 }
 
-.theme-selector:hover {
+.theme-selector-compact:hover {
   border-color: var(--control-border-hover);
   box-shadow: 0 4px 12px var(--control-shadow);
 }
 
-.theme-selector:focus {
+.theme-selector-compact:focus {
   border-color: var(--control-border-focus);
   box-shadow: 0 0 0 2px var(--control-shadow-focus);
 }
 
 /* === TOPBAR === */
 .topbar {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
+  position: relative;
+  width: 100%;
   height: 60px;
   background: var(--side-panel-bg);
   border-bottom: 1px solid var(--side-panel-border);
@@ -861,7 +860,8 @@ svg .node.node-selected {
   align-items: center;
   justify-content: space-between;
   padding: 0 20px;
-  z-index: 1000;
+  z-index: 10;
+  box-sizing: border-box;
 }
 
 .topbar-left {
@@ -927,7 +927,6 @@ svg .node.node-selected {
 
 /* Ajustar SVG para el topbar */
 svg {
-  margin-top: 60px;
   height: calc(100vh - 60px);
 }
 

@@ -1,15 +1,13 @@
 <!DOCTYPE html>
-<html lang="en" translate="no">
+<html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="google" content="notranslate">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Swanix Diagrams</title>
+    <title>Swanix Diagrams - Embedded</title>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
     <script src="sw-diagrams.js"></script>
     <link href="sw-diagrams.css" rel="stylesheet">
-    <link rel="icon" href="https://swanix.org/assets/images/favicon.ico" type="image/x-icon">
     
     <style>
         /* Estilos para el contenedor encapsulado */
@@ -173,11 +171,128 @@
     </div>
 
     <script>
+        // Función para inicializar el diagrama encapsulado
+        function initSwanixDiagram(containerId, csvUrl) {
+            const container = document.getElementById(containerId);
+            if (!container) {
+                console.error('Contenedor no encontrado:', containerId);
+                return;
+            }
+            
+            // Modificar la función initDiagram para que busque elementos dentro del contenedor
+            const originalInitDiagram = window.initDiagram;
+            
+            window.initDiagram = function(url) {
+                console.log('Iniciando carga del diagrama...');
+                
+                // Buscar elementos dentro del contenedor
+                const svg = container.querySelector('svg');
+                const loading = container.querySelector('#loading');
+                const errorMessage = container.querySelector('#error-message');
+                const typeDropdown = container.querySelector('#type-dropdown');
+                const searchInput = container.querySelector('#search-input');
+                const themeSelector = container.querySelector('#theme-selector');
+                
+                // Aplicar variables CSS al contenedor
+                function applyThemeToContainer(themeId) {
+                    const themeVariables = getThemeVariables(themeId);
+                    Object.keys(themeVariables).forEach(function(varName) {
+                        container.style.setProperty(varName, themeVariables[varName]);
+                    });
+                }
+                
+                // Restaurar función original
+                window.initDiagram = originalInitDiagram;
+                
+                // Llamar a la función original con los elementos del contenedor
+                return originalInitDiagram(url);
+            };
+            
+            // Inicializar el diagrama
+            initDiagram(csvUrl);
+        }
+        
+        // Función para obtener las variables CSS de cada tema (copiada de sw-diagrams.js)
+        function getThemeVariables(themeId) {
+            const themes = {
+                'light': {
+                    '--bg-color': '#ecf2fd',
+                    '--text-color': '#222',
+                    '--node-fill': '#fff',
+                    '--node-stroke-focus': '#1976d2',
+                    '--label-border': '#bdbdbd',
+                    '--link-color': '#999',
+                    '--side-panel-bg': '#fff',
+                    '--side-panel-text': '#222',
+                    '--side-panel-header-bg': '#f8f9fa',
+                    '--side-panel-header-border': '#dee2e6',
+                    '--side-panel-border': '#e0e0e0',
+                    '--side-panel-label': '#666',
+                    '--side-panel-value': '#222',
+                    '--node-selection-border': '#e0e0e0',
+                    '--node-selection-focus': '#1976d2',
+                    '--node-selection-hover': '#bdbdbd',
+                    '--node-selection-selected': '#1976d2',
+                    '--image-filter': 'grayscale(30%)',
+                    '--loading-color': '#1976d2',
+                    '--loading-bg': '#ffffff',
+                    '--bg-image': 'url("img/backgrounds/light-pattern.svg")',
+                    '--bg-opacity': '0.9',
+                    '--control-bg': '#ffffff',
+                    '--control-text': '#333333',
+                    '--control-border': '#d1d5db',
+                    '--control-border-hover': '#9ca3af',
+                    '--control-border-focus': '#1976d2',
+                    '--control-placeholder': '#9ca3af',
+                    '--control-shadow': 'rgba(0, 0, 0, 0.1)',
+                    '--control-shadow-focus': 'rgba(25, 118, 210, 0.2)'
+                },
+                'dark': {
+                    '--bg-color': '#181c24',
+                    '--text-color': '#f6f7f9',
+                    '--node-fill': '#23272f',
+                    '--node-stroke-focus': '#00eaff',
+                    '--label-border': '#444',
+                    '--link-color': '#666',
+                    '--side-panel-bg': '#23272f',
+                    '--side-panel-text': '#f6f7f9',
+                    '--side-panel-header-bg': '#23272f',
+                    '--side-panel-header-border': '#333',
+                    '--side-panel-border': '#333',
+                    '--side-panel-label': '#aaa',
+                    '--side-panel-value': '#fff',
+                    '--node-selection-border': '#444',
+                    '--node-selection-focus': '#00eaff',
+                    '--node-selection-hover': '#555',
+                    '--node-selection-selected': '#00eaff',
+                    '--image-filter': 'invert(100%) brightness(3.5) contrast(200%)',
+                    '--loading-color': '#00eaff',
+                    '--loading-bg': '#23272f',
+                    '--bg-image': 'url("https://images.unsplash.com/photo-1632059368252-be6d65abc4e2?w=1920&q=80")',
+                    '--bg-opacity': '0.9',
+                    '--control-bg': '#2d3748',
+                    '--control-text': '#e2e8f0',
+                    '--control-border': '#4a5568',
+                    '--control-border-hover': '#718096',
+                    '--control-border-focus': '#00eaff',
+                    '--control-placeholder': '#a0aec0',
+                    '--control-shadow': 'rgba(0, 0, 0, 0.3)',
+                    '--control-shadow-focus': 'rgba(0, 234, 255, 0.3)'
+                }
+                // ... otros temas se pueden agregar aquí
+            };
+            
+            return themes[themeId] || themes['light'];
+        }
+        
         // Inicializar el diagrama cuando se carga la página
         document.addEventListener('DOMContentLoaded', function() {
-            // Inicializar el diagrama directamente
-            initDiagram("https://docs.google.com/spreadsheets/d/e/2PACX-1vTQZfZhC3cWHg0QkqRoY9i3alinAnSHab5DJtWzsm_xAhLKKJdHri8fBMUawh-DhpvCkm-G1vBeWPFq/pub?gid=466976322&single=true&output=csv");
+            // Ejemplo de uso: inicializar el diagrama
+            initSwanixDiagram('swanix-diagram', 'data/tree-simple.csv');
+            
+            // También se puede usar con una URL externa:
+            // initSwanixDiagram('swanix-diagram', 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTQZfZhC3cWHg0QkqRoY9i3alinAnSHab5DJtWzsm_xAhLKKJdHri8fBMUawh-DhpvCkm-G1vBeWPFq/pub?gid=466976322&single=true&output=csv');
         });
     </script>
 </body>
-</html>
+</html> 

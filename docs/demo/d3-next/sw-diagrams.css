@@ -677,7 +677,7 @@ svg .node.node-selected {
   --loading-color: #00eaff; /* Cyan brillante para el spinner */
   --loading-bg: #23272f; /* Fondo oscuro para el loading */
   --bg-image: url('https://images.unsplash.com/photo-1632059368252-be6d65abc4e2?w=1920&q=80'); /* Imagen de fondo oscura */
-  --bg-opacity: 0.9; /* Opacidad muy baja para ver la imagen claramente */
+  --bg-opacity: 0.3; /* Opacidad reducida para ver la imagen claramente */
   /* Variables específicas para controles */
   --control-bg: #2d3748;
   --control-text: #e2e8f0;

@@ -27,8 +27,12 @@ function initDiagram(csvUrl) {
         console.log("Árboles dibujados");
         
         console.log("Creando panel lateral...");
-        createSidePanel();
-        console.log("Panel lateral creado");
+        try {
+          createSidePanel();
+          console.log("Panel lateral creado exitosamente");
+        } catch (error) {
+          console.error("Error al crear el panel lateral:", error);
+        }
         
         console.log("Creando dropdown de tipos...");
         createTypeDropdown(data);
@@ -541,12 +545,19 @@ document.addEventListener("DOMContentLoaded", () => {
 // Funciones para el panel lateral
 function createSidePanel() {
   console.log("Creando panel lateral...");
-  // No crear overlay
-
-  // Crear el panel lateral
-  const sidePanel = document.createElement('div');
-  sidePanel.className = 'side-panel';
-  sidePanel.id = 'side-panel';
+  
+  try {
+    // Detectar si estamos dentro de un contenedor encapsulado
+    const container = document.querySelector('.swanix-diagram-container');
+    const targetParent = container || document.body;
+    
+    console.log("Contenedor encontrado:", container);
+    console.log("Target parent:", targetParent);
+    
+    // Crear el panel lateral
+    const sidePanel = document.createElement('div');
+    sidePanel.className = 'side-panel';
+    sidePanel.id = 'side-panel';
   
   sidePanel.innerHTML = `
     <div class="side-panel-header">
@@ -558,7 +569,7 @@ function createSidePanel() {
     </div>
   `;
   
-  document.body.appendChild(sidePanel);
+  targetParent.appendChild(sidePanel);
 
   // Agregar event listener para enlaces de subnodos
   sidePanel.addEventListener('click', function(e) {
@@ -620,6 +631,10 @@ function createSidePanel() {
   updateSidePanelTheme();
   
   console.log("Panel lateral creado exitosamente");
+  } catch (error) {
+    console.error("Error en createSidePanel:", error);
+    throw error; // Re-lanzar el error para que se capture en el nivel superior
+  }
 }
 
 function openSidePanel(nodeData) {
@@ -627,8 +642,16 @@ function openSidePanel(nodeData) {
   const sidePanel = document.getElementById('side-panel');
   const content = document.getElementById('side-panel-content');
 
+  console.log("Side panel encontrado:", sidePanel);
+  console.log("Content encontrado:", content);
+
   if (!sidePanel || !content) {
     console.error("No se encontró el panel lateral o su contenido");
+    console.log("Elementos en el DOM:", {
+      sidePanel: document.getElementById('side-panel'),
+      content: document.getElementById('side-panel-content'),
+      allSidePanels: document.querySelectorAll('.side-panel')
+    });
     return;
   }
 
@@ -651,9 +674,6 @@ function openSidePanel(nodeData) {
 
   // Aplicar el tema actual al panel lateral
   updateSidePanelTheme();
-
-  // Prevenir el scroll del body
-  document.body.style.overflow = 'hidden';
 }
 
 function closeSidePanel() {
@@ -672,9 +692,6 @@ function closeSidePanel() {
 
   // Cerrar el panel
   sidePanel.classList.remove('open');
-
-  // Restaurar el scroll del body
-  document.body.style.overflow = '';
 }
 
 function generateSidePanelContent(nodeData) {
@@ -882,6 +899,25 @@ function setupClosePanelOnSvgClick() {
 function setTheme(themeId) {
   console.log(`Aplicando tema: ${themeId}`);
   
+  // EJECUTAR RESET AUTOMÁTICO AL CAMBIAR TEMA
+  // Limpiar todos los valores personalizados del localStorage
+  const allCSSVars = [
+    '--bg-color', '--text-color', '--node-fill', '--node-stroke-focus', '--label-border', '--link-color',
+    '--side-panel-bg', '--side-panel-text', '--side-panel-header-bg', '--side-panel-header-border',
+    '--side-panel-border', '--side-panel-label', '--side-panel-value', '--node-selection-border',
+    '--node-selection-focus', '--node-selection-hover', '--node-selection-selected', '--image-filter',
+    '--loading-color', '--loading-bg', '--bg-image', '--bg-opacity', '--control-bg', '--control-text',
+    '--control-border', '--control-border-hover', '--control-border-focus', '--control-placeholder',
+    '--control-shadow', '--control-shadow-focus'
+  ];
+  
+  // Limpiar localStorage de valores personalizados
+  allCSSVars.forEach(function(varName) {
+    localStorage.removeItem(`custom_${varName}`);
+  });
+  
+  console.log('Valores personalizados limpiados del localStorage');
+  
   // Remover todas las clases de tema anteriores
   document.body.classList.remove(
     'theme-light', 'theme-dark', 'theme-vintage', 'theme-pastel', 'theme-cyberpunk', 'theme-neon'
@@ -893,20 +929,29 @@ function setTheme(themeId) {
   
   console.log(`Clase de tema aplicada: theme-${themeId}`);
   
-  // Aplicar variables CSS directamente al documentElement (como en theme-creator)
+  // Detectar si estamos dentro de un contenedor encapsulado
+  const container = document.querySelector('.swanix-diagram-container');
+  const targetElement = container || document.documentElement;
+  
+  // Remover todas las variables CSS anteriores
+  allCSSVars.forEach(function(varName) {
+    targetElement.style.removeProperty(varName);
+  });
+  
+  // Aplicar variables CSS del nuevo tema (valores puros del tema)
   const themeVariables = getThemeVariables(themeId);
   Object.keys(themeVariables).forEach(function(varName) {
-    document.documentElement.style.setProperty(varName, themeVariables[varName]);
+    targetElement.style.setProperty(varName, themeVariables[varName]);
   });
   
   console.log(`Variables CSS aplicadas directamente para tema: ${themeId}`);
   
-  // Pequeño delay para asegurar que las variables CSS se apliquen
+  // Forzar la actualización inmediata de todos los elementos
   setTimeout(() => {
     console.log(`Actualizando colores para tema: ${themeId}`);
     
     // Verificar que las variables CSS se aplican correctamente
-    const computedStyle = getComputedStyle(document.documentElement);
+    const computedStyle = getComputedStyle(targetElement);
     const nodeFill = computedStyle.getPropertyValue('--node-fill');
     const textColor = computedStyle.getPropertyValue('--text-color');
     const linkColor = computedStyle.getPropertyValue('--link-color');
@@ -935,8 +980,14 @@ function setTheme(themeId) {
     // Actualizar el panel lateral si está abierto
     updateSidePanelTheme();
     
-    console.log(`Tema ${themeId} aplicado completamente`);
-  }, 50); // Aumentado a 50ms para mayor seguridad
+    // Forzar la actualización de todos los elementos del DOM que usan variables CSS
+    forceUpdateAllElements();
+    
+    // Resetear todos los inputs del theme creator si existe
+    resetThemeCreatorInputs(themeId);
+    
+    console.log(`Tema ${themeId} aplicado completamente con reset automático`);
+  }, 50);
 }
 
 // Función para obtener las variables CSS de cada tema
@@ -1143,8 +1194,12 @@ function getThemeVariables(themeId) {
 function updateSVGColors() {
   console.log('Actualizando colores del SVG...');
   
+  // Detectar si estamos dentro de un contenedor encapsulado
+  const container = document.querySelector('.swanix-diagram-container');
+  const targetElement = container || document.documentElement;
+  
   // Obtener las variables CSS del tema actual
-  const computedStyle = getComputedStyle(document.documentElement);
+  const computedStyle = getComputedStyle(targetElement);
   
   // Variables del tema
   const textColor = computedStyle.getPropertyValue('--text-color');
@@ -1213,6 +1268,84 @@ function updateSVGColors() {
   console.log('Colores del SVG actualizados completamente');
 }
 
+// Función para forzar la actualización de todos los elementos que usan variables CSS
+function forceUpdateAllElements() {
+  console.log('Forzando actualización de todos los elementos...');
+  
+  // Detectar si estamos dentro de un contenedor encapsulado
+  const container = document.querySelector('.swanix-diagram-container');
+  const targetElement = container || document.documentElement;
+  
+  // Obtener las variables CSS del tema actual
+  const computedStyle = getComputedStyle(targetElement);
+  
+  // Forzar la actualización de elementos específicos que podrían tener estilos en línea
+  const elementsToUpdate = [
+    { selector: '.side-panel', properties: ['background-color', 'color', 'border-color'] },
+    { selector: '.side-panel-header', properties: ['background-color', 'border-color'] },
+    { selector: '.side-panel-title', properties: ['color'] },
+    { selector: '.side-panel-close', properties: ['background-color', 'color', 'border-color'] },
+    { selector: '.side-panel-label', properties: ['color'] },
+    { selector: '.side-panel-value', properties: ['color'] },
+    { selector: '.control-item', properties: ['background-color', 'color', 'border-color'] },
+    { selector: '.theme-selector', properties: ['background-color', 'color', 'border-color'] },
+    { selector: '.topbar', properties: ['background-color', 'color'] },
+    { selector: '.diagram-title', properties: ['color'] }
+  ];
+  
+  elementsToUpdate.forEach(function(elementConfig) {
+    const elements = document.querySelectorAll(elementConfig.selector);
+    elements.forEach(function(element) {
+      // Remover estilos en línea que podrían estar sobrescribiendo las variables CSS
+      elementConfig.properties.forEach(function(property) {
+        element.style.removeProperty(property);
+      });
+    });
+  });
+  
+  console.log('Actualización forzada completada');
+}
+
+// Función para resetear todos los inputs del theme creator
+function resetThemeCreatorInputs(themeId) {
+  console.log('Reseteando inputs del theme creator para tema:', themeId);
+  
+  // Obtener los valores del tema seleccionado
+  const themeVariables = getThemeVariables(themeId);
+  
+  // Resetear todos los inputs de texto
+  const textInputs = document.querySelectorAll('.text-input');
+  textInputs.forEach(function(input) {
+    const varName = input.getAttribute('data-var');
+    if (varName && themeVariables[varName]) {
+      input.value = themeVariables[varName];
+      console.log(`Input ${varName} reseteado a:`, themeVariables[varName]);
+    }
+  });
+  
+  // Resetear todos los color pickers
+  const colorPickers = document.querySelectorAll('.color-picker input[type="color"]');
+  colorPickers.forEach(function(colorInput) {
+    const varName = colorInput.getAttribute('data-var');
+    if (varName && themeVariables[varName]) {
+      const colorValue = themeVariables[varName];
+      // Solo actualizar si es un color válido (hex)
+      if (colorValue.match(/^#[0-9A-F]{6}$/i)) {
+        colorInput.value = colorValue;
+        // Actualizar el color visual del picker
+        const pickerElement = colorInput.closest('.color-picker');
+        if (pickerElement) {
+          pickerElement.style.setProperty('--picker-color', colorValue);
+          pickerElement.style.backgroundColor = colorValue;
+        }
+        console.log(`Color picker ${varName} reseteado a:`, colorValue);
+      }
+    }
+  });
+  
+  console.log('Inputs del theme creator reseteados completamente');
+}
+
 // Función para actualizar el tema del panel lateral
 function updateSidePanelTheme() {
   console.log('Actualizando tema del panel lateral...');
@@ -1223,8 +1356,12 @@ function updateSidePanelTheme() {
     return;
   }
   
+  // Detectar si estamos dentro de un contenedor encapsulado
+  const container = document.querySelector('.swanix-diagram-container');
+  const targetElement = container || document.documentElement;
+  
   // Obtener las variables CSS del tema actual
-  const computedStyle = getComputedStyle(document.documentElement);
+  const computedStyle = getComputedStyle(targetElement);
   
   // Log de depuración para verificar las variables
   const sidePanelBg = computedStyle.getPropertyValue('--side-panel-bg');
@@ -1246,8 +1383,11 @@ function updateSidePanelTheme() {
   console.log('Tema del panel lateral actualizado');
 }
 
-// Hacer la función global para que el theme creator pueda usarla
+// Hacer las funciones globales para que el theme creator pueda usarlas
 window.updateSVGColors = updateSVGColors;
+window.setTheme = setTheme;
+window.openSidePanel = openSidePanel;
+window.closeSidePanel = closeSidePanel;
 
 // Configurar el selector de tema cuando el DOM esté listo
 document.addEventListener('DOMContentLoaded', function() {

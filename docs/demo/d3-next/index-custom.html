@@ -443,37 +443,50 @@
         }
 
         .control-item {
-            background: var(--side-panel-bg);
-            color: var(--side-panel-text);
-            border: 1px solid var(--side-panel-border);
+            background: var(--control-bg);
+            color: var(--control-text);
+            border: 1px solid var(--control-border);
             border-radius: 6px;
             padding: 8px 12px;
             font-size: 14px;
             outline: none;
-            transition: border-color 0.2s ease;
+            transition: all 0.2s ease;
+            box-shadow: 0 1px 3px var(--control-shadow);
         }
 
         .control-item:hover {
-            border-color: var(--side-panel-header-border);
+            border-color: var(--control-border-hover);
+            box-shadow: 0 2px 6px var(--control-shadow);
         }
 
         .control-item:focus {
-            border-color: var(--node-stroke-focus);
-            box-shadow: 0 0 0 2px rgba(25, 118, 210, 0.2);
+            border-color: var(--control-border-focus);
+            box-shadow: 0 0 0 2px var(--control-shadow-focus);
         }
 
         .control-item::placeholder {
-            color: #999;
+            color: var(--control-placeholder);
         }
 
         .theme-selector {
-            background: var(--side-panel-bg);
-            color: var(--side-panel-text);
-            border: 1px solid var(--side-panel-border);
+            background: var(--control-bg);
+            color: var(--control-text);
+            border: 1px solid var(--control-border);
             border-radius: 6px;
             font-size: 14px;
             padding: 4px 10px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+            box-shadow: 0 1px 3px var(--control-shadow);
+            transition: all 0.2s ease;
+        }
+
+        .theme-selector:hover {
+            border-color: var(--control-border-hover);
+            box-shadow: 0 2px 6px var(--control-shadow);
+        }
+
+        .theme-selector:focus {
+            border-color: var(--control-border-focus);
+            box-shadow: 0 0 0 2px var(--control-shadow-focus);
         }
     </style>
 </head>

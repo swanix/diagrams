@@ -375,9 +375,9 @@
 }
 
 .side-panel-close {
-  background-color: #000 !important;
-  color: #fff !important;
-  border: none;
+  background-color: var(--control-bg) !important;
+  color: var(--control-text) !important;
+  border: 1px solid var(--control-border) !important;
   border-radius: 50%;
   width: 30px;
   height: 30px;
@@ -386,12 +386,14 @@
   align-items: center;
   justify-content: center;
   font-size: 16px;
-  transition: background-color 0.2s ease;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 3px var(--control-shadow);
 }
 
 .side-panel-close:hover {
-  background-color: #222 !important;
-  color: #fff !important;
+  background-color: var(--control-border-hover) !important;
+  color: var(--control-text) !important;
+  box-shadow: 0 2px 6px var(--control-shadow);
 }
 
 .side-panel-content {
@@ -451,53 +453,57 @@
 }
 
 .side-panel-url {
-  color: #007bff;
+  color: var(--control-border-focus);
   text-decoration: none;
   word-break: break-all;
+  transition: color 0.2s ease;
 }
 
 .side-panel-url:hover {
+  color: var(--control-border-hover);
   text-decoration: underline;
 }
 
 /* Estilos para enlaces de subnodos */
 .subnode-link {
-  color: #007bff;
+  color: var(--control-border-focus);
   text-decoration: none;
   cursor: pointer;
   transition: color 0.2s ease;
 }
 
 .subnode-link:hover {
-  color: #0056b3;
+  color: var(--control-border-hover);
   text-decoration: underline;
 }
 
-/* Estilos para el dropdown de thumbnails */
+/* Estilos para el dropdown de thumbnails - usando los mismos estilos que control-item */
 .thumbnail-selector-dropdown {
-  width: 100%;
+  background: var(--control-bg);
+  color: var(--control-text);
+  border: 1px solid var(--control-border);
+  border-radius: 6px;
   padding: 8px 12px;
-  border: 1px solid var(--side-panel-border);
-  border-radius: 4px;
-  background: var(--side-panel-bg);
-  color: var(--side-panel-text);
   font-size: 14px;
   outline: none;
-  transition: border-color 0.2s ease;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 3px var(--control-shadow);
+  width: 100%;
 }
 
 .thumbnail-selector-dropdown:hover {
-  border-color: var(--node-selection-hover);
+  border-color: var(--control-border-hover);
+  box-shadow: 0 2px 6px var(--control-shadow);
 }
 
 .thumbnail-selector-dropdown:focus {
-  border-color: var(--node-selection-focus);
-  box-shadow: 0 0 0 2px rgba(25, 118, 210, 0.2);
+  border-color: var(--control-border-focus);
+  box-shadow: 0 0 0 2px var(--control-shadow-focus);
 }
 
 .thumbnail-selector-dropdown option {
-  background: var(--side-panel-bg);
-  color: var(--side-panel-text);
+  background: var(--control-bg);
+  color: var(--control-text);
   padding: 8px;
 }
 
@@ -639,6 +645,15 @@ svg .node.node-selected {
   --loading-bg: #ffffff; /* Fondo blanco para el loading */
   --bg-image: url('img/backgrounds/light-pattern.svg'); /* Patrón sutil de puntos */
   --bg-opacity: 0.9; /* Opacidad reducida para ver el patrón */
+  /* Variables específicas para controles */
+  --control-bg: #ffffff;
+  --control-text: #333333;
+  --control-border: #d1d5db;
+  --control-border-hover: #9ca3af;
+  --control-border-focus: #1976d2;
+  --control-placeholder: #9ca3af;
+  --control-shadow: rgba(0, 0, 0, 0.1);
+  --control-shadow-focus: rgba(25, 118, 210, 0.2);
 }
 .theme-dark {
   --bg-color: #181c24;
@@ -663,6 +678,15 @@ svg .node.node-selected {
   --loading-bg: #23272f; /* Fondo oscuro para el loading */
   --bg-image: url('https://images.unsplash.com/photo-1632059368252-be6d65abc4e2?w=1920&q=80'); /* Imagen de fondo oscura */
   --bg-opacity: 0.9; /* Opacidad muy baja para ver la imagen claramente */
+  /* Variables específicas para controles */
+  --control-bg: #2d3748;
+  --control-text: #e2e8f0;
+  --control-border: #4a5568;
+  --control-border-hover: #718096;
+  --control-border-focus: #00eaff;
+  --control-placeholder: #a0aec0;
+  --control-shadow: rgba(0, 0, 0, 0.3);
+  --control-shadow-focus: rgba(0, 234, 255, 0.3);
 }
 .theme-vintage {
   --bg-color: #f5e9da;
@@ -687,6 +711,15 @@ svg .node.node-selected {
   --loading-bg: #fffbe6; /* Fondo crema vintage para el loading */
   --bg-image: url('img/backgrounds/vintage-texture.svg'); /* Textura vintage */
   --bg-opacity: 0.8; /* Opacidad reducida para ver la textura */
+  /* Variables específicas para controles */
+  --control-bg: #fef7e0;
+  --control-text: #5d4037;
+  --control-border: #d4a574;
+  --control-border-hover: #b97a56;
+  --control-border-focus: #8b4513;
+  --control-placeholder: #a1887f;
+  --control-shadow: rgba(139, 69, 19, 0.2);
+  --control-shadow-focus: rgba(139, 69, 19, 0.4);
 }
 .theme-pastel {
   --bg-color: #fdf6fb;
@@ -711,6 +744,15 @@ svg .node.node-selected {
   --loading-bg: #ffffff; /* Fondo blanco para el loading */
   --bg-image: url('img/backgrounds/pastel-dots.svg'); /* Puntos pastel */
   --bg-opacity: 0.85; /* Opacidad reducida para ver los puntos */
+  /* Variables específicas para controles */
+  --control-bg: #ffffff;
+  --control-text: #7a7a7a;
+  --control-border: #e8d5e0;
+  --control-border-hover: #d4a5c0;
+  --control-border-focus: #b6b6f7;
+  --control-placeholder: #c4a8b8;
+  --control-shadow: rgba(182, 182, 247, 0.2);
+  --control-shadow-focus: rgba(182, 182, 247, 0.4);
 }
 .theme-cyberpunk {
   --bg-color: #0f0026;
@@ -734,7 +776,16 @@ svg .node.node-selected {
   --loading-color: #00ffe7; /* Cyan cyberpunk para el spinner */
   --loading-bg: #1a0033; /* Fondo púrpura oscuro para el loading */
   --bg-image: url('https://images.unsplash.com/photo-1632059368252-be6d65abc4e2?w=1920&q=80'); /* Imagen de fondo oscura */
-  --bg-opacity: 0.9; /
+  --bg-opacity: 0.9; /* Opacidad muy baja para ver la imagen claramente */
+  /* Variables específicas para controles */
+  --control-bg: #2a0040;
+  --control-text: #00ffe7;
+  --control-border: #ff00c8;
+  --control-border-hover: #ff33d6;
+  --control-border-focus: #00ffe7;
+  --control-placeholder: #7a4d8a;
+  --control-shadow: rgba(255, 0, 200, 0.3);
+  --control-shadow-focus: rgba(0, 255, 231, 0.4);
 }
 .theme-neon {
   --bg-color: #000;
@@ -759,6 +810,15 @@ svg .node.node-selected {
   --loading-bg: #111111; /* Fondo negro para el loading */
   --bg-image: url('img/backgrounds/neon-grid.svg'); /* Cuadrícula neón */
   --bg-opacity: 0.2; /* Opacidad muy baja para ver la cuadrícula neón */
+  /* Variables específicas para controles */
+  --control-bg: #1a1a1a;
+  --control-text: #39ff14;
+  --control-border: #ff00de;
+  --control-border-hover: #ff33e6;
+  --control-border-focus: #39ff14;
+  --control-placeholder: #666666;
+  --control-shadow: rgba(255, 0, 222, 0.3);
+  --control-shadow-focus: rgba(57, 255, 20, 0.4);
 }
 
 /* Selector de tema compacto */
@@ -767,13 +827,24 @@ svg .node.node-selected {
   top: 10px;
   right: 10px;
   z-index: 1001;
-  background: var(--side-panel-bg);
-  color: var(--side-panel-text);
-  border: 1px solid var(--side-panel-border);
+  background: var(--control-bg);
+  color: var(--control-text);
+  border: 1px solid var(--control-border);
   border-radius: 6px;
   font-size: 14px;
   padding: 4px 10px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+  box-shadow: 0 2px 8px var(--control-shadow);
+  transition: all 0.2s ease;
+}
+
+.theme-selector:hover {
+  border-color: var(--control-border-hover);
+  box-shadow: 0 4px 12px var(--control-shadow);
+}
+
+.theme-selector:focus {
+  border-color: var(--control-border-focus);
+  box-shadow: 0 0 0 2px var(--control-shadow-focus);
 }
 
 /* === TOPBAR === */
@@ -829,27 +900,29 @@ svg .node.node-selected {
 }
 
 .control-item {
-  background: var(--side-panel-bg);
-  color: var(--side-panel-text);
-  border: 1px solid var(--side-panel-border);
+  background: var(--control-bg);
+  color: var(--control-text);
+  border: 1px solid var(--control-border);
   border-radius: 6px;
   padding: 8px 12px;
   font-size: 14px;
   outline: none;
-  transition: border-color 0.2s ease;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 3px var(--control-shadow);
 }
 
 .control-item:hover {
-  border-color: var(--side-panel-header-border);
+  border-color: var(--control-border-hover);
+  box-shadow: 0 2px 6px var(--control-shadow);
 }
 
 .control-item:focus {
-  border-color: var(--node-stroke-focus);
-  box-shadow: 0 0 0 2px rgba(25, 118, 210, 0.2);
+  border-color: var(--control-border-focus);
+  box-shadow: 0 0 0 2px var(--control-shadow-focus);
 }
 
 .control-item::placeholder {
-  color: var(--side-panel-label);
+  color: var(--control-placeholder);
 }
 
 /* Ajustar SVG para el topbar */
@@ -861,12 +934,23 @@ svg {
 /* Ajustar selector de tema para el topbar */
 .theme-selector {
   position: static;
-  background: var(--side-panel-bg);
-  color: var(--side-panel-text);
-  border: 1px solid var(--side-panel-border);
+  background: var(--control-bg);
+  color: var(--control-text);
+  border: 1px solid var(--control-border);
   border-radius: 6px;
   font-size: 14px;
   padding: 8px 12px;
-  box-shadow: none;
+  box-shadow: 0 1px 3px var(--control-shadow);
   min-width: 140px; /* Asegurar un ancho mínimo consistente */
+  transition: all 0.2s ease;
+}
+
+.theme-selector:hover {
+  border-color: var(--control-border-hover);
+  box-shadow: 0 2px 6px var(--control-shadow);
+}
+
+.theme-selector:focus {
+  border-color: var(--control-border-focus);
+  box-shadow: 0 0 0 2px var(--control-shadow-focus);
 }

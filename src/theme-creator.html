@@ -447,11 +447,14 @@
         }
         
         .topbar .control-item,
-        .topbar .theme-selector,
+        .topbar .theme-selector {
+            background: var(--control-bg, #fff) !important;
+            color: var(--control-text, var(--text-color, #333)) !important;
+            border-color: var(--control-border, #ddd) !important;
+        }
+        
         .topbar .diagram-title {
-            background: var(--node-fill, #fff) !important;
             color: var(--topbar-text, var(--text-color, #333)) !important;
-            border-color: var(--label-border, #ddd) !important;
         }
         
         /* Panel lateral del diagrama (el que se abre al hacer clic en nodos) */
@@ -709,6 +712,58 @@
                 </div>
             </div>
 
+            <div class="variable-group">
+                <h3>Controles (Inputs, Dropdowns, Botones)</h3>
+                <div class="variable-item">
+                    <label class="variable-label">Fondo de Controles</label>
+                    <input type="text" class="text-input" data-var="--control-bg" value="#ffffff">
+                    <button class="reset-individual-btn" onclick="resetIndividualValue('--control-bg', '#ffffff')" title="Resetear a valor original">↺</button>
+                    <div class="color-picker" data-var="--control-bg" data-color="#ffffff" style="--picker-color: #ffffff; background-color: #ffffff;">
+                        <input type="color" value="#ffffff">
+                    </div>
+                </div>
+                <div class="variable-item">
+                    <label class="variable-label">Texto de Controles</label>
+                    <input type="text" class="text-input" data-var="--control-text" value="#333333">
+                    <button class="reset-individual-btn" onclick="resetIndividualValue('--control-text', '#333333')" title="Resetear a valor original">↺</button>
+                    <div class="color-picker" data-var="--control-text" data-color="#333333" style="--picker-color: #333333; background-color: #333333;">
+                        <input type="color" value="#333333">
+                    </div>
+                </div>
+                <div class="variable-item">
+                    <label class="variable-label">Borde de Controles</label>
+                    <input type="text" class="text-input" data-var="--control-border" value="#d1d5db">
+                    <button class="reset-individual-btn" onclick="resetIndividualValue('--control-border', '#d1d5db')" title="Resetear a valor original">↺</button>
+                    <div class="color-picker" data-var="--control-border" data-color="#d1d5db" style="--picker-color: #d1d5db; background-color: #d1d5db;">
+                        <input type="color" value="#d1d5db">
+                    </div>
+                </div>
+                <div class="variable-item">
+                    <label class="variable-label">Borde Hover</label>
+                    <input type="text" class="text-input" data-var="--control-border-hover" value="#9ca3af">
+                    <button class="reset-individual-btn" onclick="resetIndividualValue('--control-border-hover', '#9ca3af')" title="Resetear a valor original">↺</button>
+                    <div class="color-picker" data-var="--control-border-hover" data-color="#9ca3af" style="--picker-color: #9ca3af; background-color: #9ca3af;">
+                        <input type="color" value="#9ca3af">
+                    </div>
+                </div>
+                <div class="variable-item">
+                    <label class="variable-label">Borde Focus</label>
+                    <input type="text" class="text-input" data-var="--control-border-focus" value="#1976d2">
+                    <button class="reset-individual-btn" onclick="resetIndividualValue('--control-border-focus', '#1976d2')" title="Resetear a valor original">↺</button>
+                    <div class="color-picker" data-var="--control-border-focus" data-color="#1976d2" style="--picker-color: #1976d2; background-color: #1976d2;">
+                        <input type="color" value="#1976d2">
+                    </div>
+                </div>
+                <div class="variable-item">
+                    <label class="variable-label">Placeholder</label>
+                    <input type="text" class="text-input" data-var="--control-placeholder" value="#9ca3af">
+                    <button class="reset-individual-btn" onclick="resetIndividualValue('--control-placeholder', '#9ca3af')" title="Resetear a valor original">↺</button>
+                    <div class="color-picker" data-var="--control-placeholder" data-color="#9ca3af" style="--picker-color: #9ca3af; background-color: #9ca3af;">
+                        <input type="color" value="#9ca3af">
+                    </div>
+                </div>
+            </div>
+
             <div class="actions-section">
                 <div class="actions-grid">
                     <button class="btn btn-primary" onclick="copyTheme()">Copiar</button>
@@ -750,7 +805,15 @@
             '--topbar-text': '#333333',
             '--sidepanel-bg': '#ffffff',
             '--sidepanel-text': '#333333',
-            '--sidepanel-border': '#dddddd'
+            '--sidepanel-border': '#dddddd',
+            '--control-bg': '#ffffff',
+            '--control-text': '#333333',
+            '--control-border': '#d1d5db',
+            '--control-border-hover': '#9ca3af',
+            '--control-border-focus': '#1976d2',
+            '--control-placeholder': '#9ca3af',
+            '--control-shadow': 'rgba(0, 0, 0, 0.1)',
+            '--control-shadow-focus': 'rgba(25, 118, 210, 0.2)'
         };
 
         // Valores de los temas predefinidos
@@ -767,7 +830,15 @@
                 '--topbar-text': '#333333',
                 '--sidepanel-bg': '#ffffff',
                 '--sidepanel-text': '#333333',
-                '--sidepanel-border': '#dddddd'
+                '--sidepanel-border': '#dddddd',
+                '--control-bg': '#ffffff',
+                '--control-text': '#333333',
+                '--control-border': '#d1d5db',
+                '--control-border-hover': '#9ca3af',
+                '--control-border-focus': '#1976d2',
+                '--control-placeholder': '#9ca3af',
+                '--control-shadow': 'rgba(0, 0, 0, 0.1)',
+                '--control-shadow-focus': 'rgba(25, 118, 210, 0.2)'
             },
             'dark': {
                 '--bg-color': '#181c24',
@@ -781,7 +852,15 @@
                 '--topbar-text': '#f6f7f9',
                 '--sidepanel-bg': '#23272f',
                 '--sidepanel-text': '#f6f7f9',
-                '--sidepanel-border': '#333'
+                '--sidepanel-border': '#333',
+                '--control-bg': '#2d3748',
+                '--control-text': '#e2e8f0',
+                '--control-border': '#4a5568',
+                '--control-border-hover': '#718096',
+                '--control-border-focus': '#00eaff',
+                '--control-placeholder': '#a0aec0',
+                '--control-shadow': 'rgba(0, 0, 0, 0.3)',
+                '--control-shadow-focus': 'rgba(0, 234, 255, 0.3)'
             },
             'vintage': {
                 '--bg-color': '#f5e9da',
@@ -795,7 +874,15 @@
                 '--topbar-text': '#7c4f20',
                 '--sidepanel-bg': '#fffbe6',
                 '--sidepanel-text': '#7c4f20',
-                '--sidepanel-border': '#b97a56'
+                '--sidepanel-border': '#b97a56',
+                '--control-bg': '#fef7e0',
+                '--control-text': '#5d4037',
+                '--control-border': '#d4a574',
+                '--control-border-hover': '#b97a56',
+                '--control-border-focus': '#8b4513',
+                '--control-placeholder': '#a1887f',
+                '--control-shadow': 'rgba(139, 69, 19, 0.2)',
+                '--control-shadow-focus': 'rgba(139, 69, 19, 0.4)'
             },
             'pastel': {
                 '--bg-color': '#fdf6fb',
@@ -809,7 +896,15 @@
                 '--topbar-text': '#7a7a7a',
                 '--sidepanel-bg': '#fff',
                 '--sidepanel-text': '#7a7a7a',
-                '--sidepanel-border': '#e0b1cb'
+                '--sidepanel-border': '#e0b1cb',
+                '--control-bg': '#ffffff',
+                '--control-text': '#7a7a7a',
+                '--control-border': '#e8d5e0',
+                '--control-border-hover': '#d4a5c0',
+                '--control-border-focus': '#b6b6f7',
+                '--control-placeholder': '#c4a8b8',
+                '--control-shadow': 'rgba(182, 182, 247, 0.2)',
+                '--control-shadow-focus': 'rgba(182, 182, 247, 0.4)'
             },
             'cyberpunk': {
                 '--bg-color': '#0f0026',
@@ -823,7 +918,15 @@
                 '--topbar-text': '#00ffe7',
                 '--sidepanel-bg': '#1a0033',
                 '--sidepanel-text': '#00ffe7',
-                '--sidepanel-border': '#ff00c8'
+                '--sidepanel-border': '#ff00c8',
+                '--control-bg': '#2a0040',
+                '--control-text': '#00ffe7',
+                '--control-border': '#ff00c8',
+                '--control-border-hover': '#ff33d6',
+                '--control-border-focus': '#00ffe7',
+                '--control-placeholder': '#7a4d8a',
+                '--control-shadow': 'rgba(255, 0, 200, 0.3)',
+                '--control-shadow-focus': 'rgba(0, 255, 231, 0.4)'
             },
             'neon': {
                 '--bg-color': '#000',
@@ -837,7 +940,15 @@
                 '--topbar-text': '#39ff14',
                 '--sidepanel-bg': '#111',
                 '--sidepanel-text': '#39ff14',
-                '--sidepanel-border': '#ff00de'
+                '--sidepanel-border': '#ff00de',
+                '--control-bg': '#1a1a1a',
+                '--control-text': '#39ff14',
+                '--control-border': '#ff00de',
+                '--control-border-hover': '#ff33e6',
+                '--control-border-focus': '#39ff14',
+                '--control-placeholder': '#666666',
+                '--control-shadow': 'rgba(255, 0, 222, 0.3)',
+                '--control-shadow-focus': 'rgba(57, 255, 20, 0.4)'
             }
         };
 
@@ -904,11 +1015,35 @@
             console.log('Valor individual reseteado:', varName, '=', originalValue);
         }
 
+        // Función para guardar un valor custom en localStorage
+        function saveCustomValue(varName, value) {
+            const customValues = JSON.parse(localStorage.getItem('customThemeValues') || '{}');
+            customValues[varName] = value;
+            localStorage.setItem('customThemeValues', JSON.stringify(customValues));
+            console.log('Valor custom guardado:', varName, '=', value);
+        }
+
+        // Función para cargar valores custom desde localStorage
+        function loadCustomValues() {
+            const customValues = JSON.parse(localStorage.getItem('customThemeValues') || '{}');
+            console.log('Valores custom cargados:', customValues);
+            return customValues;
+        }
+
+        // Función para limpiar valores custom (usado en reset)
+        function clearCustomValues() {
+            localStorage.removeItem('customThemeValues');
+            console.log('Valores custom limpiados');
+        }
+
         // Función para resetear a valores del tema seleccionado
         function resetToDefault() {
             // Obtener el tema seleccionado actualmente
             const selectedTheme = document.getElementById('theme-selector-visible').value;
             const themeToReset = themeValues[selectedTheme] || defaultValues;
+            
+            // Limpiar valores custom
+            clearCustomValues();
             
             Object.keys(themeToReset).forEach(function(varName) {
                 const value = themeToReset[varName];
@@ -1165,97 +1300,11 @@
 
 
 
-        // Definir los temas predefinidos (usando las variables exactas del CSS)
-        const predefinedThemes = {
-            light: {
-                '--bg-color': '#ecf2fd',
-                '--text-color': '#222',
-                '--node-fill': '#fff',
-                '--label-border': '#bdbdbd',
-                '--node-selection-focus': '#1976d2',
-                '--link-color': '#999',
-                '--image-filter': 'grayscale(30%)',
-                '--topbar-bg': '#ffffff',
-                '--topbar-text': '#333333',
-                '--sidepanel-bg': '#ffffff',
-                '--sidepanel-text': '#333333',
-                '--sidepanel-border': '#dddddd'
-            },
-            dark: {
-                '--bg-color': '#181c24',
-                '--text-color': '#f6f7f9',
-                '--node-fill': '#23272f',
-                '--label-border': '#444',
-                '--node-selection-focus': '#00eaff',
-                '--link-color': '#666',
-                '--image-filter': 'invert(100%) brightness(3.5) contrast(200%)',
-                '--topbar-bg': '#23272f',
-                '--topbar-text': '#f6f7f9',
-                '--sidepanel-bg': '#23272f',
-                '--sidepanel-text': '#f6f7f9',
-                '--sidepanel-border': '#444'
-            },
-            vintage: {
-                '--bg-color': '#f5e9da',
-                '--text-color': '#7c4f20',
-                '--node-fill': '#fffbe6',
-                '--label-border': '#b97a56',
-                '--node-selection-focus': '#8b4513',
-                '--link-color': '#b97a56',
-                '--image-filter': 'sepia(40%) brightness(1.1)',
-                '--topbar-bg': '#fffbe6',
-                '--topbar-text': '#7c4f20',
-                '--sidepanel-bg': '#fffbe6',
-                '--sidepanel-text': '#7c4f20',
-                '--sidepanel-border': '#b97a56'
-            },
-            pastel: {
-                '--bg-color': '#fdf6fb',
-                '--text-color': '#7a7a7a',
-                '--node-fill': '#fff',
-                '--label-border': '#e0b1cb',
-                '--node-selection-focus': '#b6b6f7',
-                '--link-color': '#b6b6f7',
-                '--image-filter': 'hue-rotate(15deg) saturate(0.8)',
-                '--topbar-bg': '#ffffff',
-                '--topbar-text': '#7a7a7a',
-                '--sidepanel-bg': '#ffffff',
-                '--sidepanel-text': '#7a7a7a',
-                '--sidepanel-border': '#e0b1cb'
-            },
-            cyberpunk: {
-                '--bg-color': '#0f0026',
-                '--text-color': '#00ffe7',
-                '--node-fill': '#1a0033',
-                '--label-border': '#00ffe7',
-                '--node-selection-focus': '#00ffe7',
-                '--link-color': '#ff00c8',
-                '--image-filter': 'invert(100%) brightness(3.5) contrast(200%)',
-                '--topbar-bg': '#1a0033',
-                '--topbar-text': '#00ffe7',
-                '--sidepanel-bg': '#1a0033',
-                '--sidepanel-text': '#00ffe7',
-                '--sidepanel-border': '#00ffe7'
-            },
-            neon: {
-                '--bg-color': '#000',
-                '--text-color': '#39ff14',
-                '--node-fill': '#111',
-                '--label-border': '#ff00de',
-                '--node-selection-focus': '#39ff14',
-                '--link-color': '#39ff14',
-                '--image-filter': 'invert(100%) brightness(3.5) contrast(200%)',
-                '--topbar-bg': '#111',
-                '--topbar-text': '#39ff14',
-                '--sidepanel-bg': '#111',
-                '--sidepanel-text': '#39ff14',
-                '--sidepanel-border': '#ff00de'
-            }
-        };
+
 
         // Función para cargar un tema predefinido
         function loadPredefinedTheme(themeName) {
-            const theme = predefinedThemes[themeName];
+            const theme = themeValues[themeName]; // Usar themeValues en lugar de predefinedThemes
             if (!theme) return;
 
             console.log('Cargando tema predefinido:', themeName);
@@ -1264,23 +1313,23 @@
             document.body.classList.remove('theme-light', 'theme-dark', 'theme-vintage', 'theme-pastel', 'theme-cyberpunk', 'theme-neon');
             document.body.classList.add('theme-' + themeName);
 
-                    // Aplicar variables CSS y actualizar TODOS los controles
-        Object.keys(theme).forEach(function(varName) {
-            const value = theme[varName];
-            
-            // Aplicar variable CSS al document.documentElement, body y todos los elementos principales
-            document.documentElement.style.setProperty(varName, value);
-            document.body.style.setProperty(varName, value);
-            
-            // Aplicar también al topbar y sidebar para que reciban los estilos
-            const topbar = document.querySelector('.topbar');
-            const sidebar = document.querySelector('.sidebar');
-            const mainContent = document.querySelector('.main-content');
-            
-            if (topbar) topbar.style.setProperty(varName, value);
-            if (sidebar) sidebar.style.setProperty(varName, value);
-            if (mainContent) mainContent.style.setProperty(varName, value);
+            // Aplicar variables CSS y actualizar TODOS los controles
+            Object.keys(theme).forEach(function(varName) {
+                const value = theme[varName];
                 
+                // Aplicar variable CSS al document.documentElement, body y todos los elementos principales
+                document.documentElement.style.setProperty(varName, value);
+                document.body.style.setProperty(varName, value);
+                
+                // Aplicar también al topbar y sidebar para que reciban los estilos
+                const topbar = document.querySelector('.topbar');
+                const sidebar = document.querySelector('.sidebar');
+                const mainContent = document.querySelector('.main-content');
+                
+                if (topbar) topbar.style.setProperty(varName, value);
+                if (sidebar) sidebar.style.setProperty(varName, value);
+                if (mainContent) mainContent.style.setProperty(varName, value);
+                    
                 // Actualizar input de texto
                 const textInput = document.querySelector('[data-var="' + varName + '"].text-input');
                 if (textInput) {
@@ -1299,6 +1348,8 @@
                         // Actualizar color visual del picker
                         pickerElement.style.setProperty('--picker-color', value);
                         pickerElement.style.backgroundColor = value;
+                        // Actualizar también el atributo data-color
+                        pickerElement.setAttribute('data-color', value);
                         console.log('Color picker actualizado:', varName, '=', value);
                     }
                 }
@@ -1314,6 +1365,39 @@
             // Actualizar nombre del tema
             document.getElementById('theme-name').value = themeName + '-custom';
             
+            // Cargar valores custom si existen
+            const customValues = loadCustomValues();
+            Object.keys(customValues).forEach(function(varName) {
+                const value = customValues[varName];
+                
+                // Aplicar variable CSS
+                document.documentElement.style.setProperty(varName, value);
+                document.body.style.setProperty(varName, value);
+                
+                // Aplicar también al topbar y sidebar
+                const topbar = document.querySelector('.topbar');
+                const sidebar = document.querySelector('.sidebar');
+                const mainContent = document.querySelector('.main-content');
+                
+                if (topbar) topbar.style.setProperty(varName, value);
+                if (sidebar) sidebar.style.setProperty(varName, value);
+                if (mainContent) mainContent.style.setProperty(varName, value);
+                
+                // Actualizar controles
+                const textInput = document.querySelector('[data-var="' + varName + '"].text-input');
+                if (textInput) textInput.value = value;
+                
+                if (varName !== '--image-filter') {
+                    const pickerElement = document.querySelector('[data-var="' + varName + '"].color-picker');
+                    if (pickerElement) {
+                        const colorInput = pickerElement.querySelector('input[type="color"]');
+                        if (colorInput) colorInput.value = value;
+                        pickerElement.style.setProperty('--picker-color', value);
+                        pickerElement.style.backgroundColor = value;
+                    }
+                }
+            });
+            
             // Forzar la actualización del SVG con un pequeño delay
             setTimeout(function() {
                 if (window.updateSVGColors) {
@@ -1323,7 +1407,7 @@
                 applyTheme(false); // Sin mostrar toast
             }, 100);
             
-            console.log('Tema', themeName, 'cargado completamente');
+            console.log('Tema', themeName, 'cargado completamente con valores custom');
         }
 
         // Event listener para el selector de temas visible
@@ -1378,6 +1462,9 @@
                         pickerElement.style.setProperty('--picker-color', hexColor);
                         pickerElement.style.backgroundColor = hexColor;
                         
+                        // Guardar el valor custom en localStorage
+                        saveCustomValue(varName, hexColor);
+                        
                         // Actualizar SVG dinámicamente (con delay para evitar conflictos)
                         setTimeout(function() {
                             if (window.updateSVGColors) {
@@ -1385,7 +1472,7 @@
                             }
                         }, 50);
                         
-                        console.log('Color actualizado:', varName, '=', hexColor);
+                        console.log('Color actualizado y guardado:', varName, '=', hexColor);
                     });
                     
                     // También escuchar el evento change para asegurar que se aplique
@@ -1414,6 +1501,9 @@
                         pickerElement.style.setProperty('--picker-color', hexColor);
                         pickerElement.style.backgroundColor = hexColor;
                         
+                        // Guardar el valor custom en localStorage
+                        saveCustomValue(varName, hexColor);
+                        
                         // Actualizar SVG dinámicamente (con delay para evitar conflictos)
                         setTimeout(function() {
                             if (window.updateSVGColors) {
@@ -1421,7 +1511,7 @@
                             }
                         }, 50);
                         
-                        console.log('Color aplicado (change):', varName, '=', hexColor);
+                        console.log('Color aplicado y guardado (change):', varName, '=', hexColor);
                     });
                     
                     // Event listener para el input de texto
@@ -1439,6 +1529,9 @@
                                 pickerElement.style.setProperty('--picker-color', newColor);
                                 pickerElement.style.backgroundColor = newColor;
                                 
+                                // Guardar el valor custom en localStorage
+                                saveCustomValue(varName, newColor);
+                                
                                 // Actualizar SVG dinámicamente (con delay para evitar conflictos)
                                 setTimeout(function() {
                                     if (window.updateSVGColors) {
@@ -1446,7 +1539,7 @@
                                     }
                                 }, 50);
                                 
-                                console.log('Color actualizado desde texto:', varName, '=', newColor);
+                                console.log('Color actualizado desde texto y guardado:', varName, '=', newColor);
                             }
                         });
                     }
@@ -1531,6 +1624,9 @@
                         }
                     }
                     
+                    // Guardar el valor custom en localStorage
+                    saveCustomValue(varName, value);
+                    
                     // Actualizar SVG dinámicamente (con delay para evitar conflictos)
                     setTimeout(function() {
                         if (window.updateSVGColors) {
@@ -1538,7 +1634,7 @@
                         }
                     }, 50);
                     
-                    console.log('Variable CSS actualizada:', varName, '=', value);
+                    console.log('Variable CSS actualizada y guardada:', varName, '=', value);
                 });
                 
                 // Evento para cuando se presiona Enter
@@ -1584,33 +1680,61 @@
             // Sincronizar selectores
             themeSelector.addEventListener('change', function() {
                 const selectedTheme = this.value;
+                const previousTheme = hiddenThemeSelector.value;
                 hiddenThemeSelector.value = selectedTheme;
+                
+                // Guardar el tema seleccionado en localStorage
+                localStorage.setItem('selectedTheme', selectedTheme);
+                console.log('Tema guardado en localStorage:', selectedTheme);
+                
+                // Si se cambió de tema, limpiar valores custom
+                if (previousTheme !== selectedTheme) {
+                    console.log('Cambio de tema detectado, limpiando valores custom');
+                    clearCustomValues();
+                }
+                
                 loadPredefinedTheme(selectedTheme);
             });
 
             // Sincronizar con el selector oculto (para compatibilidad con sw-diagrams.js)
             hiddenThemeSelector.addEventListener('change', function() {
                 const selectedTheme = this.value;
+                const previousTheme = themeSelector.value;
                 themeSelector.value = selectedTheme;
+                
+                // Guardar el tema seleccionado en localStorage
+                localStorage.setItem('selectedTheme', selectedTheme);
+                console.log('Tema guardado en localStorage:', selectedTheme);
+                
+                // Si se cambió de tema, limpiar valores custom
+                if (previousTheme !== selectedTheme) {
+                    console.log('Cambio de tema detectado, limpiando valores custom');
+                    clearCustomValues();
+                }
+                
                 loadPredefinedTheme(selectedTheme);
             });
 
-            // Inicializar con tema light después de que los color pickers estén listos
+            // Inicializar con tema persistente después de que los color pickers estén listos
             setTimeout(function() {
-                // Establecer tema light como seleccionado por defecto
-                themeSelector.value = 'light';
-                hiddenThemeSelector.value = 'light';
+                // Restaurar tema guardado o usar light por defecto
+                const savedTheme = localStorage.getItem('selectedTheme') || 'light';
+                console.log('Tema guardado encontrado:', savedTheme);
                 
-                // Cargar tema light por defecto en lugar de resetear
-                loadPredefinedTheme('light');
+                // Establecer el tema guardado como seleccionado
+                themeSelector.value = savedTheme;
+                hiddenThemeSelector.value = savedTheme;
+                
+                // Cargar el tema guardado
+                loadPredefinedTheme(savedTheme);
                 
                 // Aplicar tema inmediatamente para que los color pickers funcionen desde el inicio
                 setTimeout(function() {
                     applyTheme(false); // Sin mostrar toast
-                    console.log('Tema aplicado automáticamente al cargar la página');
+                    console.log('Tema persistente aplicado automáticamente al cargar la página:', savedTheme);
                 }, 200);
                 
-                console.log('Tema light cargado automáticamente al cargar la página');
+                console.log('Tema persistente cargado automáticamente al cargar la página:', savedTheme);
             }, 100);
         });
 

@@ -4,8 +4,8 @@
 
 function initDiagram(csvUrl) {
   console.log("Iniciando carga del diagrama...");
-  const loadingElement = document.querySelector(".diagram-container #loading");
-  const errorElement = document.querySelector(".diagram-container #error-message");
+  const loadingElement = document.querySelector("#loading");
+  const errorElement = document.querySelector("#error-message");
   
   if (loadingElement) loadingElement.style.display = "block";
   if (errorElement) errorElement.style.display = "none";
@@ -36,6 +36,12 @@ function initDiagram(csvUrl) {
         
         console.log("Ocultando loading...");
         if (loadingElement) loadingElement.style.display = "none";
+        
+        // Aplicar el tema actual después de que el diagrama esté completamente cargado
+        const currentTheme = localStorage.getItem('selectedTheme') || 'light';
+        console.log("Aplicando tema actual:", currentTheme);
+        setTheme(currentTheme);
+        
         console.log("Diagrama cargado completamente");
       } catch (error) {
         console.error("Error durante la inicialización:", error);
@@ -89,16 +95,10 @@ function buildMultipleHierarchies(data) {
 
 function drawMultipleTrees(trees) {
   
-  // Asegurar que solo trabajamos con el SVG del contenedor del diagrama
-  const diagramContainer = document.querySelector(".diagram-container");
-  if (!diagramContainer) {
-    console.error("No se encontró el contenedor del diagrama");
-    return;
-  }
-  
-  let svg = diagramContainer.querySelector("svg");
+  // Buscar el SVG directamente en el body
+  let svg = document.querySelector("svg");
   if (!svg) {
-    console.error("No se encontró el SVG en el contenedor del diagrama");
+    console.error("No se encontró el SVG en el documento");
     return;
   }
   
@@ -880,64 +880,337 @@ function setupClosePanelOnSvgClick() {
 
 // === SISTEMA DE THEMES ===
 function setTheme(themeId) {
+  console.log(`Aplicando tema: ${themeId}`);
+  
+  // Remover todas las clases de tema anteriores
   document.body.classList.remove(
     'theme-light', 'theme-dark', 'theme-vintage', 'theme-pastel', 'theme-cyberpunk', 'theme-neon'
   );
+  
+  // Agregar la nueva clase de tema
   document.body.classList.add('theme-' + themeId);
   localStorage.setItem('selectedTheme', themeId);
   
-  // Log temporal para verificar que las variables se aplican
-  const nodeSelectionFocus = getComputedStyle(document.documentElement).getPropertyValue('--node-selection-focus');
-  console.log(`Tema ${themeId} - Variable --node-selection-focus:`, nodeSelectionFocus);
+  console.log(`Clase de tema aplicada: theme-${themeId}`);
   
-  // Verificar que los filtros se aplican correctamente
-  const imageElements = document.querySelectorAll('image.image-filter');
-  if (imageElements.length > 0) {
-    const computedFilter = getComputedStyle(imageElements[0]).filter;
-    console.log(`Tema ${themeId} - Filtro aplicado:`, computedFilter);
-  }
+  // Aplicar variables CSS directamente al documentElement (como en theme-creator)
+  const themeVariables = getThemeVariables(themeId);
+  Object.keys(themeVariables).forEach(function(varName) {
+    document.documentElement.style.setProperty(varName, themeVariables[varName]);
+  });
   
-  // Verificar variables del panel lateral
-  const sidePanelBg = getComputedStyle(document.documentElement).getPropertyValue('--side-panel-bg');
-  const sidePanelText = getComputedStyle(document.documentElement).getPropertyValue('--side-panel-text');
-  console.log(`Tema ${themeId} - Variables del panel:`, { sidePanelBg, sidePanelText });
+  console.log(`Variables CSS aplicadas directamente para tema: ${themeId}`);
   
-  // Actualizar el SVG dinámicamente
-  updateSVGColors();
+  // Pequeño delay para asegurar que las variables CSS se apliquen
+  setTimeout(() => {
+    console.log(`Actualizando colores para tema: ${themeId}`);
+    
+    // Verificar que las variables CSS se aplican correctamente
+    const computedStyle = getComputedStyle(document.documentElement);
+    const nodeFill = computedStyle.getPropertyValue('--node-fill');
+    const textColor = computedStyle.getPropertyValue('--text-color');
+    const linkColor = computedStyle.getPropertyValue('--link-color');
+    
+    console.log(`Variables CSS del tema ${themeId}:`, {
+      '--node-fill': nodeFill,
+      '--text-color': textColor,
+      '--link-color': linkColor
+    });
+    
+    // Verificar que los filtros se aplican correctamente
+    const imageElements = document.querySelectorAll('image.image-filter');
+    if (imageElements.length > 0) {
+      const computedFilter = getComputedStyle(imageElements[0]).filter;
+      console.log(`Tema ${themeId} - Filtro aplicado:`, computedFilter);
+    }
+    
+    // Verificar variables del panel lateral
+    const sidePanelBg = computedStyle.getPropertyValue('--side-panel-bg');
+    const sidePanelText = computedStyle.getPropertyValue('--side-panel-text');
+    console.log(`Tema ${themeId} - Variables del panel:`, { sidePanelBg, sidePanelText });
+    
+    // Actualizar el SVG dinámicamente
+    updateSVGColors();
+    
+    // Actualizar el panel lateral si está abierto
+    updateSidePanelTheme();
+    
+    console.log(`Tema ${themeId} aplicado completamente`);
+  }, 50); // Aumentado a 50ms para mayor seguridad
+}
+
+// Función para obtener las variables CSS de cada tema
+function getThemeVariables(themeId) {
+  const themes = {
+    'light': {
+      '--bg-color': '#ecf2fd',
+      '--text-color': '#222',
+      '--node-fill': '#fff',
+      '--node-stroke-focus': '#1976d2',
+      '--label-border': '#bdbdbd',
+      '--link-color': '#999',
+      '--side-panel-bg': '#fff',
+      '--side-panel-text': '#222',
+      '--side-panel-header-bg': '#f8f9fa',
+      '--side-panel-header-border': '#dee2e6',
+      '--side-panel-border': '#e0e0e0',
+      '--side-panel-label': '#666',
+      '--side-panel-value': '#222',
+      '--node-selection-border': '#e0e0e0',
+      '--node-selection-focus': '#1976d2',
+      '--node-selection-hover': '#bdbdbd',
+      '--node-selection-selected': '#1976d2',
+      '--image-filter': 'grayscale(30%)',
+      '--loading-color': '#1976d2',
+      '--loading-bg': '#ffffff',
+      '--bg-image': 'url("img/backgrounds/light-pattern.svg")',
+      '--bg-opacity': '0.9',
+      '--control-bg': '#ffffff',
+      '--control-text': '#333333',
+      '--control-border': '#d1d5db',
+      '--control-border-hover': '#9ca3af',
+      '--control-border-focus': '#1976d2',
+      '--control-placeholder': '#9ca3af',
+      '--control-shadow': 'rgba(0, 0, 0, 0.1)',
+      '--control-shadow-focus': 'rgba(25, 118, 210, 0.2)'
+    },
+    'dark': {
+      '--bg-color': '#181c24',
+      '--text-color': '#f6f7f9',
+      '--node-fill': '#23272f',
+      '--node-stroke-focus': '#00eaff',
+      '--label-border': '#444',
+      '--link-color': '#666',
+      '--side-panel-bg': '#23272f',
+      '--side-panel-text': '#f6f7f9',
+      '--side-panel-header-bg': '#23272f',
+      '--side-panel-header-border': '#333',
+      '--side-panel-border': '#333',
+      '--side-panel-label': '#aaa',
+      '--side-panel-value': '#fff',
+      '--node-selection-border': '#444',
+      '--node-selection-focus': '#00eaff',
+      '--node-selection-hover': '#555',
+      '--node-selection-selected': '#00eaff',
+      '--image-filter': 'invert(100%) brightness(3.5) contrast(200%)',
+      '--loading-color': '#00eaff',
+      '--loading-bg': '#23272f',
+      '--bg-image': 'url("https://images.unsplash.com/photo-1632059368252-be6d65abc4e2?w=1920&q=80")',
+      '--bg-opacity': '0.9',
+      '--control-bg': '#2d3748',
+      '--control-text': '#e2e8f0',
+      '--control-border': '#4a5568',
+      '--control-border-hover': '#718096',
+      '--control-border-focus': '#00eaff',
+      '--control-placeholder': '#a0aec0',
+      '--control-shadow': 'rgba(0, 0, 0, 0.3)',
+      '--control-shadow-focus': 'rgba(0, 234, 255, 0.3)'
+    },
+    'vintage': {
+      '--bg-color': '#f5e9da',
+      '--text-color': '#7c4f20',
+      '--node-fill': '#fffbe6',
+      '--node-stroke-focus': '#b97a56',
+      '--label-border': '#b97a56',
+      '--link-color': '#b97a56',
+      '--side-panel-bg': '#fffbe6',
+      '--side-panel-text': '#7c4f20',
+      '--side-panel-header-bg': '#f5e9da',
+      '--side-panel-header-border': '#b97a56',
+      '--side-panel-border': '#b97a56',
+      '--side-panel-label': '#b97a56',
+      '--side-panel-value': '#7c4f20',
+      '--node-selection-border': '#b97a56',
+      '--node-selection-focus': '#8b4513',
+      '--node-selection-hover': '#a0522d',
+      '--node-selection-selected': '#8b4513',
+      '--image-filter': 'sepia(40%) brightness(1.1)',
+      '--loading-color': '#8b4513',
+      '--loading-bg': '#fffbe6',
+      '--bg-image': 'url("img/backgrounds/vintage-texture.svg")',
+      '--bg-opacity': '0.8',
+      '--control-bg': '#fef7e0',
+      '--control-text': '#5d4037',
+      '--control-border': '#d4a574',
+      '--control-border-hover': '#b97a56',
+      '--control-border-focus': '#8b4513',
+      '--control-placeholder': '#a1887f',
+      '--control-shadow': 'rgba(139, 69, 19, 0.2)',
+      '--control-shadow-focus': 'rgba(139, 69, 19, 0.4)'
+    },
+    'pastel': {
+      '--bg-color': '#fdf6fb',
+      '--text-color': '#7a7a7a',
+      '--node-fill': '#fff',
+      '--node-stroke-focus': '#b6b6f7',
+      '--label-border': '#e0b1cb',
+      '--link-color': '#b6b6f7',
+      '--side-panel-bg': '#fff',
+      '--side-panel-text': '#7a7a7a',
+      '--side-panel-header-bg': '#fdf6fb',
+      '--side-panel-header-border': '#e0b1cb',
+      '--side-panel-border': '#e0b1cb',
+      '--side-panel-label': '#b6b6f7',
+      '--side-panel-value': '#7a7a7a',
+      '--node-selection-border': '#e0b1cb',
+      '--node-selection-focus': '#b6b6f7',
+      '--node-selection-hover': '#d4a5c0',
+      '--node-selection-selected': '#b6b6f7',
+      '--image-filter': 'hue-rotate(15deg) saturate(0.8)',
+      '--loading-color': '#b6b6f7',
+      '--loading-bg': '#ffffff',
+      '--bg-image': 'url("img/backgrounds/pastel-dots.svg")',
+      '--bg-opacity': '0.85',
+      '--control-bg': '#ffffff',
+      '--control-text': '#7a7a7a',
+      '--control-border': '#e8d5e0',
+      '--control-border-hover': '#d4a5c0',
+      '--control-border-focus': '#b6b6f7',
+      '--control-placeholder': '#c4a8b8',
+      '--control-shadow': 'rgba(182, 182, 247, 0.2)',
+      '--control-shadow-focus': 'rgba(182, 182, 247, 0.4)'
+    },
+    'cyberpunk': {
+      '--bg-color': '#0f0026',
+      '--text-color': '#00ffe7',
+      '--node-fill': '#1a0033',
+      '--node-stroke-focus': '#ff00c8',
+      '--label-border': '#00ffe7',
+      '--link-color': '#ff00c8',
+      '--side-panel-bg': '#1a0033',
+      '--side-panel-text': '#00ffe7',
+      '--side-panel-header-bg': '#0f0026',
+      '--side-panel-header-border': '#ff00c8',
+      '--side-panel-border': '#ff00c8',
+      '--side-panel-label': '#ff00c8',
+      '--side-panel-value': '#00ffe7',
+      '--node-selection-border': '#ff00c8',
+      '--node-selection-focus': '#00ffe7',
+      '--node-selection-hover': '#ff33d6',
+      '--node-selection-selected': '#00ffe7',
+      '--image-filter': 'invert(100%) brightness(3.5) contrast(200%)',
+      '--loading-color': '#00ffe7',
+      '--loading-bg': '#1a0033',
+      '--bg-image': 'url("https://images.unsplash.com/photo-1632059368252-be6d65abc4e2?w=1920&q=80")',
+      '--bg-opacity': '0.9',
+      '--control-bg': '#2a0040',
+      '--control-text': '#00ffe7',
+      '--control-border': '#ff00c8',
+      '--control-border-hover': '#ff33d6',
+      '--control-border-focus': '#00ffe7',
+      '--control-placeholder': '#7a4d8a',
+      '--control-shadow': 'rgba(255, 0, 200, 0.3)',
+      '--control-shadow-focus': 'rgba(0, 255, 231, 0.4)'
+    },
+    'neon': {
+      '--bg-color': '#000',
+      '--text-color': '#39ff14',
+      '--node-fill': '#111',
+      '--node-stroke-focus': '#ff00de',
+      '--label-border': '#ff00de',
+      '--link-color': '#39ff14',
+      '--side-panel-bg': '#111',
+      '--side-panel-text': '#39ff14',
+      '--side-panel-header-bg': '#000',
+      '--side-panel-header-border': '#ff00de',
+      '--side-panel-border': '#ff00de',
+      '--side-panel-label': '#ff00de',
+      '--side-panel-value': '#39ff14',
+      '--node-selection-border': '#ff00de',
+      '--node-selection-focus': '#39ff14',
+      '--node-selection-hover': '#ff33e6',
+      '--node-selection-selected': '#39ff14',
+      '--image-filter': 'invert(100%) brightness(3.5) contrast(200%)',
+      '--loading-color': '#39ff14',
+      '--loading-bg': '#111111',
+      '--bg-image': 'url("img/backgrounds/neon-grid.svg")',
+      '--bg-opacity': '0.2',
+      '--control-bg': '#1a1a1a',
+      '--control-text': '#39ff14',
+      '--control-border': '#ff00de',
+      '--control-border-hover': '#ff33e6',
+      '--control-border-focus': '#39ff14',
+      '--control-placeholder': '#666666',
+      '--control-shadow': 'rgba(255, 0, 222, 0.3)',
+      '--control-shadow-focus': 'rgba(57, 255, 20, 0.4)'
+    }
+  };
   
-  // Actualizar el panel lateral si está abierto
-  updateSidePanelTheme();
+  return themes[themeId] || themes['light'];
 }
 
 // Función para actualizar colores del SVG dinámicamente
 function updateSVGColors() {
   console.log('Actualizando colores del SVG...');
   
-  // Actualizar colores de texto
+  // Obtener las variables CSS del tema actual
+  const computedStyle = getComputedStyle(document.documentElement);
+  
+  // Variables del tema
+  const textColor = computedStyle.getPropertyValue('--text-color');
+  const nodeFill = computedStyle.getPropertyValue('--node-fill');
+  const labelBorder = computedStyle.getPropertyValue('--label-border');
+  const linkColor = computedStyle.getPropertyValue('--link-color');
+  const imageFilter = computedStyle.getPropertyValue('--image-filter');
+  
+  console.log('Variables del tema:', {
+    textColor,
+    nodeFill,
+    labelBorder,
+    linkColor,
+    imageFilter
+  });
+  
+  // Actualizar colores de texto de los nodos
   d3.selectAll('.custom-text')
-    .style('fill', getComputedStyle(document.documentElement).getPropertyValue('--text-color'));
+    .style('fill', textColor);
   
   d3.selectAll('.id-text')
-    .style('fill', getComputedStyle(document.documentElement).getPropertyValue('--label-id-text-color'));
+    .style('fill', textColor);
   
   d3.selectAll('.subtitle-text')
-    .style('fill', getComputedStyle(document.documentElement).getPropertyValue('--text-subtitle-color'));
+    .style('fill', textColor);
   
   // Actualizar colores de enlaces
   d3.selectAll('.link')
-    .style('stroke', getComputedStyle(document.documentElement).getPropertyValue('--link-color'));
+    .style('stroke', linkColor);
   
   // Actualizar filtros de imágenes
-  const imageFilter = getComputedStyle(document.documentElement).getPropertyValue('--image-filter');
   d3.selectAll('.image-filter')
     .style('filter', imageFilter);
   
-  // Actualizar colores de fondo de nodos
+  // Actualizar colores de fondo y borde de los nodos
   d3.selectAll('.node rect')
-    .style('fill', getComputedStyle(document.documentElement).getPropertyValue('--node-fill'))
-    .style('stroke', getComputedStyle(document.documentElement).getPropertyValue('--label-border'));
+    .style('fill', nodeFill)
+    .style('stroke', labelBorder);
   
-  console.log('Colores del SVG actualizados');
+  // Forzar la actualización de todos los nodos
+  d3.selectAll('.node').each(function() {
+    const node = d3.select(this);
+    
+    // Actualizar el rectángulo del nodo
+    node.select('rect')
+      .style('fill', nodeFill)
+      .style('stroke', labelBorder);
+    
+    // Actualizar el texto del nodo
+    node.select('.custom-text')
+      .style('fill', textColor);
+    
+    // Actualizar el texto del ID si existe
+    node.select('.id-text')
+      .style('fill', textColor);
+    
+    // Actualizar el texto del subtítulo si existe
+    node.select('.subtitle-text')
+      .style('fill', textColor);
+    
+    // Actualizar la imagen del nodo
+    node.select('image')
+      .style('filter', imageFilter);
+  });
+  
+  console.log('Colores del SVG actualizados completamente');
 }
 
 // Función para actualizar el tema del panel lateral
@@ -967,20 +1240,8 @@ function updateSidePanelTheme() {
   // NO aplicar estilos en línea al panel, header, título y contenido
   // Dejar que las variables CSS hagan el trabajo automáticamente
   
-  // Solo actualizar dropdowns de thumbnails (necesario en algunos navegadores)
-  const dropdowns = sidePanel.querySelectorAll('.thumbnail-selector-dropdown');
-  dropdowns.forEach(dropdown => {
-    dropdown.style.backgroundColor = sidePanelBg;
-    dropdown.style.color = sidePanelText;
-    dropdown.style.borderColor = computedStyle.getPropertyValue('--side-panel-border');
-  });
-  
-  // Actualizar opciones de los dropdowns
-  const options = sidePanel.querySelectorAll('.thumbnail-selector-dropdown option');
-  options.forEach(option => {
-    option.style.backgroundColor = sidePanelBg;
-    option.style.color = sidePanelText;
-  });
+  // Los dropdowns de thumbnails ahora usan variables CSS del tema
+  // No es necesario aplicar estilos inline
   
   console.log('Tema del panel lateral actualizado');
 }
@@ -988,13 +1249,19 @@ function updateSidePanelTheme() {
 // Hacer la función global para que el theme creator pueda usarla
 window.updateSVGColors = updateSVGColors;
 
+// Configurar el selector de tema cuando el DOM esté listo
 document.addEventListener('DOMContentLoaded', function() {
   const selector = document.getElementById('theme-selector');
-  // Restaurar tema guardado
-  const saved = localStorage.getItem('selectedTheme') || 'light';
-  selector.value = saved;
-  setTheme(saved);
-  selector.addEventListener('change', function() {
-    setTheme(this.value);
-  });
+  if (selector) {
+    // Restaurar tema guardado
+    const saved = localStorage.getItem('selectedTheme') || 'light';
+    selector.value = saved;
+    setTheme(saved);
+    
+    // Agregar event listener para cambios de tema
+    selector.addEventListener('change', function() {
+      console.log('Cambiando tema a:', this.value);
+      setTheme(this.value);
+    });
+  }
 });

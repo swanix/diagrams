@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="es" translate="no">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Demo Multi-Diagramas Swanix</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+    <script src="sw-diagrams.js"></script>
+    <link href="sw-diagrams.css" rel="stylesheet">
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            width: 100%;
+        }
+        .swanix-diagram-container {
+            height: 100vh;
+            width: 100vw;
+            position: relative;
+        }
+        .diagram-switcher {
+            position: absolute;
+            top: 80px; /* Posicionar debajo del topbar */
+            left: 20px;
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            background: var(--sidepanel-bg, #fff);
+            padding: 15px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            border: 1px solid var(--sidepanel-border, #ddd);
+        }
+        .diagram-btn {
+            background: var(--control-bg, #fff);
+            color: var(--control-text, #333);
+            border: 2px solid var(--control-border, #d1d5db);
+            border-radius: 8px;
+            padding: 10px 20px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            cursor: pointer;
+            box-shadow: 0 2px 8px var(--control-shadow, rgba(0,0,0,0.1));
+            transition: all 0.2s ease;
+            text-align: left;
+            min-width: 200px;
+        }
+        .diagram-btn.active {
+            background: var(--node-selection-focus, #1976d2);
+            color: #fff;
+            border: 2px solid var(--node-selection-focus, #1976d2);
+            box-shadow: 0 4px 12px var(--control-shadow-focus, rgba(25, 118, 210, 0.2));
+        }
+        .diagram-btn:hover:not(:disabled) {
+            background: var(--control-bg, #fff);
+            border-color: var(--control-border-hover, #9ca3af);
+            box-shadow: 0 4px 12px var(--control-shadow, rgba(0,0,0,0.15));
+            transform: translateY(-1px);
+        }
+        .diagram-btn.active:hover:not(:disabled) {
+            background: var(--node-selection-focus, #1976d2);
+            border-color: var(--node-selection-focus, #1976d2);
+            transform: translateY(-1px);
+        }
+        .diagram-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            background: var(--control-bg, #f5f5f5);
+            color: var(--control-placeholder, #9ca3af);
+            border-color: var(--control-border, #ddd);
+            transform: none;
+        }
+        
+        .switcher-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .copy-url-btn {
+            background: var(--control-bg, #fff);
+            color: var(--control-text, #333);
+            border: 1px solid var(--control-border, #d1d5db);
+            border-radius: 6px;
+            padding: 6px 12px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .copy-url-btn:hover {
+            background: var(--control-bg, #fff);
+            border-color: var(--control-border-hover, #9ca3af);
+            box-shadow: 0 2px 8px var(--control-shadow, rgba(0,0,0,0.1));
+        }
+    </style>
+</head>
+<body>
+    <div id="swanix-diagram" class="swanix-diagram-container">
+        <!-- Topbar necesario para que funcione el código -->
+        <div class="topbar">
+            <div class="topbar-left">
+                <div class="controls-container">
+                    <select id="type-dropdown" class="control-item">
+                        <!-- Se llena dinámicamente -->
+                    </select>
+                    <input type="text" id="search-input" class="control-item" placeholder="Buscar nodo...">
+                </div>
+            </div>
+            
+            <div class="topbar-center">
+                <h1 class="diagram-title">Demo Multi-Diagramas</h1>
+            </div>
+            
+            <div class="topbar-right">
+                <select id="theme-selector" class="theme-selector">
+                    <option value="light">Light</option>
+                    <option value="dark">Dark</option>
+                    <option value="vintage">Vintage</option>
+                    <option value="pastel">Pastel</option>
+                    <option value="cyberpunk">Cyberpunk</option>
+                    <option value="neon">Neon</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="diagram-switcher" id="diagram-switcher">
+            <div class="switcher-header">
+                <h4 style="margin: 0 0 10px 0; color: var(--text-color, #333);">Diagramas</h4>
+                <button id="copy-url-btn" class="copy-url-btn" title="Copiar enlace">
+                    📋 Copiar enlace
+                </button>
+            </div>
+        </div>
+        <svg></svg>
+        <div id="loading" class="loading"><div class="spinner"></div></div>
+        <small id="error-message" class="error-message"></small>
+    </div>
+    <script>
+    // Lista de diagramas predefinidos (pueden ser links externos o archivos locales)
+    const diagrams = [
+        {
+            name: "Org Chart (Google Sheets)",
+            url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vTQZfZhC3cWHg0QkqRoY9i3alinAnSHab5DJtWzsm_xAhLKKJdHri8fBMUawh-DhpvCkm-G1vBeWPFq/pub?gid=466976322&single=true&output=csv"
+        },
+        {
+            name: "Tree Simple (Local)",
+            url: "./data/tree-simple.csv"
+        },
+        {
+            name: "Company Structure (Local)",
+            url: "./data/company-structure.csv"
+        },
+        {
+            name: "Sample Diagram (Local)",
+            url: "./data/sample-diagram.csv"
+        },
+        {
+            name: "Sitemap Demo (Local)",
+            url: "../docs/demo/sitemap/data/sitemap.csv"
+        }
+    ];
+
+    let currentDiagramIdx = 0;
+    let isLoading = false; // Flag para prevenir cargas múltiples
+    let loadedDiagrams = new Map(); // Cache de diagramas cargados
+    let currentUrl = null; // URL actual para evitar recargas innecesarias
+    
+    // Función para obtener el índice del diagrama desde la URL
+    function getDiagramIndexFromURL() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const diagramId = urlParams.get('d'); // Parámetro corto
+        if (diagramId !== null) {
+            const index = parseInt(diagramId);
+            if (!isNaN(index) && index >= 0 && index < diagrams.length) {
+                return index;
+            }
+        }
+        return 0; // Default al primer diagrama
+    }
+    
+    // Función para actualizar la URL con el diagrama seleccionado
+    function updateURL(diagramIndex) {
+        const url = new URL(window.location);
+        url.searchParams.set('d', diagramIndex.toString()); // Parámetro corto
+        window.history.pushState({}, '', url);
+    }
+
+    function renderDiagramButtons() {
+        const switcher = document.getElementById('diagram-switcher');
+        // Preservar el header y limpiar solo los botones
+        const header = switcher.querySelector('.switcher-header');
+        switcher.innerHTML = '';
+        if (header) {
+            switcher.appendChild(header);
+        }
+        
+        diagrams.forEach((d, idx) => {
+            const btn = document.createElement('button');
+            btn.className = 'diagram-btn' + (idx === currentDiagramIdx ? ' active' : '');
+            btn.textContent = d.name;
+            btn.disabled = isLoading; // Deshabilitar botones durante la carga
+            btn.onclick = () => {
+                if (currentDiagramIdx !== idx && !isLoading) {
+                    currentDiagramIdx = idx;
+                    updateURL(idx); // Actualizar URL
+                    renderDiagramButtons();
+                    loadDiagram(d.url);
+                }
+            };
+            switcher.appendChild(btn);
+        });
+    }
+
+    function loadDiagram(url) {
+        // Evitar recargar el mismo diagrama
+        if (currentUrl === url && !isLoading) {
+            console.log('Diagrama ya cargado, saltando recarga');
+            return;
+        }
+        
+        // Prevenir cargas múltiples
+        if (isLoading) {
+            console.log('Carga en progreso, ignorando nueva solicitud');
+            return;
+        }
+        
+        isLoading = true;
+        currentUrl = url;
+        
+        // Cancelar cualquier transición en progreso
+        const svgD3 = d3.select("svg");
+        if (!svgD3.empty()) {
+            svgD3.interrupt(); // Interrumpir transiciones en progreso
+        }
+        
+        // Mostrar loading
+        const loading = document.getElementById('loading');
+        if (loading) loading.style.display = 'block';
+        
+        // Limpiar SVG y ocultarlo
+        const svg = document.querySelector('svg');
+        if (svg) {
+            svg.innerHTML = '';
+            svg.style.opacity = '0'; // Ocultar SVG durante la carga
+        }
+        
+        // Limpiar mensajes de error
+        const error = document.getElementById('error-message');
+        if (error) error.textContent = '';
+        
+        // Limpiar dropdown de tipos
+        const typeDropdown = document.getElementById('type-dropdown');
+        if (typeDropdown) typeDropdown.innerHTML = '';
+        
+        // Limpiar campo de búsqueda
+        const searchInput = document.getElementById('search-input');
+        if (searchInput) searchInput.value = '';
+        
+        // Llamar a la función global para cargar el diagrama
+        if (window.initDiagram) {
+            // Sobrescribir temporalmente applyAutoZoom para un fade-in suave
+            const originalApplyAutoZoom = window.applyAutoZoom;
+            window.applyAutoZoom = function() {
+                setTimeout(() => {
+                    const svg = d3.select("svg");
+                    const g = svg.select("g");
+                    
+                    function tryZoom() {
+                        if (g.empty() || g.node().getBBox().width === 0 || g.node().getBBox().height === 0) {
+                            setTimeout(tryZoom, 100);
+                            return;
+                        }
+
+                        const bounds = g.node().getBBox();
+                        const svgWidth = window.innerWidth;
+                        const svgHeight = window.innerHeight;
+
+                        if (!bounds.width || !bounds.height) {
+                            setTimeout(tryZoom, 100);
+                            return;
+                        }
+
+                        // Calcular la escala final
+                        const scale = Math.min(svgWidth / bounds.width, svgHeight / bounds.height) * 0.75;
+                        const translateX = svgWidth / 2 - (bounds.x + bounds.width / 2) * scale;
+                        const translateY = svgHeight / 2 - (bounds.y + bounds.height / 2) * scale;
+
+                        // Crear la transformación inicial
+                        const transform = d3.zoomIdentity
+                            .translate(translateX, translateY)
+                            .scale(scale);
+
+                        // Aplicar la transformación al comportamiento de zoom
+                        svg.call(zoom.transform, transform);
+                        svg.call(zoom);
+                        
+                        // Ocultar loading y hacer fade-in del SVG
+                        if (loading) loading.style.display = 'none';
+                        
+                        // Verificar si el SVG ya está visible para evitar parpadeos
+                        const currentOpacity = parseFloat(svg.style("opacity") || "0");
+                        if (currentOpacity > 0) {
+                            // Si ya está visible, solo aplicar el zoom sin transición
+                            isLoading = false;
+                        } else {
+                            // Si está oculto, hacer fade-in suave
+                            svg.transition()
+                                .duration(800)
+                                .style("opacity", 1)
+                                .on('end', function() {
+                                    // Marcar como no cargando cuando termine la transición
+                                    isLoading = false;
+                                });
+                        }
+                    }
+
+                    tryZoom();
+                }, 100);
+            };
+            
+            window.initDiagram(url);
+            
+            // Restaurar la función original después de un tiempo
+            setTimeout(() => {
+                window.applyAutoZoom = originalApplyAutoZoom;
+            }, 2000);
+            
+            // También marcar como no cargando en caso de error
+            setTimeout(() => {
+                isLoading = false;
+                currentUrl = null; // Reset URL en caso de error
+            }, 10000); // Timeout de seguridad de 10 segundos
+        }
+    }
+
+    // Función para limpiar cache si es necesario
+    function clearCache() {
+        loadedDiagrams.clear();
+        currentUrl = null;
+    }
+    
+    // Función para actualizar estilos de los botones según el tema
+    function updateButtonStyles() {
+        const switcher = document.getElementById('diagram-switcher');
+        if (switcher) {
+            // Los estilos CSS ya usan variables, pero podemos forzar una actualización
+            switcher.style.setProperty('--sidepanel-bg', getComputedStyle(document.documentElement).getPropertyValue('--sidepanel-bg'));
+            switcher.style.setProperty('--sidepanel-border', getComputedStyle(document.documentElement).getPropertyValue('--sidepanel-border'));
+        }
+    }
+    
+    // Inicializar
+    document.addEventListener('DOMContentLoaded', function() {
+        // Obtener el diagrama desde la URL o usar el default
+        currentDiagramIdx = getDiagramIndexFromURL();
+        
+        renderDiagramButtons();
+        loadDiagram(diagrams[currentDiagramIdx].url);
+        
+        // Observer para detectar cambios en las variables CSS del tema
+        const observer = new MutationObserver(function(mutations) {
+            mutations.forEach(function(mutation) {
+                if (mutation.type === 'attributes' && mutation.attributeName === 'style') {
+                    updateButtonStyles();
+                }
+            });
+        });
+        
+        // Observar cambios en el contenedor principal
+        const container = document.querySelector('.swanix-diagram-container');
+        if (container) {
+            observer.observe(container, {
+                attributes: true,
+                attributeFilter: ['style']
+            });
+        }
+        
+        // También actualizar cuando cambie el tema selector
+        const themeSelector = document.getElementById('theme-selector');
+        if (themeSelector) {
+            themeSelector.addEventListener('change', function() {
+                setTimeout(updateButtonStyles, 100); // Pequeño delay para que se aplique el tema
+            });
+        }
+        
+        // Listener para navegación del navegador (botones atrás/adelante)
+        window.addEventListener('popstate', function() {
+            const newIndex = getDiagramIndexFromURL();
+            if (newIndex !== currentDiagramIdx && !isLoading) {
+                currentDiagramIdx = newIndex;
+                renderDiagramButtons();
+                loadDiagram(diagrams[currentDiagramIdx].url);
+            }
+        });
+        
+        // Funcionalidad para copiar URL
+        const copyUrlBtn = document.getElementById('copy-url-btn');
+        if (copyUrlBtn) {
+            copyUrlBtn.addEventListener('click', function() {
+                const currentURL = window.location.href;
+                navigator.clipboard.writeText(currentURL).then(function() {
+                    // Feedback visual
+                    const originalText = copyUrlBtn.textContent;
+                    copyUrlBtn.textContent = '✅ Copiado!';
+                    copyUrlBtn.style.background = '#4caf50';
+                    copyUrlBtn.style.color = '#fff';
+                    
+                    setTimeout(() => {
+                        copyUrlBtn.textContent = originalText;
+                        copyUrlBtn.style.background = '';
+                        copyUrlBtn.style.color = '';
+                    }, 2000);
+                }).catch(function(err) {
+                    console.error('Error al copiar URL:', err);
+                    // Fallback para navegadores antiguos
+                    const textArea = document.createElement('textarea');
+                    textArea.value = currentURL;
+                    document.body.appendChild(textArea);
+                    textArea.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(textArea);
+                    
+                    copyUrlBtn.textContent = '✅ Copiado!';
+                    setTimeout(() => {
+                        copyUrlBtn.textContent = '📋 Copiar enlace';
+                    }, 2000);
+                });
+            });
+        }
+    });
+    </script>
+</body>
+</html> 

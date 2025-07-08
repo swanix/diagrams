@@ -406,7 +406,8 @@ function drawMultipleTrees(trees) {
     console.error('Error general en drawMultipleTrees:', err);
   }
 
-  applyAutoZoom();
+  // NO llamar applyAutoZoom aquí - se llamará desde el callback de initDiagram
+  // applyAutoZoom();
 }
 
 // Función para recalcular el espaciado entre clusters
@@ -437,7 +438,7 @@ function recalculateClusterSpacing(clusters) {
 }
 
 function applyAutoZoom() {
-  console.log('[Zoom] applyAutoZoom iniciado');
+  console.log('[Zoom] applyAutoZoom iniciado - Llamada única');
   console.log('[Zoom] zoom behavior definido:', !!zoom);
   
   // Aplicar zoom inmediatamente sin delays

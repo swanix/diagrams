@@ -6,7 +6,7 @@
     <title>My Diagrams</title>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
-    <script src="sw-diagrams.js"></script>
+    <script src="sw-diagrams-clean.js"></script>
     <link href="sw-diagrams.css" rel="stylesheet">
     <style>
         body, html {
@@ -37,7 +37,7 @@
             background: var(--sidepanel-bg, #fff);
             padding: 15px;
             border-radius: 12px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            box-shadow: none;
             border: 1px solid var(--sidepanel-border, #ddd);
             pointer-events: auto; /* Asegurar que los eventos de mouse funcionen */
             user-select: none; /* Prevenir selección de texto */
@@ -51,7 +51,7 @@
             font-size: 0.9rem;
             font-weight: 500;
             cursor: pointer;
-            box-shadow: 0 2px 8px var(--control-shadow, rgba(0,0,0,0.1));
+            box-shadow: none;
             transition: all 0.2s ease;
             text-align: left;
             min-width: 200px;
@@ -66,20 +66,20 @@
             display: block; /* Hacer que los links se comporten como bloques */
         }
         .diagram-btn.active {
-            background: var(--node-selection-focus, #1976d2);
+            background: var(--control-focus, #1976d2);
             color: #fff;
-            border: 2px solid var(--node-selection-focus, #1976d2);
-            box-shadow: 0 4px 12px var(--control-shadow-focus, rgba(25, 118, 210, 0.2));
+            border: 2px solid var(--control-focus, #1976d2);
+            box-shadow: none;
         }
         .diagram-btn:hover:not(:disabled) {
             background: var(--control-bg, #fff);
             border-color: var(--control-border-hover, #9ca3af);
-            box-shadow: 0 4px 12px var(--control-shadow, rgba(0,0,0,0.15));
+            box-shadow: none;
             transform: translateY(-1px);
         }
         .diagram-btn.active:hover:not(:disabled) {
-            background: var(--node-selection-focus, #1976d2);
-            border-color: var(--node-selection-focus, #1976d2);
+            background: var(--control-focus, #1976d2);
+            border-color: var(--control-focus, #1976d2);
             transform: translateY(-1px);
         }
         .diagram-btn:disabled {
@@ -120,11 +120,98 @@
             opacity: 1 !important;
             pointer-events: auto; /* Restaurar interacciones cuando está visible */
         }
+        
+        /* Estilos para el botón de tema redondo */
+        .theme-controls {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .theme-toggle {
+            background: var(--control-bg, #fff);
+            border: 1px solid var(--control-border, #ddd);
+            border-radius: 50%; /* Botón redondo */
+            width: 40px;
+            height: 40px;
+            padding: 0;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .theme-toggle:hover {
+            background: var(--control-border-hover, #f0f0f0);
+            transform: scale(1.05);
+            box-shadow: none;
+        }
+        
+        .theme-toggle:active {
+            transform: scale(0.95);
+        }
+        
+        .theme-icon {
+            width: 18px;
+            height: 18px;
+            color: var(--control-text, #333);
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+        
+        /* Mostrar solo el icono de sol por defecto (tema claro) */
+        .theme-toggle .moon-icon {
+            display: none;
+            opacity: 0;
+            transform: translate(-50%, -50%) scale(0.8);
+            transition: all 0.3s ease;
+        }
+        
+        .theme-toggle .sun-icon {
+            display: block;
+            opacity: 1;
+            transform: translate(-50%, -50%) scale(1);
+            transition: all 0.3s ease;
+        }
+        
+        /* Cuando el tema es oscuro, mostrar solo el icono de luna */
+        body.theme-onyx .theme-toggle .sun-icon,
+        body.theme-neon .theme-toggle .sun-icon {
+            display: none;
+            opacity: 0;
+            transform: translate(-50%, -50%) scale(0.8);
+        }
+        
+        body.theme-onyx .theme-toggle .moon-icon,
+        body.theme-neon .theme-toggle .moon-icon {
+            display: block;
+            opacity: 1;
+            transform: translate(-50%, -50%) scale(1);
+        }
 
     </style>
 </head>
 <body>
-    <div id="swanix-diagram" class="swanix-diagram-container">
+    <!-- 
+    Configuración de temas:
+    - data-light-theme: Tema para modo claro (snow, vintage, pastel)
+    - data-dark-theme: Tema para modo oscuro (onyx, neon)
+    
+    Ejemplos:
+    - data-light-theme="vintage" data-dark-theme="neon" (Vintage claro, Neon oscuro)
+    - data-light-theme="pastel" data-dark-theme="onyx" (Pastel claro, Onyx oscuro)
+    - data-light-theme="snow" data-dark-theme="neon" (Snow claro, Neon oscuro)
+    
+    NOTA: Este archivo carga Snow (tema claro) por defecto en la primera visita
+    -->
+    <div id="swanix-diagram" class="swanix-diagram-container" 
+         data-light-theme="snow" 
+         data-dark-theme="onyx">
         <!-- Topbar necesario para que funcione el código -->
         <div class="topbar">
             <div class="topbar-left">
@@ -138,28 +225,24 @@
             <div class="topbar-right">
                 <div class="theme-controls">
                     <button id="theme-toggle" class="theme-toggle" title="Cambiar tema">
-                        <svg class="theme-icon sun-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <circle cx="12" cy="12" r="5"></circle>
-                            <line x1="12" y1="1" x2="12" y2="3"></line>
-                            <line x1="12" y1="21" x2="12" y2="23"></line>
-                            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
-                            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
-                            <line x1="1" y1="12" x2="3" y2="12"></line>
-                            <line x1="21" y1="12" x2="23" y2="12"></line>
-                            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
-                            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                        <svg class="theme-icon sun-icon" width="18" height="18" viewBox="0 0 24 24">
+                            <circle cx="12" cy="12" r="4" fill="currentColor"></circle>
+                            <g stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                                <line x1="12" y1="1" x2="12" y2="3"></line>
+                                <line x1="12" y1="21" x2="12" y2="23"></line>
+                                <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                                <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                                <line x1="1" y1="12" x2="3" y2="12"></line>
+                                <line x1="21" y1="12" x2="23" y2="12"></line>
+                                <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                                <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                            </g>
                         </svg>
-                        <svg class="theme-icon moon-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                        <svg class="theme-icon moon-icon" width="18" height="18" viewBox="0 0 24 24">
+                            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" fill="currentColor"></path>
                         </svg>
                     </button>
-                    <select id="theme-selector" class="theme-selector">
-                        <option value="snow">Snow</option>
-                        <option value="onyx">Onyx</option>
-                        <option value="vintage">Vintage</option>
-                        <option value="pastel">Pastel</option>
-                        <option value="neon">Neon</option>
-                    </select>
+
                 </div>
             </div>
         </div>
@@ -315,18 +398,19 @@
         const loading = document.getElementById('loading');
         if (loading) loading.style.display = 'block';
         
-        // Limpiar SVG y ocultarlo completamente
+        // Limpiar SVG y ocultarlo completamente de golpe
         const svg = document.getElementById('main-diagram-svg');
         if (svg) {
-            // Ocultar el SVG inmediatamente para evitar parpadeos
+            // Ocultar el SVG de golpe sin transición
+            svg.style.transition = 'none'; // Deshabilitar transiciones
             svg.style.opacity = '0';
             svg.classList.remove('loaded');
             svg.style.pointerEvents = 'none';
             
-            // Limpiar el contenido
+            // Limpiar el contenido inmediatamente
             svg.innerHTML = '';
             
-            console.log('SVG ocultado y limpiado para nueva carga');
+            console.log('SVG ocultado y limpiado de golpe para nueva carga');
         }
         
         // Limpiar mensajes de error
@@ -339,67 +423,48 @@
         if (window.initDiagram) {
             console.log('Llamando a initDiagram con URL:', url);
             
-            // Usar la función con callback para saber cuándo está realmente terminado
+            // Usar la versión limpia con flujo simplificado
             window.initDiagram(url, function() {
-                console.log('initDiagram completado, procediendo con zoom y fade-in');
+                console.log('initDiagram completado con versión limpia');
                 
-                // Aplicar zoom automático inmediatamente (mientras el SVG está invisible)
+                // Aplicar zoom automático (solo una vez)
                 if (window.applyAutoZoom) {
                     console.log('Aplicando zoom automático');
                     window.applyAutoZoom();
                 }
                 
-                // Esperar un tiempo corto para que el zoom se aplique
+                // Mostrar el nuevo diagrama de golpe
                 setTimeout(() => {
                     // Ocultar loading
                     const loading = document.getElementById('loading');
                     if (loading) loading.style.display = 'none';
                     
-                    // Hacer fade-in suave del SVG (ya con zoom aplicado)
+                    // Mostrar el SVG de golpe sin transición
                     const svg = document.getElementById("main-diagram-svg");
                     if (svg) {
-                        console.log('Iniciando fade-in del SVG');
-                        svg.classList.add('loaded');
+                        console.log('Mostrando nuevo diagrama de golpe');
                         
-                        // Asegurar que los pointer events estén habilitados después del fade-in
-                        setTimeout(() => {
-                            svg.style.pointerEvents = 'auto';
-                            console.log('Pointer events habilitados para zoom y drag');
-                            
-                            // Aplicar zoom behavior después de que el SVG esté visible y tenga pointer events
-                            if (window.ensureZoomBehavior) {
-                                console.log('Aplicando zoom behavior después del fade-in');
-                                window.ensureZoomBehavior();
-                                
-                                // Configurar el cierre del panel después de que el zoom esté activo
-                                if (window.setupClosePanelOnSvgClick) {
-                                    console.log('Configurando cierre del panel');
-                                    window.setupClosePanelOnSvgClick();
-                                }
-                                
-                                // Debug del estado del SVG
-                                if (window.debugSVGState) {
-                                    setTimeout(() => {
-                                        window.debugSVGState();
-                                    }, 100);
-                                }
-                            }
-                        }, 600); // Después de la transición de fade-in
+                        // Restaurar transiciones y mostrar de golpe
+                        svg.style.transition = ''; // Restaurar transiciones CSS
+                        svg.style.opacity = '1';
+                        svg.classList.add('loaded');
+                        svg.style.pointerEvents = 'auto';
+                        
+                        console.log('Pointer events habilitados');
+                        
+                        // Aplicar zoom behavior y configurar cierre del panel
+                        if (window.ensureZoomBehavior) {
+                            window.ensureZoomBehavior();
+                        }
+                        
+                        if (window.setupClosePanelOnSvgClick) {
+                            window.setupClosePanelOnSvgClick();
+                        }
                     }
                     
-                    // El zoom behavior ya se aplicó en applyAutoZoom, no es necesario aplicarlo aquí
-                    // setTimeout(() => {
-                    //     if (window.ensureZoomBehavior) {
-                    //         console.log('Aplicando zoom behavior después del fade-in');
-                    //         window.ensureZoomBehavior();
-                    //     }
-                    // }, 100);
-                    
-                    // Marcar como no cargando después de la transición
-                    setTimeout(() => {
-                        isLoading = false;
-                    }, 600);
-                }, 200); // Delay corto y consistente
+                    // Marcar como no cargando
+                    isLoading = false;
+                }, 100); // Reducir delay para transición más rápida
             });
             
             // Timeout de seguridad
@@ -492,7 +557,7 @@
     document.addEventListener('DOMContentLoaded', function() {
         console.log('DOMContentLoaded iniciado');
         
-        // Inicializar el sistema de temas primero
+        // Inicializar el sistema de temas
         if (window.initializeThemeSystem && !window.themeSystemInitialized) {
             window.initializeThemeSystem();
             window.themeSystemInitialized = true;
@@ -550,37 +615,7 @@
             });
         }
         
-        // También actualizar cuando cambie el tema selector
-        const themeSelector = document.getElementById('theme-selector');
-        if (themeSelector) {
-            // Verificar que setTheme esté disponible
-            console.log('Verificando disponibilidad de setTheme:', typeof window.setTheme);
-            
-            themeSelector.addEventListener('change', function() {
-                // Llamar a la función global setTheme para que haga el reset automático
-                if (window.setTheme) {
-                    console.log('Llamando a window.setTheme con:', this.value);
-                    window.setTheme(this.value);
-                } else {
-                    console.warn('window.setTheme no está disponible');
-                }
-                
-                // También actualizar los estilos específicos del multi-diagrama
-                // Esperar más tiempo para que setTheme complete su reset automático
-                setTimeout(updateButtonStyles, 200);
-                setTimeout(updateThemeStyles, 200);
-                
-                // Actualizar colores del SVG incluyendo clusters
-                setTimeout(() => {
-                    if (window.updateSVGColors) {
-                        console.log('Llamando a updateSVGColors para actualizar clusters');
-                        window.updateSVGColors();
-                    } else {
-                        console.warn('updateSVGColors no está disponible');
-                    }
-                }, 300);
-            });
-        }
+
         
         // Listener para navegación del navegador (botones atrás/adelante)
         window.addEventListener('popstate', function(event) {

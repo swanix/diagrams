@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Demo Multi-Diagramas Swanix</title>
+    <title>My Diagrams</title>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
     <script src="sw-diagrams.js"></script>
@@ -27,10 +27,10 @@
             position: relative;
         }
         .diagram-switcher {
-            position: absolute;
+            position: fixed; /* Cambiar a fixed para asegurar que esté siempre visible */
             top: 80px; /* Posicionar debajo del topbar */
             left: 20px;
-            z-index: 100;
+            z-index: 9999; /* Z-index muy alto para asegurar que esté por encima de todo */
             display: flex;
             flex-direction: column;
             gap: 10px;
@@ -39,6 +39,8 @@
             border-radius: 12px;
             box-shadow: 0 4px 20px rgba(0,0,0,0.1);
             border: 1px solid var(--sidepanel-border, #ddd);
+            pointer-events: auto; /* Asegurar que los eventos de mouse funcionen */
+            user-select: none; /* Prevenir selección de texto */
         }
         .diagram-btn {
             background: var(--control-bg, #fff);
@@ -53,6 +55,15 @@
             transition: all 0.2s ease;
             text-align: left;
             min-width: 200px;
+            pointer-events: auto; /* Asegurar que los eventos de mouse funcionen */
+            position: relative; /* Para z-index */
+            z-index: 10001; /* Asegurar que esté por encima */
+            user-select: none; /* Prevenir selección de texto */
+            -webkit-user-select: none; /* Para Safari */
+            -moz-user-select: none; /* Para Firefox */
+            -ms-user-select: none; /* Para IE */
+            text-decoration: none; /* Eliminar subrayado de links */
+            display: block; /* Hacer que los links se comporten como bloques */
         }
         .diagram-btn.active {
             background: var(--node-selection-focus, #1976d2);
@@ -87,6 +98,28 @@
             margin-bottom: 10px;
         }
         
+        /* Estilos para el fade-in suave */
+        #main-diagram-svg {
+            opacity: 0 !important; /* Forzar opacidad 0 por defecto */
+            transition: opacity 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            visibility: visible; /* Mantener visible para que funcione el zoom */
+        }
+        
+        #main-diagram-svg.loaded {
+            opacity: 1 !important;
+        }
+        
+        /* Asegurar que el SVG esté oculto durante la carga */
+        #main-diagram-svg:not(.loaded) {
+            opacity: 0 !important;
+            pointer-events: none; /* Deshabilitar interacciones mientras está oculto */
+        }
+        
+        /* Restaurar interacciones cuando el SVG está cargado */
+        #main-diagram-svg.loaded {
+            opacity: 1 !important;
+            pointer-events: auto; /* Restaurar interacciones cuando está visible */
+        }
 
     </style>
 </head>
@@ -95,12 +128,7 @@
         <!-- Topbar necesario para que funcione el código -->
         <div class="topbar">
             <div class="topbar-left">
-                <div class="controls-container">
-                    <select id="type-dropdown" class="control-item">
-                        <!-- Se llena dinámicamente -->
-                    </select>
-                    <input type="text" id="search-input" class="control-item" placeholder="Buscar nodo...">
-                </div>
+                <!-- Controles removidos temporalmente -->
             </div>
             
             <div class="topbar-center">
@@ -108,13 +136,31 @@
             </div>
             
             <div class="topbar-right">
-                <select id="theme-selector" class="theme-selector">
-                                                <option value="snow">Snow</option>
-                            <option value="onyx">Onyx</option>
-                            <option value="vintage">Vintage</option>
-                            <option value="pastel">Pastel</option>
-                            <option value="neon">Neon</option>
-                </select>
+                <div class="theme-controls">
+                    <button id="theme-toggle" class="theme-toggle" title="Cambiar tema">
+                        <svg class="theme-icon sun-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="5"></circle>
+                            <line x1="12" y1="1" x2="12" y2="3"></line>
+                            <line x1="12" y1="21" x2="12" y2="23"></line>
+                            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                            <line x1="1" y1="12" x2="3" y2="12"></line>
+                            <line x1="21" y1="12" x2="23" y2="12"></line>
+                            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                        </svg>
+                        <svg class="theme-icon moon-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                        </svg>
+                    </button>
+                    <select id="theme-selector" class="theme-selector">
+                        <option value="snow">Snow</option>
+                        <option value="onyx">Onyx</option>
+                        <option value="vintage">Vintage</option>
+                        <option value="pastel">Pastel</option>
+                        <option value="neon">Neon</option>
+                    </select>
+                </div>
             </div>
         </div>
 
@@ -123,7 +169,7 @@
                 <h4 style="margin: 0 0 10px 0; color: var(--text-color, #333);">Diagramas</h4>
             </div>
         </div>
-        <svg></svg>
+        <svg id="main-diagram-svg"></svg>
         <div id="loading" class="loading"><div class="spinner"></div></div>
         <small id="error-message" class="error-message"></small>
     </div>
@@ -170,15 +216,25 @@
         return 0; // Default al primer diagrama
     }
     
-    // Función para actualizar la URL con el diagrama seleccionado
-    function updateURL(diagramIndex) {
-        const url = new URL(window.location);
-        url.searchParams.set('d', diagramIndex.toString()); // Parámetro corto
-        window.history.pushState({}, '', url);
+    // Función para actualizar el título del topbar
+    function updateTopbarTitle(diagramIndex) {
+        const titleElement = document.querySelector('.diagram-title');
+        if (titleElement && diagrams[diagramIndex]) {
+            titleElement.textContent = diagrams[diagramIndex].name;
+        }
     }
+    
+
 
     function renderDiagramButtons() {
         const switcher = document.getElementById('diagram-switcher');
+        console.log('Renderizando botones de diagramas, switcher:', switcher);
+        
+        if (!switcher) {
+            console.error('No se encontró el elemento diagram-switcher');
+            return;
+        }
+        
         // Preservar el header y limpiar solo los botones
         const header = switcher.querySelector('.switcher-header');
         switcher.innerHTML = '';
@@ -186,29 +242,56 @@
             switcher.appendChild(header);
         }
         
+        console.log('Creando', diagrams.length, 'links para diagramas');
         diagrams.forEach((d, idx) => {
-            const btn = document.createElement('button');
-            btn.className = 'diagram-btn' + (idx === currentDiagramIdx ? ' active' : '');
-            btn.textContent = d.name;
-            btn.disabled = isLoading; // Deshabilitar botones durante la carga
-            btn.onclick = () => {
+            const link = document.createElement('a');
+            link.href = `?d=${idx}`; // URL con parámetro del diagrama
+            link.className = 'diagram-btn' + (idx === currentDiagramIdx ? ' active' : '');
+            link.textContent = d.name;
+            link.style.textDecoration = 'none'; // Eliminar subrayado del link
+            
+            // Deshabilitar link durante la carga
+            if (isLoading) {
+                link.style.pointerEvents = 'none';
+                link.style.opacity = '0.5';
+            }
+            
+            // Usar addEventListener para mayor compatibilidad
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log('Link clickeado:', d.name, 'índice:', idx, 'isLoading:', isLoading);
                 if (currentDiagramIdx !== idx && !isLoading) {
+                    console.log('Procesando clic del link:', d.name);
+                    
+                    // Actualizar URL sin disparar popstate
+                    const url = new URL(window.location);
+                    url.searchParams.set('d', idx.toString());
+                    window.history.pushState({}, '', url);
+                    
                     currentDiagramIdx = idx;
-                    updateURL(idx); // Actualizar URL
+                    updateTopbarTitle(idx); // Actualizar título del topbar
                     renderDiagramButtons();
                     loadDiagram(d.url);
+                } else {
+                    console.log('Link ignorado - currentDiagramIdx:', currentDiagramIdx, 'idx:', idx, 'isLoading:', isLoading);
                 }
-            };
-            switcher.appendChild(btn);
+            });
+            
+            // Agregar también un event listener de mouseenter para debug
+            link.addEventListener('mouseenter', () => {
+                console.log('Mouse sobre link:', d.name);
+            });
+            
+            switcher.appendChild(link);
+            console.log('Link creado:', d.name);
         });
+        
+        console.log('Links renderizados. Total de links:', switcher.querySelectorAll('.diagram-btn').length);
     }
 
     function loadDiagram(url) {
-        // Evitar recargar el mismo diagrama
-        if (currentUrl === url && !isLoading) {
-            console.log('Diagrama ya cargado, saltando recarga');
-            return;
-        }
+        console.log('loadDiagram llamado con URL:', url);
         
         // Prevenir cargas múltiples
         if (isLoading) {
@@ -219,8 +302,11 @@
         isLoading = true;
         currentUrl = url;
         
+        // Limpiar cache para forzar recarga completa
+        clearCache();
+        
         // Cancelar cualquier transición en progreso
-        const svgD3 = d3.select("svg");
+        const svgD3 = d3.select("#main-diagram-svg");
         if (!svgD3.empty()) {
             svgD3.interrupt(); // Interrumpir transiciones en progreso
         }
@@ -229,139 +315,108 @@
         const loading = document.getElementById('loading');
         if (loading) loading.style.display = 'block';
         
-        // Limpiar SVG y ocultarlo
-        const svg = document.querySelector('svg');
+        // Limpiar SVG y ocultarlo completamente
+        const svg = document.getElementById('main-diagram-svg');
         if (svg) {
+            // Ocultar el SVG inmediatamente para evitar parpadeos
+            svg.style.opacity = '0';
+            svg.classList.remove('loaded');
+            svg.style.pointerEvents = 'none';
+            
+            // Limpiar el contenido
             svg.innerHTML = '';
-            svg.style.opacity = '0'; // Ocultar SVG durante la carga
+            
+            console.log('SVG ocultado y limpiado para nueva carga');
         }
         
         // Limpiar mensajes de error
         const error = document.getElementById('error-message');
         if (error) error.textContent = '';
         
-        // Limpiar dropdown de tipos
-        const typeDropdown = document.getElementById('type-dropdown');
-        if (typeDropdown) typeDropdown.innerHTML = '';
-        
-        // Limpiar campo de búsqueda
-        const searchInput = document.getElementById('search-input');
-        if (searchInput) searchInput.value = '';
+        // Controles removidos temporalmente
         
         // Llamar a la función global para cargar el diagrama
         if (window.initDiagram) {
-            // Sobrescribir temporalmente applyAutoZoom para un fade-in suave
-            const originalApplyAutoZoom = window.applyAutoZoom;
-            window.applyAutoZoom = function() {
+            console.log('Llamando a initDiagram con URL:', url);
+            
+            // Usar la función con callback para saber cuándo está realmente terminado
+            window.initDiagram(url, function() {
+                console.log('initDiagram completado, procediendo con zoom y fade-in');
+                
+                // Aplicar zoom automático inmediatamente (mientras el SVG está invisible)
+                if (window.applyAutoZoom) {
+                    console.log('Aplicando zoom automático');
+                    window.applyAutoZoom();
+                }
+                
+                // Esperar un tiempo corto para que el zoom se aplique
                 setTimeout(() => {
-                    const svg = d3.select("svg");
-                    const g = svg.select("g");
+                    // Ocultar loading
+                    const loading = document.getElementById('loading');
+                    if (loading) loading.style.display = 'none';
                     
-                    function tryZoom() {
-                        if (g.empty() || g.node().getBBox().width === 0 || g.node().getBBox().height === 0) {
-                            setTimeout(tryZoom, 100);
-                            return;
-                        }
-
-                        const bounds = g.node().getBBox();
-                        // Obtener el ancho y alto real del SVG
-                        const svgElement = document.querySelector('svg');
-                        const svgWidth = svgElement ? svgElement.clientWidth || svgElement.offsetWidth : window.innerWidth;
-                        const svgHeight = svgElement ? svgElement.clientHeight || svgElement.offsetHeight : window.innerHeight;
-
-                        if (!bounds.width || !bounds.height) {
-                            setTimeout(tryZoom, 100);
-                            return;
-                        }
-
-                        // Para múltiples clusters, calcular bounds más precisos
-                        let totalBounds = bounds;
+                    // Hacer fade-in suave del SVG (ya con zoom aplicado)
+                    const svg = document.getElementById("main-diagram-svg");
+                    if (svg) {
+                        console.log('Iniciando fade-in del SVG');
+                        svg.classList.add('loaded');
                         
-                        // Si hay diagram groups, calcular el bounds total de todos
-                        const diagramGroups = g.selectAll(".diagram-group");
-                        if (!diagramGroups.empty()) {
-                            let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-                            let hasValidBounds = false;
+                        // Asegurar que los pointer events estén habilitados después del fade-in
+                        setTimeout(() => {
+                            svg.style.pointerEvents = 'auto';
+                            console.log('Pointer events habilitados para zoom y drag');
                             
-                            diagramGroups.each(function() {
-                                const groupBounds = this.getBBox();
-                                if (groupBounds.width > 0 && groupBounds.height > 0) {
-                                    minX = Math.min(minX, groupBounds.x);
-                                    minY = Math.min(minY, groupBounds.y);
-                                    maxX = Math.max(maxX, groupBounds.x + groupBounds.width);
-                                    maxY = Math.max(maxY, groupBounds.y + groupBounds.height);
-                                    hasValidBounds = true;
+                            // Aplicar zoom behavior después de que el SVG esté visible y tenga pointer events
+                            if (window.ensureZoomBehavior) {
+                                console.log('Aplicando zoom behavior después del fade-in');
+                                window.ensureZoomBehavior();
+                                
+                                // Configurar el cierre del panel después de que el zoom esté activo
+                                if (window.setupClosePanelOnSvgClick) {
+                                    console.log('Configurando cierre del panel');
+                                    window.setupClosePanelOnSvgClick();
                                 }
-                            });
-                            
-                            if (hasValidBounds) {
-                                totalBounds = {
-                                    x: minX,
-                                    y: minY,
-                                    width: maxX - minX,
-                                    height: maxY - minY
-                                };
+                                
+                                // Debug del estado del SVG
+                                if (window.debugSVGState) {
+                                    setTimeout(() => {
+                                        window.debugSVGState();
+                                    }, 100);
+                                }
                             }
-                        }
-
-                        // Calcular la escala final
-                        const scale = Math.min(svgWidth / totalBounds.width, svgHeight / totalBounds.height) * 0.75;
-                        
-                        // Centrar el contenido dentro del SVG disponible
-                        const contentCenterX = totalBounds.x + totalBounds.width / 2;
-                        const contentCenterY = totalBounds.y + totalBounds.height / 2;
-                        const svgCenterX = svgWidth / 2;
-                        const svgCenterY = svgHeight / 2;
-                        
-                        // Calcular la traslación para centrar el contenido
-                        const translateX = svgCenterX - contentCenterX * scale;
-                        const translateY = svgCenterY - contentCenterY * scale - 50; // Ajuste vertical adicional
-
-                        // Crear la transformación inicial
-                        const transform = d3.zoomIdentity
-                            .translate(translateX, translateY)
-                            .scale(scale);
-
-                        // Aplicar la transformación al comportamiento de zoom
-                        svg.call(zoom.transform, transform);
-                        svg.call(zoom);
-                        
-                        // Ocultar loading y hacer fade-in del SVG
-                        if (loading) loading.style.display = 'none';
-                        
-                        // Verificar si el SVG ya está visible para evitar parpadeos
-                        const currentOpacity = parseFloat(svg.style("opacity") || "0");
-                        if (currentOpacity > 0) {
-                            // Si ya está visible, solo aplicar el zoom sin transición
-                            isLoading = false;
-                        } else {
-                            // Si está oculto, hacer fade-in suave
-                            svg.transition()
-                                .duration(800)
-                                .style("opacity", 1)
-                                .on('end', function() {
-                                    // Marcar como no cargando cuando termine la transición
-                                    isLoading = false;
-                                });
-                        }
+                        }, 600); // Después de la transición de fade-in
                     }
-
-                    tryZoom();
-                }, 100);
-            };
+                    
+                    // El zoom behavior ya se aplicó en applyAutoZoom, no es necesario aplicarlo aquí
+                    // setTimeout(() => {
+                    //     if (window.ensureZoomBehavior) {
+                    //         console.log('Aplicando zoom behavior después del fade-in');
+                    //         window.ensureZoomBehavior();
+                    //     }
+                    // }, 100);
+                    
+                    // Marcar como no cargando después de la transición
+                    setTimeout(() => {
+                        isLoading = false;
+                    }, 600);
+                }, 200); // Delay corto y consistente
+            });
             
-            window.initDiagram(url);
-            
-            // Restaurar la función original después de un tiempo
+            // Timeout de seguridad
             setTimeout(() => {
-                window.applyAutoZoom = originalApplyAutoZoom;
-            }, 2000);
-            
-            // También marcar como no cargando en caso de error
-            setTimeout(() => {
-                isLoading = false;
-                currentUrl = null; // Reset URL en caso de error
-            }, 10000); // Timeout de seguridad de 10 segundos
+                if (isLoading) {
+                    console.warn('Timeout de carga del diagrama');
+                    const loading = document.getElementById('loading');
+                    if (loading) loading.style.display = 'none';
+                    const svg = document.getElementById('main-diagram-svg');
+                    if (svg) svg.classList.add('loaded');
+                    isLoading = false;
+                    currentUrl = null;
+                }
+            }, 10000);
+        } else {
+            console.error('initDiagram no está disponible');
+            isLoading = false;
         }
     }
 
@@ -435,11 +490,47 @@
     
     // Inicializar
     document.addEventListener('DOMContentLoaded', function() {
+        console.log('DOMContentLoaded iniciado');
+        
+        // Inicializar el sistema de temas primero
+        if (window.initializeThemeSystem && !window.themeSystemInitialized) {
+            window.initializeThemeSystem();
+            window.themeSystemInitialized = true;
+        }
+        
         // Obtener el diagrama desde la URL o usar el default
         currentDiagramIdx = getDiagramIndexFromURL();
+        console.log('Índice del diagrama inicial:', currentDiagramIdx);
         
-        renderDiagramButtons();
-        loadDiagram(diagrams[currentDiagramIdx].url);
+        // Actualizar el título del topbar con el diagrama inicial
+        updateTopbarTitle(currentDiagramIdx);
+        
+        // Asegurar que el SVG comience oculto
+        const svg = document.getElementById('main-diagram-svg');
+        if (svg) {
+            svg.classList.remove('loaded');
+        }
+        
+        // Verificar que el elemento diagram-switcher esté presente antes de renderizar
+        const switcher = document.getElementById('diagram-switcher');
+        if (switcher) {
+            console.log('Elemento diagram-switcher encontrado, renderizando botones');
+            renderDiagramButtons();
+            loadDiagram(diagrams[currentDiagramIdx].url);
+        } else {
+            console.error('Elemento diagram-switcher NO encontrado en DOMContentLoaded');
+            // Reintentar después de un breve delay
+            setTimeout(() => {
+                const retrySwitcher = document.getElementById('diagram-switcher');
+                if (retrySwitcher) {
+                    console.log('Elemento diagram-switcher encontrado en retry, renderizando botones');
+                    renderDiagramButtons();
+                    loadDiagram(diagrams[currentDiagramIdx].url);
+                } else {
+                    console.error('Elemento diagram-switcher NO encontrado en retry');
+                }
+            }, 100);
+        }
         
         // Observer para detectar cambios en las variables CSS del tema
         const observer = new MutationObserver(function(mutations) {
@@ -492,12 +583,17 @@
         }
         
         // Listener para navegación del navegador (botones atrás/adelante)
-        window.addEventListener('popstate', function() {
-            const newIndex = getDiagramIndexFromURL();
-            if (newIndex !== currentDiagramIdx && !isLoading) {
-                currentDiagramIdx = newIndex;
-                renderDiagramButtons();
-                loadDiagram(diagrams[currentDiagramIdx].url);
+        window.addEventListener('popstate', function(event) {
+            // Solo procesar si no es una navegación programática
+            if (!event.state || Object.keys(event.state).length === 0) {
+                const newIndex = getDiagramIndexFromURL();
+                if (newIndex !== currentDiagramIdx && !isLoading) {
+                    console.log('Navegación del navegador detectada, cargando diagrama:', newIndex);
+                    currentDiagramIdx = newIndex;
+                    updateTopbarTitle(currentDiagramIdx); // Actualizar título del topbar
+                    renderDiagramButtons();
+                    loadDiagram(diagrams[currentDiagramIdx].url);
+                }
             }
         });
         

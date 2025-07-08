@@ -899,42 +899,20 @@ svg .node.node-selected {
   color: var(--side-panel-text);
 }
 
-.controls-container {
-  display: flex;
-  gap: 12px;
-  align-items: center;
-  justify-content: flex-start;
-}
-
-.control-item {
-  background: var(--control-bg);
-  color: var(--control-text);
-  border: 1px solid var(--control-border);
-  border-radius: 6px;
-  padding: 8px 12px;
-  font-size: 14px;
-  outline: none;
-  transition: all 0.2s ease;
-  box-shadow: 0 1px 3px var(--control-shadow);
-}
-
-.control-item:hover {
-  border-color: var(--control-border-hover);
-  box-shadow: 0 2px 6px var(--control-shadow);
-}
-
-.control-item:focus {
-  border-color: var(--control-border-focus);
-  box-shadow: 0 0 0 2px var(--control-shadow-focus);
-}
-
-.control-item::placeholder {
-  color: var(--control-placeholder);
-}
+/* Controles removidos temporalmente */
 
 /* Ajustar SVG para el topbar */
 svg {
   height: calc(100vh - 60px);
+}
+
+/* SVG principal del diagrama */
+#main-diagram-svg {
+  width: 100%;
+  height: calc(100vh - 60px);
+  display: block;
+  z-index: 1; /* Asegurar que esté por debajo de los controles */
+  position: relative;
 }
 
 /* Ajustar selector de tema para el topbar */
@@ -959,4 +937,74 @@ svg {
 .theme-selector:focus {
   border-color: var(--control-border-focus);
   box-shadow: 0 0 0 2px var(--control-shadow-focus);
+}
+
+/* Theme Controls */
+.theme-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* Theme Toggle Button */
+.theme-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border: 1px solid var(--control-border);
+  border-radius: 8px;
+  background: var(--control-bg);
+  color: var(--control-text);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.theme-toggle:hover {
+  border-color: var(--control-border-hover);
+  box-shadow: 0 0 0 2px var(--control-shadow);
+  transform: translateY(-1px);
+}
+
+.theme-toggle:active {
+  transform: translateY(0);
+}
+
+.theme-toggle:focus {
+  outline: none;
+  border-color: var(--control-border-focus);
+  box-shadow: 0 0 0 2px var(--control-shadow-focus);
+}
+
+/* Theme Icons */
+.theme-icon {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  transition: all 0.3s ease;
+}
+
+.sun-icon {
+  opacity: 1;
+  transform: translate(-50%, -50%) rotate(0deg);
+}
+
+.moon-icon {
+  opacity: 0;
+  transform: translate(-50%, -50%) rotate(90deg);
+}
+
+/* Dark mode - show moon icon */
+.theme-toggle.dark-mode .sun-icon {
+  opacity: 0;
+  transform: translate(-50%, -50%) rotate(-90deg);
+}
+
+.theme-toggle.dark-mode .moon-icon {
+  opacity: 1;
+  transform: translate(-50%, -50%) rotate(0deg);
 }

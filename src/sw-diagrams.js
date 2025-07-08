@@ -2,7 +2,14 @@
 /* Based on D3.js */
 
 
-function initDiagram(csvUrl) {
+// Zoom behavior global - debe estar definido ANTES de cualquier función que lo use
+const zoom = d3.zoom()
+  .scaleExtent([0.1, 4])
+  .on("zoom", event => {
+    d3.select("#main-diagram-svg g").attr("transform", event.transform);
+  });
+
+function initDiagram(csvUrl, onComplete) {
   console.log("Iniciando carga del diagrama...");
   const loadingElement = document.querySelector("#loading");
   const errorElement = document.querySelector("#error-message");
@@ -35,28 +42,52 @@ function initDiagram(csvUrl) {
         }
         
         console.log("Creando dropdown de tipos...");
-        createTypeDropdown(data);
-        console.log("Dropdown creado");
+        // Dropdown de tipos removido temporalmente
+        console.log("Dropdown removido temporalmente");
         
-        console.log("Ocultando loading...");
-        if (loadingElement) loadingElement.style.display = "none";
+        console.log("Diagrama renderizado completamente");
+        
+        // NO ocultar loading aquí - se manejará desde el código principal
+        // if (loadingElement) loadingElement.style.display = "none";
         
         // Aplicar el tema actual después de que el diagrama esté completamente cargado
-        const currentTheme = localStorage.getItem('selectedTheme') || 'snow';
-        console.log("Aplicando tema actual:", currentTheme);
-        setTheme(currentTheme);
+        setTimeout(() => {
+            const currentTheme = localStorage.getItem('selectedTheme') || 'snow';
+            console.log("Aplicando tema actual:", currentTheme);
+            if (window.setTheme) {
+                window.setTheme(currentTheme);
+            }
+        }, 100);
         
         console.log("Diagrama cargado completamente");
+        
+        // Llamar al callback cuando esté completamente terminado
+        if (onComplete && typeof onComplete === 'function') {
+          setTimeout(() => {
+            // NO aplicar zoom behavior aquí - se aplicará desde applyAutoZoom
+            onComplete();
+          }, 100); // Pequeño delay para asegurar que todo esté listo
+        }
       } catch (error) {
         console.error("Error durante la inicialización:", error);
         if (errorElement) errorElement.innerText = `Error: ${error.message}`;
         if (loadingElement) loadingElement.style.display = "none";
+        
+        // Llamar al callback incluso en caso de error
+        if (onComplete && typeof onComplete === 'function') {
+          onComplete();
+        }
       }
     },
     error: function(err) {
       console.error("Error al cargar CSV:", err);
       if (errorElement) errorElement.innerText = `CSV File ${err.message}`;
       if (loadingElement) loadingElement.style.display = "none";
+      
+      // Llamar al callback en caso de error de CSV
+      if (onComplete && typeof onComplete === 'function') {
+        onComplete();
+      }
     }
   });
 }
@@ -99,16 +130,31 @@ function buildMultipleHierarchies(data) {
 
 function drawMultipleTrees(trees) {
   
-  // Buscar el SVG directamente en el body
-  let svg = document.querySelector("svg");
+  // Buscar el SVG principal del diagrama por ID específico
+  let svg = document.getElementById("main-diagram-svg");
   if (!svg) {
-    console.error("No se encontró el SVG en el documento");
+    // Fallback: buscar el SVG dentro del contenedor
+    svg = document.querySelector(".swanix-diagram-container svg");
+  }
+  if (!svg) {
+    // Fallback: buscar cualquier SVG que no sea un icono del tema
+    const allSvgs = document.querySelectorAll("svg");
+    svg = Array.from(allSvgs).find(svg => !svg.classList.contains('theme-icon'));
+  }
+  
+  if (!svg) {
+    console.error("No se encontró el SVG principal del diagrama en el documento");
     return;
   }
   
   // Limpiar cualquier contenido previo del SVG
   svg.innerHTML = "";
-  console.log("SVG seleccionado:", svg);
+  
+  // Asegurar que el SVG esté oculto durante el renderizado
+  svg.style.opacity = '0';
+  svg.classList.remove('loaded');
+  
+  console.log("SVG principal seleccionado:", svg);
   
   try {
     const g = d3.select(svg).append("g");
@@ -327,8 +373,8 @@ function drawMultipleTrees(trees) {
                 .style("stroke-dasharray", "12,8");
               treeGroup.append("text")
                 .attr("class", "cluster-title")
-                .attr("x", minX + 16)
-                .attr("y", minY + 28)
+                .attr("x", minX + 32) // Aumentado de 16 a 32 para separarlo más del borde izquierdo
+                .attr("y", minY + 40) // Aumentado de 28 a 40 para bajarlo un poco
                 .attr("text-anchor", "start")
                 .style("font-size", "1.5em")
                 .style("font-weight", "bold")
@@ -391,123 +437,162 @@ function recalculateClusterSpacing(clusters) {
 }
 
 function applyAutoZoom() {
-  // Wait for DOM to be fully loaded
-  setTimeout(() => {
-    const svg = d3.select("svg");
-    const g = svg.select("g");
-    // Hide SVG initially
-    svg.style("opacity", 0);
-    // Try multiple times until the diagram is ready
-    let attempts = 0;
-    const maxAttempts = 10;
-    
-    function tryZoom() {
-      if (attempts >= maxAttempts) {
-        console.warn("❗ Could not apply automatic zoom after multiple attempts");
-        return;
-      }
+  console.log('[Zoom] applyAutoZoom iniciado');
+  console.log('[Zoom] zoom behavior definido:', !!zoom);
+  
+  // Aplicar zoom inmediatamente sin delays
+  const svg = d3.select("#main-diagram-svg");
+  const g = svg.select("g");
+  
+  // Verificar que el contenido esté listo
+  if (g.empty() || g.node().getBBox().width === 0 || g.node().getBBox().height === 0) {
+    console.warn("❗ Contenido no listo para zoom automático");
+    return;
+  }
 
-      if (g.empty() || g.node().getBBox().width === 0 || g.node().getBBox().height === 0) {
-        attempts++;
-        setTimeout(tryZoom, 100);
-        return;
-      }
+  const bounds = g.node().getBBox();
+  // Obtener el ancho y alto real del SVG
+  const svgElement = document.getElementById('main-diagram-svg');
+  const svgWidth = svgElement ? svgElement.clientWidth || svgElement.offsetWidth : window.innerWidth;
+  const svgHeight = svgElement ? svgElement.clientHeight || svgElement.offsetHeight : window.innerHeight;
 
-      const bounds = g.node().getBBox();
-      // Obtener el ancho y alto real del SVG
-      const svgElement = document.querySelector('svg');
-      const svgWidth = svgElement ? svgElement.clientWidth || svgElement.offsetWidth : window.innerWidth;
-      const svgHeight = svgElement ? svgElement.clientHeight || svgElement.offsetHeight : window.innerHeight;
+  if (!bounds.width || !bounds.height) {
+    console.warn("❗ Bounds inválidos para zoom automático");
+    return;
+  }
 
-      if (!bounds.width || !bounds.height) {
-        attempts++;
-        setTimeout(tryZoom, 100);
-        return;
-      }
-
-      // Para múltiples clusters, centrar y ajustar el zoom usando el bounding box total de todos los diagram-group
-      let totalBounds = bounds;
-      let xOffset = 0;
-      
-      // Calcular el bounding box total de todos los diagram-group
-      const diagramGroups = g.selectAll(".diagram-group");
-      if (!diagramGroups.empty()) {
-        let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-        diagramGroups.each(function() {
-          const groupBounds = this.getBBox();
-          const transform = this.getAttribute("transform");
-          let groupOffsetX = 0;
-          if (transform) {
-            const match = /translate\(([-\d.]+), ?([-\d.]+)\)/.exec(transform);
-            if (match) {
-              groupOffsetX = parseFloat(match[1]) || 0;
-            }
-          }
-          const absX = groupBounds.x + groupOffsetX;
-          minX = Math.min(minX, absX);
-          minY = Math.min(minY, groupBounds.y);
-          maxX = Math.max(maxX, absX + groupBounds.width);
-          maxY = Math.max(maxY, groupBounds.y + groupBounds.height);
-        });
-        if (minX < Infinity && minY < Infinity && maxX > -Infinity && maxY > -Infinity) {
-          totalBounds = {
-            x: minX,
-            y: minY,
-            width: maxX - minX,
-            height: maxY - minY
-          };
+  // Para múltiples clusters, centrar y ajustar el zoom usando el bounding box total de todos los diagram-group
+  let totalBounds = bounds;
+  
+  // Calcular el bounding box total de todos los diagram-group
+  const diagramGroups = g.selectAll(".diagram-group");
+  if (!diagramGroups.empty()) {
+    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+    diagramGroups.each(function() {
+      const groupBounds = this.getBBox();
+      const transform = this.getAttribute("transform");
+      let groupOffsetX = 0;
+      if (transform) {
+        const match = /translate\(([-\d.]+), ?([-\d.]+)\)/.exec(transform);
+        if (match) {
+          groupOffsetX = parseFloat(match[1]) || 0;
         }
       }
-
-      // Calcular el centro del contenido del bounding box total
-      const contentCenterX = totalBounds.x + totalBounds.width / 2;
-      const contentCenterY = totalBounds.y + totalBounds.height / 2;
-      const svgCenterX = svgWidth / 2;
-      const svgCenterY = svgHeight / 2;
-      
-      // Calcular el scale para ajustar el contenido al viewport
-      const scaleX = (svgWidth - 100) / totalBounds.width; // 100px de margen
-      const scaleY = (svgHeight - 100) / totalBounds.height; // 100px de margen
-      const scale = Math.min(scaleX, scaleY, 1); // No hacer zoom in, solo out si es necesario
-      
-      // Calcular la traslación para centrar el contenido
-      let translateX = svgCenterX - contentCenterX * scale;
-      const leftEdge = totalBounds.x * scale + translateX;
-      if (leftEdge > 300) {
-        translateX -= (leftEdge - 300);
-      }
-      const translateY = svgCenterY - contentCenterY * scale - 50; // Ajuste vertical adicional
-      
-      // LOGS DE CENTRADO
-      console.log('[Zoom] totalBounds:', totalBounds, 'contentCenterX:', contentCenterX, 'svgCenterX:', svgCenterX, 'translateX:', translateX, 'leftEdge:', leftEdge);
-      console.log('[Zoom] transform:', { translateX, translateY, scale });
-
-      // Create the initial transformation
-      const transform = d3.zoomIdentity
-        .translate(translateX, translateY)
-        .scale(scale);
-
-      // Apply the transformation to the zoom behavior
-      svg.call(zoom.transform, transform);
-
-      // Show the SVG with a smooth transition
-      svg.transition()
-        .duration(800)
-        .style("opacity", 1);
-
-      // Reapply zoom behavior to ensure it works
-      svg.call(zoom);
+      const absX = groupBounds.x + groupOffsetX;
+      minX = Math.min(minX, absX);
+      minY = Math.min(minY, groupBounds.y);
+      maxX = Math.max(maxX, absX + groupBounds.width);
+      maxY = Math.max(maxY, groupBounds.y + groupBounds.height);
+    });
+    if (minX < Infinity && minY < Infinity && maxX > -Infinity && maxY > -Infinity) {
+      totalBounds = {
+        x: minX,
+        y: minY,
+        width: maxX - minX,
+        height: maxY - minY
+      };
     }
+  }
 
-    tryZoom();
-  }, 100);
+  // Calcular el centro del contenido del bounding box total
+  const contentCenterX = totalBounds.x + totalBounds.width / 2;
+  const contentCenterY = totalBounds.y + totalBounds.height / 2;
+  const svgCenterX = svgWidth / 2;
+  const svgCenterY = svgHeight / 2;
+  
+  // Detectar si es un diagrama pequeño (4 o menos nodos)
+  const nodeCount = g.selectAll(".node").size();
+  const isSmallDiagram = nodeCount <= 4;
+  
+  console.log('[Zoom] Número de nodos detectados:', nodeCount, '¿Es diagrama pequeño?', isSmallDiagram);
+  
+  // Calcular el scale para ajustar el contenido al viewport
+  let scaleX = (svgWidth - 100) / totalBounds.width; // 100px de margen
+  let scaleY = (svgHeight - 100) / totalBounds.height; // 100px de margen
+  let scale = Math.min(scaleX, scaleY, 1); // No hacer zoom in, solo out si es necesario
+  
+  // Para diagramas pequeños, aplicar zoom out adicional
+  if (isSmallDiagram) {
+    // Reducir el scale para diagramas pequeños (más zoom out)
+    const smallDiagramScaleFactor = 0.8; // Ajusta este valor según necesites
+    scale = Math.min(scale * smallDiagramScaleFactor, 0.8); // Máximo 0.8 para diagramas pequeños
+    console.log('[Zoom] Aplicando zoom out para diagrama pequeño. Scale ajustado:', scale);
+  }
+  
+  // Calcular la traslación para centrar el contenido
+  let translateX = svgCenterX - contentCenterX * scale;
+  const leftEdge = totalBounds.x * scale + translateX;
+  if (leftEdge > 300) {
+    translateX -= (leftEdge - 300);
+  }
+  const translateY = svgCenterY - contentCenterY * scale - 50; // Ajuste vertical adicional
+  
+  // LOGS DE CENTRADO
+  console.log('[Zoom] totalBounds:', totalBounds, 'contentCenterX:', contentCenterX, 'svgCenterX:', svgCenterX, 'translateX:', translateX, 'leftEdge:', leftEdge);
+  console.log('[Zoom] transform:', { translateX, translateY, scale });
+
+  // Create the initial transformation
+  const transform = d3.zoomIdentity
+    .translate(translateX, translateY)
+    .scale(scale);
+
+  // Apply the transformation to the zoom behavior
+  console.log('[Zoom] Aplicando transformación:', transform);
+  svg.call(zoom.transform, transform);
+  
+  // NO aplicar zoom behavior aquí - se aplicará después de que el SVG esté visible
+  // console.log('[Zoom] Aplicando zoom behavior');
+  // svg.call(zoom);
+  
+  console.log('[Zoom] Zoom automático aplicado exitosamente');
+  console.log('[Zoom] Zoom behavior se aplicará después del fade-in');
 }
 
-const zoom = d3.zoom().scaleExtent([0.1, 4]).on("zoom", event => {
-  d3.select("svg g").attr("transform", event.transform);
-});
+// Zoom behavior global ya está definido al inicio del archivo
 
-d3.select("svg").call(zoom);
+// Función para asegurar que el zoom behavior esté activo
+function ensureZoomBehavior() {
+  const svg = d3.select("#main-diagram-svg");
+  if (!svg.empty()) {
+    // Verificar si el zoom behavior ya está aplicado de manera más robusta
+    const hasZoomBehavior = svg.node().__zoom !== undefined;
+    
+    // Aplicar zoom behavior siempre para asegurar que funcione
+    svg.call(zoom);
+    
+    // Verificar que se aplicó correctamente
+    const hasZoomBehaviorAfter = svg.node().__zoom !== undefined;
+    console.log('[Zoom] Zoom behavior aplicado:', hasZoomBehaviorAfter);
+    
+    // Habilitar pointer events explícitamente
+    svg.style('pointer-events', 'auto');
+    console.log('[Zoom] Pointer events habilitados');
+  }
+}
+
+// Función de debug para verificar el estado del SVG
+function debugSVGState() {
+  const svg = document.getElementById('main-diagram-svg');
+  if (svg) {
+    const computedStyle = window.getComputedStyle(svg);
+    console.log('[Debug] Estado del SVG:', {
+      opacity: computedStyle.opacity,
+      pointerEvents: computedStyle.pointerEvents,
+      visibility: computedStyle.visibility,
+      display: computedStyle.display,
+      hasZoomBehavior: svg.__zoom !== undefined,
+      classList: Array.from(svg.classList)
+    });
+  }
+}
+
+// Exportar las funciones para que estén disponibles globalmente
+window.ensureZoomBehavior = ensureZoomBehavior;
+window.debugSVGState = debugSVGState;
+window.setupClosePanelOnSvgClick = setupClosePanelOnSvgClick;
+
+// NO aplicar zoom behavior aquí - se aplicará después de que el diagrama esté cargado
+// d3.select("#main-diagram-svg").call(zoom);
 
 // Custom function to wrap text
 function wrap(text, width) {
@@ -553,66 +638,9 @@ function wrap(text, width) {
   });
 }
 
-function createTypeDropdown(data) {
-  // Obtener el dropdown del topbar
-  const typeDropdown = document.getElementById("type-dropdown");
-  
-  // Agregar opción por defecto "All" con contador
-  const allCount = data.length;
-  const allOption = document.createElement("option");
-  allOption.value = "all";
-  allOption.textContent = `Todos los tipos (${allCount})`;
-  typeDropdown.appendChild(allOption);
+// Función createTypeDropdown removida temporalmente
 
-  // Obtener las opciones únicas de type
-  const types = [...new Set(data.map(d => d.type))];
-  types.forEach(type => {
-    const count = data.filter(d => d.type === type).length;
-    const option = document.createElement("option");
-    option.value = type;
-    option.textContent = `${type || "Sin tipo"} (${count})`;
-    typeDropdown.appendChild(option);
-  });
-
-  // Evento para seleccionar tipo
-  typeDropdown.addEventListener("change", function() {
-    const selectedType = this.value;
-    const searchTerm = document.getElementById("search-input").value.toLowerCase();
-
-    d3.selectAll(".node").each(function(d) {
-      const node = d3.select(this);
-      const nodeGroup = node.node().parentNode;
-      const matchesSearch = !searchTerm || d.data.name.toLowerCase().includes(searchTerm);
-      const matchesType = selectedType === "all" || d.data.type === selectedType;
-      
-      if (matchesSearch && matchesType) {
-        // Mostrar el nodo
-        nodeGroup.style.opacity = "1";
-        nodeGroup.style.pointerEvents = "auto";
-        // Resaltar según el criterio activo
-        if (searchTerm && d.data.name.toLowerCase().includes(searchTerm)) {
-          // Resaltar por búsqueda
-          applyNodeSelectionStyle(node, 'search');
-        } else if (selectedType !== "all" && d.data.type === selectedType) {
-          // Resaltar por tipo con el mismo estilo que nodos seleccionados
-          applyNodeSelectionStyle(node, 'type-filter');
-        } else {
-          // Sin resaltado
-          applyNodeSelectionStyle(node, 'none');
-        }
-      } else {
-        // Ocultar el nodo pero mantenerlo clickeable
-        nodeGroup.style.opacity = "0.3";
-        nodeGroup.style.pointerEvents = "none";
-      }
-    });
-  });
-
-  // Función para crear el botón de zoom hacia el nodo seleccionado
-  // createZoomToNodeButton(); // Comentado temporalmente
-}
-
-// Función helper para aplicar estilos de selección consistentes
+// Función helper para aplicar estilos de selección (simplificada)
 function applyNodeSelectionStyle(node, styleType) {
   const rect = node.select("rect");
   
@@ -622,92 +650,18 @@ function applyNodeSelectionStyle(node, styleType) {
       .style("filter", "none")
       .style("animation", "none");
   
-  switch (styleType) {
-    case 'type-filter':
-      // Estilo para filtro por tipo (igual que nodos seleccionados)
-      const focusColor = getComputedStyle(document.documentElement).getPropertyValue('--node-selection-focus');
-      rect.style("stroke", focusColor)
-          .style("stroke-width", "5px")
-          .style("filter", `drop-shadow(0 0 6px ${focusColor}aa)`)
-          .style("animation", "node-pulse 1.2s infinite alternate");
-      break;
-      
-    case 'search':
-      // Estilo para búsqueda (blanco con sombra)
-      rect.style("stroke", "white")
-          .style("stroke-width", "4px")
-          .style("filter", "drop-shadow(0 0 6px rgba(255,255,255,0.6))");
-      break;
-      
-    case 'none':
-    default:
-      // Sin estilos
-      break;
+  // Solo mantener estilos para selección de nodos
+  if (styleType === 'selected') {
+    const focusColor = getComputedStyle(document.documentElement).getPropertyValue('--node-selection-focus');
+    rect.style("stroke", focusColor)
+        .style("stroke-width", "5px")
+        .style("filter", `drop-shadow(0 0 6px ${focusColor}aa)`)
+        .style("animation", "node-pulse 1.2s infinite alternate");
   }
 }
 
 document.addEventListener("DOMContentLoaded", () => {
-  // Obtener el campo de búsqueda del topbar
-  const searchInput = document.getElementById("search-input");
-
-  // Evento para buscar nodos
-  searchInput.addEventListener("input", function() {
-    const searchTerm = this.value.toLowerCase();
-    const selectedType = document.getElementById("type-dropdown").value;
-    
-    d3.selectAll(".node").each(function(d) {
-      const node = d3.select(this);
-      const nodeGroup = node.node().parentNode;
-      const matchesSearch = !searchTerm || d.data.name.toLowerCase().includes(searchTerm);
-      const matchesType = selectedType === "all" || d.data.type === selectedType;
-      
-      if (matchesSearch && matchesType) {
-        // Mostrar el nodo
-        nodeGroup.style.opacity = "1";
-        nodeGroup.style.pointerEvents = "auto";
-        // Resaltar si coincide con la búsqueda
-        if (searchTerm) {
-          applyNodeSelectionStyle(node, 'search');
-        } else {
-          // Quitar resaltado si no hay término de búsqueda
-          applyNodeSelectionStyle(node, 'none');
-        }
-      } else {
-        // Ocultar el nodo pero mantenerlo clickeable
-        nodeGroup.style.opacity = "0.3";
-        nodeGroup.style.pointerEvents = "none";
-      }
-    });
-  });
-
-  // Agregar evento para presionar "Enter"
-  searchInput.addEventListener("keydown", function(event) {
-    if (event.key === "Enter") {
-      const searchTerm = this.value.toLowerCase();
-      const foundNode = d3.selectAll(".node").filter(d => d.data.name.toLowerCase().includes(searchTerm));
-
-      if (!foundNode.empty()) {
-        const bounds = foundNode.node().getBBox();
-        const svg = d3.select("svg");
-        const svgWidth = window.innerWidth;
-        const svgHeight = window.innerHeight;
-
-        // Calcular la escala y la traducción para centrar el nodo
-        const scale = Math.min(svgWidth / bounds.width, svgHeight / bounds.height) * 0.9;
-        const translateX = (svgWidth / 2) - (bounds.x + bounds.width / 2) * scale;
-        const translateY = (svgHeight / 2) - (bounds.y + bounds.height / 2) * scale;
-
-        // Crear la transformación inicial
-        const transform = d3.zoomIdentity.translate(translateX, translateY).scale(scale);
-
-        // Aplicar la transformación con una transición suave
-        svg.transition()
-          .duration(800)
-          .call(zoom.transform, transform);
-      }
-    }
-  });
-
+  // Event listeners de búsqueda removidos temporalmente
   setupClosePanelOnSvgClick();
 });
 
@@ -1054,24 +1008,48 @@ window.closeSidePanel = closeSidePanel;
 
 // Evento global para cerrar el panel al hacer clic fuera de los nodos
 function setupClosePanelOnSvgClick() {
-  const svg = document.querySelector('svg');
-  if (!svg) return;
-  svg.addEventListener('click', function(event) {
+  const svg = document.querySelector('#main-diagram-svg');
+  if (!svg) {
+    console.warn('No se encontró el SVG principal para configurar el cierre del panel');
+    return;
+  }
+  
+  console.log('Configurando evento de cierre del panel en SVG:', svg);
+  
+  // Remover event listener previo si existe
+  svg.removeEventListener('click', handleSvgClick);
+  
+  // Agregar el nuevo event listener
+  svg.addEventListener('click', handleSvgClick);
+  
+  function handleSvgClick(event) {
+    console.log('Clic en SVG detectado, target:', event.target);
+    
     // Si el clic NO es sobre un nodo ni un descendiente de nodo
     if (!event.target.closest('.node')) {
+      console.log('Clic fuera de nodo detectado, cerrando panel');
       closeSidePanel();
+    } else {
+      console.log('Clic en nodo detectado, no cerrando panel');
     }
-  });
+  }
 }
 
 // === SISTEMA DE THEMES ===
+// Variables globales para el sistema de temas
+let currentThemeMode = 'light'; // 'light' o 'dark'
+let currentTheme = 'snow'; // tema actual
+
 function setTheme(themeId) {
   // Cerrar el panel lateral si está abierto
   const sidePanel = document.getElementById('side-panel');
   if (sidePanel && sidePanel.classList.contains('open')) {
     sidePanel.classList.remove('open');
   }
-  console.log(`Aplicando tema: ${themeId}`);
+  console.log(`setTheme llamado con: ${themeId} - Stack:`, new Error().stack);
+  
+  // Actualizar tema actual
+  currentTheme = themeId;
   
   // EJECUTAR RESET AUTOMÁTICO AL CAMBIAR TEMA
   // Limpiar todos los valores personalizados del localStorage
@@ -1189,6 +1167,56 @@ function setTheme(themeId) {
     
     console.log(`Tema ${themeId} aplicado completamente con reset automático`);
   }, 50);
+}
+
+// Función para cambiar entre modo claro y oscuro
+function toggleThemeMode() {
+  currentThemeMode = currentThemeMode === 'light' ? 'dark' : 'light';
+  
+  // Aplicar tema según el modo
+  const themeToApply = currentThemeMode === 'light' ? 'snow' : 'onyx';
+  
+  // Actualizar el botón de toggle
+  const themeToggle = document.getElementById('theme-toggle');
+  if (themeToggle) {
+    if (currentThemeMode === 'dark') {
+      themeToggle.classList.add('dark-mode');
+    } else {
+      themeToggle.classList.remove('dark-mode');
+    }
+  }
+  
+  // Aplicar el tema correspondiente
+  setTheme(themeToApply);
+  
+  // Guardar preferencia en localStorage
+  localStorage.setItem('themeMode', currentThemeMode);
+  
+  console.log('Theme mode toggled to:', currentThemeMode);
+}
+
+// Función para inicializar el sistema de temas
+function initializeThemeSystem() {
+  // Cargar preferencia guardada o usar 'light' por defecto
+  const savedMode = localStorage.getItem('themeMode') || 'light';
+  currentThemeMode = savedMode;
+  
+  // Configurar el botón de toggle
+  const themeToggle = document.getElementById('theme-toggle');
+  if (themeToggle) {
+    if (currentThemeMode === 'dark') {
+      themeToggle.classList.add('dark-mode');
+    }
+    
+    // Agregar event listener
+    themeToggle.addEventListener('click', toggleThemeMode);
+  }
+  
+  // Aplicar tema inicial
+  const initialTheme = currentThemeMode === 'light' ? 'snow' : 'onyx';
+  setTheme(initialTheme);
+  
+  console.log('Theme system initialized with mode:', currentThemeMode);
 }
 
 // Función para obtener las variables CSS de cada tema
@@ -1621,20 +1649,29 @@ window.updateSVGColors = updateSVGColors;
 window.setTheme = setTheme;
 window.openSidePanel = openSidePanel;
 window.closeSidePanel = closeSidePanel;
+window.toggleThemeMode = toggleThemeMode;
+window.initializeThemeSystem = initializeThemeSystem;
+window.applyAutoZoom = applyAutoZoom;
 
 // Configurar el selector de tema cuando el DOM esté listo
 document.addEventListener('DOMContentLoaded', function() {
+  // Inicializar el sistema de temas (toggle dark/light) solo si no está ya inicializado
+  if (!window.themeSystemInitialized) {
+    initializeThemeSystem();
+    window.themeSystemInitialized = true;
+  }
+  
   const selector = document.getElementById('theme-selector');
   if (selector) {
-  // Restaurar tema guardado
-  const saved = localStorage.getItem('selectedTheme') || 'light';
-  selector.value = saved;
-  setTheme(saved);
+    // Restaurar tema guardado
+    const saved = localStorage.getItem('selectedTheme') || 'snow';
+    selector.value = saved;
+    setTheme(saved);
     
     // Agregar event listener para cambios de tema
-  selector.addEventListener('change', function() {
+    selector.addEventListener('change', function() {
       console.log('Cambiando tema a:', this.value);
-    setTheme(this.value);
-  });
+      setTheme(this.value);
+    });
   }
 });

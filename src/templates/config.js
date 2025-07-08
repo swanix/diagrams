@@ -67,6 +67,22 @@ const SIDE_PANEL_CONFIG = {
     { id: 'edit', label: 'Editar', icon: '✏️', action: 'editNode' },
     { id: 'delete', label: 'Eliminar', icon: '🗑️', action: 'deleteNode' },
     { id: 'duplicate', label: 'Duplicar', icon: '📋', action: 'duplicateNode' }
+  ],
+
+  // Array principal de variables del theme creator
+  themeControls: [
+    {
+      label: 'Cluster fondo',
+      var: '--cluster-bg',
+      type: 'color-rgba', // Soporta transparencias
+      default: 'rgba(0,0,0,0.2)'
+    },
+    {
+      label: 'Cluster borde',
+      var: '--cluster-stroke',
+      type: 'color',
+      default: '#222'
+    }
   ]
 };
 

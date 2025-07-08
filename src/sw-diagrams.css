@@ -84,6 +84,25 @@
     --side-panel-value: #222;
     --side-panel-close-bg: #dc3545;
     --side-panel-close-hover: #c82333;
+    
+    /* Control variables */
+    --control-bg: #ffffff;
+    --control-text: #333333;
+    --control-border: #d1d5db;
+    --control-border-hover: #9ca3af;
+    --control-border-focus: #1976d2;
+    --control-placeholder: #9ca3af;
+    --control-shadow: rgba(0, 0, 0, 0.1);
+    --control-shadow-focus: rgba(25, 118, 210, 0.2);
+    
+    /* Topbar variables */
+    --topbar-bg: #ffffff;
+    --topbar-text: #333333;
+    
+    /* Sidepanel variables (alias for side-panel) */
+    --sidepanel-bg: #ffffff;
+    --sidepanel-text: #333333;
+    --sidepanel-border: #dddddd;
 
     /* Node Selection States */
     --node-selection-border: #e0e0e0;
@@ -111,6 +130,9 @@
     --csv: https://swanix.org/diagrams/lib/file-csv.svg;
     --xls: https://swanix.org/diagrams/lib/file-xls.svg;
     --mosaic: https://swanix.org/diagrams/lib/mosaic.svg;
+    --cluster-bg: rgba(0,0,0,0.05);
+    --cluster-stroke: rgba(0,0,0,0.1);
+    --cluster-title-color: #222;
   }
 
   @media (prefers-color-scheme: dark) {
@@ -137,6 +159,9 @@
       --side-panel-text: #ffffff;
       --side-panel-label: #cccccc;
       --side-panel-value: #ffffff;
+      --cluster-bg: rgba(255,255,255,0.02);
+      --cluster-stroke: rgba(255,255,255,0.1);
+      --cluster-title-color: #00eaff;
     }
     
     /* Dark mode status styles */
@@ -623,7 +648,7 @@ svg .node.node-selected {
 }
 
 /* === THEMES === */
-.theme-light {
+.theme-snow {
   --bg-color: #ecf2fd;
   --text-color: #222;
   --node-fill: #fff;
@@ -641,7 +666,7 @@ svg .node.node-selected {
   --node-selection-focus: #1976d2;
   --node-selection-hover: #bdbdbd;
   --node-selection-selected: #1976d2;
-  --image-filter: grayscale(30%); /* Filtro sutil para tema light */
+  --image-filter: grayscale(30%); /* Filtro sutil para tema snow */
   --loading-color: #1976d2; /* Azul corporativo para el spinner */
   --loading-bg: #ffffff; /* Fondo blanco para el loading */
   --bg-image: url('img/backgrounds/light-pattern.svg'); /* Patrón sutil de puntos */
@@ -655,8 +680,11 @@ svg .node.node-selected {
   --control-placeholder: #9ca3af;
   --control-shadow: rgba(0, 0, 0, 0.1);
   --control-shadow-focus: rgba(25, 118, 210, 0.2);
+  --cluster-bg: rgba(0,0,0,0.02);
+  --cluster-stroke: rgba(0,0,0,0.1);
+  --cluster-title-color: #222;
 }
-.theme-dark {
+.theme-onyx {
   --bg-color: #181c24;
   --text-color: #f6f7f9;
   --node-fill: #23272f;
@@ -674,11 +702,11 @@ svg .node.node-selected {
   --node-selection-focus: #00eaff;
   --node-selection-hover: #555;
   --node-selection-selected: #00eaff;
-  --image-filter: invert(100%) brightness(3.5) contrast(200%); /* Invertir colores para tema dark */
+  --image-filter: invert(100%) brightness(3.5) contrast(200%); /* Invertir colores para tema onyx */
   --loading-color: #00eaff; /* Cyan brillante para el spinner */
   --loading-bg: #23272f; /* Fondo oscuro para el loading */
-  --bg-image: url('https://images.unsplash.com/photo-1632059368252-be6d65abc4e2?w=1920&q=80'); /* Imagen de fondo oscura */
-  --bg-opacity: 0.3; /* Opacidad reducida para ver la imagen claramente */
+  --bg-image: url('img/backgrounds/dark-grid.svg'); /* Imagen de fondo oscura local */
+  --bg-opacity: 0.9; /* Opacidad reducida para ver la imagen claramente */
   /* Variables específicas para controles */
   --control-bg: #2d3748;
   --control-text: #e2e8f0;
@@ -688,6 +716,9 @@ svg .node.node-selected {
   --control-placeholder: #a0aec0;
   --control-shadow: rgba(0, 0, 0, 0.3);
   --control-shadow-focus: rgba(0, 234, 255, 0.3);
+  --cluster-bg: rgba(255,255,255,0.02);
+  --cluster-stroke: rgba(255,255,255,0.1);
+  --cluster-title-color: #00eaff;
 }
 .theme-vintage {
   --bg-color: #f5e9da;
@@ -721,6 +752,9 @@ svg .node.node-selected {
   --control-placeholder: #a1887f;
   --control-shadow: rgba(139, 69, 19, 0.2);
   --control-shadow-focus: rgba(139, 69, 19, 0.4);
+  --cluster-bg: rgba(0,0,0,0.05);
+  --cluster-stroke: rgba(0,0,0,0.1);
+  --cluster-title-color: #7c4f20;
 }
 .theme-pastel {
   --bg-color: #fdf6fb;
@@ -754,8 +788,11 @@ svg .node.node-selected {
   --control-placeholder: #c4a8b8;
   --control-shadow: rgba(182, 182, 247, 0.2);
   --control-shadow-focus: rgba(182, 182, 247, 0.4);
+  --cluster-bg: rgba(0,0,0,0.05);
+  --cluster-stroke: rgba(0,0,0,0.1);
+  --cluster-title-color: #b6b6f7;
 }
-.theme-cyberpunk {
+.theme-neon {
   --bg-color: #0f0026;
   --text-color: #00ffe7;
   --node-fill: #1a0033;
@@ -773,11 +810,11 @@ svg .node.node-selected {
   --node-selection-focus: #00ffe7;
   --node-selection-hover: #ff33d6;
   --node-selection-selected: #00ffe7;
-  --image-filter: invert(100%) brightness(3.5) contrast(200%); /* Invertir colores para tema dark */
-  --loading-color: #00ffe7; /* Cyan cyberpunk para el spinner */
+  --image-filter: invert(100%) brightness(3.5) contrast(200%); /* Invertir colores para tema neon */
+  --loading-color: #00ffe7; /* Cyan neon para el spinner */
   --loading-bg: #1a0033; /* Fondo púrpura oscuro para el loading */
-  --bg-image: url('https://images.unsplash.com/photo-1632059368252-be6d65abc4e2?w=1920&q=80'); /* Imagen de fondo oscura */
-  --bg-opacity: 0.3; /* Opacidad reducida para ver la imagen claramente */
+  --bg-image: url('img/backgrounds/neon-grid.svg'); /* Imagen de fondo neon local */
+  --bg-opacity: 0.9; /* Opacidad reducida para ver la imagen claramente */
   /* Variables específicas para controles */
   --control-bg: #2a0040;
   --control-text: #00ffe7;
@@ -787,39 +824,9 @@ svg .node.node-selected {
   --control-placeholder: #7a4d8a;
   --control-shadow: rgba(255, 0, 200, 0.3);
   --control-shadow-focus: rgba(0, 255, 231, 0.4);
-}
-.theme-neon {
-  --bg-color: #000;
-  --text-color: #39ff14;
-  --node-fill: #111;
-  --node-stroke-focus: #ff00de;
-  --label-border: #ff00de;
-  --link-color: #39ff14;
-  --side-panel-bg: #111;
-  --side-panel-text: #39ff14;
-  --side-panel-header-bg: #000;
-  --side-panel-header-border: #ff00de;
-  --side-panel-border: #ff00de;
-  --side-panel-label: #ff00de;
-  --side-panel-value: #39ff14;
-  --node-selection-border: #ff00de;
-  --node-selection-focus: #39ff14;
-  --node-selection-hover: #ff33e6;
-  --node-selection-selected: #39ff14;
-  --image-filter: invert(100%) brightness(3.5) contrast(200%);
-  --loading-color: #39ff14; /* Verde neón para el spinner */
-  --loading-bg: #111111; /* Fondo negro para el loading */
-  --bg-image: url('img/backgrounds/neon-grid.svg'); /* Cuadrícula neón */
-  --bg-opacity: 0.2; /* Opacidad muy baja para ver la cuadrícula neón */
-  /* Variables específicas para controles */
-  --control-bg: #1a1a1a;
-  --control-text: #39ff14;
-  --control-border: #ff00de;
-  --control-border-hover: #ff33e6;
-  --control-border-focus: #39ff14;
-  --control-placeholder: #666666;
-  --control-shadow: rgba(255, 0, 222, 0.3);
-  --control-shadow-focus: rgba(57, 255, 20, 0.4);
+  --cluster-bg: rgba(255,255,255,0.02);
+  --cluster-stroke: rgba(255,255,255,0.1);
+  --cluster-title-color: #00ffe7;
 }
 
 /* Selector de tema compacto (para uso fuera del topbar) */

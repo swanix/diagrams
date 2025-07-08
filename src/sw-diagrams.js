@@ -28,7 +28,7 @@ function initDiagram(csvUrl) {
         
         console.log("Creando panel lateral...");
         try {
-          createSidePanel();
+        createSidePanel();
           console.log("Panel lateral creado exitosamente");
         } catch (error) {
           console.error("Error al crear el panel lateral:", error);
@@ -42,7 +42,7 @@ function initDiagram(csvUrl) {
         if (loadingElement) loadingElement.style.display = "none";
         
         // Aplicar el tema actual después de que el diagrama esté completamente cargado
-        const currentTheme = localStorage.getItem('selectedTheme') || 'light';
+        const currentTheme = localStorage.getItem('selectedTheme') || 'snow';
         console.log("Aplicando tema actual:", currentTheme);
         setTheme(currentTheme);
         
@@ -110,23 +110,39 @@ function drawMultipleTrees(trees) {
   svg.innerHTML = "";
   console.log("SVG seleccionado:", svg);
   
-  const g = d3.select(svg).append("g");
+  try {
+    const g = d3.select(svg).append("g");
+    if (g.empty()) {
+      console.error("❌ No se pudo crear el elemento g en el SVG");
+      return;
+    }
 
   let xOffset = 150; // Initial margin from left edge
   let treeSpacingX = 3400; // Minimum space between trees
+    const clusters = []; // Array para almacenar información de clusters
 
   trees.forEach((data, index) => {
+      try {
     const root = d3.hierarchy(data);
-    const treeLayout = d3.tree()
-      .nodeSize([120, 180]); // Adjust these values to control the separation
-
+        const treeLayout = d3.tree().nodeSize([120, 180]); // Restaurado a 120 para separación horizontal estándar
     treeLayout(root);
 
     const treeGroup = g.append("g")
+          .attr("class", "diagram-group")
+          .attr("data-root-id", root.data.id)
       .attr("transform", `translate(${xOffset}, 100)`);
+
+        // Guardar información del cluster para recalcular después
+        clusters.push({
+          treeGroup: treeGroup,
+          root: root,
+          initialX: xOffset,
+          index: index
+        });
 
     xOffset += treeSpacingX;
 
+        // --- Renderizado de enlaces y nodos (código existente) ---
     treeGroup.selectAll(".link")
       .data(root.links())
       .enter().append("path")
@@ -145,10 +161,7 @@ function drawMultipleTrees(trees) {
       .attr("data-id", d => d.data.id)
       .attr("transform", d => `translate(${d.x},${d.y})`)
       .on("click", function(event, d) {
-        console.log("Nodo clickeado:", d.data);
-        // Prevenir que el clic se propague al zoom
         event.stopPropagation();
-        // Abrir el panel lateral con los datos del nodo
         openSidePanel(d.data);
       });
 
@@ -185,8 +198,6 @@ function drawMultipleTrees(trees) {
           d3.select(this)
             .attr("xlink:href", `img/detail.svg?v=${Date.now()}`);
         });
-      
-
     });
 
     // Agregar etiqueta para el Name
@@ -211,7 +222,6 @@ function drawMultipleTrees(trees) {
       .attr("dy", parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--label-id-dy')))
       .attr("x", parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--label-id-x')))
       .attr("y", parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--label-id-y'))); 
-
 
     // Agregar etiqueta para el subtítulo
     node.append("text")
@@ -252,7 +262,6 @@ function drawMultipleTrees(trees) {
       .style("transition", "opacity 0.3s ease")
       .text("↗");
 
-
     // Add hover events
     link.on("mouseover", function() {
       d3.select(this).select("rect")
@@ -270,9 +279,115 @@ function drawMultipleTrees(trees) {
         .style("opacity", 0.7)
         .style("fill", "var(--btn-text)");
     });
-  });
+
+        // --- CLUSTER VISUAL ---
+        setTimeout(() => {
+          const nodes = treeGroup.selectAll(".node");
+          if (!nodes.empty()) {
+            let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+            let found = false;
+            nodes.each(function() {
+              const transform = d3.select(this).attr("transform");
+              if (transform) {
+                // Soporta tanto "translate(x,y)" como "translate(x y)"
+                const match = /translate\(([-\d.]+)[, ]+([-.\d]+)\)/.exec(transform);
+                if (match) {
+                  const x = parseFloat(match[1]);
+                  const y = parseFloat(match[2]);
+                  if (!isNaN(x) && !isNaN(y)) {
+                    minX = Math.min(minX, x);
+                    minY = Math.min(minY, y);
+                    maxX = Math.max(maxX, x);
+                    maxY = Math.max(maxY, y);
+                    found = true;
+                  }
+                }
+              }
+            });
+            if (found) {
+              const paddingX = 220; // Aumentado a 220px
+              const paddingY = 220; // Aumentado a 220px
+              minX -= paddingX;
+              minY -= paddingY + 30;
+              maxX += paddingX;
+              maxY += paddingY;
+              const width = maxX - minX;
+              const height = maxY - minY;
+              treeGroup.insert("rect", ":first-child")
+                .attr("class", "cluster-rect")
+                .attr("x", minX)
+                .attr("y", minY)
+                .attr("width", width)
+                .attr("height", height)
+                .attr("rx", 18)
+                .attr("ry", 18)
+                .style("fill", "var(--cluster-bg, rgba(0,0,0,0.2))")
+                .style("stroke", "var(--cluster-stroke, #222)")
+                .style("stroke-width", 3)
+                .style("stroke-dasharray", "12,8");
+              treeGroup.append("text")
+                .attr("class", "cluster-title")
+                .attr("x", minX + 16)
+                .attr("y", minY + 28)
+                .attr("text-anchor", "start")
+                .style("font-size", "1.5em")
+                .style("font-weight", "bold")
+                .style("fill", "var(--cluster-title-color, #fff)")
+                .text(root.data.name);
+            }
+          }
+        }, 0);
+        // --- FIN CLUSTER ---
+
+      } catch (err) {
+        console.error(`Error al renderizar árbol ${index + 1}:`, err);
+      }
+    });
+
+    // Recalcular espaciado después de que todos los clusters estén dibujados
+    let attempts = 0;
+    const maxAttempts = 5;
+    function retrySpacing() {
+      recalculateClusterSpacing(clusters);
+      attempts++;
+      if (attempts < maxAttempts) {
+        setTimeout(retrySpacing, 120);
+      }
+    }
+    setTimeout(retrySpacing, 120);
+
+  } catch (err) {
+    console.error('Error general en drawMultipleTrees:', err);
+  }
 
   applyAutoZoom();
+}
+
+// Función para recalcular el espaciado entre clusters
+function recalculateClusterSpacing(clusters) {
+  if (clusters.length <= 1) return;
+
+  let currentX = 150; // Margen inicial
+  // spacing controla la separación horizontal entre clusters (diagram-group):
+  //   - Un valor negativo los acerca o superpone
+  //   - Un valor positivo los separa más
+  //   - Ajusta este valor según el efecto visual deseado
+  const spacing = -1400; // Spacing negativo para clusters muy juntos (ajustable)
+
+  clusters.forEach((cluster, index) => {
+    const treeGroup = cluster.treeGroup;
+    // Usar el bounding box real del grupo
+    const bbox = treeGroup.node().getBBox();
+    
+    // Calcular nueva posición X basada en el borde izquierdo del grupo
+    const newX = currentX - bbox.x;
+    
+    // Aplicar nueva transformación
+    treeGroup.attr("transform", `translate(${newX}, 100)`);
+    
+    // Actualizar posición para el siguiente cluster
+    currentX = newX + bbox.width + spacing;
+  });
 }
 
 function applyAutoZoom() {
@@ -299,8 +414,10 @@ function applyAutoZoom() {
       }
 
       const bounds = g.node().getBBox();
-      const svgWidth = window.innerWidth;
-      const svgHeight = window.innerHeight;
+      // Obtener el ancho y alto real del SVG
+      const svgElement = document.querySelector('svg');
+      const svgWidth = svgElement ? svgElement.clientWidth || svgElement.offsetWidth : window.innerWidth;
+      const svgHeight = svgElement ? svgElement.clientHeight || svgElement.offsetHeight : window.innerHeight;
 
       if (!bounds.width || !bounds.height) {
         attempts++;
@@ -308,10 +425,62 @@ function applyAutoZoom() {
         return;
       }
 
-      // Calculate the final scale
-      const scale = Math.min(svgWidth / bounds.width, svgHeight / bounds.height) * 0.75;
-      const translateX = svgWidth / 2 - (bounds.x + bounds.width / 2) * scale;
-      const translateY = svgHeight / 2 - (bounds.y + bounds.height / 2) * scale;
+      // Para múltiples clusters, centrar y ajustar el zoom usando el bounding box total de todos los diagram-group
+      let totalBounds = bounds;
+      let xOffset = 0;
+      
+      // Calcular el bounding box total de todos los diagram-group
+      const diagramGroups = g.selectAll(".diagram-group");
+      if (!diagramGroups.empty()) {
+        let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+        diagramGroups.each(function() {
+          const groupBounds = this.getBBox();
+          const transform = this.getAttribute("transform");
+          let groupOffsetX = 0;
+          if (transform) {
+            const match = /translate\(([-\d.]+), ?([-\d.]+)\)/.exec(transform);
+            if (match) {
+              groupOffsetX = parseFloat(match[1]) || 0;
+            }
+          }
+          const absX = groupBounds.x + groupOffsetX;
+          minX = Math.min(minX, absX);
+          minY = Math.min(minY, groupBounds.y);
+          maxX = Math.max(maxX, absX + groupBounds.width);
+          maxY = Math.max(maxY, groupBounds.y + groupBounds.height);
+        });
+        if (minX < Infinity && minY < Infinity && maxX > -Infinity && maxY > -Infinity) {
+          totalBounds = {
+            x: minX,
+            y: minY,
+            width: maxX - minX,
+            height: maxY - minY
+          };
+        }
+      }
+
+      // Calcular el centro del contenido del bounding box total
+      const contentCenterX = totalBounds.x + totalBounds.width / 2;
+      const contentCenterY = totalBounds.y + totalBounds.height / 2;
+      const svgCenterX = svgWidth / 2;
+      const svgCenterY = svgHeight / 2;
+      
+      // Calcular el scale para ajustar el contenido al viewport
+      const scaleX = (svgWidth - 100) / totalBounds.width; // 100px de margen
+      const scaleY = (svgHeight - 100) / totalBounds.height; // 100px de margen
+      const scale = Math.min(scaleX, scaleY, 1); // No hacer zoom in, solo out si es necesario
+      
+      // Calcular la traslación para centrar el contenido
+      let translateX = svgCenterX - contentCenterX * scale;
+      const leftEdge = totalBounds.x * scale + translateX;
+      if (leftEdge > 300) {
+        translateX -= (leftEdge - 300);
+      }
+      const translateY = svgCenterY - contentCenterY * scale - 50; // Ajuste vertical adicional
+      
+      // LOGS DE CENTRADO
+      console.log('[Zoom] totalBounds:', totalBounds, 'contentCenterX:', contentCenterX, 'svgCenterX:', svgCenterX, 'translateX:', translateX, 'leftEdge:', leftEdge);
+      console.log('[Zoom] transform:', { translateX, translateY, scale });
 
       // Create the initial transformation
       const transform = d3.zoomIdentity
@@ -553,11 +722,11 @@ function createSidePanel() {
     
     console.log("Contenedor encontrado:", container);
     console.log("Target parent:", targetParent);
-    
-    // Crear el panel lateral
-    const sidePanel = document.createElement('div');
-    sidePanel.className = 'side-panel';
-    sidePanel.id = 'side-panel';
+
+  // Crear el panel lateral
+  const sidePanel = document.createElement('div');
+  sidePanel.className = 'side-panel';
+  sidePanel.id = 'side-panel';
   
   sidePanel.innerHTML = `
     <div class="side-panel-header">
@@ -914,7 +1083,7 @@ function setTheme(themeId) {
     '--loading-color', '--loading-bg', '--bg-image', '--bg-opacity', '--control-bg', '--control-text',
     '--control-border', '--control-border-hover', '--control-border-focus', '--control-placeholder',
     '--control-shadow', '--control-shadow-focus', '--topbar-bg', '--topbar-text', '--sidepanel-bg', 
-    '--sidepanel-text', '--sidepanel-border'
+    '--sidepanel-text', '--sidepanel-border', '--cluster-bg', '--cluster-stroke', '--cluster-title-color'
   ];
   
   // Limpiar localStorage de valores personalizados
@@ -926,7 +1095,7 @@ function setTheme(themeId) {
   
   // Remover todas las clases de tema anteriores
   document.body.classList.remove(
-    'theme-light', 'theme-dark', 'theme-vintage', 'theme-pastel', 'theme-cyberpunk', 'theme-neon'
+    'theme-snow', 'theme-onyx', 'theme-vintage', 'theme-pastel', 'theme-neon'
   );
   
   // Agregar la nueva clase de tema
@@ -948,6 +1117,9 @@ function setTheme(themeId) {
   const themeVariables = window.getThemeVariables(themeId);
   Object.keys(themeVariables).forEach(function(varName) {
     targetElement.style.setProperty(varName, themeVariables[varName]);
+    // Aplicar también al body y html para que el fondo funcione en multi-diagramas
+    document.body.style.setProperty(varName, themeVariables[varName]);
+    document.documentElement.style.setProperty(varName, themeVariables[varName]);
   });
   
   // Aplicar variables CSS también al topbar y sidebar del theme creator si existen
@@ -990,14 +1162,14 @@ function setTheme(themeId) {
       '--text-color': textColor,
       '--link-color': linkColor
     });
-    
-    // Verificar que los filtros se aplican correctamente
-    const imageElements = document.querySelectorAll('image.image-filter');
-    if (imageElements.length > 0) {
-      const computedFilter = getComputedStyle(imageElements[0]).filter;
-      console.log(`Tema ${themeId} - Filtro aplicado:`, computedFilter);
-    }
-    
+  
+  // Verificar que los filtros se aplican correctamente
+  const imageElements = document.querySelectorAll('image.image-filter');
+  if (imageElements.length > 0) {
+    const computedFilter = getComputedStyle(imageElements[0]).filter;
+    console.log(`Tema ${themeId} - Filtro aplicado:`, computedFilter);
+  }
+  
     // Verificar variables del panel lateral
     const sidePanelBg = computedStyle.getPropertyValue('--side-panel-bg');
     const sidePanelText = computedStyle.getPropertyValue('--side-panel-text');
@@ -1022,7 +1194,7 @@ function setTheme(themeId) {
 // Función para obtener las variables CSS de cada tema
 window.getThemeVariables = function(themeId) {
   const themes = {
-    'light': {
+    'snow': {
       '--bg-color': '#ecf2fd',
       '--text-color': '#222',
       '--node-fill': '#fff',
@@ -1057,9 +1229,12 @@ window.getThemeVariables = function(themeId) {
       '--topbar-text': '#333333',
       '--sidepanel-bg': '#ffffff',
       '--sidepanel-text': '#333333',
-      '--sidepanel-border': '#dddddd'
+      '--sidepanel-border': '#dddddd',
+      '--cluster-bg': 'rgba(0,0,0,0.05)',
+      '--cluster-stroke': 'rgba(0,0,0,0.1)',
+      '--cluster-title-color': '#222'
     },
-    'dark': {
+    'onyx': {
       '--bg-color': '#181c24',
       '--text-color': '#f6f7f9',
       '--node-fill': '#23272f',
@@ -1080,7 +1255,7 @@ window.getThemeVariables = function(themeId) {
       '--image-filter': 'invert(100%) brightness(3.5) contrast(200%)',
       '--loading-color': '#00eaff',
       '--loading-bg': '#23272f',
-      '--bg-image': 'url("https://images.unsplash.com/photo-1632059368252-be6d65abc4e2?w=1920&q=80")',
+      '--bg-image': 'url("img/backgrounds/dark-grid.svg")',
       '--bg-opacity': '0.9',
       '--control-bg': '#2d3748',
       '--control-text': '#e2e8f0',
@@ -1094,7 +1269,10 @@ window.getThemeVariables = function(themeId) {
       '--topbar-text': '#f6f7f9',
       '--sidepanel-bg': '#23272f',
       '--sidepanel-text': '#f6f7f9',
-      '--sidepanel-border': '#333'
+      '--sidepanel-border': '#333',
+      '--cluster-bg': 'rgba(255,255,255,0.02)',
+      '--cluster-stroke': 'rgba(255,255,255,0.1)',
+      '--cluster-title-color': '#00eaff'
     },
     'vintage': {
       '--bg-color': '#f5e9da',
@@ -1131,7 +1309,10 @@ window.getThemeVariables = function(themeId) {
       '--topbar-text': '#7c4f20',
       '--sidepanel-bg': '#fffbe6',
       '--sidepanel-text': '#7c4f20',
-      '--sidepanel-border': '#b97a56'
+      '--sidepanel-border': '#b97a56',
+      '--cluster-bg': 'rgba(139,69,19,0.05)',
+      '--cluster-stroke': 'rgba(139,69,19,0.1)',
+      '--cluster-title-color': '#7c4f20'
     },
     'pastel': {
       '--bg-color': '#fdf6fb',
@@ -1168,9 +1349,12 @@ window.getThemeVariables = function(themeId) {
       '--topbar-text': '#7a7a7a',
       '--sidepanel-bg': '#ffffff',
       '--sidepanel-text': '#7a7a7a',
-      '--sidepanel-border': '#e0b1cb'
+      '--sidepanel-border': '#e0b1cb',
+      '--cluster-bg': 'rgba(182,182,247,0.05)',
+      '--cluster-stroke': 'rgba(182,182,247,0.1)',
+      '--cluster-title-color': '#b6b6f7'
     },
-    'cyberpunk': {
+    'neon': {
       '--bg-color': '#0f0026',
       '--text-color': '#00ffe7',
       '--node-fill': '#1a0033',
@@ -1191,7 +1375,7 @@ window.getThemeVariables = function(themeId) {
       '--image-filter': 'invert(100%) brightness(3.5) contrast(200%)',
       '--loading-color': '#00ffe7',
       '--loading-bg': '#1a0033',
-      '--bg-image': 'url("https://images.unsplash.com/photo-1632059368252-be6d65abc4e2?w=1920&q=80")',
+      '--bg-image': 'url("img/backgrounds/neon-grid.svg")',
       '--bg-opacity': '0.9',
       '--control-bg': '#2a0040',
       '--control-text': '#00ffe7',
@@ -1205,48 +1389,14 @@ window.getThemeVariables = function(themeId) {
       '--topbar-text': '#00ffe7',
       '--sidepanel-bg': '#1a0033',
       '--sidepanel-text': '#00ffe7',
-      '--sidepanel-border': '#ff00c8'
-    },
-    'neon': {
-      '--bg-color': '#000',
-      '--text-color': '#39ff14',
-      '--node-fill': '#111',
-      '--node-stroke-focus': '#ff00de',
-      '--label-border': '#ff00de',
-      '--link-color': '#39ff14',
-      '--side-panel-bg': '#111',
-      '--side-panel-text': '#39ff14',
-      '--side-panel-header-bg': '#000',
-      '--side-panel-header-border': '#ff00de',
-      '--side-panel-border': '#ff00de',
-      '--side-panel-label': '#ff00de',
-      '--side-panel-value': '#39ff14',
-      '--node-selection-border': '#ff00de',
-      '--node-selection-focus': '#39ff14',
-      '--node-selection-hover': '#ff33e6',
-      '--node-selection-selected': '#39ff14',
-      '--image-filter': 'invert(100%) brightness(3.5) contrast(200%)',
-      '--loading-color': '#39ff14',
-      '--loading-bg': '#111111',
-      '--bg-image': 'url("img/backgrounds/neon-grid.svg")',
-      '--bg-opacity': '0.2',
-      '--control-bg': '#1a1a1a',
-      '--control-text': '#39ff14',
-      '--control-border': '#ff00de',
-      '--control-border-hover': '#ff33e6',
-      '--control-border-focus': '#39ff14',
-      '--control-placeholder': '#666666',
-      '--control-shadow': 'rgba(255, 0, 222, 0.3)',
-      '--control-shadow-focus': 'rgba(57, 255, 20, 0.4)',
-      '--topbar-bg': '#111',
-      '--topbar-text': '#39ff14',
-      '--sidepanel-bg': '#111',
-      '--sidepanel-text': '#39ff14',
-      '--sidepanel-border': '#ff00de'
+      '--sidepanel-border': '#ff00c8',
+      '--cluster-bg': 'rgba(0,255,231,0.05)',
+      '--cluster-stroke': 'rgba(0,255,231,0.1)',
+      '--cluster-title-color': '#00ffe7'
     }
   };
   
-  return themes[themeId] || themes['light'];
+  return themes[themeId] || themes['snow'];
 }
 
 // Función para actualizar colores del SVG dinámicamente
@@ -1267,12 +1417,20 @@ function updateSVGColors() {
   const linkColor = computedStyle.getPropertyValue('--link-color');
   const imageFilter = computedStyle.getPropertyValue('--image-filter');
   
+  // Variables específicas de clusters
+  const clusterBg = computedStyle.getPropertyValue('--cluster-bg');
+  const clusterStroke = computedStyle.getPropertyValue('--cluster-stroke');
+  const clusterTitleColor = computedStyle.getPropertyValue('--cluster-title-color');
+  
   console.log('Variables del tema:', {
     textColor,
     nodeFill,
     labelBorder,
     linkColor,
-    imageFilter
+    imageFilter,
+    clusterBg,
+    clusterStroke,
+    clusterTitleColor
   });
   
   // Actualizar colores de texto de los nodos
@@ -1323,6 +1481,22 @@ function updateSVGColors() {
     node.select('image')
       .style('filter', imageFilter);
   });
+  
+  // Actualizar colores de clusters
+  if (clusterBg && clusterBg.trim() !== '') {
+    d3.selectAll('.cluster-rect')
+      .style('fill', clusterBg);
+  }
+  
+  if (clusterStroke && clusterStroke.trim() !== '') {
+    d3.selectAll('.cluster-rect')
+      .style('stroke', clusterStroke);
+  }
+  
+  if (clusterTitleColor && clusterTitleColor.trim() !== '') {
+    d3.selectAll('.cluster-title')
+      .style('fill', clusterTitleColor);
+  }
   
   console.log('Colores del SVG actualizados completamente');
 }
@@ -1452,15 +1626,15 @@ window.closeSidePanel = closeSidePanel;
 document.addEventListener('DOMContentLoaded', function() {
   const selector = document.getElementById('theme-selector');
   if (selector) {
-    // Restaurar tema guardado
-    const saved = localStorage.getItem('selectedTheme') || 'light';
-    selector.value = saved;
-    setTheme(saved);
+  // Restaurar tema guardado
+  const saved = localStorage.getItem('selectedTheme') || 'light';
+  selector.value = saved;
+  setTheme(saved);
     
     // Agregar event listener para cambios de tema
-    selector.addEventListener('change', function() {
+  selector.addEventListener('change', function() {
       console.log('Cambiando tema a:', this.value);
-      setTheme(this.value);
-    });
+    setTheme(this.value);
+  });
   }
 });

@@ -15,6 +15,12 @@
             width: 100%;
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             overflow-x: hidden;
+            background-color: var(--bg-color, #f8f9fa);
+            background-image: var(--bg-image, none);
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
         }
         
         .container {
@@ -452,12 +458,11 @@
 </head>
 <body>
     <select id="theme-selector" class="theme-selector">
-        <option value="light">Light</option>
-        <option value="dark">Dark</option>
-        <option value="vintage">Vintage</option>
-        <option value="pastel">Pastel</option>
-        <option value="cyberpunk">Cyberpunk</option>
-        <option value="neon">Neon</option>
+                                    <option value="snow">Snow</option>
+                            <option value="onyx">Onyx</option>
+                            <option value="vintage">Vintage</option>
+                            <option value="pastel">Pastel</option>
+                            <option value="neon">Neon</option>
     </select>
 
     <div class="container">
@@ -538,9 +543,6 @@
                     <button class="action-btn" onclick="reloadDiagram(${index})">
                         🔄 Recargar
                     </button>
-                    <button class="action-btn" onclick="copyDiagramUrl(${index})">
-                        📋 Copiar URL
-                    </button>
                 </div>
             `;
 
@@ -587,7 +589,7 @@
                                 console.log(`Opacidad forzada para diagrama ${index}`);
                                 
                                 // Aplicar tema actual al diagrama
-                                const currentTheme = localStorage.getItem('selectedTheme') || 'light';
+                                const currentTheme = localStorage.getItem('selectedTheme') || 'snow';
                                 if (window.setTheme) {
                                     window.setTheme(currentTheme);
                                 }
@@ -793,35 +795,68 @@
             }
         }
 
-        // Función para copiar URL del diagrama
-        function copyDiagramUrl(index) {
-            const url = `${window.location.origin}${window.location.pathname.replace('index-multi-diagrams.html', 'demo-multi-diagram.html')}?d=${index}`;
-            navigator.clipboard.writeText(url).then(() => {
-                // Feedback visual
-                const btn = event.target;
-                const originalText = btn.textContent;
-                btn.textContent = '✅ Copiado!';
-                setTimeout(() => {
-                    btn.textContent = originalText;
-                }, 2000);
-            });
-        }
+
 
         // Función para actualizar estilos según el tema
         function updateThemeStyles() {
-            const container = document.querySelector('.container');
-            if (container) {
-                container.style.setProperty('--text-color', getComputedStyle(document.documentElement).getPropertyValue('--text-color'));
-                container.style.setProperty('--topbar-bg', getComputedStyle(document.documentElement).getPropertyValue('--topbar-bg'));
-                container.style.setProperty('--sidepanel-bg', getComputedStyle(document.documentElement).getPropertyValue('--sidepanel-bg'));
-                container.style.setProperty('--sidepanel-border', getComputedStyle(document.documentElement).getPropertyValue('--sidepanel-border'));
-                container.style.setProperty('--control-bg', getComputedStyle(document.documentElement).getPropertyValue('--control-bg'));
-                container.style.setProperty('--control-text', getComputedStyle(document.documentElement).getPropertyValue('--control-text'));
-                container.style.setProperty('--control-border', getComputedStyle(document.documentElement).getPropertyValue('--control-border'));
-                container.style.setProperty('--control-border-hover', getComputedStyle(document.documentElement).getPropertyValue('--control-border-hover'));
-                container.style.setProperty('--control-shadow', getComputedStyle(document.documentElement).getPropertyValue('--control-shadow'));
-                container.style.setProperty('--node-selection-focus', getComputedStyle(document.documentElement).getPropertyValue('--node-selection-focus'));
+            console.log('Actualizando estilos del tema...');
+            
+            // Obtener todas las variables CSS del tema actual
+            const computedStyle = getComputedStyle(document.documentElement);
+            const cssVariables = [
+                '--bg-color', '--text-color', '--node-fill', '--label-border', '--link-color',
+                '--topbar-bg', '--topbar-text', '--sidepanel-bg', '--sidepanel-text', '--sidepanel-border',
+                '--side-panel-bg', '--side-panel-text', '--side-panel-header-bg', '--side-panel-header-border',
+                '--side-panel-border', '--side-panel-label', '--side-panel-value', '--side-panel-close-bg',
+                '--side-panel-close-hover', '--side-panel-shadow',
+                '--control-bg', '--control-text', '--control-border', '--control-border-hover',
+                '--control-border-focus', '--control-placeholder', '--control-shadow', '--control-shadow-focus',
+                '--node-selection-focus', '--node-selection-border', '--node-selection-hover', '--node-selection-selected',
+                '--image-filter', '--loading-color', '--loading-bg', '--bg-image', '--bg-opacity',
+                '--cluster-bg', '--cluster-stroke', '--cluster-title-color'
+            ];
+            
+            // Aplicar variables CSS a todos los elementos relevantes
+            const elementsToUpdate = [
+                document.documentElement,
+                document.body,
+                document.querySelector('.container'),
+                document.querySelector('.diagrams-grid'),
+                ...document.querySelectorAll('.diagram-section'),
+                ...document.querySelectorAll('.diagram-container'),
+                ...document.querySelectorAll('.side-panel')
+            ].filter(el => el); // Filtrar elementos nulos
+            
+            elementsToUpdate.forEach(element => {
+                cssVariables.forEach(varName => {
+                    const value = computedStyle.getPropertyValue(varName);
+                    if (value && value.trim() !== '') {
+                        element.style.setProperty(varName, value);
+                    }
+                });
+            });
+            
+            // Aplicar específicamente el fondo y la imagen de fondo al body y html
+            const bgColor = computedStyle.getPropertyValue('--bg-color');
+            const bgImage = computedStyle.getPropertyValue('--bg-image');
+            
+            if (bgColor && bgColor.trim() !== '') {
+                document.body.style.backgroundColor = bgColor;
+                document.documentElement.style.backgroundColor = bgColor;
+                console.log('Color de fondo aplicado:', bgColor);
             }
+            
+            if (bgImage && bgImage.trim() !== 'none') {
+                document.body.style.backgroundImage = bgImage;
+                document.documentElement.style.backgroundImage = bgImage;
+                console.log('Imagen de fondo aplicada:', bgImage);
+            } else {
+                document.body.style.backgroundImage = 'none';
+                document.documentElement.style.backgroundImage = 'none';
+                console.log('Imagen de fondo removida');
+            }
+            
+            console.log('Estilos del tema actualizados');
             
             // Actualizar colores de los diagramas existentes
             updateDiagramColors();
@@ -829,14 +864,22 @@
         
         // Función para actualizar colores de los diagramas usando la librería principal
         function updateDiagramColors() {
+            console.log('Actualizando colores de los diagramas...');
+            
             // Usar la función de la librería principal si está disponible
             if (window.updateSVGColors) {
                 window.updateSVGColors();
+                console.log('Colores actualizados usando librería principal');
             } else {
-                // Fallback manual
-                const textColor = getComputedStyle(document.documentElement).getPropertyValue('--text-color') || '#333';
-                const nodeFill = getComputedStyle(document.documentElement).getPropertyValue('--node-fill') || '#fff';
-                const linkColor = getComputedStyle(document.documentElement).getPropertyValue('--link-color') || '#999';
+                // Fallback manual más robusto
+                const computedStyle = getComputedStyle(document.documentElement);
+                const textColor = computedStyle.getPropertyValue('--text-color') || '#333';
+                const nodeFill = computedStyle.getPropertyValue('--node-fill') || '#fff';
+                const linkColor = computedStyle.getPropertyValue('--link-color') || '#999';
+                const labelBorder = computedStyle.getPropertyValue('--label-border') || '#999';
+                const imageFilter = computedStyle.getPropertyValue('--image-filter') || 'none';
+                
+                console.log('Variables del tema:', { textColor, nodeFill, linkColor, labelBorder, imageFilter });
                 
                 // Actualizar todos los SVGs existentes
                 d3.selectAll('.diagram-svg').each(function() {
@@ -847,20 +890,27 @@
                     
                     // Actualizar enlaces
                     svg.selectAll('.link')
-                        .attr('stroke', linkColor)
+                        .style('stroke', linkColor)
                         .style('opacity', '1');
                     
                     // Actualizar nodos
                     svg.selectAll('.node rect')
-                        .attr('fill', nodeFill)
-                        .attr('stroke', linkColor)
+                        .style('fill', nodeFill)
+                        .style('stroke', labelBorder)
                         .style('opacity', '1');
                     
                     // Actualizar texto
-                    svg.selectAll('.node text')
-                        .attr('fill', textColor)
+                    svg.selectAll('.node text, .custom-text, .id-text, .subtitle-text')
+                        .style('fill', textColor)
+                        .style('opacity', '1');
+                    
+                    // Actualizar imágenes
+                    svg.selectAll('image')
+                        .style('filter', imageFilter)
                         .style('opacity', '1');
                 });
+                
+                console.log('Colores actualizados manualmente');
             }
         }
         
@@ -996,10 +1046,15 @@
             console.log('Diagramas a cargar:', diagrams.length);
             
             // Aplicar tema inicial
-            const currentTheme = localStorage.getItem('selectedTheme') || 'light';
+            const currentTheme = localStorage.getItem('selectedTheme') || 'snow';
             if (window.setTheme) {
                 window.setTheme(currentTheme);
                 console.log('Tema inicial aplicado:', currentTheme);
+                
+                // Forzar actualización de estilos después de aplicar el tema
+                setTimeout(() => {
+                    updateThemeStyles();
+                }, 100);
             }
             
             // Crear secciones para cada diagrama
@@ -1017,6 +1072,9 @@
             // Configurar theme selector
             const themeSelector = document.getElementById('theme-selector');
             if (themeSelector) {
+                // Verificar que setTheme esté disponible
+                console.log('Verificando disponibilidad de setTheme:', typeof window.setTheme);
+                
                 // Establecer el tema actual en el selector
                 themeSelector.value = currentTheme;
                 
@@ -1024,11 +1082,16 @@
                     const theme = this.value;
                     console.log('Cambiando tema a:', theme);
                     if (window.setTheme) {
+                        console.log('Llamando a window.setTheme con:', theme);
                         window.setTheme(theme);
+                        // Esperar más tiempo para que setTheme complete su reset automático
                         setTimeout(() => {
+                            console.log('Ejecutando updateThemeStyles y updateDiagramColors');
                             updateThemeStyles();
                             updateDiagramColors();
-                        }, 100);
+                        }, 200);
+                    } else {
+                        console.warn('window.setTheme no está disponible');
                     }
                 });
             }

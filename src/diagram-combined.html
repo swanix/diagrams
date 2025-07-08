@@ -13,8 +13,15 @@
             margin: 0;
             padding: 0;
             width: 100%;
+            height: 100%;
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             overflow: hidden;
+            background-color: var(--bg-color, #f8f9fa);
+            background-image: var(--bg-image, none);
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
         }
         
         .container {
@@ -443,12 +450,11 @@
                 <button class="control-btn" onclick="centerDiagram()">🎯 Centrar</button>
                 <button class="control-btn primary" onclick="exportData()">📊 Exportar</button>
                 <select id="theme-selector" class="theme-selector">
-                    <option value="light">Light</option>
-                    <option value="dark">Dark</option>
-                    <option value="vintage">Vintage</option>
-                    <option value="pastel">Pastel</option>
-                    <option value="cyberpunk">Cyberpunk</option>
-                    <option value="neon">Neon</option>
+                                                <option value="snow">Snow</option>
+                            <option value="onyx">Onyx</option>
+                            <option value="vintage">Vintage</option>
+                            <option value="pastel">Pastel</option>
+                            <option value="neon">Neon</option>
                 </select>
             </div>
         </div>
@@ -1211,7 +1217,7 @@
             const root = document.documentElement;
             
             const themes = {
-                light: {
+                snow: {
                     '--bg-color': '#f6f7f9',
                     '--text-color': '#333',
                     '--control-bg': '#fff',
@@ -1239,7 +1245,7 @@
                     '--cluster-border-width-hover': '2px',
                     '--cluster-bg-hover': 'rgba(0, 0, 0, 0.08)',
                 },
-                dark: {
+                onyx: {
                     '--bg-color': '#1a1a1a',
                     '--text-color': '#fff',
                     '--control-bg': '#2d2d2d',
@@ -1323,7 +1329,7 @@
                     '--cluster-border-width-hover': '2px',
                     '--cluster-bg-hover': 'rgba(182, 182, 247, 0.08)',
                 },
-                cyberpunk: {
+                neon: {
                     '--bg-color': '#0f0026',
                     '--text-color': '#00ff88',
                     '--control-bg': '#1a0033',
@@ -1350,38 +1356,10 @@
                     '--cluster-border-hover': '#00ff88',
                     '--cluster-border-width-hover': '2px',
                     '--cluster-bg-hover': 'rgba(0, 255, 136, 0.08)',
-                },
-                neon: {
-                    '--bg-color': '#000',
-                    '--text-color': '#fff',
-                    '--control-bg': '#111',
-                    '--control-text': '#fff',
-                    '--control-border': '#0ff',
-                    '--control-border-hover': '#0cc',
-                    '--control-shadow': 'rgba(0, 255, 255, 0.3)',
-                    '--node-selection-focus': '#0ff',
-                    '--side-panel-bg': '#111',
-                    '--side-panel-border': '#0ff',
-                    '--side-panel-shadow': 'rgba(0, 255, 255, 0.3)',
-                    '--side-panel-header-bg': '#000',
-                    '--side-panel-header-border': '#0ff',
-                    '--side-panel-text': '#fff',
-                    '--side-panel-close-bg': '#f0f',
-                    '--side-panel-close-hover': '#c0c',
-                    '--side-panel-label': '#0ff',
-                    '--side-panel-value': '#fff',
-                    '--cluster-opacity': '0.9',
-                    '--cluster-border-color': '#0ff',
-                    '--cluster-border-width': '1.5px',
-                    '--cluster-border-dash': '8,4',
-                    '--cluster-bg-color': 'rgba(0, 255, 255, 0.05)',
-                    '--cluster-border-hover': '#0ff',
-                    '--cluster-border-width-hover': '2px',
-                    '--cluster-bg-hover': 'rgba(0, 255, 255, 0.08)',
-                },
+                }
             };
             
-            const theme = themes[themeName] || themes.light;
+            const theme = themes[themeName] || themes.snow;
             
             Object.entries(theme).forEach(([property, value]) => {
                 root.style.setProperty(property, value);
@@ -1403,7 +1381,7 @@
             console.log('DOM cargado, iniciando aplicación...');
             
             // Aplicar tema inicial
-            const currentTheme = localStorage.getItem('selectedTheme') || 'light';
+            const currentTheme = localStorage.getItem('selectedTheme') || 'snow';
             if (window.setTheme) {
                 window.setTheme(currentTheme);
                 console.log('Tema inicial aplicado:', currentTheme);
@@ -1417,9 +1395,23 @@
                 themeSelector.addEventListener('change', function() {
                     const theme = this.value;
                     console.log('Cambiando tema a:', theme);
+                    // Usar la función global setTheme de sw-diagrams.js para que haga el reset automático
                     if (window.setTheme) {
                         window.setTheme(theme);
+                    } else {
+                        // Fallback a la función local si la global no está disponible
+                        setTheme(theme);
                     }
+                    
+                    // Actualizar colores del SVG incluyendo clusters
+                    setTimeout(() => {
+                        if (window.updateSVGColors) {
+                            console.log('Llamando a updateSVGColors para actualizar clusters');
+                            window.updateSVGColors();
+                        } else {
+                            console.warn('updateSVGColors no está disponible');
+                        }
+                    }, 300);
                 });
             }
             

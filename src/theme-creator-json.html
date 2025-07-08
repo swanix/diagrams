@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Theme Creator JSON Demo - Swanix Diagrams</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+    <script src="sw-diagrams.js"></script>
+    <link href="sw-diagrams.css" rel="stylesheet">
+    <style>
+      body { background: #f6f7f9; }
+      .theme-creator-demo { max-width: 600px; margin: 40px auto; background: #fff; border-radius: 12px; box-shadow: 0 4px 24px #0001; padding: 32px; }
+      .theme-row { display: flex; align-items: center; margin-bottom: 16px; }
+      .theme-row label { width: 180px; font-size: 14px; color: #333; }
+      .theme-row input[type="color"], .theme-row input[type="text"] { margin-right: 12px; }
+      .theme-row input[type="text"] { width: 120px; }
+      .theme-row select { margin-left: 8px; }
+      .theme-row .reset-btn { margin-left: 8px; }
+      .theme-preview { margin-top: 32px; padding: 24px; border-radius: 8px; border: 1px solid #eee; }
+      .cluster-title-preview { font-size: 1.5em; font-weight: bold; margin-top: 8px; }
+    </style>
+</head>
+<body>
+<div class="theme-creator-demo">
+  <h2>Theme Creator (JSON Demo)</h2>
+  <div>
+    <label for="theme-select">Selecciona un theme:</label>
+    <select id="theme-select"></select>
+    <button id="reset-theme" class="reset-btn">Reset</button>
+  </div>
+  <form id="theme-form"></form>
+  <div class="theme-preview" id="theme-preview">
+    <div class="cluster-title-preview" id="cluster-title-preview">Ejemplo de título de cluster</div>
+    <div style="margin-top:12px; width:220px; height:80px; border-radius:18px; border:3px dashed;" id="cluster-rect-preview"></div>
+  </div>
+</div>
+<script>
+// Definición de themes en JS (JSON)
+const themes = {
+  light: {
+    '--bg-color': '#ecf2fd',
+    '--text-color': '#222',
+    '--cluster-bg': 'rgba(0,0,0,0.05)',
+    '--cluster-stroke': 'rgba(0,0,0,0.1)',
+    '--cluster-title-color': '#222'
+  },
+  dark: {
+    '--bg-color': '#181c24',
+    '--text-color': '#f6f7f9',
+    '--cluster-bg': 'rgba(255,255,255,0.02)',
+    '--cluster-stroke': 'rgba(255,255,255,0.1)',
+    '--cluster-title-color': '#00eaff'
+  },
+  vintage: {
+    '--bg-color': '#f5e9da',
+    '--text-color': '#7c4f20',
+    '--cluster-bg': 'rgba(0,0,0,0.05)',
+    '--cluster-stroke': 'rgba(0,0,0,0.1)',
+    '--cluster-title-color': '#7c4f20'
+  },
+  pastel: {
+    '--bg-color': '#fdf6fb',
+    '--text-color': '#7a7a7a',
+    '--cluster-bg': 'rgba(0,0,0,0.05)',
+    '--cluster-stroke': 'rgba(0,0,0,0.1)',
+    '--cluster-title-color': '#b6b6f7'
+  },
+  cyberpunk: {
+    '--bg-color': '#0f0026',
+    '--text-color': '#00ffe7',
+    '--cluster-bg': 'rgba(255,255,255,0.02)',
+    '--cluster-stroke': 'rgba(255,255,255,0.1)',
+    '--cluster-title-color': '#00ffe7'
+  },
+  neon: {
+    '--bg-color': '#000',
+    '--text-color': '#39ff14',
+    '--cluster-bg': 'rgba(255,255,255,0.05)',
+    '--cluster-stroke': 'rgba(255,255,255,0.1)',
+    '--cluster-title-color': '#39ff14'
+  }
+};
+
+let currentTheme = 'light';
+
+function applyTheme(themeName) {
+  const vars = themes[themeName];
+  Object.entries(vars).forEach(([k, v]) => {
+    document.documentElement.style.setProperty(k, v);
+  });
+  // Actualizar preview
+  document.getElementById('cluster-title-preview').style.color = vars['--cluster-title-color'];
+  const rect = document.getElementById('cluster-rect-preview');
+  rect.style.background = vars['--cluster-bg'];
+  rect.style.borderColor = vars['--cluster-stroke'];
+  rect.style.borderStyle = 'dashed';
+}
+
+function renderThemeForm(themeName) {
+  const vars = themes[themeName];
+  const form = document.getElementById('theme-form');
+  form.innerHTML = '';
+  Object.entries(vars).forEach(([k, v]) => {
+    const row = document.createElement('div');
+    row.className = 'theme-row';
+    const label = document.createElement('label');
+    label.textContent = k;
+    row.appendChild(label);
+    if (v.startsWith('rgba') || v.startsWith('#')) {
+      const color = document.createElement('input');
+      color.type = 'color';
+      color.value = v.startsWith('#') ? v : rgbaToHex(v);
+      color.addEventListener('input', e => {
+        themes[themeName][k] = e.target.value;
+        applyTheme(themeName);
+      });
+      row.appendChild(color);
+    }
+    const text = document.createElement('input');
+    text.type = 'text';
+    text.value = v;
+    text.addEventListener('input', e => {
+      themes[themeName][k] = e.target.value;
+      applyTheme(themeName);
+    });
+    row.appendChild(text);
+    form.appendChild(row);
+  });
+}
+
+function rgbaToHex(rgba) {
+  // Convierte rgba(0,0,0,0.05) a #000000
+  const match = rgba.match(/rgba?\((\d+), ?(\d+), ?(\d+)(?:, ?([\d.]+))?\)/);
+  if (!match) return '#000000';
+  const r = parseInt(match[1]).toString(16).padStart(2, '0');
+  const g = parseInt(match[2]).toString(16).padStart(2, '0');
+  const b = parseInt(match[3]).toString(16).padStart(2, '0');
+  return `#${r}${g}${b}`;
+}
+
+// Inicializar selector de themes
+const themeSelect = document.getElementById('theme-select');
+Object.keys(themes).forEach(t => {
+  const opt = document.createElement('option');
+  opt.value = t;
+  opt.textContent = t.charAt(0).toUpperCase() + t.slice(1);
+  themeSelect.appendChild(opt);
+});
+themeSelect.value = currentTheme;
+themeSelect.addEventListener('change', e => {
+  currentTheme = e.target.value;
+  renderThemeForm(currentTheme);
+  applyTheme(currentTheme);
+});
+document.getElementById('reset-theme').addEventListener('click', () => {
+  renderThemeForm(currentTheme);
+  applyTheme(currentTheme);
+});
+// Render inicial
+renderThemeForm(currentTheme);
+applyTheme(currentTheme);
+</script>
+</body>
+</html> 

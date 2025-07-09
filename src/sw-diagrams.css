@@ -894,9 +894,12 @@ svg .node.node-selected {
 
 .diagram-title {
   margin: 0;
-  font-size: 20px;
+  font-size: 16px;
   font-weight: 600;
   color: var(--side-panel-text);
+  display: flex;
+  align-items: center;
+  height: 100%;
 }
 
 /* Controles removidos temporalmente */
@@ -1098,9 +1101,9 @@ svg {
     overflow: hidden;
 }
 .theme-toggle:hover {
-    background: var(--control-border-hover, #f0f0f0);
+    border-color: var(--control-border-hover, #9ca3af);
     transform: scale(1.05);
-    box-shadow: none;
+    box-shadow: 0 0 0 2px var(--control-shadow, rgba(0, 0, 0, 0.1));
 }
 .theme-toggle:active {
     transform: scale(0.95);
@@ -1160,10 +1163,13 @@ body.theme-neon .theme-toggle .moon-icon {
     justify-content: center;
 }
 .diagram-title {
-    font-size: 1.3rem;
+    font-size: 1.1rem;
     font-weight: 600;
     margin: 0;
     color: var(--topbar-text, #333);
+    display: flex;
+    align-items: center;
+    height: 100%;
 }
 #main-diagram-svg {
     opacity: 0 !important;

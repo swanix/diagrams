@@ -110,7 +110,7 @@ function drawTrees(trees) {
 
     // Obtener variables de espaciado desde el theme (CSS)
     const themeVars = getComputedStyle(document.documentElement);
-    const clusterSpacing = parseFloat(themeVars.getPropertyValue('--cluster-spacing')) || 400;
+    const clusterSpacing = parseFloat(themeVars.getPropertyValue('--cluster-spacing')) || 120;
 
     trees.forEach((data, index) => {
       try {
@@ -420,9 +420,9 @@ function applyAutoZoom() {
     scale = Math.min(scale * 0.6, 0.6); // Zoom out más agresivo para mostrar aura
     console.log('[Zoom] Aplicando zoom out para cluster único con aura. Scale:', scale);
   } else {
-    // Para múltiples clusters: zoom in para mejor visibilidad
-    scale = Math.min(scale * 2.0, 2.0); // Zoom in más agresivo para múltiples clusters
-    console.log('[Zoom] Aplicando zoom in para múltiples clusters. Scale:', scale);
+    // Para múltiples clusters: zoom out con factor 0.6
+    scale = Math.min(scale * 0.6, 0.6); // Zoom out para múltiples clusters
+    console.log('[Zoom] Aplicando zoom out para múltiples clusters. Scale:', scale);
   }
   
   let translateX = svgCenterX - contentCenterX * scale;
@@ -712,7 +712,7 @@ function getThemeVariables(themeId) {
       '--tree-horizontal-spacing': '180',
       '--cluster-padding-x': '220',
       '--cluster-padding-y': '220',
-      '--cluster-spacing': '400'
+      '--cluster-spacing': '120'
     },
     onyx: {
       '--bg-color': '#181c24',
@@ -760,7 +760,7 @@ function getThemeVariables(themeId) {
       '--tree-horizontal-spacing': '180',
       '--cluster-padding-x': '220',
       '--cluster-padding-y': '220',
-      '--cluster-spacing': '400'
+      '--cluster-spacing': '120'
     },
     vintage: {
       '--bg-color': '#f5f1e8',
@@ -808,7 +808,7 @@ function getThemeVariables(themeId) {
       '--tree-horizontal-spacing': '180',
       '--cluster-padding-x': '220',
       '--cluster-padding-y': '220',
-      '--cluster-spacing': '400'
+      '--cluster-spacing': '120'
     },
     pastel: {
       '--bg-color': '#f8f9ff',
@@ -856,7 +856,7 @@ function getThemeVariables(themeId) {
       '--tree-horizontal-spacing': '180',
       '--cluster-padding-x': '220',
       '--cluster-padding-y': '220',
-      '--cluster-spacing': '-1400'
+      '--cluster-spacing': '120'
     },
     neon: {
       '--bg-color': '#0a0a0a',
@@ -904,7 +904,7 @@ function getThemeVariables(themeId) {
       '--tree-horizontal-spacing': '180',
       '--cluster-padding-x': '220',
       '--cluster-padding-y': '220',
-      '--cluster-spacing': '400'
+      '--cluster-spacing': '120'
     }
   };
   

@@ -72,7 +72,7 @@ function buildHierarchies(data) {
     let id = d.Node?.trim() || d.id?.trim() || "";
     let name = d.Name?.trim() || d.name?.trim() || "Nodo sin nombre";
     let subtitle = d.Description?.trim() || d.subtitle?.trim() || "";
-    let img = d.Thumbnail?.trim() || d.img?.trim() || "";
+    let img = d.Thumbnail?.trim() || d.img?.trim() || d.Type?.trim() || d.type?.trim() || "";
     let parent = d.Parent?.trim() || d.parent?.trim() || "";
     let url = d.url?.trim() || "";
     let type = d.Type?.trim() || d.type?.trim() || "";
@@ -106,14 +106,60 @@ function drawTrees(trees) {
   try {
     const g = d3.select(svg).append("g");
     let xOffset = 150;
-    const treeSpacingX = 3400;
     const clusters = [];
+
+    // Obtener variables de espaciado desde el theme (CSS)
+    const themeVars = getComputedStyle(document.documentElement);
+    const clusterSpacing = parseFloat(themeVars.getPropertyValue('--cluster-spacing')) || 400;
 
     trees.forEach((data, index) => {
       try {
+        // Variables de espaciado de árbol
+        const treeSimpleVertical = parseFloat(themeVars.getPropertyValue('--tree-simple-vertical-spacing')) || 60;
+        const treeSimpleHorizontal = parseFloat(themeVars.getPropertyValue('--tree-simple-horizontal-spacing')) || 140;
+        const treeVertical = parseFloat(themeVars.getPropertyValue('--tree-vertical-spacing')) || 100;
+        const treeHorizontal = parseFloat(themeVars.getPropertyValue('--tree-horizontal-spacing')) || 180;
+        const clusterPaddingX = parseFloat(themeVars.getPropertyValue('--cluster-padding-x')) || 220;
+        const clusterPaddingY = parseFloat(themeVars.getPropertyValue('--cluster-padding-y')) || 220;
+
         const root = d3.hierarchy(data);
-        const treeLayout = d3.tree().nodeSize([120, 180]);
+        
+        // Detectar si el árbol es tipo 'site map' (root con varios hijos, y cada hijo solo tiene un hijo, y así sucesivamente)
+        function isLinearSiteMap(root) {
+          if (!root.children || root.children.length < 2) return false;
+          return root.children.every(child => {
+            let current = child;
+            while (current.children && current.children.length === 1) {
+              current = current.children[0];
+            }
+            // Si en algún punto hay más de un hijo, no es lineal
+            return !current.children || current.children.length === 0;
+          });
+        }
+
+        let treeLayout;
+        if (isLinearSiteMap(root)) {
+          treeLayout = d3.tree().nodeSize([treeSimpleVertical, treeSimpleHorizontal]);
+        } else {
+          treeLayout = d3.tree().nodeSize([treeVertical, treeHorizontal]);
+        }
         treeLayout(root);
+
+        // Si es tree-simple, aumentar la separación vertical solo para los hijos directos del root y todos sus descendientes
+        if (isLinearSiteMap(root)) {
+          const extraY = treeSimpleVertical;
+          if (root.children) {
+            root.children.forEach(child => {
+              function shiftSubtreeY(node, deltaY) {
+                node.y += deltaY;
+                if (node.children) {
+                  node.children.forEach(c => shiftSubtreeY(c, deltaY));
+                }
+              }
+              shiftSubtreeY(child, extraY);
+            });
+          }
+        }
 
         const treeGroup = g.append("g")
           .attr("class", "diagram-group")
@@ -126,8 +172,6 @@ function drawTrees(trees) {
           initialX: xOffset,
           index: index
         });
-
-        xOffset += treeSpacingX;
 
         // Renderizar enlaces
         treeGroup.selectAll(".link")
@@ -219,8 +263,8 @@ function drawTrees(trees) {
           setTimeout(() => {
             const bounds = treeGroup.node().getBBox();
             if (bounds.width > 0 && bounds.height > 0) {
-              const paddingX = 220;
-              const paddingY = 220;
+              const paddingX = clusterPaddingX;
+              const paddingY = clusterPaddingY;
               const minX = bounds.x - paddingX;
               const minY = bounds.y - paddingY - 30;
               const maxX = bounds.x + bounds.width + paddingX;
@@ -262,13 +306,14 @@ function drawTrees(trees) {
     // Recalcular espaciado con reintentos
     let attempts = 0;
     const maxAttempts = 5;
-    function retrySpacing() {
-      recalculateClusterSpacing(clusters);
+
+    const retrySpacing = () => {
+      recalculateClusterSpacing(clusters, clusterSpacing);
       attempts++;
       if (attempts < maxAttempts) {
         setTimeout(retrySpacing, 120);
       }
-    }
+    };
     setTimeout(retrySpacing, 120);
 
   } catch (err) {
@@ -277,29 +322,23 @@ function drawTrees(trees) {
 }
 
 // Función para recalcular el espaciado entre clusters
-function recalculateClusterSpacing(clusters) {
+function recalculateClusterSpacing(clusters, clusterSpacing) {
   if (clusters.length <= 1) return;
 
-  let currentX = 150; // Margen inicial
-  // spacing controla la separación horizontal entre clusters (diagram-group):
-  //   - Un valor negativo los acerca o superpone
-  //   - Un valor positivo los separa más
-  //   - Ajusta este valor según el efecto visual deseado
-  const spacing = -1400; // Spacing negativo para clusters muy juntos (ajustable)
+  const uniformSpacing = Math.abs(clusterSpacing); // Espaciado fijo
+  let currentX = 150; // Margen inicial izquierdo
 
   clusters.forEach((cluster, index) => {
     const treeGroup = cluster.treeGroup;
-    // Usar el bounding box real del grupo
     const bbox = treeGroup.node().getBBox();
-    
-    // Calcular nueva posición X basada en el borde izquierdo del grupo
+
+    // Coloca el cluster en currentX
     const newX = currentX - bbox.x;
-    
-    // Aplicar nueva transformación
     treeGroup.attr("transform", `translate(${newX}, 100)`);
-    
-    // Actualizar posición para el siguiente cluster
-    currentX = newX + bbox.width + spacing;
+    console.log(`[ClusterSpacing] Cluster ${index}: newX=${newX}, width=${bbox.width}, spacing=${uniformSpacing}`);
+
+    // El siguiente cluster empieza justo después del borde derecho del actual + espaciado uniforme
+    currentX = newX + bbox.x + bbox.width + uniformSpacing;
   });
 }
 
@@ -666,7 +705,14 @@ function getThemeVariables(themeId) {
       '--bg-image': 'none',
       '--bg-opacity': '1',
       '--loading-color': '#666',
-      '--loading-bg': '#ffffff'
+      '--loading-bg': '#ffffff',
+      '--tree-simple-vertical-spacing': '60',
+      '--tree-simple-horizontal-spacing': '140',
+      '--tree-vertical-spacing': '100',
+      '--tree-horizontal-spacing': '180',
+      '--cluster-padding-x': '220',
+      '--cluster-padding-y': '220',
+      '--cluster-spacing': '400'
     },
     onyx: {
       '--bg-color': '#181c24',
@@ -707,7 +753,14 @@ function getThemeVariables(themeId) {
       '--bg-image': 'url(img/backgrounds/grid-dots.svg)',
       '--bg-opacity': '1',
       '--loading-color': '#999',
-      '--loading-bg': '#23272f'
+      '--loading-bg': '#23272f',
+      '--tree-simple-vertical-spacing': '80',
+      '--tree-simple-horizontal-spacing': '160',
+      '--tree-vertical-spacing': '100',
+      '--tree-horizontal-spacing': '180',
+      '--cluster-padding-x': '220',
+      '--cluster-padding-y': '220',
+      '--cluster-spacing': '400'
     },
     vintage: {
       '--bg-color': '#f5f1e8',
@@ -748,7 +801,14 @@ function getThemeVariables(themeId) {
       '--bg-image': 'url(img/backgrounds/vintage-texture.svg)',
       '--bg-opacity': '1',
       '--loading-color': '#8b7355',
-      '--loading-bg': '#faf6f0'
+      '--loading-bg': '#faf6f0',
+      '--tree-simple-vertical-spacing': '60',
+      '--tree-simple-horizontal-spacing': '140',
+      '--tree-vertical-spacing': '100',
+      '--tree-horizontal-spacing': '180',
+      '--cluster-padding-x': '220',
+      '--cluster-padding-y': '220',
+      '--cluster-spacing': '400'
     },
     pastel: {
       '--bg-color': '#f8f9ff',
@@ -789,7 +849,14 @@ function getThemeVariables(themeId) {
       '--bg-image': 'url(img/backgrounds/pastel-dots.svg)',
       '--bg-opacity': '1',
       '--loading-color': '#b8c5d6',
-      '--loading-bg': '#ffffff'
+      '--loading-bg': '#ffffff',
+      '--tree-simple-vertical-spacing': '60',
+      '--tree-simple-horizontal-spacing': '140',
+      '--tree-vertical-spacing': '100',
+      '--tree-horizontal-spacing': '180',
+      '--cluster-padding-x': '220',
+      '--cluster-padding-y': '220',
+      '--cluster-spacing': '-1400'
     },
     neon: {
       '--bg-color': '#0a0a0a',
@@ -830,7 +897,14 @@ function getThemeVariables(themeId) {
       '--bg-image': 'url(img/backgrounds/neon-grid.svg)',
       '--bg-opacity': '1',
       '--loading-color': '#666',
-      '--loading-bg': '#1a1a1a'
+      '--loading-bg': '#1a1a1a',
+      '--tree-simple-vertical-spacing': '60',
+      '--tree-simple-horizontal-spacing': '140',
+      '--tree-vertical-spacing': '100',
+      '--tree-horizontal-spacing': '180',
+      '--cluster-padding-x': '220',
+      '--cluster-padding-y': '220',
+      '--cluster-spacing': '400'
     }
   };
   

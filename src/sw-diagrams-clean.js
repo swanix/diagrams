@@ -1039,6 +1039,210 @@ function preserveCurrentTheme() {
   }
 }
 
+// --- Gestión de diagramas y switcher (sin diagramas por defecto) ---
+window.swanixDiagrams = window.swanixDiagrams || {};
+window.swanixDiagrams.currentDiagramIdx = 0;
+window.swanixDiagrams.isLoading = false;
+window.swanixDiagrams.loadedDiagrams = new Map();
+window.swanixDiagrams.currentUrl = null;
+// NO definir diagrams por defecto aquí
+window.swanixDiagrams.getDiagramIndexFromURL = function() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const diagramId = urlParams.get('d');
+    if (diagramId !== null && Array.isArray(window.swanixDiagrams.diagrams)) {
+        const index = parseInt(diagramId);
+        if (!isNaN(index) && index >= 0 && index < window.swanixDiagrams.diagrams.length) {
+            return index;
+        }
+    }
+    return 0;
+};
+window.swanixDiagrams.updateTopbarTitle = function(diagramIndex) {
+    const titleElement = document.querySelector('.diagram-title');
+    if (titleElement && Array.isArray(window.swanixDiagrams.diagrams) && window.swanixDiagrams.diagrams[diagramIndex]) {
+        titleElement.textContent = window.swanixDiagrams.diagrams[diagramIndex].name;
+    } else if (titleElement) {
+        titleElement.textContent = 'Sin datos';
+    }
+};
+window.swanixDiagrams.renderDiagramButtons = function() {
+    const switcher = document.getElementById('diagram-switcher');
+    if (!switcher) return;
+    const header = switcher.querySelector('.switcher-header');
+    switcher.innerHTML = '';
+    if (header) switcher.appendChild(header);
+    if (!Array.isArray(window.swanixDiagrams.diagrams) || window.swanixDiagrams.diagrams.length === 0) {
+        // Mostrar mensaje centrado
+        const msg = document.createElement('div');
+        msg.style.textAlign = 'center';
+        msg.style.padding = '40px 0';
+        msg.style.color = 'var(--text-color, #333)';
+        msg.style.fontSize = '1.2em';
+        msg.textContent = 'Sin datos';
+        switcher.appendChild(msg);
+        return;
+    }
+    window.swanixDiagrams.diagrams.forEach((d, idx) => {
+        const link = document.createElement('a');
+        link.href = `?d=${idx}`;
+        link.className = 'diagram-btn' + (idx === window.swanixDiagrams.currentDiagramIdx ? ' active' : '');
+        link.textContent = d.name;
+        link.style.textDecoration = 'none';
+        if (window.swanixDiagrams.isLoading) {
+            link.style.pointerEvents = 'none';
+            link.style.opacity = '0.5';
+        }
+        link.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            if (window.swanixDiagrams.currentDiagramIdx !== idx && !window.swanixDiagrams.isLoading) {
+                const url = new URL(window.location);
+                url.searchParams.set('d', idx.toString());
+                window.history.pushState({}, '', url);
+                window.swanixDiagrams.currentDiagramIdx = idx;
+                window.swanixDiagrams.updateTopbarTitle(idx);
+                window.swanixDiagrams.renderDiagramButtons();
+                window.swanixDiagrams.loadDiagram(d.url);
+            }
+        });
+        link.addEventListener('mouseenter', () => {});
+        switcher.appendChild(link);
+    });
+};
+window.swanixDiagrams.loadDiagram = function(url) {
+    if (!Array.isArray(window.swanixDiagrams.diagrams) || window.swanixDiagrams.diagrams.length === 0) {
+        // No cargar nada si no hay diagramas definidos
+        return;
+    }
+    if (window.swanixDiagrams.isLoading) return;
+    window.swanixDiagrams.isLoading = true;
+    window.swanixDiagrams.currentUrl = url;
+    window.swanixDiagrams.clearCache();
+    const svgD3 = d3.select("#main-diagram-svg");
+    if (!svgD3.empty()) svgD3.interrupt();
+    const loading = document.getElementById('loading');
+    if (loading) loading.style.display = 'block';
+    const svg = document.getElementById('main-diagram-svg');
+    if (svg) {
+        svg.style.transition = 'none';
+        svg.style.opacity = '0';
+        svg.classList.remove('loaded');
+        svg.style.pointerEvents = 'none';
+        svg.innerHTML = '';
+    }
+    const error = document.getElementById('error-message');
+    if (error) error.textContent = '';
+    if (window.initDiagram) {
+        window.initDiagram(url, function() {
+            if (window.applyAutoZoom) window.applyAutoZoom();
+            setTimeout(() => {
+                if (loading) loading.style.display = 'none';
+                if (svg) {
+                    svg.style.transition = '';
+                    svg.style.opacity = '1';
+                    svg.classList.add('loaded');
+                    svg.style.pointerEvents = 'auto';
+                    if (window.ensureZoomBehavior) window.ensureZoomBehavior();
+                    if (window.setupClosePanelOnSvgClick) window.setupClosePanelOnSvgClick();
+                }
+                window.swanixDiagrams.isLoading = false;
+            }, 100);
+        });
+        setTimeout(() => {
+            if (window.swanixDiagrams.isLoading) {
+                if (loading) loading.style.display = 'none';
+                if (svg) svg.classList.add('loaded');
+                window.swanixDiagrams.isLoading = false;
+                window.swanixDiagrams.currentUrl = null;
+            }
+        }, 10000);
+    } else {
+        window.swanixDiagrams.isLoading = false;
+    }
+};
+window.swanixDiagrams.clearCache = function() {
+    window.swanixDiagrams.loadedDiagrams.clear();
+    window.swanixDiagrams.currentUrl = null;
+};
+
+// --- Fin gestión de diagramas ---
+
+// --- Renderizado automático de estructura base si no existe ---
+function renderSwanixDiagramBase() {
+  if (!document.getElementById('swanix-diagram')) {
+    const container = document.createElement('div');
+    container.id = 'swanix-diagram';
+    container.className = 'swanix-diagram-container';
+    container.setAttribute('data-light-theme', 'snow');
+    container.setAttribute('data-dark-theme', 'onyx');
+    container.innerHTML = `
+      <div class="topbar">
+        <div class="topbar-left"></div>
+        <div class="topbar-center">
+          <h1 class="diagram-title">Mis Diagramas</h1>
+        </div>
+        <div class="topbar-right">
+          <div class="theme-controls">
+            <button id="theme-toggle" class="theme-toggle" title="Cambiar tema">
+              <svg class="theme-icon sun-icon" width="18" height="18" viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="4" fill="currentColor"></circle>
+                <g stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                  <line x1="12" y1="1" x2="12" y2="3"></line>
+                  <line x1="12" y1="21" x2="12" y2="23"></line>
+                  <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                  <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                  <line x1="1" y1="12" x2="3" y2="12"></line>
+                  <line x1="21" y1="12" x2="23" y2="12"></line>
+                  <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                  <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                </g>
+              </svg>
+              <svg class="theme-icon moon-icon" width="18" height="18" viewBox="0 0 24 24">
+                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" fill="currentColor"></path>
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+      <div class="diagram-switcher" id="diagram-switcher">
+        <div class="switcher-header">
+          <h4 style="margin:0 0 10px 0; color:var(--text-color, #333);">Diagramas</h4>
+        </div>
+      </div>
+      <svg id="main-diagram-svg"></svg>
+      <div id="loading" class="loading"><div class="spinner"></div></div>
+      <small id="error-message" class="error-message"></small>
+    `;
+    document.body.appendChild(container);
+  }
+  // Agregar event listener al botón de cambio de tema
+  const themeToggle = document.getElementById('theme-toggle');
+  if (themeToggle) {
+    themeToggle.addEventListener('click', function() {
+      const config = window.getThemeConfiguration ? window.getThemeConfiguration() : { lightTheme: 'snow', darkTheme: 'onyx' };
+      const storageKey = window.getStorageKey ? window.getStorageKey() : 'selectedTheme_index.html';
+      const currentTheme = localStorage.getItem(storageKey) || config.lightTheme;
+      const newTheme = (window.getOppositeTheme ? window.getOppositeTheme(currentTheme, config) : (currentTheme === config.lightTheme ? config.darkTheme : config.lightTheme));
+      if (window.setTheme) window.setTheme(newTheme);
+    });
+  }
+  // Inicialización automática del switcher y diagrama al cargar la página
+  if (document.getElementById('diagram-switcher')) {
+    window.swanixDiagrams.currentDiagramIdx = window.swanixDiagrams.getDiagramIndexFromURL();
+    window.swanixDiagrams.updateTopbarTitle(window.swanixDiagrams.currentDiagramIdx);
+    window.swanixDiagrams.renderDiagramButtons();
+    window.swanixDiagrams.loadDiagram(window.swanixDiagrams.diagrams[window.swanixDiagrams.currentDiagramIdx].url);
+  }
+}
+
+// Llamar a la función de renderizado base al cargar la librería
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', renderSwanixDiagramBase);
+} else {
+  renderSwanixDiagramBase();
+}
+// --- Fin renderizado automático de estructura base ---
+
 // Exportar funciones globalmente
 window.initDiagram = initDiagram;
 window.applyAutoZoom = applyAutoZoom;

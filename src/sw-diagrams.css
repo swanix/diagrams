@@ -1008,3 +1008,176 @@ svg {
   opacity: 1;
   transform: translate(-50%, -50%) rotate(0deg);
 }
+
+/* --- Estilos migrados desde index.html para integración en la librería --- */
+.diagram-switcher {
+    position: fixed;
+    top: 80px;
+    left: 20px;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    background: var(--sidepanel-bg, #fff);
+    padding: 15px;
+    border-radius: 12px;
+    box-shadow: none;
+    border: 1px solid var(--sidepanel-border, #ddd);
+    pointer-events: auto;
+    user-select: none;
+}
+.diagram-btn {
+    background: var(--control-bg, #fff);
+    color: var(--control-text, #333);
+    border: 2px solid var(--control-border, #d1d5db);
+    border-radius: 8px;
+    padding: 10px 20px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    box-shadow: none;
+    transition: all 0.2s ease;
+    text-align: left;
+    min-width: 200px;
+    pointer-events: auto;
+    position: relative;
+    z-index: 10001;
+    user-select: none;
+    text-decoration: none;
+    display: block;
+}
+.diagram-btn.active {
+    background: var(--control-focus, #1976d2);
+    color: #fff;
+    border: 2px solid var(--control-focus, #1976d2);
+    box-shadow: none;
+}
+.diagram-btn:hover:not(:disabled) {
+    background: var(--control-bg, #fff);
+    border-color: var(--control-border-hover, #9ca3af);
+    box-shadow: none;
+    transform: translateY(-1px);
+}
+.diagram-btn.active:hover:not(:disabled) {
+    background: var(--control-focus, #1976d2);
+    border-color: var(--control-focus, #1976d2);
+    transform: translateY(-1px);
+}
+.diagram-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    background: var(--control-bg, #f5f5f5);
+    color: var(--control-placeholder, #9ca3af);
+    border-color: var(--control-border, #ddd);
+    transform: none;
+}
+.switcher-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+.theme-controls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.theme-toggle {
+    background: var(--control-bg, #fff);
+    border: 1px solid var(--control-border, #ddd);
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+}
+.theme-toggle:hover {
+    background: var(--control-border-hover, #f0f0f0);
+    transform: scale(1.05);
+    box-shadow: none;
+}
+.theme-toggle:active {
+    transform: scale(0.95);
+}
+.theme-icon {
+    width: 18px;
+    height: 18px;
+    color: var(--control-text, #333);
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+.sun-icon {
+    display: block;
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+    transition: all 0.3s ease;
+}
+.moon-icon {
+    display: none;
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.8);
+    transition: all 0.3s ease;
+}
+body.theme-onyx .theme-toggle .sun-icon,
+body.theme-neon .theme-toggle .sun-icon {
+    display: none;
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.8);
+}
+body.theme-onyx .theme-toggle .moon-icon,
+body.theme-neon .theme-toggle .moon-icon {
+    display: block;
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+}
+.topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--topbar-bg, #fff);
+    color: var(--topbar-text, #333);
+    padding: 0 24px;
+    height: 60px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+    position: relative;
+    z-index: 10000;
+}
+.topbar-left, .topbar-center, .topbar-right {
+    display: flex;
+    align-items: center;
+    height: 100%;
+}
+.topbar-center {
+    flex: 1;
+    justify-content: center;
+}
+.diagram-title {
+    font-size: 1.3rem;
+    font-weight: 600;
+    margin: 0;
+    color: var(--topbar-text, #333);
+}
+#main-diagram-svg {
+    opacity: 0 !important;
+    transition: opacity 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    visibility: visible;
+}
+#main-diagram-svg.loaded {
+    opacity: 1 !important;
+}
+#main-diagram-svg:not(.loaded) {
+    opacity: 0 !important;
+    pointer-events: none;
+}
+#main-diagram-svg.loaded {
+    opacity: 1 !important;
+    pointer-events: auto;
+}

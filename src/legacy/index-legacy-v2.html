@@ -567,8 +567,9 @@
         
         // Inicializar el sistema de temas
         if (window.initializeThemeSystem && !window.themeSystemInitialized) {
-            window.initializeThemeSystem();
-            window.themeSystemInitialized = true;
+            window.initializeThemeSystem().then(() => {
+                window.themeSystemInitialized = true;
+            });
         }
         
         // Obtener el diagrama desde la URL o usar el default

@@ -8,8 +8,8 @@ const zoom = d3.zoom()
   });
 
 // Main function to initialize diagram
-function initDiagram(csvUrl, onComplete) {
-  console.log("Iniciando carga del diagrama...");
+function initDiagram(csvUrl, onComplete, retryCount = 0) {
+  console.log("Iniciando carga del diagrama...", retryCount > 0 ? `(intento ${retryCount + 1})` : '');
   
   const loadingElement = document.querySelector("#loading");
   const errorElement = document.querySelector("#error-message");
@@ -58,7 +58,39 @@ function initDiagram(csvUrl, onComplete) {
     },
     error: function(err) {
       console.error("Error al cargar CSV:", err);
-      if (errorElement) errorElement.innerText = `Error CSV: ${err.message}`;
+      
+      // Handle CORS errors specifically
+      let errorMessage = err.message || 'Error desconocido';
+      let isCorsError = errorMessage.includes('CORS') || 
+                       errorMessage.includes('cross-origin') ||
+                       errorMessage.includes('mismo origen') ||
+                       errorMessage.includes('origin');
+      
+      // Auto-retry for CORS errors (up to 2 retries)
+      if (isCorsError && retryCount < 2) {
+        console.log(`[Retry] CORS error detected, retrying in 2 seconds... (attempt ${retryCount + 1})`);
+        setTimeout(() => {
+          initDiagram(csvUrl, onComplete, retryCount + 1);
+        }, 2000);
+        return;
+      }
+      
+      // Try fallback URLs if available
+      if (isCorsError) {
+        console.log('[Fallback] Attempting to use fallback URLs...');
+        if (window.tryDiagramFallbacks && window.tryDiagramFallbacks(csvUrl, onComplete)) {
+          return;
+        }
+      }
+      
+      if (isCorsError) {
+        errorMessage = 'Error de CORS: No se puede acceder al archivo desde este dominio. Intenta refrescar la página o usar un archivo local.';
+      }
+      
+      if (errorElement) {
+        errorElement.innerText = errorMessage;
+        errorElement.style.display = "block";
+      }
       if (loadingElement) loadingElement.style.display = "none";
       
       if (onComplete && typeof onComplete === 'function') {
@@ -726,14 +758,14 @@ function setupClosePanelOnSvgClick() {
 }
 
 // Simplified theme system
-function setTheme(themeId) {
+async function setTheme(themeId) {
   const sidePanel = document.getElementById('side-panel');
   if (sidePanel && sidePanel.classList.contains('open')) {
     sidePanel.classList.remove('open');
   }
   
   // Clear previous classes
-  document.body.classList.remove('theme-snow', 'theme-onyx', 'theme-vintage', 'theme-pastel', 'theme-neon');
+  document.body.classList.remove('theme-snow', 'theme-onyx', 'theme-vintage', 'theme-pastel', 'theme-neon', 'theme-forest');
   
   // Apply new class
   document.body.classList.add('theme-' + themeId);
@@ -743,8 +775,13 @@ function setTheme(themeId) {
   localStorage.setItem(storageKey, themeId);
   console.log('[Theme System] Tema guardado:', themeId, 'en clave:', storageKey);
   
+  // Clear cache before applying theme
+  if (window.swDiagrams && window.swDiagrams.clearCache) {
+    window.swDiagrams.clearCache();
+  }
+  
   // Apply theme CSS variables
-  const themeVariables = getThemeVariables(themeId);
+  const themeVariables = await getThemeVariables(themeId);
   const targetElement = document.querySelector('.sw-diagram-container') || document.documentElement;
   
   Object.keys(themeVariables).forEach(varName => {
@@ -755,254 +792,55 @@ function setTheme(themeId) {
   
   // Update SVG colors
   updateSVGColors();
+  
+  // Update switcher colors
+  updateSwitcherColors();
 }
 
-// Get theme variables
-function getThemeVariables(themeId) {
-  const themes = {
-    snow: {
-      '--bg-color': '#f6f7f9',
-      '--text-color': '#222',
-      '--node-fill': '#fff',
-      '--node-stroke-focus': '#1976d2',
-      '--link-color': '#999',
-      '--label-border': '#bdbdbd',
-      '--side-panel-bg': '#fff',
-      '--side-panel-text': '#222',
-      '--side-panel-header-bg': '#f8f9fa',
-      '--side-panel-header-border': '#e0e0e0',
-      '--side-panel-border': '#e0e0e0',
-      '--side-panel-label': '#1976d2',
-      '--side-panel-value': '#222',
-      '--sidepanel-bg': '#fff',
-      '--sidepanel-text': '#222',
-      '--sidepanel-border': '#e0e0e0',
-      '--node-selection-border': '#bdbdbd',
-      '--node-selection-focus': '#1976d2',
-      '--node-selection-hover': '#1565c0',
-      '--node-selection-selected': '#1976d2',
-      '--control-bg': '#ffffff',
-      '--control-text': '#333333',
-      '--control-border': '#d1d5db',
-      '--control-border-hover': '#9ca3af',
-      '--control-border-focus': '#1976d2',
-      '--control-focus': '#1976d2',
-      '--control-placeholder': '#9ca3af',
-      '--control-shadow': 'rgba(0, 0, 0, 0.1)',
-      '--control-shadow-focus': 'rgba(25, 118, 210, 0.2)',
-      '--topbar-bg': '#ffffff',
-      '--topbar-text': '#333333',
-      '--cluster-bg': 'rgba(0,0,0,0.02)',
-      '--cluster-stroke': 'rgba(0,0,0,0.1)',
-      '--cluster-title-color': '#222',
-      '--image-filter': 'grayscale(30%)',
-      '--bg-image': 'none',
-      '--bg-opacity': '1',
-      '--loading-color': '#666',
-      '--loading-bg': '#ffffff',
-      '--tree-simple-vertical-spacing': '60',
-      '--tree-simple-horizontal-spacing': '140',
-      '--tree-vertical-spacing': '100',
-      '--tree-horizontal-spacing': '180',
-      '--cluster-padding-x': '220',
-      '--cluster-padding-y': '220',
-      '--cluster-spacing': '120'
-    },
-    onyx: {
-      '--bg-color': '#181c24',
-      '--text-color': '#f6f7f9',
-      '--node-fill': '#23272f',
-      '--node-stroke-focus': '#1976d2',
-      '--link-color': '#666',
-      '--label-border': '#444',
-      '--side-panel-bg': '#23272f',
-      '--side-panel-text': '#f6f7f9',
-      '--side-panel-header-bg': '#23272f',
-      '--side-panel-header-border': '#333',
-      '--side-panel-border': '#333',
-      '--side-panel-label': '#00eaff',
-      '--side-panel-value': '#f6f7f9',
-      '--sidepanel-bg': '#23272f',
-      '--sidepanel-text': '#f6f7f9',
-      '--sidepanel-border': '#333',
-      '--node-selection-border': '#444',
-      '--node-selection-focus': '#00eaff',
-      '--node-selection-hover': '#00b8cc',
-      '--node-selection-selected': '#00eaff',
-      '--control-bg': '#23272f',
-      '--control-text': '#f6f7f9',
-      '--control-border': '#333',
-      '--control-border-hover': '#555',
-      '--control-border-focus': '#00eaff',
-      '--control-focus': '#1976d2',
-      '--control-placeholder': '#666',
-      '--control-shadow': 'rgba(0, 0, 0, 0.3)',
-      '--control-shadow-focus': 'rgba(0, 234, 255, 0.2)',
-      '--topbar-bg': '#23272f',
-      '--topbar-text': '#f6f7f9',
-      '--cluster-bg': 'rgba(255,255,255,0.02)',
-      '--cluster-stroke': 'rgba(255,255,255,0.1)',
-      '--cluster-title-color': '#CCCCCC',
-      '--image-filter': 'invert(100%) brightness(0.8) contrast(1.2)',
-      '--bg-image': 'url(img/backgrounds/grid-dots.svg)',
-      '--bg-opacity': '1',
-      '--loading-color': '#999',
-      '--loading-bg': '#23272f',
-      '--tree-simple-vertical-spacing': '80',
-      '--tree-simple-horizontal-spacing': '160',
-      '--tree-vertical-spacing': '100',
-      '--tree-horizontal-spacing': '180',
-      '--cluster-padding-x': '220',
-      '--cluster-padding-y': '220',
-      '--cluster-spacing': '120'
-    },
-    vintage: {
-      '--bg-color': '#f5f1e8',
-      '--text-color': '#2c1810',
-      '--node-fill': '#faf6f0',
-      '--node-stroke-focus': '#8b4513',
-      '--link-color': '#8b7355',
-      '--label-border': '#d4c4a8',
-      '--side-panel-bg': '#faf6f0',
-      '--side-panel-text': '#2c1810',
-      '--side-panel-header-bg': '#f5f1e8',
-      '--side-panel-header-border': '#d4c4a8',
-      '--side-panel-border': '#d4c4a8',
-      '--side-panel-label': '#8b4513',
-      '--side-panel-value': '#2c1810',
-      '--sidepanel-bg': '#faf6f0',
-      '--sidepanel-text': '#2c1810',
-      '--sidepanel-border': '#d4c4a8',
-      '--node-selection-border': '#d4c4a8',
-      '--node-selection-focus': '#8b4513',
-      '--node-selection-hover': '#a0522d',
-      '--node-selection-selected': '#8b4513',
-      '--control-bg': '#faf6f0',
-      '--control-text': '#2c1810',
-      '--control-border': '#d4c4a8',
-      '--control-border-hover': '#c4b498',
-      '--control-border-focus': '#8b4513',
-      '--control-focus': '#8b4513',
-      '--control-placeholder': '#a0522d',
-      '--control-shadow': 'rgba(139, 69, 19, 0.1)',
-      '--control-shadow-focus': 'rgba(139, 69, 19, 0.2)',
-      '--topbar-bg': '#f5f1e8',
-      '--topbar-text': '#2c1810',
-      '--cluster-bg': 'rgba(139, 69, 19, 0.05)',
-      '--cluster-stroke': 'rgba(139, 69, 19, 0.1)',
-      '--cluster-title-color': '#8b4513',
-      '--image-filter': 'sepia(20%) brightness(0.95)',
-      '--bg-image': 'url(img/backgrounds/vintage-texture.svg)',
-      '--bg-opacity': '1',
-      '--loading-color': '#8b7355',
-      '--loading-bg': '#faf6f0',
-      '--tree-simple-vertical-spacing': '60',
-      '--tree-simple-horizontal-spacing': '140',
-      '--tree-vertical-spacing': '100',
-      '--tree-horizontal-spacing': '180',
-      '--cluster-padding-x': '220',
-      '--cluster-padding-y': '220',
-      '--cluster-spacing': '120'
-    },
-    pastel: {
-      '--bg-color': '#f8f9ff',
-      '--text-color': '#4a4a6a',
-      '--node-fill': '#ffffff',
-      '--node-stroke-focus': '#a8b4f5',
-      '--link-color': '#b8c5d6',
-      '--label-border': '#e1e8f0',
-      '--side-panel-bg': '#ffffff',
-      '--side-panel-text': '#4a4a6a',
-      '--side-panel-header-bg': '#f8f9ff',
-      '--side-panel-header-border': '#e1e8f0',
-      '--side-panel-border': '#e1e8f0',
-      '--side-panel-label': '#a8b4f5',
-      '--side-panel-value': '#4a4a6a',
-      '--sidepanel-bg': '#ffffff',
-      '--sidepanel-text': '#4a4a6a',
-      '--sidepanel-border': '#e1e8f0',
-      '--node-selection-border': '#e1e8f0',
-      '--node-selection-focus': '#a8b4f5',
-      '--node-selection-hover': '#8b9af0',
-      '--node-selection-selected': '#a8b4f5',
-      '--control-bg': '#ffffff',
-      '--control-text': '#4a4a6a',
-      '--control-border': '#e1e8f0',
-      '--control-border-hover': '#d1d8e0',
-      '--control-border-focus': '#a8b4f5',
-      '--control-focus': '#a8b4f5',
-      '--control-placeholder': '#b8c5d6',
-      '--control-shadow': 'rgba(168, 180, 245, 0.1)',
-      '--control-shadow-focus': 'rgba(168, 180, 245, 0.2)',
-      '--topbar-bg': '#f8f9ff',
-      '--topbar-text': '#4a4a6a',
-      '--cluster-bg': 'rgba(168, 180, 245, 0.05)',
-      '--cluster-stroke': 'rgba(168, 180, 245, 0.1)',
-      '--cluster-title-color': '#a8b4f5',
-      '--image-filter': 'brightness(1.05) saturate(0.9)',
-      '--bg-image': 'url(img/backgrounds/pastel-dots.svg)',
-      '--bg-opacity': '1',
-      '--loading-color': '#b8c5d6',
-      '--loading-bg': '#ffffff',
-      '--tree-simple-vertical-spacing': '60',
-      '--tree-simple-horizontal-spacing': '140',
-      '--tree-vertical-spacing': '100',
-      '--tree-horizontal-spacing': '180',
-      '--cluster-padding-x': '220',
-      '--cluster-padding-y': '220',
-      '--cluster-spacing': '120'
-    },
-    neon: {
-      '--bg-color': '#0a0a0a',
-      '--text-color': '#00ff41',
-      '--node-fill': '#1a1a1a',
-      '--node-stroke-focus': '#00ff88',
-      '--link-color': '#00ff88',
-      '--label-border': '#00ff41',
-      '--side-panel-bg': '#1a1a1a',
-      '--side-panel-text': '#00ff41',
-      '--side-panel-header-bg': '#0a0a0a',
-      '--side-panel-header-border': '#00ff41',
-      '--side-panel-border': '#00ff41',
-      '--side-panel-label': '#00ff88',
-      '--side-panel-value': '#00ff41',
-      '--sidepanel-bg': '#1a1a1a',
-      '--sidepanel-text': '#00ff41',
-      '--sidepanel-border': '#00ff41',
-      '--node-selection-border': '#00ff41',
-      '--node-selection-focus': '#00ff88',
-      '--node-selection-hover': '#00cc6a',
-      '--node-selection-selected': '#00ff88',
-      '--control-bg': '#1a1a1a',
-      '--control-text': '#00ff41',
-      '--control-border': '#00ff41',
-      '--control-border-hover': '#00ff88',
-      '--control-border-focus': '#00ff88',
-      '--control-focus': '#00ff88',
-      '--control-placeholder': '#00cc6a',
-      '--control-shadow': 'rgba(0, 255, 65, 0.2)',
-      '--control-shadow-focus': 'rgba(0, 255, 136, 0.3)',
-      '--topbar-bg': '#0a0a0a',
-      '--topbar-text': '#00ff41',
-      '--cluster-bg': 'rgba(0, 255, 65, 0.05)',
-      '--cluster-stroke': 'rgba(0, 255, 65, 0.2)',
-      '--cluster-title-color': '#00ff88',
-      '--image-filter': 'brightness(1.2) contrast(1.1) saturate(1.3)',
-      '--bg-image': 'url(img/backgrounds/neon-grid.svg)',
-      '--bg-opacity': '1',
-      '--loading-color': '#666',
-      '--loading-bg': '#1a1a1a',
-      '--tree-simple-vertical-spacing': '60',
-      '--tree-simple-horizontal-spacing': '140',
-      '--tree-vertical-spacing': '100',
-      '--tree-horizontal-spacing': '180',
-      '--cluster-padding-x': '220',
-      '--cluster-padding-y': '220',
-      '--cluster-spacing': '120'
+// Cache for themes to avoid repeated fetches
+let themesCache = null;
+
+// Get theme variables from external JSON file
+async function getThemeVariables(themeId) {
+  // Return cached themes if available
+  if (themesCache) {
+    return themesCache[themeId] || themesCache.snow;
+  }
+
+  try {
+    // Load themes from external JSON file
+    const response = await fetch('themes.json');
+    if (!response.ok) {
+      throw new Error(`Failed to load themes: ${response.status}`);
     }
-  };
-  
-  return themes[themeId] || themes.snow;
+    
+    themesCache = await response.json();
+    return themesCache[themeId] || themesCache.snow;
+  } catch (error) {
+    console.warn('Error loading themes from JSON, using fallback:', error);
+    
+    // Fallback to basic theme if JSON loading fails
+    const fallbackThemes = {
+      snow: {
+        '--bg-color': '#f6f7f9',
+        '--text-color': '#222',
+        '--node-fill': '#fff',
+        '--control-bg': '#ffffff',
+        '--control-text': '#333333',
+        '--control-focus': '#1976d2'
+      },
+      onyx: {
+        '--bg-color': '#181c24',
+        '--text-color': '#f6f7f9',
+        '--node-fill': '#23272f',
+        '--control-bg': '#23272f',
+        '--control-text': '#f6f7f9',
+        '--control-focus': '#00eaff'
+      }
+    };
+    
+    return fallbackThemes[themeId] || fallbackThemes.snow;
+  }
 }
 
 // Update SVG colors
@@ -1026,6 +864,13 @@ function updateSVGColors() {
   d3.selectAll('.subtitle-text').style('fill', variables.textColor);
   d3.selectAll('.cluster-rect').style('fill', variables.clusterBg).style('stroke', variables.clusterStroke);
   d3.selectAll('.cluster-title').style('fill', variables.clusterTitleColor);
+}
+
+// Update switcher colors
+function updateSwitcherColors() {
+  // This function is no longer needed as CSS handles all styling
+  // The diagram buttons now use CSS variables for consistent theming
+  console.log('[Theme] Switcher colors are now handled by CSS variables');
 }
 
 // Generate unique key for localStorage based on file URL
@@ -1066,7 +911,20 @@ function getThemeConfiguration() {
 // Determine if a theme is light or dark
 function isLightTheme(themeId) {
   const lightThemes = ['snow', 'vintage', 'pastel'];
-  return lightThemes.includes(themeId);
+  const darkThemes = ['onyx', 'neon', 'forest'];
+  
+  // If explicitly defined as dark, return false
+  if (darkThemes.includes(themeId)) {
+    return false;
+  }
+  
+  // If explicitly defined as light, return true
+  if (lightThemes.includes(themeId)) {
+    return true;
+  }
+  
+  // Default: assume light theme
+  return true;
 }
 
 // Get opposite theme based on configuration
@@ -1076,7 +934,7 @@ function getOppositeTheme(currentTheme, config) {
 }
 
 // Initialize theme system (simplified version to use with theme-loader.js)
-function initializeThemeSystem() {
+async function initializeThemeSystem() {
   const config = getThemeConfiguration();
   const storageKey = getStorageKey();
   console.log('[Theme System] Configuración cargada:', config);
@@ -1087,28 +945,35 @@ function initializeThemeSystem() {
   console.log('[Theme System] Tema actual:', currentTheme);
   
   // Apply complete theme (with all CSS variables)
-  setTheme(currentTheme);
+  await setTheme(currentTheme);
   
   // Configure theme toggle if it exists
   const themeToggle = document.getElementById('theme-toggle');
   if (themeToggle) {
-    themeToggle.addEventListener('click', function() {
+    console.log('[Theme System] Botón de tema encontrado, configurando event listener');
+    themeToggle.addEventListener('click', async function() {
       const currentTheme = localStorage.getItem(storageKey);
+      const isCurrentLight = isLightTheme(currentTheme);
       const newTheme = getOppositeTheme(currentTheme, config);
-      console.log('[Theme System] Cambiando de', currentTheme, 'a', newTheme);
-      setTheme(newTheme);
+      console.log('[Theme System] Click en botón de tema');
+      console.log('[Theme System] Tema actual:', currentTheme, '(es claro:', isCurrentLight, ')');
+      console.log('[Theme System] Configuración:', config);
+      console.log('[Theme System] Cambiando a:', newTheme);
+      await setTheme(newTheme);
     });
+  } else {
+    console.warn('[Theme System] Botón de tema NO encontrado');
   }
 }
 
 // Function to force default light theme
-function forceDefaultLightTheme() {
+async function forceDefaultLightTheme() {
   const config = getThemeConfiguration();
   const storageKey = getStorageKey();
   localStorage.removeItem(storageKey);
   localStorage.setItem(`themeSystemInitialized_${storageKey}`, 'true');
   console.log('[Theme System] Forzando tema claro por defecto:', config.lightTheme);
-  setTheme(config.lightTheme);
+  await setTheme(config.lightTheme);
 }
 
 // Function to preserve current theme
@@ -1129,6 +994,9 @@ function preserveCurrentTheme() {
     
     // Update SVG colors
     updateSVGColors();
+    
+    // Update switcher colors
+    updateSwitcherColors();
   }
 }
 
@@ -1177,32 +1045,45 @@ window.swDiagrams.updateTopbarTitle = function(diagramIndex) {
     }
 };
 window.swDiagrams.renderDiagramButtons = function() {
-    const switcher = document.getElementById('diagram-switcher');
-    if (!switcher) return;
-    const header = switcher.querySelector('.switcher-header');
-    switcher.innerHTML = '';
-    if (header) switcher.appendChild(header);
+    const dropdown = document.getElementById('diagram-dropdown');
+    const dropdownContent = document.getElementById('diagram-dropdown-content');
+    const dropdownBtn = document.getElementById('diagram-dropdown-btn');
+    const dropdownText = dropdownBtn ? dropdownBtn.querySelector('.dropdown-text') : null;
+    
+    if (!dropdown || !dropdownContent) return;
+    
+    dropdownContent.innerHTML = '';
+    
     if (!Array.isArray(window.swDiagrams.diagrams) || window.swDiagrams.diagrams.length === 0) {
         // Show centered message
         const msg = document.createElement('div');
         msg.style.textAlign = 'center';
-        msg.style.padding = '40px 0';
+        msg.style.padding = '20px';
         msg.style.color = 'var(--text-color, #333)';
-        msg.style.fontSize = '1.2em';
+        msg.style.fontSize = '0.9em';
         msg.textContent = 'Sin datos';
-        switcher.appendChild(msg);
+        dropdownContent.appendChild(msg);
+        if (dropdownText) dropdownText.textContent = 'Sin diagramas';
         return;
     }
+    
+    // Update dropdown button text with current selection
+    if (dropdownText && window.swDiagrams.diagrams[window.swDiagrams.currentDiagramIdx]) {
+        dropdownText.textContent = window.swDiagrams.diagrams[window.swDiagrams.currentDiagramIdx].name;
+    }
+    
     window.swDiagrams.diagrams.forEach((d, idx) => {
         const link = document.createElement('a');
         link.href = `?d=${idx}`;
-        link.className = 'diagram-btn' + (idx === window.swDiagrams.currentDiagramIdx ? ' active' : '');
+        link.className = 'switcher-btn' + (idx === window.swDiagrams.currentDiagramIdx ? ' active' : '');
         link.textContent = d.name;
         link.style.textDecoration = 'none';
+        
         if (window.swDiagrams.isLoading) {
             link.style.pointerEvents = 'none';
             link.style.opacity = '0.5';
         }
+        
         link.addEventListener('click', (e) => {
             e.preventDefault();
             e.stopPropagation();
@@ -1219,11 +1100,17 @@ window.swDiagrams.renderDiagramButtons = function() {
                 window.swDiagrams.updateTopbarTitle(idx);
                 window.swDiagrams.renderDiagramButtons();
                 window.swDiagrams.loadDiagram(d.url);
+                
+                // Close dropdown after selection
+                dropdown.classList.remove('open');
             }
         });
-        link.addEventListener('mouseenter', () => {});
-        switcher.appendChild(link);
+        
+        dropdownContent.appendChild(link);
     });
+    
+    // Apply current theme colors to the switcher buttons
+    updateSwitcherColors();
 };
 window.swDiagrams.loadDiagram = function(url) {
     if (!Array.isArray(window.swDiagrams.diagrams) || window.swDiagrams.diagrams.length === 0) {
@@ -1372,7 +1259,18 @@ function renderSwDiagramBase() {
     
     container.innerHTML = `
       <div class="topbar">
-        <div class="topbar-left"></div>
+        <div class="topbar-left">
+          <div class="diagram-dropdown" id="diagram-dropdown">
+            <button class="diagram-dropdown-btn" id="diagram-dropdown-btn">
+              <span class="dropdown-text">Seleccionar diagrama</span>
+              <svg class="dropdown-arrow" width="20" height="20" viewBox="0 0 24 24" fill="none">
+                <path d="M7 10l5 5 5-5" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
+            <div class="diagram-dropdown-content" id="diagram-dropdown-content">
+            </div>
+          </div>
+        </div>
         <div class="topbar-center">
           <h1 class="diagram-title">${fixedTitle}</h1>
         </div>
@@ -1401,7 +1299,6 @@ function renderSwDiagramBase() {
       </div>
       <div class="diagram-switcher" id="diagram-switcher">
         <div class="switcher-header">
-          <h4 style="margin:0 0 10px 0; color:var(--text-color, #333);">Diagramas</h4>
         </div>
       </div>
       <svg id="main-diagram-svg"></svg>
@@ -1410,19 +1307,19 @@ function renderSwDiagramBase() {
     `;
     document.body.appendChild(container);
   }
-  // Add event listener to theme change button
-  const themeToggle = document.getElementById('theme-toggle');
-  if (themeToggle) {
-    themeToggle.addEventListener('click', function() {
-      const config = window.getThemeConfiguration ? window.getThemeConfiguration() : { lightTheme: 'snow', darkTheme: 'onyx' };
-      const storageKey = window.getStorageKey ? window.getStorageKey() : 'selectedTheme_index.html';
-      const currentTheme = localStorage.getItem(storageKey) || config.lightTheme;
-      const newTheme = (window.getOppositeTheme ? window.getOppositeTheme(currentTheme, config) : (currentTheme === config.lightTheme ? config.darkTheme : config.lightTheme));
-      if (window.setTheme) window.setTheme(newTheme);
+  // Initialize theme system after base structure is rendered
+  console.log('[Base Render] Inicializando sistema de temas...');
+  if (window.initializeThemeSystem) {
+    window.initializeThemeSystem().then(() => {
+      console.log('[Base Render] Sistema de temas inicializado correctamente');
+    }).catch(error => {
+      console.error('[Base Render] Error inicializando sistema de temas:', error);
     });
+  } else {
+    console.warn('[Base Render] initializeThemeSystem no está disponible');
   }
-  // Automatic initialization of switcher and diagram when page loads
-  if (document.getElementById('diagram-switcher')) {
+  // Automatic initialization of dropdown and diagram when page loads
+  if (document.getElementById('diagram-dropdown')) {
     window.swDiagrams.currentDiagramIdx = window.swDiagrams.getDiagramIndexFromURL();
     window.swDiagrams.updateTopbarTitle(window.swDiagrams.currentDiagramIdx);
     window.swDiagrams.renderDiagramButtons();
@@ -1449,10 +1346,85 @@ window.setTheme = setTheme;
 window.initializeThemeSystem = initializeThemeSystem;
 window.forceDefaultLightTheme = forceDefaultLightTheme;
 window.preserveCurrentTheme = preserveCurrentTheme;
+window.getThemeConfiguration = getThemeConfiguration;
+window.getStorageKey = getStorageKey;
+window.getOppositeTheme = getOppositeTheme;
+window.isLightTheme = isLightTheme;
+
+// Helper function to check if URL is accessible
+window.checkUrlAccessibility = function(url) {
+  return new Promise((resolve) => {
+    const xhr = new XMLHttpRequest();
+    xhr.timeout = 5000; // 5 second timeout
+    xhr.open('HEAD', url, true);
+    xhr.onload = () => resolve(true);
+    xhr.onerror = () => resolve(false);
+    xhr.ontimeout = () => resolve(false);
+    xhr.send();
+  });
+};
+
+// Function to find diagram by URL and get its fallbacks
+window.findDiagramByUrl = function(url) {
+  if (!window.swDiagrams || !window.swDiagrams.diagrams) {
+    return null;
+  }
+  
+  return window.swDiagrams.diagrams.find(diagram => diagram.url === url);
+};
+
+// Function to try fallback URLs from diagram definition
+window.tryDiagramFallbacks = function(originalUrl, onComplete, retryCount = 0) {
+  const diagram = window.findDiagramByUrl(originalUrl);
+  
+  if (!diagram || !diagram.fallbacks || !Array.isArray(diagram.fallbacks)) {
+    console.log('[Fallback] No fallbacks defined for this diagram');
+    return false;
+  }
+  
+  if (retryCount >= diagram.fallbacks.length) {
+    console.error('[Fallback] No more fallback URLs available');
+    return false;
+  }
+  
+  const fallbackUrl = diagram.fallbacks[retryCount];
+  console.log(`[Fallback] Trying fallback URL ${retryCount + 1}:`, fallbackUrl);
+  
+  // Try the fallback URL with error handling
+  window.initDiagram(fallbackUrl, onComplete, 0); // Reset retry count for fallback
+  
+  return true;
+};
 
 // Initialize when DOM is ready
 document.addEventListener("DOMContentLoaded", () => {
   setupClosePanelOnSvgClick();
+  
+  // Setup dropdown functionality
+  const dropdownBtn = document.getElementById('diagram-dropdown-btn');
+  const dropdown = document.getElementById('diagram-dropdown');
+  
+  if (dropdownBtn && dropdown) {
+    dropdownBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      dropdown.classList.toggle('open');
+    });
+    
+    // Close dropdown when clicking outside
+    document.addEventListener('click', (e) => {
+      if (!dropdown.contains(e.target)) {
+        dropdown.classList.remove('open');
+      }
+    });
+    
+    // Close dropdown on escape key
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        dropdown.classList.remove('open');
+      }
+    });
+  }
   
   // Clear cache on page refresh
   window.addEventListener('beforeunload', () => {
@@ -1460,16 +1432,4 @@ document.addEventListener("DOMContentLoaded", () => {
       window.swDiagrams.clearCache();
     }
   });
-  
-  // Clear cache on theme change
-  const themeToggle = document.getElementById('theme-toggle');
-  if (themeToggle) {
-    const originalClick = themeToggle.onclick;
-    themeToggle.addEventListener('click', () => {
-      // Clear cache before theme change
-      if (window.swDiagrams && window.swDiagrams.clearCache) {
-        window.swDiagrams.clearCache();
-      }
-    });
-  }
 }); 

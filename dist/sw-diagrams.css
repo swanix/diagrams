@@ -49,26 +49,7 @@
     /* Error message */
     --error-message-color: #999999;
 
-    /* Images */
-    --cover-home: https://swanix.org/diagrams/lib/cover-home.svg;
-    --cover-home-circle: https://swanix.org/diagrams/lib/cover-home-circle.svg;
-    --cover-menu: https://swanix.org/diagrams/lib/cover-menu.svg;
-    --cover-message: https://swanix.org/diagrams/lib/cover-message.svg;
-    --cover-search: https://swanix.org/diagrams/lib/cover-search.svg;
-    --cover-settings: https://swanix.org/diagrams/lib/cover-settings.svg;
-    --home: https://swanix.org/diagrams/lib/cover-home.svg;
-    --list: https://swanix.org/diagrams/lib/list.svg;
-    --form: https://swanix.org/diagrams/lib/form.svg;
-    --detail: https://swanix.org/diagrams/lib/detail.svg;
-    --document: https://swanix.org/diagrams/lib/document.svg;
-    --report: https://swanix.org/diagrams/lib/report.svg;
-    --modal: https://swanix.org/diagrams/lib/modal.svg;
-    --settings: https://swanix.org/diagrams/lib/settings.svg;
-    --pdf: https://swanix.org/diagrams/lib/file-pdf.svg;
-    --xml: https://swanix.org/diagrams/lib/file-xml.svg;
-    --csv: https://swanix.org/diagrams/lib/file-csv.svg;
-    --xls: https://swanix.org/diagrams/lib/file-xls.svg;
-    --mosaic: https://swanix.org/diagrams/lib/mosaic.svg;
+
   }
 
 

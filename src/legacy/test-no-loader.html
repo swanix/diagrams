@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Sin Theme Loader</title>
+    <link rel="stylesheet" href="sw-diagrams.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+</head>
+<body>
+<!-- Test container -->
+<div class="sw-diagram-container" 
+  data-themes='{
+    "light": "snow",
+    "dark": "forest"
+  }'
+  data-title="Test Sin Loader"
+  >
+</div>
+
+<!-- Library -->
+<script src="sw-diagrams.js"></script>
+
+<!-- Debug -->
+<script>
+  setTimeout(() => {
+    console.log('=== TEST SIN LOADER ===');
+    console.log('Theme toggle:', document.getElementById('theme-toggle'));
+    console.log('Current theme:', localStorage.getItem('selectedTheme_test-no-loader.html'));
+    console.log('Config:', window.getThemeConfiguration ? window.getThemeConfiguration() : 'N/A');
+    
+    // Manual test
+    const toggle = document.getElementById('theme-toggle');
+    if (toggle) {
+      console.log('Haciendo click manual...');
+      toggle.click();
+    }
+  }, 2000);
+</script>
+</body>
+</html> 

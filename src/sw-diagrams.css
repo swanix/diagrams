@@ -3,19 +3,107 @@
 
 :root {
 
-    /* Layout */
-    --svg-width: 100vw;
-    --svg-height: 100vh;
-
-    /* Node stroke colors */
-    --node-stroke-focus: #000;
-
-    /* Base colors */
+    /* ===== Background and Images ===== */
     --bg-color: #f6f7f9;
+    --bg-image: none; /* No image by default */
+    --bg-opacity: 1; /* Background color opacity (1 = opaque, 0 = transparent) */
+    --image-filter: none; /* No filter by default */
+
+    /* ===== Text and Nodes ===== */
     --text-color: #222;
     --node-fill: #fff;
-    --label-border: #bdbdbd;
+    --node-stroke-focus: #000;
+    --node-selection-border: #e0e0e0;
+    --node-selection-focus: #1976d2;
+    --node-selection-hover: #bdbdbd;
+    --node-selection-selected: #1976d2;
+
+    /* ===== Links and Labels ===== */
     --link-color: #999;
+    --label-border: #bdbdbd;
+
+    /* ===== Clusters ===== */
+    --cluster-bg: rgba(0,0,0,0.05);
+    --cluster-stroke: rgba(0,0,0,0.1);
+    --cluster-title-color: #222;
+
+    /* ===== Loading ===== */
+    --loading-color: #dadada;
+    --loading-bg: var(--bg-color);
+
+    /* ===== Side Panel ===== */
+    --side-panel-width: 350px;
+    --side-panel-bg: #fff;
+    --side-panel-text: #222;
+    --side-panel-header-bg: #f8f9fa;
+    --side-panel-header-border: #dee2e6;
+    --side-panel-border: #e0e0e0;
+    --side-panel-label: #666;
+    --side-panel-value: #222;
+    --side-panel-close-bg: #dc3545;
+    --side-panel-close-hover: #c82333;
+    --side-panel-shadow: rgba(0, 0, 0, 0.1);
+    
+    /* ===== Controls ===== */
+    --control-bg: #ffffff;
+    --control-text: #333333;
+    --control-border: #d1d5db;
+    --control-border-hover: #9ca3af;
+    --control-border-focus: #1976d2;
+    --control-placeholder: #9ca3af;
+    --control-shadow: rgba(0, 0, 0, 0.1);
+    --control-shadow-focus: rgba(25, 118, 210, 0.2);
+    
+    /* ===== Topbar ===== */
+    --topbar-bg: #ffffff;
+    --topbar-text: #333333;
+
+    /* ===== Diagram Switcher ===== */
+    --switcher-bg: #ffffff;
+    --switcher-border: #d1d5db;
+    --switcher-text: #333333;
+    --switcher-shadow: none;
+    --switcher-padding: 15px;
+    --switcher-border-radius: 12px;
+    --switcher-gap: 10px;
+    --switcher-header-margin: 10px;
+
+    /* Diagram Buttons */
+    --switcher-btn-bg: #ffffff;
+    --switcher-btn-text: #333333;
+    --switcher-btn-border: #d1d5db;
+    --switcher-btn-border-hover: #9ca3af;
+    --switcher-btn-border-active: #1976d2;
+    --switcher-btn-bg-active: #1976d2;
+    --switcher-btn-text-active: #ffffff;
+    --switcher-btn-bg-disabled: #f5f5f5;
+    --switcher-btn-text-disabled: #9ca3af;
+    --switcher-btn-border-disabled: #d1d5db;
+    --switcher-btn-shadow: none;
+    --switcher-btn-shadow-hover: none;
+    --switcher-btn-border-radius: 8px;
+    --switcher-btn-padding: 10px 20px;
+    --switcher-btn-min-width: 200px;
+
+    /* Theme Toggle Button */
+    --theme-toggle-bg: #ffffff;
+    --theme-toggle-border: #d1d5db;
+    --theme-toggle-border-hover: #9ca3af;
+    --theme-toggle-text: #333333;
+    --theme-toggle-shadow: rgba(0, 0, 0, 0.1);
+    --theme-toggle-size: 40px;
+    --theme-toggle-border-radius: 50%;
+    --theme-icon-size: 18px;
+
+    /* ===== Tree Spacing ===== */
+    --tree-simple-vertical-spacing: 60;
+    --tree-simple-horizontal-spacing: 140;
+    --tree-vertical-spacing: 100;
+    --tree-horizontal-spacing: 180;
+
+    /* ===== Layout and Dimensions ===== */
+    --svg-width: 100vw;
+    --svg-height: 100vh;
 
     /* Node dimensions */
     --node-bg-width: 80px;
@@ -29,7 +117,6 @@
     --image-y: -54px;
     --image-width: 72px;
     --image-height: 65px;
-    --image-filter: none; /* Sin filtro por defecto */
 
     /* Label ID text */
     --label-id-text-color: #888888;
@@ -61,107 +148,53 @@
     --btn-text: #000;
     --btn-text-hover: #FFF;
 
-    /* Loading */
-    --loading-color: #dadada;
-    --loading-bg: var(--bg-color);
-
-    /* Background Image */
-    --bg-image: none; /* Sin imagen por defecto */
-    --bg-opacity: 1; /* Opacidad del color de fondo (1 = opaco, 0 = transparente) */
-
     /* Error message */
     --error-message-color: #999999;
 
-    /* Side Panel */
-    --side-panel-width: 350px;
-    --side-panel-bg: #fff;
-    --side-panel-border: #e0e0e0;
-    --side-panel-shadow: rgba(0, 0, 0, 0.1);
-    --side-panel-header-bg: #f8f9fa;
-    --side-panel-header-border: #dee2e6;
-    --side-panel-text: #222;
-    --side-panel-label: #666;
-    --side-panel-value: #222;
-    --side-panel-close-bg: #dc3545;
-    --side-panel-close-hover: #c82333;
-    
-    /* Control variables */
-    --control-bg: #ffffff;
-    --control-text: #333333;
-    --control-border: #d1d5db;
-    --control-border-hover: #9ca3af;
-    --control-border-focus: #1976d2;
-    --control-placeholder: #9ca3af;
-    --control-shadow: rgba(0, 0, 0, 0.1);
-    --control-shadow-focus: rgba(25, 118, 210, 0.2);
-    
-    /* Topbar variables */
-    --topbar-bg: #ffffff;
-    --topbar-text: #333333;
-    
-    /* Sidepanel variables (alias for side-panel) */
-    --sidepanel-bg: #ffffff;
-    --sidepanel-text: #333333;
-    --sidepanel-border: #dddddd;
-
-    /* Node Selection States */
-    --node-selection-border: #e0e0e0;
-    --node-selection-focus: #1976d2;
-    --node-selection-hover: #bdbdbd;
-    --node-selection-selected: #1976d2;
-
-    /* Images */
-    --cover-home: https://swanix.org/diagrams/lib/cover-home.svg;
-    --cover-home-circle: https://swanix.org/diagrams/lib/cover-home-circle.svg;
-    --cover-menu: https://swanix.org/diagrams/lib/cover-menu.svg;
-    --cover-message: https://swanix.org/diagrams/lib/cover-message.svg;
-    --cover-search: https://swanix.org/diagrams/lib/cover-search.svg;
-    --cover-settings: https://swanix.org/diagrams/lib/cover-settings.svg;
-    --home: https://swanix.org/diagrams/lib/cover-home.svg;
-    --list: https://swanix.org/diagrams/lib/list.svg;
-    --form: https://swanix.org/diagrams/lib/form.svg;
-    --detail: https://swanix.org/diagrams/lib/detail.svg;
-    --document: https://swanix.org/diagrams/lib/document.svg;
-    --report: https://swanix.org/diagrams/lib/report.svg;
-    --modal: https://swanix.org/diagrams/lib/modal.svg;
-    --settings: https://swanix.org/diagrams/lib/settings.svg;
-    --pdf: https://swanix.org/diagrams/lib/file-pdf.svg;
-    --xml: https://swanix.org/diagrams/lib/file-xml.svg;
-    --csv: https://swanix.org/diagrams/lib/file-csv.svg;
-    --xls: https://swanix.org/diagrams/lib/file-xls.svg;
-    --mosaic: https://swanix.org/diagrams/lib/mosaic.svg;
-    --cluster-bg: rgba(0,0,0,0.05);
-    --cluster-stroke: rgba(0,0,0,0.1);
-    --cluster-title-color: #222;
   }
 
   @media (prefers-color-scheme: dark) {
     :root {
-      --node-stroke-focus: #fff;
+      /* ===== Background and Images ===== */
       --bg-color: #121212;
+      --image-filter: invert(100%) grayscale(100%);
+
+      /* ===== Text and Nodes ===== */
       --text-color: #fff;
       --node-fill: #333;
+      --node-stroke-focus: #fff;
+
+      /* ===== Links and Labels ===== */
       --link-color: #666;
       --label-border: #787878;
-      --image-filter: invert(100%) grayscale(100%);
+
+      /* ===== Clusters ===== */
+      --cluster-bg: rgba(255,255,255,0.02);
+      --cluster-stroke: rgba(255,255,255,0.1);
+      --cluster-title-color: #00eaff;
+
+      /* ===== Loading ===== */
+      --loading-color: #ffffff;
+      --loading-bg: var(--bg-color);
+
+      /* ===== Side Panel ===== */
+      --side-panel-bg: #2d2d2d;
+      --side-panel-text: #ffffff;
+      --side-panel-header-bg: #404040;
+      --side-panel-header-border: #505050;
+      --side-panel-border: #404040;
+      --side-panel-label: #cccccc;
+      --side-panel-value: #ffffff;
+
+      /* ===== Controls ===== */
       --btn-bg: #000;
       --btn-bg-hover: #FFF;
       --btn-text: #FFF;
       --btn-text-hover: #000;
-      --loading-color: #ffffff;
-      --loading-bg: var(--bg-color);
+
+      /* ===== Labels ===== */
       --label-id-text-color: #5c5c5c;
       --text-subtitle-color: #5c5c5c;
-      --side-panel-bg: #2d2d2d;
-      --side-panel-border: #404040;
-      --side-panel-header-bg: #404040;
-      --side-panel-header-border: #505050;
-      --side-panel-text: #ffffff;
-      --side-panel-label: #cccccc;
-      --side-panel-value: #ffffff;
-      --cluster-bg: rgba(255,255,255,0.02);
-      --cluster-stroke: rgba(255,255,255,0.1);
-      --cluster-title-color: #00eaff;
     }
     
     /* Dark mode status styles */
@@ -285,23 +318,6 @@
     text-anchor: middle;
     font-weight: bold;
     pointer-events: none;
-  }
-
-  .toggle-btn {
-    position: fixed;
-    top: 10px;
-    right: 10px;
-    background: var(--bg-color);
-    color: var(--text-color);
-    border: 1px solid var(--label-border);
-    padding: 8px 12px;
-    border-radius: 6px;
-    cursor: pointer;
-    font-size: 14px;
-  }
-
-  .custom-text {
-    font-size: var(--label-font-size);
   }
 
   .node-link {
@@ -1013,6 +1029,37 @@ svg {
 }
 
 /* --- Estilos migrados desde index.html para integración en la librería --- */
+
+/* Ocultar elementos hasta que se aplique el tema para evitar FOUC */
+.diagram-switcher,
+.theme-toggle,
+.topbar {
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+/* Mostrar elementos cuando el tema esté aplicado */
+body.theme-snow .diagram-switcher,
+body.theme-snow .theme-toggle,
+body.theme-snow .topbar,
+body.theme-onyx .diagram-switcher,
+body.theme-onyx .theme-toggle,
+body.theme-onyx .topbar,
+body.theme-vintage .diagram-switcher,
+body.theme-vintage .theme-toggle,
+body.theme-vintage .topbar,
+body.theme-pastel .diagram-switcher,
+body.theme-pastel .theme-toggle,
+body.theme-pastel .topbar,
+body.theme-neon .diagram-switcher,
+body.theme-neon .theme-toggle,
+body.theme-neon .topbar,
+body.theme-forest .diagram-switcher,
+body.theme-forest .theme-toggle,
+body.theme-forest .topbar {
+    opacity: 1;
+}
+
 .diagram-switcher {
     position: fixed;
     top: 80px;
@@ -1020,28 +1067,160 @@ svg {
     z-index: 9999;
     display: flex;
     flex-direction: column;
-    gap: 10px;
-    background: var(--sidepanel-bg, #fff);
-    padding: 15px;
-    border-radius: 12px;
-    box-shadow: none;
-    border: 1px solid var(--sidepanel-border, #ddd);
+    gap: var(--switcher-gap, 10px);
+    background: var(--switcher-bg, #fff);
+    padding: var(--switcher-padding, 15px);
+    border-radius: var(--switcher-border-radius, 12px);
+    box-shadow: var(--switcher-shadow, none);
+    border: 1px solid var(--switcher-border, #ddd);
     pointer-events: auto;
     user-select: none;
+    display: none; /* Oculto por defecto */
 }
-.diagram-btn {
-    background: var(--control-bg, #fff);
-    color: var(--control-text, #333);
-    border: 2px solid var(--control-border, #d1d5db);
-    border-radius: 8px;
-    padding: 10px 20px;
+
+/* Dropdown del diagram switcher en el topbar */
+.diagram-dropdown {
+    position: relative;
+    display: inline-block;
+    width: 180px;
+    max-width: 250px;
+}
+
+.diagram-dropdown-btn {
+    background: var(--switcher-btn-bg, var(--control-bg, #fff));
+    color: var(--switcher-btn-text, var(--control-text, #333));
+    border: 1px solid var(--switcher-btn-border, var(--control-border, #d1d5db));
+    border-radius: var(--switcher-btn-border-radius, 8px);
+    padding: 8px 12px 8px 16px;
     font-size: 0.9rem;
     font-weight: 500;
     cursor: pointer;
-    box-shadow: none;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    transition: all 0.2s ease;
+    min-width: 180px;
+    max-width: 250px;
+    justify-content: space-between;
+    box-sizing: border-box;
+    white-space: nowrap;
+    overflow: hidden;
+    text-align: left;
+}
+
+.diagram-dropdown-btn:hover {
+    border-color: var(--switcher-btn-border-hover, var(--control-border-hover, #9ca3af));
+    box-shadow: var(--switcher-btn-shadow-hover, none);
+    background: var(--switcher-btn-bg-hover, rgba(0, 0, 0, 0.02));
+}
+
+.diagram-dropdown-btn .dropdown-text {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    text-align: left;
+    margin-right: 4px;
+}
+
+.diagram-dropdown-btn .dropdown-arrow {
+    width: 20px;
+    height: 20px;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    flex-shrink: 0;
+    color: var(--switcher-btn-text, var(--control-text, #333));
+    opacity: 0.8;
+}
+
+.diagram-dropdown-btn:hover .dropdown-arrow {
+    opacity: 1;
+}
+
+.diagram-dropdown.open .dropdown-arrow {
+    transform: rotate(180deg);
+    opacity: 1;
+}
+
+.diagram-dropdown-content {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: var(--switcher-bg, #fff);
+    border: 1px solid var(--switcher-border, #ddd);
+    border-radius: 8px;
+    z-index: 10001;
+    max-height: 300px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    display: none;
+    margin-top: 4px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.diagram-dropdown.open .diagram-dropdown-content {
+    display: block;
+}
+
+/* Estilos para los elementos del dropdown */
+.diagram-dropdown-content .switcher-btn {
+    border: none;
+    border-radius: 0;
+    margin: 0;
+    min-width: auto;
+    width: 100%;
+    text-align: left;
+    background: transparent;
+    color: var(--switcher-btn-text, var(--control-text, #333));
+    border-bottom: 1px solid var(--switcher-border, #ddd);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    box-sizing: border-box;
+    padding: 12px 16px;
+    transition: background-color 0.2s ease;
+}
+
+.diagram-dropdown-content .switcher-btn:first-child {
+    border-top-left-radius: 8px;
+    border-top-right-radius: 8px;
+}
+
+.diagram-dropdown-content .switcher-btn:last-child {
+    border-bottom: none;
+    border-bottom-left-radius: 8px;
+    border-bottom-right-radius: 8px;
+}
+
+.diagram-dropdown-content .switcher-btn:hover {
+    background: var(--switcher-btn-bg-hover, rgba(0, 0, 0, 0.1));
+    border-color: var(--switcher-border, #ddd) !important;
+    border-bottom-color: var(--switcher-border, #ddd) !important;
+}
+
+.diagram-dropdown-content .switcher-btn.active {
+    background: var(--switcher-btn-bg-active, var(--control-focus, #1976d2));
+    color: var(--switcher-btn-text-active, #fff);
+    font-weight: 600;
+    border: none !important;
+    border-bottom: 1px solid var(--switcher-border, #ddd) !important;
+}
+
+
+.switcher-btn {
+    background: var(--switcher-btn-bg, var(--control-bg, #fff));
+    color: var(--switcher-btn-text, var(--control-text, #333));
+    border: 2px solid var(--switcher-btn-border, var(--control-border, #d1d5db));
+    border-radius: var(--switcher-btn-border-radius, 8px);
+    padding: var(--switcher-btn-padding, 10px 20px);
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    box-shadow: var(--switcher-btn-shadow, none);
     transition: all 0.2s ease;
     text-align: left;
-    min-width: 200px;
+    min-width: var(--switcher-btn-min-width, 200px);
     pointer-events: auto;
     position: relative;
     z-index: 10001;
@@ -1049,36 +1228,34 @@ svg {
     text-decoration: none;
     display: block;
 }
-.diagram-btn.active {
-    background: var(--control-focus, #1976d2);
-    color: #fff;
-    border: 2px solid var(--control-focus, #1976d2);
-    box-shadow: none;
+.switcher-btn.active {
+    background: var(--switcher-btn-bg-active, var(--control-focus, #1976d2));
+    color: var(--switcher-btn-text-active, #fff);
+    border: 2px solid var(--switcher-btn-border-active, var(--control-focus, #1976d2));
+    box-shadow: var(--switcher-btn-shadow, none);
 }
-.diagram-btn:hover:not(:disabled) {
-    background: var(--control-bg, #fff);
-    border-color: var(--control-border-hover, #9ca3af);
-    box-shadow: none;
-    transform: translateY(-1px);
+.switcher-btn:hover:not(:disabled) {
+    background: var(--switcher-btn-bg-hover, var(--control-bg, #fff));
+    border-color: var(--switcher-btn-border-hover, var(--control-border-hover, #9ca3af));
+    box-shadow: var(--switcher-btn-shadow-hover, none);
 }
-.diagram-btn.active:hover:not(:disabled) {
-    background: var(--control-focus, #1976d2);
-    border-color: var(--control-focus, #1976d2);
-    transform: translateY(-1px);
+.switcher-btn.active:hover:not(:disabled) {
+    background: var(--switcher-btn-bg-active, var(--control-focus, #1976d2));
+    border-color: var(--switcher-btn-border-active, var(--control-focus, #1976d2));
 }
-.diagram-btn:disabled {
+.switcher-btn:disabled {
     opacity: 0.5;
     cursor: not-allowed;
-    background: var(--control-bg, #f5f5f5);
-    color: var(--control-placeholder, #9ca3af);
-    border-color: var(--control-border, #ddd);
+    background: var(--switcher-btn-bg-disabled, var(--control-bg, #f5f5f5));
+    color: var(--switcher-btn-text-disabled, var(--control-placeholder, #9ca3af));
+    border-color: var(--switcher-btn-border-disabled, var(--control-border, #ddd));
     transform: none;
 }
 .switcher-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 10px;
+    margin-bottom: var(--switcher-header-margin, 10px);
 }
 .theme-controls {
     display: flex;
@@ -1086,11 +1263,11 @@ svg {
     gap: 10px;
 }
 .theme-toggle {
-    background: var(--control-bg, #fff);
-    border: 1px solid var(--control-border, #ddd);
-    border-radius: 50%;
-    width: 40px;
-    height: 40px;
+    background: var(--theme-toggle-bg, var(--control-bg, #fff));
+    border: 1px solid var(--theme-toggle-border, var(--control-border, #ddd));
+    border-radius: var(--theme-toggle-border-radius, 50%);
+    width: var(--theme-toggle-size, 40px);
+    height: var(--theme-toggle-size, 40px);
     padding: 0;
     cursor: pointer;
     display: flex;
@@ -1101,17 +1278,17 @@ svg {
     overflow: hidden;
 }
 .theme-toggle:hover {
-    border-color: var(--control-border-hover, #9ca3af);
+    border-color: var(--theme-toggle-border-hover, var(--control-border-hover, #9ca3af));
     transform: scale(1.05);
-    box-shadow: 0 0 0 2px var(--control-shadow, rgba(0, 0, 0, 0.1));
+    box-shadow: 0 0 0 2px var(--theme-toggle-shadow, var(--control-shadow, rgba(0, 0, 0, 0.1)));
 }
 .theme-toggle:active {
     transform: scale(0.95);
 }
 .theme-icon {
-    width: 18px;
-    height: 18px;
-    color: var(--control-text, #333);
+    width: var(--theme-icon-size, 18px);
+    height: var(--theme-icon-size, 18px);
+    color: var(--theme-toggle-text, var(--control-text, #333));
     position: absolute;
     top: 50%;
     left: 50%;

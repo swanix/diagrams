@@ -1,0 +1,7 @@
+id,name,parent,type,description
+1,"Este es un título muy largo que debería ocupar múltiples líneas y necesitar truncamiento después de la primera línea completa","",person,"Descripción del nodo 1"
+2,"Título con salto de línea\nEsta es la segunda línea que debería truncarse si es muy larga","1",person,"Descripción del nodo 2"
+3,"Primera línea normal\nSegunda línea extremadamente larga que debería truncarse con puntos suspensivos cuando exceda el límite de caracteres establecido","1",person,"Descripción del nodo 3"
+4,"Línea 1: Información básica\nLínea 2: Detalles adicionales\nLínea 3: Información complementaria muy extensa que necesita truncamiento","2",person,"Descripción del nodo 4"
+5,"Título simple","3",person,"Descripción del nodo 5"
+6,"Este nodo tiene un nombre que es extremadamente largo y debería ocupar múltiples líneas en el SVG, con la primera línea completa y las siguientes truncadas según el límite establecido","4",person,"Descripción del nodo 6" 

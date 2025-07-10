@@ -1,0 +1,7 @@
+Node,Name,Description,Parent,Thumbnail,url,Type
+1,Main Hub,Central connection point,,"",,hub
+2,Service A,First service,1,"",,service
+3,Service B,Second service,1,"",,service
+4,Service C,Third service,1,"",,service
+5,Sub-service A1,Sub-service of A,2,"",,subservice
+6,Sub-service A2,Another sub-service of A,2,"",,subservice 

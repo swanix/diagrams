@@ -1,4 +1,5 @@
-// SW Diagrams - Clean and Simplified Version
+// Swanix Diagrams - JS
+// v0.2.0
 
 // Global zoom behavior - defined at the beginning to avoid scope issues
 const zoom = d3.zoom()
@@ -191,13 +192,25 @@ function buildHierarchies(data) {
     // Use custom column configuration with fallbacks
     let id = getColumnValue(d, columnConfig.id, "");
     let name = getColumnValue(d, columnConfig.name, "Nodo sin nombre");
+    // Reemplazar secuencias \n o \r\n por saltos de línea reales
+    name = name.replace(/\\n|\r\n/g, "\n");
     let subtitle = getColumnValue(d, columnConfig.subtitle, "");
     let img = getColumnValue(d, columnConfig.img, "");
     let parent = getColumnValue(d, columnConfig.parent, "");
     let url = getColumnValue(d, columnConfig.url, "");
     let type = getColumnValue(d, columnConfig.type, "");
 
-    let node = { id, name, subtitle, img, url, type, children: [], parent: parent };
+    let node = { 
+      id, 
+      name, 
+      subtitle, 
+      img, 
+      url, 
+      type, 
+      children: [], 
+      parent: parent,
+      originalData: d // Preserve original CSV data
+    };
     nodeMap.set(id, node);
 
     if (parent && nodeMap.has(parent)) {
@@ -395,20 +408,31 @@ function drawTrees(trees) {
           .text(d => d.data.name);
 
         // Apply text wrapping
-        wrap(nameText, 80);
+        const maxWidth = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--label-max-width')) || 68;
+        wrap(nameText, maxWidth);
 
-        // Node subtitle
-        if (data.subtitle) {
-          textGroup.append("text")
-            .attr("class", "subtitle-text")
-            .attr("transform", "rotate(270)") // Rotate text 90 degrees for vertical position
-            .attr("x", parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--subtitle-x')))
-            .attr("y", parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--subtitle-y')))
-            .attr("text-anchor", getComputedStyle(document.documentElement).getPropertyValue('--subtitle-anchor'))
-            .style("font-size", getComputedStyle(document.documentElement).getPropertyValue('--subtitle-font-size'))
-            .style("fill", getComputedStyle(document.documentElement).getPropertyValue('--text-subtitle-color'))
-            .text(d => d.data.subtitle);
-        }
+        // Node subtitle with truncation for vertical text - individual per node
+        textGroup.append("text")
+          .attr("class", "subtitle-text")
+          .attr("transform", "rotate(270)") // Rotate text 90 degrees for vertical position
+          .attr("x", parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--subtitle-x')))
+          .attr("y", parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--subtitle-y')))
+          .attr("text-anchor", getComputedStyle(document.documentElement).getPropertyValue('--subtitle-anchor'))
+          .style("font-size", getComputedStyle(document.documentElement).getPropertyValue('--subtitle-font-size'))
+          .style("fill", getComputedStyle(document.documentElement).getPropertyValue('--text-subtitle-color'))
+          .text(d => {
+            const subtitleText = d.data.subtitle || "";
+            const maxSubtitleChars = 35; // Maximum characters for subtitle
+            
+            // Check if subtitle needs truncation
+            if (subtitleText.length > maxSubtitleChars) {
+              const displayText = subtitleText.substring(0, maxSubtitleChars) + "...";
+              console.log(`[SVG Subtitle] Truncado: "${subtitleText}" -> "${displayText}"`);
+              return displayText;
+            }
+            
+            return subtitleText;
+          });
 
         // Create cluster always (even for single nodes)
         if (root.descendants().length >= 1) {
@@ -437,15 +461,54 @@ function drawTrees(trees) {
                 .style("stroke-width", 3)
                 .style("stroke-dasharray", "6,4");
               
+              // Truncar el título del cluster por ancho
+              function truncateClusterTitle(text, maxWidth, fontSize, fontWeight, fontFamily) {
+                // Crear un elemento temporal SVG para medir el ancho
+                const svg = document.getElementById('main-diagram-svg');
+                const tempText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                tempText.setAttribute('font-size', fontSize || '1.5em');
+                tempText.setAttribute('font-weight', fontWeight || 'bold');
+                tempText.setAttribute('font-family', fontFamily || 'inherit');
+                tempText.style.visibility = 'hidden';
+                svg.appendChild(tempText);
+                let truncated = text;
+                tempText.textContent = truncated;
+                if (tempText.getComputedTextLength() <= maxWidth) {
+                  svg.removeChild(tempText);
+                  return truncated;
+                }
+                const words = text.split(' ');
+                truncated = '';
+                for (let i = 0; i < words.length; i++) {
+                  let test = truncated ? truncated + ' ' + words[i] : words[i];
+                  tempText.textContent = test + '...';
+                  if (tempText.getComputedTextLength() > maxWidth) {
+                    tempText.textContent = truncated + '...';
+                    svg.removeChild(tempText);
+                    return truncated + '...';
+                  }
+                  truncated = test;
+                }
+                svg.removeChild(tempText);
+                return truncated;
+              }
+
+              // Obtener estilos para el título
+              const clusterFontSize = getComputedStyle(document.documentElement).getPropertyValue('--cluster-title-font-size') || '1.5em';
+              const clusterFontWeight = 'bold';
+              const clusterFontFamily = 'inherit';
+              // Truncar el texto si es necesario
+              const clusterTitleText = truncateClusterTitle(root.data.name, width - 40, clusterFontSize, clusterFontWeight, clusterFontFamily);
+
               treeGroup.append("text")
                 .attr("class", "cluster-title")
                 .attr("x", minX + 32)
                 .attr("y", minY + 40)
                 .attr("text-anchor", "start")
-                .style("font-size", "1.5em")
-                .style("font-weight", "bold")
+                .style("font-size", clusterFontSize)
+                .style("font-weight", clusterFontWeight)
                 .style("fill", "var(--cluster-title-color, #fff)")
-                .text(root.data.name);
+                .text(clusterTitleText);
             }
           }, 0);
         }
@@ -647,38 +710,69 @@ function ensureZoomBehavior() {
 // Function to wrap text
 function wrap(text, width) {
   const lineHeight = 1.5;
-
   text.each(function() {
     const textElement = d3.select(this);
-    const words = textElement.text().split(/\s+/).reverse();
-    let word;
-    let line = [];
-    let lineNumber = 0;
-    const dy = parseFloat(textElement.attr("dy")) || 0;
-    let tspan = textElement.text(null).append("tspan")
-        .attr("x", getComputedStyle(document.documentElement).getPropertyValue('--label-x'))
-        .attr("y", getComputedStyle(document.documentElement).getPropertyValue('--label-y'))
-        .attr("dy", dy + "em")
-        .attr("text-anchor", "middle");
+    let originalText = textElement.text();
 
-    while (word = words.pop()) {
-      line.push(word);
-      tspan.text(line.join(" "));
-      if (tspan.node().getComputedTextLength() > width) {
-        line.pop();
-        tspan.text(line.join(" "));
-        line = [word];
-        tspan = textElement.append("tspan")
-          .attr("x", getComputedStyle(document.documentElement).getPropertyValue('--label-x'))
-          .attr("dy", `${lineHeight}em`)
-          .attr("text-anchor", "middle")
-          .text(word);
-        lineNumber++;
+    // Si hay saltos de línea, solo se consideran los dos primeros segmentos
+    let lines = originalText.split('\n');
+    let firstLine = lines[0];
+    let secondLine = lines[1] || '';
+
+    textElement.text(null);
+
+    // --- Word wrap para la primera línea ---
+    const words = firstLine.split(/\s+/);
+    let currentLine = '';
+    let tspan1 = textElement.append('tspan')
+      .attr('x', getComputedStyle(document.documentElement).getPropertyValue('--label-x'))
+      .attr('y', getComputedStyle(document.documentElement).getPropertyValue('--label-y'))
+      .attr('dy', (parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--label-dy')) || 0) + 'em')
+      .attr('text-anchor', 'middle')
+      .text('');
+    let usedWords = 0;
+    for (let i = 0; i < words.length; i++) {
+      let testLine = currentLine ? currentLine + ' ' + words[i] : words[i];
+      tspan1.text(testLine);
+      if (tspan1.node().getComputedTextLength() > width) {
+        // Si ya hay texto, no cabe la siguiente palabra, así que paramos aquí
+        break;
+      } else {
+        currentLine = testLine;
+        tspan1.text(currentLine);
+        usedWords = i + 1;
       }
     }
 
-    if (lineNumber === 0) {
-      tspan.attr("dy", getComputedStyle(document.documentElement).getPropertyValue('--label-dy-single'));
+    // --- Segunda línea: puede venir de salto de línea o del wrap automático ---
+    let secondLineText = '';
+    if (secondLine) {
+      // Si hay salto de línea explícito, usar ese texto
+      secondLineText = secondLine;
+    } else if (usedWords < words.length) {
+      // Si quedaron palabras sin usar, forman la segunda línea
+      secondLineText = words.slice(usedWords).join(' ');
+    }
+    if (secondLineText) {
+      let tspan2 = textElement.append('tspan')
+        .attr('x', getComputedStyle(document.documentElement).getPropertyValue('--label-x'))
+        .attr('y', getComputedStyle(document.documentElement).getPropertyValue('--label-y'))
+        .attr('dy', lineHeight + 'em')
+        .attr('text-anchor', 'middle')
+        .text('');
+      const words2 = secondLineText.split(/\s+/);
+      let currentLine2 = '';
+      for (let i = 0; i < words2.length; i++) {
+        let testLine2 = currentLine2 ? currentLine2 + ' ' + words2[i] : words2[i];
+        tspan2.text(testLine2 + '...');
+        if (tspan2.node().getComputedTextLength() > width) {
+          tspan2.text(currentLine2 + '...');
+          return;
+        } else {
+          currentLine2 = testLine2;
+          tspan2.text(currentLine2);
+        }
+      }
     }
   });
 }
@@ -694,7 +788,7 @@ function createSidePanel() {
   
   sidePanel.innerHTML = `
     <div class="side-panel-header">
-      <h3 class="side-panel-title">Detalles del Nodo</h3>
+      <h3 class="side-panel-title" id="side-panel-title">Detalles del Nodo</h3>
       <button class="side-panel-close" onclick="closeSidePanel()">×</button>
     </div>
     <div class="side-panel-content" id="side-panel-content">
@@ -715,6 +809,7 @@ function createSidePanel() {
 function openSidePanel(nodeData) {
   const sidePanel = document.getElementById('side-panel');
   const content = document.getElementById('side-panel-content');
+  const titleElement = document.getElementById('side-panel-title');
 
   if (!sidePanel || !content) {
     console.error("No se encontró el panel lateral");
@@ -725,11 +820,104 @@ function openSidePanel(nodeData) {
   d3.selectAll('.node.node-selected').classed('node-selected', false);
   
   if (nodeData && nodeData.id) {
-    d3.selectAll('.node').filter(d => d.data.id == nodeData.id).classed('node-selected', true);
+    // Buscar el nodo por ID, pero también considerar nodos huérfanos
+    const selectedNode = d3.selectAll('.node').filter(d => {
+      // Si el nodo tiene ID, comparar por ID
+      if (d.data.id && nodeData.id) {
+        return d.data.id == nodeData.id;
+      }
+      // Si no hay ID, comparar por nombre y otros campos
+      return d.data.name === nodeData.name && 
+             d.data.subtitle === nodeData.subtitle &&
+             d.data.type === nodeData.type;
+    });
+    
+    if (!selectedNode.empty()) {
+      selectedNode.classed('node-selected', true);
+    } else {
+      // Fallback: buscar por cualquier campo que coincida
+      const fallbackNode = d3.selectAll('.node').filter(d => 
+        d.data.name === nodeData.name || 
+        d.data.id === nodeData.id ||
+        (d.data.originalData && nodeData.originalData && 
+         JSON.stringify(d.data.originalData) === JSON.stringify(nodeData.originalData))
+      );
+      fallbackNode.classed('node-selected', true);
+    }
+  }
+
+  // Update title with node name and thumbnail
+  if (titleElement && nodeData) {
+    // Use original CSV data if available, otherwise fall back to processed data
+    const dataToShow = nodeData.originalData || nodeData;
+    // Get the name value from the data
+    const nodeName = dataToShow.name || dataToShow.Name || dataToShow.NAME || nodeData.name || 'Nodo sin nombre';
+    // Get the type for thumbnail
+    const nodeType = dataToShow.type || dataToShow.Type || dataToShow.TYPE || nodeData.type || 'detail';
+    // Create thumbnail HTML
+    const thumbnailHtml = `<img src="img/${nodeType}.svg" alt="${nodeType}" class="side-panel-title-thumbnail" onerror="this.src='img/detail.svg'">`;
+
+    // Truncar el texto del título por ancho disponible antes del botón de cerrar
+    function truncateSidePanelTitle(text, maxWidth, fontSize, fontWeight, fontFamily) {
+      // Crear un elemento temporal para medir el ancho
+      const temp = document.createElement('span');
+      temp.style.position = 'absolute';
+      temp.style.visibility = 'hidden';
+      temp.style.fontSize = fontSize || '1.2em';
+      temp.style.fontWeight = fontWeight || 'bold';
+      temp.style.fontFamily = fontFamily || 'inherit';
+      temp.style.whiteSpace = 'nowrap';
+      temp.textContent = text;
+      document.body.appendChild(temp);
+      if (temp.offsetWidth <= maxWidth) {
+        document.body.removeChild(temp);
+        return text;
+      }
+      const words = text.split(' ');
+      let truncated = '';
+      for (let i = 0; i < words.length; i++) {
+        let test = truncated ? truncated + ' ' + words[i] : words[i];
+        temp.textContent = test + '...';
+        if (temp.offsetWidth > maxWidth) {
+          temp.textContent = truncated + '...';
+          document.body.removeChild(temp);
+          return truncated + '...';
+        }
+        truncated = test;
+      }
+      document.body.removeChild(temp);
+      return truncated;
+    }
+    // Medir el ancho disponible en el header
+    const header = titleElement.closest('.side-panel-header');
+    const closeBtn = header ? header.querySelector('.side-panel-close') : null;
+    const headerRect = header ? header.getBoundingClientRect() : { width: 320 };
+    const closeRect = closeBtn ? closeBtn.getBoundingClientRect() : { width: 40 };
+    // Margen entre texto y botón
+    const margin = 24;
+    const availableWidth = headerRect.width - closeRect.width - margin - 48; // 48px para thumbnail y paddings
+    // Obtener estilos
+    const fontSize = getComputedStyle(titleElement).fontSize || '1.2em';
+    const fontWeight = getComputedStyle(titleElement).fontWeight || 'bold';
+    const fontFamily = getComputedStyle(titleElement).fontFamily || 'inherit';
+    // Truncar el texto si es necesario
+    const truncatedTitle = truncateSidePanelTitle(nodeName, availableWidth, fontSize, fontWeight, fontFamily);
+    
+    // Agregar tooltip si el texto está truncado
+    const titleTooltip = truncatedTitle !== nodeName ? `title="${nodeName}"` : '';
+    
+    // Update title with thumbnail and name
+    titleElement.innerHTML = `${thumbnailHtml}<span class="side-panel-title-text" ${titleTooltip}>${truncatedTitle}</span>`;
   }
 
   // Generate content
   content.innerHTML = generateSidePanelContent(nodeData);
+  
+  // Re-initialize tooltips after content is generated
+  setTimeout(() => {
+    console.log('[Side Panel] Reinicializando tooltips después de generar contenido...');
+    initializeCustomTooltips();
+  }, 100);
   
   sidePanel.classList.add('open');
 }
@@ -743,27 +931,81 @@ function closeSidePanel() {
   }
 }
 
+// Helper function to detect if a value is a URL
+function isUrl(value) {
+  if (!value || typeof value !== 'string') return false;
+  
+  // Remove whitespace
+  const trimmedValue = value.trim();
+  
+  // Check for common URL patterns
+  const urlPatterns = [
+    /^https?:\/\//i,                    // http:// or https://
+    /^www\./i,                          // www.
+    /^[a-z0-9]+([\-\.]{1}[a-z0-9]+)*\.[a-z]{2,}/i,  // domain.com
+    /^[a-z0-9]+([\-\.]{1}[a-z0-9]+)*\.[a-z]{2,}\.[a-z]{2,}/i,  // domain.co.uk
+    /^[a-z0-9]+([\-\.]{1}[a-z0-9]+)*\.[a-z]{2,}\/[^\s]*/i,  // domain.com/path
+  ];
+  
+  return urlPatterns.some(pattern => pattern.test(trimmedValue));
+}
+
+// Helper function to format URL for display
+function formatUrlForDisplay(url) {
+  if (!url || typeof url !== 'string') return url;
+  
+  let formattedUrl = url.trim();
+  
+  // Add https:// if no protocol is specified
+  if (!formattedUrl.match(/^https?:\/\//i)) {
+    formattedUrl = 'https://' + formattedUrl;
+  }
+  
+  return formattedUrl;
+}
+
 // Generate panel content
 function generateSidePanelContent(nodeData) {
   if (!nodeData) return '<p>No hay datos disponibles</p>';
 
-  const fields = [
-    { key: 'id', label: 'ID' },
-    { key: 'name', label: 'Nombre' },
-    { key: 'subtitle', label: 'Descripción' },
-    { key: 'type', label: 'Tipo' },
-    { key: 'url', label: 'URL' }
-  ];
-
   let html = '<div class="side-panel-fields-table">';
   
-  fields.forEach(field => {
-    const value = nodeData[field.key] || '';
+  // Use original CSV data if available, otherwise fall back to processed data
+  const dataToShow = nodeData.originalData || nodeData;
+  
+  // Show all available fields from the original CSV data
+  Object.keys(dataToShow).forEach(key => {
+    // Skip internal properties and name field (already shown in header)
+    if (key === 'children' || key === 'parent' || key === 'originalData' || 
+        key.toLowerCase() === 'name') return;
+    
+    const value = dataToShow[key] || '';
+    const label = key; // Use the original column name from CSV
+    
+    // Check if the value is a URL
+    const isUrlValue = isUrl(value);
+    const displayValue = isUrlValue ? formatUrlForDisplay(value) : value;
+    
+    // Add title attribute for tooltip if text is long
+    const labelTitle = label.length > 15 ? label : '';
+    const valueTitle = (value && value.length > 20) ? value : '';
+    
+    // Debug: Log tooltip information
+    if (labelTitle || valueTitle) {
+      console.log(`[Tooltip Debug] Field: ${label}, Label title: ${labelTitle}, Value title: ${valueTitle}`);
+    }
+    
+    // Always log for debugging
+    console.log(`[Side Panel] Field: "${label}" (${label.length} chars), Value: "${value}" (${value ? value.length : 0} chars)`);
+    
     html += `
       <div class="side-panel-field">
-        <div class="side-panel-label">${field.label}</div>
-        <div class="side-panel-value ${!value ? 'empty' : ''}">
-          ${field.key === 'url' && value ? `<a href="${value}" target="_blank" class="side-panel-url">${value}</a>` : value || 'Sin datos'}
+        <div class="side-panel-label" ${labelTitle ? `data-tooltip="${labelTitle}"` : ''}>${label}</div>
+        <div class="side-panel-value ${!value ? 'empty' : ''}" ${valueTitle ? `data-tooltip="${valueTitle}"` : ''}>
+          ${isUrlValue ? 
+            `<a href="${displayValue}" target="_blank" rel="noreferrer" class="side-panel-url-link">Visit</a>` : 
+            value || '-'
+          }
         </div>
       </div>
     `;
@@ -880,14 +1122,15 @@ function updateSVGColors() {
     linkColor: computedStyle.getPropertyValue('--link-color'),
     clusterBg: computedStyle.getPropertyValue('--cluster-bg'),
     clusterStroke: computedStyle.getPropertyValue('--cluster-stroke'),
-    clusterTitleColor: computedStyle.getPropertyValue('--cluster-title-color')
+    clusterTitleColor: computedStyle.getPropertyValue('--cluster-title-color'),
+    subtitleColor: computedStyle.getPropertyValue('--text-subtitle-color')
   };
 
   // Apply colors to SVG elements
   d3.selectAll('.link').style('stroke', variables.linkColor);
   d3.selectAll('.node rect').style('fill', variables.nodeFill).style('stroke', variables.labelBorder);
   d3.selectAll('.label-text').style('fill', variables.textColor);
-  d3.selectAll('.subtitle-text').style('fill', variables.textColor);
+  d3.selectAll('.subtitle-text').style('fill', variables.subtitleColor);
   d3.selectAll('.cluster-rect').style('fill', variables.clusterBg).style('stroke', variables.clusterStroke);
   d3.selectAll('.cluster-title').style('fill', variables.clusterTitleColor);
 }
@@ -959,7 +1202,7 @@ function getOppositeTheme(currentTheme, config) {
   return isLight ? config.darkTheme : config.lightTheme;
 }
 
-// Initialize theme system (simplified version to use with theme-loader.js)
+// Initialize theme system (simplified version to use with sw-diagrams-loader.js)
 async function initializeThemeSystem() {
   const config = getThemeConfiguration();
   const storageKey = getStorageKey();
@@ -1639,6 +1882,11 @@ window.swDiagrams.renderDiagramButtons = function() {
             e.preventDefault();
             e.stopPropagation();
             if (window.swDiagrams.currentDiagramIdx !== idx && !window.swDiagrams.isLoading) {
+                // Close side panel if open
+                if (window.closeSidePanel) {
+                    window.closeSidePanel();
+                }
+                
                 // Clear cache before switching diagrams
                 if (window.swDiagrams.clearCache) {
                     window.swDiagrams.clearCache();
@@ -1669,6 +1917,12 @@ window.swDiagrams.loadDiagram = function(url) {
         return;
     }
     if (window.swDiagrams.isLoading) return;
+    
+    // Close side panel if open
+    if (window.closeSidePanel) {
+        window.closeSidePanel();
+    }
+    
     window.swDiagrams.isLoading = true;
     window.swDiagrams.currentUrl = url;
     
@@ -1879,10 +2133,20 @@ function renderSwDiagramBase() {
 }
 
 // Call base rendering function when library loads
+function initializeWhenReady() {
+  // Wait for diagrams to be defined
+  if (window.swDiagrams && window.swDiagrams.diagrams && Array.isArray(window.swDiagrams.diagrams)) {
+    renderSwDiagramBase();
+  } else {
+    // Check again in 100ms
+    setTimeout(initializeWhenReady, 100);
+  }
+}
+
 if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', renderSwDiagramBase);
+  document.addEventListener('DOMContentLoaded', initializeWhenReady);
 } else {
-  renderSwDiagramBase();
+  initializeWhenReady();
 }
 // --- End automatic base structure rendering ---
 
@@ -1996,6 +2260,87 @@ window.tryDiagramFallbacks = function(originalUrl, onComplete, retryCount = 0) {
   return true;
 };
 
+// Custom tooltip system
+function initializeCustomTooltips() {
+  console.log('[Tooltip System] Inicializando sistema de tooltips personalizados...');
+  
+  // Remove existing tooltip if any
+  const existingTooltip = document.getElementById('custom-tooltip');
+  if (existingTooltip) {
+    existingTooltip.remove();
+  }
+  
+  // Create tooltip element
+  const tooltip = document.createElement('div');
+  tooltip.id = 'custom-tooltip';
+  tooltip.style.cssText = `
+    position: fixed;
+    background-color: #333;
+    color: white;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 13px;
+    white-space: pre-wrap;
+    max-width: 300px;
+    word-wrap: break-word;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    z-index: 99999;
+    pointer-events: none;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.2s ease;
+  `;
+  document.body.appendChild(tooltip);
+  console.log('[Tooltip System] Elemento tooltip creado y agregado al DOM');
+  
+  // Add event listeners for tooltip elements
+  document.addEventListener('mouseover', function(e) {
+    const target = e.target;
+    if (target.hasAttribute('data-tooltip')) {
+      const tooltipText = target.getAttribute('data-tooltip');
+      console.log('[Tooltip System] Hover detectado en elemento con data-tooltip:', tooltipText);
+      if (tooltipText) {
+        tooltip.textContent = tooltipText;
+        tooltip.style.opacity = '1';
+        tooltip.style.visibility = 'visible';
+        
+        // Position tooltip below the text
+        const rect = target.getBoundingClientRect();
+        const tooltipRect = tooltip.getBoundingClientRect();
+        
+        let left = rect.left + (rect.width / 2) - (tooltipRect.width / 2);
+        let top = rect.bottom + 10; // Position below the text
+        
+        // Adjust if tooltip goes off screen
+        if (left < 10) left = 10;
+        if (left + tooltipRect.width > window.innerWidth - 10) {
+          left = window.innerWidth - tooltipRect.width - 10;
+        }
+        // If tooltip goes below the viewport, position it above the text
+        if (top + tooltipRect.height > window.innerHeight - 10) {
+          top = rect.top - tooltipRect.height - 10;
+          // Change arrow to point down when tooltip is above
+          tooltip.style.setProperty('--arrow-direction', 'down');
+        } else {
+          // Arrow points up when tooltip is below
+          tooltip.style.setProperty('--arrow-direction', 'up');
+        }
+        
+        tooltip.style.left = left + 'px';
+        tooltip.style.top = top + 'px';
+      }
+    }
+  });
+  
+  document.addEventListener('mouseout', function(e) {
+    const target = e.target;
+    if (target.hasAttribute('data-tooltip')) {
+      tooltip.style.opacity = '0';
+      tooltip.style.visibility = 'hidden';
+    }
+  });
+}
+
 // Initialize when DOM is ready
 document.addEventListener("DOMContentLoaded", () => {
   setupClosePanelOnSvgClick();
@@ -2007,6 +2352,9 @@ document.addEventListener("DOMContentLoaded", () => {
   if (window.swDiagrams.keyboardNavigation) {
     window.swDiagrams.keyboardNavigation.init();
   }
+  
+  // Initialize custom tooltips
+  initializeCustomTooltips();
   
   // Setup dropdown functionality
   const dropdownBtn = document.getElementById('diagram-dropdown-btn');

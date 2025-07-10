@@ -1,4 +1,7 @@
-/* Swanix Diagrams v0.1.0 - Styles */
+/*
+  Swanix Diagrams - CSS
+  v0.2.0
+*/
 /* Based on D3.js */
 
 :root {
@@ -150,6 +153,7 @@
 
     /* Error message */
     --error-message-color: #999999;
+    --label-max-width: 68px;
 
   }
 
@@ -414,6 +418,28 @@
   font-size: 18px;
   font-weight: 600;
   color: var(--side-panel-text) !important;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.side-panel-title-thumbnail {
+  width: 24px;
+  height: 24px;
+  filter: var(--image-filter);
+  flex-shrink: 0;
+}
+
+.side-panel-title-text {
+  font-size: 0.9em !important;
+  font-weight: bold;
+  line-height: 1.1;
+  vertical-align: middle;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: inline-block;
+  max-width: 100%;
 }
 
 .side-panel-close {
@@ -440,6 +466,8 @@
 
 .side-panel-content {
   padding: 20px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  line-height: 1.5;
 }
 
 .side-panel-section {
@@ -451,11 +479,17 @@
   display: table;
   width: 100%;
   border-collapse: separate;
-  border-spacing: 0 8px;
+  border-spacing: 0 2px;
+  table-layout: fixed;
 }
 
 .side-panel-field {
   display: table-row;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.side-panel-field:last-child {
+  border-bottom: none;
 }
 
 .side-panel-label {
@@ -463,27 +497,126 @@
   font-size: 13px;
   color: var(--side-panel-label);
   font-weight: 500;
-  padding-right: 16px;
-  vertical-align: middle;
-  min-width: 120px;
-  max-width: 220px;
-  text-align: right;
+  padding: 2px 16px 2px 0;
+  vertical-align: top;
+  width: 40%;
+  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.3;
+  opacity: 0.5;
+  position: relative;
 }
 
 .side-panel-value {
   display: table-cell;
   font-size: 15px;
   color: var(--side-panel-value);
-  word-wrap: break-word;
-  line-height: 1.4;
-  vertical-align: middle;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.3;
+  vertical-align: top;
   text-align: left;
+  width: 60%;
+  padding: 2px 0 2px 8px;
+  position: relative;
 }
 
 .side-panel-value.empty {
   color: var(--side-panel-label);
-  font-style: italic;
+  font-style: normal;
+  opacity: 0.8;
 }
+
+/* Tooltip styles for truncated text */
+.side-panel-label[title]:hover::after,
+.side-panel-value[title]:hover::after {
+  content: attr(title);
+  position: fixed;
+  bottom: auto;
+  top: auto;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: #333 !important;
+  color: white !important;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 13px;
+  white-space: pre-wrap;
+  max-width: 300px;
+  word-wrap: break-word;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
+  z-index: 99999 !important;
+  pointer-events: none;
+  opacity: 1 !important;
+  visibility: visible !important;
+  margin-bottom: 5px;
+}
+
+.side-panel-label[title]:hover::before,
+.side-panel-value[title]:hover::before {
+  content: '';
+  position: fixed;
+  bottom: auto;
+  top: auto;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 5px solid transparent;
+  border-top-color: #333 !important;
+  z-index: 99999 !important;
+  pointer-events: none;
+  opacity: 1 !important;
+  visibility: visible !important;
+  margin-bottom: 5px;
+}
+
+/* Custom tooltip element styles */
+#custom-tooltip {
+  position: fixed;
+  background-color: #333;
+  color: white;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 13px;
+  white-space: pre-wrap;
+  max-width: 300px;
+  word-wrap: break-word;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  z-index: 99999;
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.2s ease;
+}
+
+/* Tooltip arrow - defaults to pointing up (when tooltip is below text) */
+#custom-tooltip::before {
+  content: '';
+  position: absolute;
+  top: -5px;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 5px solid transparent;
+  border-bottom-color: #333;
+}
+
+/* Tooltip arrow pointing down (when tooltip is above text) */
+#custom-tooltip[style*="--arrow-direction: down"]::before {
+  top: auto;
+  bottom: -5px;
+  border-bottom-color: transparent;
+  border-top-color: #333;
+}
+
+/* Cursor styles for elements with tooltips */
+.side-panel-label[data-tooltip],
+.side-panel-value[data-tooltip] {
+  cursor: default;
+}
+
+
 
 .side-panel-image {
   width: 100%;
@@ -504,6 +637,23 @@
 .side-panel-url:hover {
   color: var(--control-border-hover);
   text-decoration: underline;
+}
+
+.side-panel-url-link {
+  color: var(--control-border-focus);
+  text-decoration: none;
+  font-size: 15px;
+  font-weight: normal;
+  transition: color 0.2s ease;
+}
+
+.side-panel-url-link:hover {
+  color: var(--side-panel-value);
+  text-decoration: none;
+  background-color: rgba(0, 0, 0, 0.05);
+  padding: 2px 4px;
+  border-radius: 3px;
+  margin: -2px -4px;
 }
 
 /* Estilos para enlaces de subnodos */
@@ -778,6 +928,7 @@ svg .node.node-selected {
   --cluster-bg: rgba(0,0,0,0.02);
   --cluster-stroke: rgba(0,0,0,0.1);
   --cluster-title-color: #222;
+  --label-max-width: 68px;
 }
 .theme-onyx {
   --bg-color: #181c24;
@@ -814,6 +965,7 @@ svg .node.node-selected {
   --cluster-bg: rgba(255,255,255,0.02);
   --cluster-stroke: rgba(255,255,255,0.1);
   --cluster-title-color: #00eaff;
+  --label-max-width: 60px;
 }
 .theme-vintage {
   --bg-color: #f5e9da;
@@ -850,6 +1002,7 @@ svg .node.node-selected {
   --cluster-bg: rgba(0,0,0,0.05);
   --cluster-stroke: rgba(0,0,0,0.1);
   --cluster-title-color: #7c4f20;
+  --label-max-width: 68px;
 }
 .theme-pastel {
   --bg-color: #fdf6fb;
@@ -886,6 +1039,7 @@ svg .node.node-selected {
   --cluster-bg: rgba(0,0,0,0.05);
   --cluster-stroke: rgba(0,0,0,0.1);
   --cluster-title-color: #b6b6f7;
+  --label-max-width: 68px;
 }
 .theme-neon {
   --bg-color: #0f0026;
@@ -922,6 +1076,7 @@ svg .node.node-selected {
   --cluster-bg: rgba(255,255,255,0.02);
   --cluster-stroke: rgba(255,255,255,0.1);
   --cluster-title-color: #00ffe7;
+  --label-max-width: 68px;
 }
 
 /* Selector de tema compacto (para uso fuera del topbar) */

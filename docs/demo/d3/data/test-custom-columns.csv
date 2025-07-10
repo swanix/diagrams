@@ -1,0 +1,7 @@
+MiID,MiNombre,MiDescripcion,MiImagen,MiPadre,MiEnlace,MiTipo,Departamento,Salario,FechaContratacion
+1,CEO,Chief Executive Officer,detail,,https://example.com/ceo,ejecutivo,Directiva,150000,2020-01-15
+2,CTO,Chief Technology Officer,detail,1,https://example.com/cto,ejecutivo,Tecnologia,120000,2020-02-01
+3,CFO,Chief Financial Officer,detail,1,https://example.com/cfo,ejecutivo,Finanzas,110000,2020-02-15
+4,Lead Developer,Senior Software Engineer,detail,2,https://example.com/lead-dev,desarrollador,Ingenieria,90000,2020-03-01
+5,Junior Developer,Software Engineer,detail,2,https://example.com/junior-dev,desarrollador,Ingenieria,65000,2020-04-01
+6,Product Manager,Product Management Lead,detail,2,https://example.com/pm,producto,Producto,85000,2020-03-15 

@@ -9,7 +9,7 @@
 
 D3 diagram with a tree structure. Data is dynamically loaded from a [CSV file]()
 
-[View Fullscreen](https://swanix.org/diagrams/demo/d3/)
+[View Fullscreen](https://swanix.org/diagrams/demo/d3)
 
 ### D3 - Tree Diagram from Google Sheets CSV
 

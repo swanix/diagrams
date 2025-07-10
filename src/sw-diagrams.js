@@ -636,7 +636,11 @@ function ensureZoomBehavior() {
   if (!svg.empty()) {
     svg.call(zoom);
     svg.style('pointer-events', 'auto');
-    console.log('[Zoom] Zoom behavior aplicado');
+    
+      // Store reference to current zoom for external access
+  window.swDiagrams.currentZoom = zoom;
+  
+  console.log('[Zoom] Zoom behavior aplicado');
   }
 }
 
@@ -1124,6 +1128,9 @@ window.swDiagrams.keyboardNavigation = {
       if (parentIndex !== -1) {
         this.selectNode(parentIndex);
       }
+    } else {
+      // No parent found, wrap around to the root node (level 0)
+      this.navigateToRootNode();
     }
   },
   
@@ -1143,6 +1150,15 @@ window.swDiagrams.keyboardNavigation = {
       
       if (childIndex !== -1) {
         this.selectNode(childIndex);
+      } else {
+        // No children found, try to go to first node of next level
+        const currentLevel = this.getNodeLevel(nodeData);
+        const nextLevelResult = this.navigateToFirstNodeOfNextLevel(currentLevel);
+        
+        // If no next level found, wrap around to the first node of the diagram
+        if (!nextLevelResult) {
+          this.navigateToFirst();
+        }
       }
     }
   },
@@ -1186,6 +1202,11 @@ window.swDiagrams.keyboardNavigation = {
       const previousNode = sameLevelNodes[currentIndex - 1];
       const previousNodeIndex = this.allNodes.indexOf(previousNode);
       this.selectNode(previousNodeIndex);
+    } else {
+      // We're at the first node of this level, wrap around to the last node
+      const lastNode = sameLevelNodes[sameLevelNodes.length - 1];
+      const lastNodeIndex = this.allNodes.indexOf(lastNode);
+      this.selectNode(lastNodeIndex);
     }
   },
   
@@ -1228,6 +1249,11 @@ window.swDiagrams.keyboardNavigation = {
       const nextNode = sameLevelNodes[currentIndex + 1];
       const nextNodeIndex = this.allNodes.indexOf(nextNode);
       this.selectNode(nextNodeIndex);
+    } else {
+      // We're at the last node of this level, wrap around to the first node
+      const firstNode = sameLevelNodes[0];
+      const firstNodeIndex = this.allNodes.indexOf(firstNode);
+      this.selectNode(firstNodeIndex);
     }
   },
   
@@ -1272,7 +1298,12 @@ window.swDiagrams.keyboardNavigation = {
       this.selectNode(nextNodeIndex);
     } else {
       // We're at the last node of this level, try to go to first node of next level
-      this.navigateToFirstNodeOfNextLevel(currentLevel);
+      const nextLevelResult = this.navigateToFirstNodeOfNextLevel(currentLevel);
+      
+      // If no next level found, wrap around to the first node of the first level
+      if (!nextLevelResult) {
+        this.navigateToFirst();
+      }
     }
   },
   
@@ -1317,7 +1348,12 @@ window.swDiagrams.keyboardNavigation = {
       this.selectNode(previousNodeIndex);
     } else {
       // We're at the first node of this level, try to go to last node of previous level
-      this.navigateToLastNodeOfPreviousLevel(currentLevel);
+      const previousLevelResult = this.navigateToLastNodeOfPreviousLevel(currentLevel);
+      
+      // If no previous level found, wrap around to the last node of the last level
+      if (!previousLevelResult) {
+        this.navigateToLast();
+      }
     }
   },
   
@@ -1345,14 +1381,17 @@ window.swDiagrams.keyboardNavigation = {
       const firstNodeOfNextLevel = nextLevelNodes[0];
       const firstNodeIndex = this.allNodes.indexOf(firstNodeOfNextLevel);
       this.selectNode(firstNodeIndex);
+      return true; // Successfully found and selected a node
     }
+    
+    return false; // No nodes found at next level
   },
   
   // Navigate to last node of previous level
   navigateToLastNodeOfPreviousLevel: function(currentLevel) {
     const previousLevel = currentLevel - 1;
     
-    if (previousLevel < 0) return; // Can't go below level 0
+    if (previousLevel < 0) return false; // Can't go below level 0
     
     // Find all nodes at the previous level
     const previousLevelNodes = this.allNodes.filter((node, index) => {
@@ -1374,7 +1413,10 @@ window.swDiagrams.keyboardNavigation = {
       const lastNodeOfPreviousLevel = previousLevelNodes[previousLevelNodes.length - 1];
       const lastNodeIndex = this.allNodes.indexOf(lastNodeOfPreviousLevel);
       this.selectNode(lastNodeIndex);
+      return true; // Successfully found and selected a node
     }
+    
+    return false; // No nodes found at previous level
   },
   
   // Navigate to first node
@@ -1389,6 +1431,36 @@ window.swDiagrams.keyboardNavigation = {
     if (this.allNodes.length === 0) return;
     this.currentNodeIndex = this.allNodes.length - 1;
     this.selectNode(this.currentNodeIndex);
+  },
+  
+  // Navigate to root node (level 0)
+  navigateToRootNode: function() {
+    if (this.allNodes.length === 0) return;
+    
+    // Find all nodes at level 0 (root level)
+    const rootNodes = this.allNodes.filter((node, index) => {
+      const data = this.getNodeData(node);
+      if (!data) return false;
+      
+      const nodeLevel = this.getNodeLevel(data);
+      return nodeLevel === 0;
+    });
+    
+    if (rootNodes.length > 0) {
+      // Sort by position and select the first root node
+      rootNodes.sort((a, b) => {
+        const indexA = this.allNodes.indexOf(a);
+        const indexB = this.allNodes.indexOf(b);
+        return indexA - indexB;
+      });
+      
+      const firstRootNode = rootNodes[0];
+      const rootNodeIndex = this.allNodes.indexOf(firstRootNode);
+      this.selectNode(rootNodeIndex);
+    } else {
+      // Fallback to first node if no root nodes found
+      this.navigateToFirst();
+    }
   },
   
   // Select a specific node by index
@@ -1844,13 +1916,15 @@ function createKeyboardInstructionsPanel() {
     <h3>⌨️ Navegación por teclado</h3>
     <div class="instructions-grid">
       <span class="key">↑</span>
-      <span class="description">Nodo padre</span>
+      <span class="description">Nodo padre (circular)</span>
       <span class="key">↓</span>
-      <span class="description">Primer hijo</span>
+      <span class="description">Primer hijo (circular)</span>
       <span class="key">←</span>
-      <span class="description">Nodo anterior del mismo nivel</span>
+      <span class="description">Nodo anterior del mismo nivel (circular)</span>
       <span class="key">→</span>
-      <span class="description">Nodo siguiente del mismo nivel</span>
+      <span class="description">Nodo siguiente del mismo nivel (circular)</span>
+      <span class="key">Tab</span>
+      <span class="description">Navegación secuencial (circular)</span>
       <span class="key">Home</span>
       <span class="description">Primer nodo</span>
       <span class="key">End</span>
@@ -1874,6 +1948,8 @@ function createKeyboardInstructionsPanel() {
   // Initially hide the panel (temporarily)
   instructionsPanel.style.display = 'none';
 }
+
+
 
 // Helper function to check if URL is accessible
 window.checkUrlAccessibility = function(url) {

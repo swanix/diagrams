@@ -26,6 +26,7 @@ A powerful JavaScript library for creating interactive, hierarchical SVG diagram
 ### 🎯 **Interactive Elements**
 - **Node Selection**: Click to select and highlight nodes
 - **Side Panel**: Detailed information display for selected nodes
+- **Keyboard Navigation**: Full keyboard navigation with hierarchical and sequential modes
 - **Auto Zoom**: Automatic zoom fitting for optimal viewing
 - **Responsive Design**: Adapts to different screen sizes
 
@@ -230,6 +231,28 @@ Customize column names for different diagram types:
 - `?zoom=auto` - Enable auto zoom
 
 ## 🎯 Advanced Features
+
+### Keyboard Navigation
+
+The library provides comprehensive keyboard navigation for accessibility and efficient diagram exploration:
+
+#### Hierarchical Navigation
+- **↑** - Navigate to parent node
+- **↓** - Navigate to first child node
+- **←→** - Navigate between nodes at the same level (siblings, cousins)
+- **Home** - Jump to first node
+- **End** - Jump to last node
+- **Escape** - Clear selection
+
+#### Sequential Navigation (Form-like)
+- **Tab** - Navigate to next node sequentially
+- **Shift + Tab** - Navigate to previous node sequentially
+- Automatically jumps between levels when reaching the end of current level
+
+#### Visual Indicators
+- Selected nodes show keyboard icon (⌨) indicator
+- Smooth scrolling to keep selected nodes visible
+- Side panel automatically opens with node details
 
 ### Fallback URLs
 

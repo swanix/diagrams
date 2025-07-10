@@ -223,6 +223,19 @@ function drawTrees(trees) {
   svg.style.opacity = '0';
   svg.classList.remove('loaded');
   
+  // Store all node data globally for keyboard navigation
+  window.swDiagrams.currentData = [];
+  trees.forEach(tree => {
+    const collectNodes = (node) => {
+      window.swDiagrams.currentData.push(node);
+      if (node.children) {
+        node.children.forEach(collectNodes);
+      }
+    };
+    collectNodes(tree);
+  });
+  console.log('[Keyboard Navigation] Stored', window.swDiagrams.currentData.length, 'nodes for navigation');
+  
   try {
     const g = d3.select(svg).append("g");
     let xOffset = 150;
@@ -314,6 +327,19 @@ function drawTrees(trees) {
           .attr("transform", d => `translate(${d.x},${d.y})`)
           .on("click", function(event, d) {
             event.stopPropagation();
+            
+            // Enable keyboard navigation when a node is clicked
+            if (window.swDiagrams.keyboardNavigation) {
+              window.swDiagrams.keyboardNavigation.enable();
+              
+              // Find the index of this node in the global data
+              const nodeIndex = window.swDiagrams.currentData.findIndex(item => item.id === d.data.id);
+              if (nodeIndex !== -1) {
+                window.swDiagrams.keyboardNavigation.currentNodeIndex = nodeIndex;
+                window.swDiagrams.keyboardNavigation.selectNode(nodeIndex);
+              }
+            }
+            
             if (window.openSidePanel) {
               window.openSidePanel(d.data);
             }
@@ -700,6 +726,7 @@ function openSidePanel(nodeData) {
 
   // Generate content
   content.innerHTML = generateSidePanelContent(nodeData);
+  
   sidePanel.classList.add('open');
 }
 
@@ -759,11 +786,6 @@ function setupClosePanelOnSvgClick() {
 
 // Simplified theme system
 async function setTheme(themeId) {
-  const sidePanel = document.getElementById('side-panel');
-  if (sidePanel && sidePanel.classList.contains('open')) {
-    sidePanel.classList.remove('open');
-  }
-  
   // Clear previous classes
   document.body.classList.remove('theme-snow', 'theme-onyx', 'theme-vintage', 'theme-pastel', 'theme-neon', 'theme-forest');
   
@@ -1006,6 +1028,463 @@ window.swDiagrams.currentDiagramIdx = 0;
 window.swDiagrams.isLoading = false;
 window.swDiagrams.loadedDiagrams = new Map();
 window.swDiagrams.currentUrl = null;
+
+// Keyboard navigation system
+window.swDiagrams.keyboardNavigation = {
+  currentNodeIndex: -1,
+  allNodes: [],
+  isEnabled: false,
+  
+  // Initialize keyboard navigation
+  init: function() {
+    this.setupKeyboardListeners();
+    console.log('[Keyboard Navigation] System initialized');
+  },
+  
+  // Setup keyboard event listeners
+  setupKeyboardListeners: function() {
+    document.addEventListener('keydown', (e) => {
+      if (!this.isEnabled) return;
+      
+      switch(e.key) {
+        case 'ArrowUp':
+          e.preventDefault();
+          this.navigateToParent();
+          break;
+        case 'ArrowDown':
+          e.preventDefault();
+          this.navigateToFirstChild();
+          break;
+        case 'ArrowLeft':
+          e.preventDefault();
+          this.navigateToPreviousSibling();
+          break;
+        case 'ArrowRight':
+          e.preventDefault();
+          this.navigateToNextSibling();
+          break;
+        case 'Tab':
+          e.preventDefault();
+          if (e.shiftKey) {
+            this.navigateToPreviousSequential();
+          } else {
+            this.navigateToNextSequential();
+          }
+          break;
+        case 'Home':
+          e.preventDefault();
+          this.navigateToFirst();
+          break;
+        case 'End':
+          e.preventDefault();
+          this.navigateToLast();
+          break;
+        case 'Escape':
+          e.preventDefault();
+          this.clearSelection();
+          break;
+      }
+    });
+  },
+  
+  // Update the list of all nodes
+  updateNodesList: function() {
+    this.allNodes = Array.from(document.querySelectorAll('.node'));
+    console.log('[Keyboard Navigation] Updated nodes list:', this.allNodes.length, 'nodes');
+  },
+  
+  // Enable keyboard navigation
+  enable: function() {
+    this.isEnabled = true;
+    this.updateNodesList();
+    console.log('[Keyboard Navigation] Enabled');
+  },
+  
+  // Disable keyboard navigation
+  disable: function() {
+    this.isEnabled = false;
+    this.currentNodeIndex = -1;
+    console.log('[Keyboard Navigation] Disabled');
+  },
+  
+  // Navigate to parent node
+  navigateToParent: function() {
+    if (this.currentNodeIndex === -1 || this.allNodes.length === 0) return;
+    
+    const currentNode = this.allNodes[this.currentNodeIndex];
+    const nodeData = this.getNodeData(currentNode);
+    
+    if (nodeData && nodeData.parent) {
+      // Find parent node
+      const parentIndex = this.allNodes.findIndex(node => {
+        const data = this.getNodeData(node);
+        return data && data.id === nodeData.parent;
+      });
+      
+      if (parentIndex !== -1) {
+        this.selectNode(parentIndex);
+      }
+    }
+  },
+  
+  // Navigate to first child node
+  navigateToFirstChild: function() {
+    if (this.currentNodeIndex === -1 || this.allNodes.length === 0) return;
+    
+    const currentNode = this.allNodes[this.currentNodeIndex];
+    const nodeData = this.getNodeData(currentNode);
+    
+    if (nodeData && nodeData.id) {
+      // Find first child
+      const childIndex = this.allNodes.findIndex(node => {
+        const data = this.getNodeData(node);
+        return data && data.parent === nodeData.id;
+      });
+      
+      if (childIndex !== -1) {
+        this.selectNode(childIndex);
+      }
+    }
+  },
+  
+  // Navigate to previous cousin (same level)
+  navigateToPreviousSibling: function() {
+    if (this.currentNodeIndex === -1 || this.allNodes.length === 0) return;
+    
+    const currentNode = this.allNodes[this.currentNodeIndex];
+    const nodeData = this.getNodeData(currentNode);
+    
+    if (!nodeData) return;
+    
+    // Get the level of current node
+    const currentLevel = this.getNodeLevel(nodeData);
+    
+    // Find all nodes at the same level
+    const sameLevelNodes = this.allNodes.filter((node, index) => {
+      const data = this.getNodeData(node);
+      if (!data) return false;
+      
+      const nodeLevel = this.getNodeLevel(data);
+      return nodeLevel === currentLevel;
+    });
+    
+    // Sort nodes by their position in the array (left to right)
+    sameLevelNodes.sort((a, b) => {
+      const indexA = this.allNodes.indexOf(a);
+      const indexB = this.allNodes.indexOf(b);
+      return indexA - indexB;
+    });
+    
+    // Find current node position among same-level nodes
+    const currentIndex = sameLevelNodes.findIndex(node => {
+      const data = this.getNodeData(node);
+      return data && data.id === nodeData.id;
+    });
+    
+    if (currentIndex > 0) {
+      // Go to previous node at same level
+      const previousNode = sameLevelNodes[currentIndex - 1];
+      const previousNodeIndex = this.allNodes.indexOf(previousNode);
+      this.selectNode(previousNodeIndex);
+    }
+  },
+  
+  // Navigate to next cousin (same level)
+  navigateToNextSibling: function() {
+    if (this.currentNodeIndex === -1 || this.allNodes.length === 0) return;
+    
+    const currentNode = this.allNodes[this.currentNodeIndex];
+    const nodeData = this.getNodeData(currentNode);
+    
+    if (!nodeData) return;
+    
+    // Get the level of current node
+    const currentLevel = this.getNodeLevel(nodeData);
+    
+    // Find all nodes at the same level
+    const sameLevelNodes = this.allNodes.filter((node, index) => {
+      const data = this.getNodeData(node);
+      if (!data) return false;
+      
+      const nodeLevel = this.getNodeLevel(data);
+      return nodeLevel === currentLevel;
+    });
+    
+    // Sort nodes by their position in the array (left to right)
+    sameLevelNodes.sort((a, b) => {
+      const indexA = this.allNodes.indexOf(a);
+      const indexB = this.allNodes.indexOf(b);
+      return indexA - indexB;
+    });
+    
+    // Find current node position among same-level nodes
+    const currentIndex = sameLevelNodes.findIndex(node => {
+      const data = this.getNodeData(node);
+      return data && data.id === nodeData.id;
+    });
+    
+    if (currentIndex < sameLevelNodes.length - 1) {
+      // Go to next node at same level
+      const nextNode = sameLevelNodes[currentIndex + 1];
+      const nextNodeIndex = this.allNodes.indexOf(nextNode);
+      this.selectNode(nextNodeIndex);
+    }
+  },
+  
+  // Navigate to next node in sequential order (like Tab in forms)
+  navigateToNextSequential: function() {
+    if (this.currentNodeIndex === -1 || this.allNodes.length === 0) return;
+    
+    const currentNode = this.allNodes[this.currentNodeIndex];
+    const nodeData = this.getNodeData(currentNode);
+    
+    if (!nodeData) return;
+    
+    // Get the level of current node
+    const currentLevel = this.getNodeLevel(nodeData);
+    
+    // Find all nodes at the same level
+    const sameLevelNodes = this.allNodes.filter((node, index) => {
+      const data = this.getNodeData(node);
+      if (!data) return false;
+      
+      const nodeLevel = this.getNodeLevel(data);
+      return nodeLevel === currentLevel;
+    });
+    
+    // Sort nodes by their position in the array (left to right)
+    sameLevelNodes.sort((a, b) => {
+      const indexA = this.allNodes.indexOf(a);
+      const indexB = this.allNodes.indexOf(b);
+      return indexA - indexB;
+    });
+    
+    // Find current node position among same-level nodes
+    const currentIndex = sameLevelNodes.findIndex(node => {
+      const data = this.getNodeData(node);
+      return data && data.id === nodeData.id;
+    });
+    
+    if (currentIndex < sameLevelNodes.length - 1) {
+      // Go to next node at same level
+      const nextNode = sameLevelNodes[currentIndex + 1];
+      const nextNodeIndex = this.allNodes.indexOf(nextNode);
+      this.selectNode(nextNodeIndex);
+    } else {
+      // We're at the last node of this level, try to go to first node of next level
+      this.navigateToFirstNodeOfNextLevel(currentLevel);
+    }
+  },
+  
+  // Navigate to previous node in sequential order (like Shift+Tab in forms)
+  navigateToPreviousSequential: function() {
+    if (this.currentNodeIndex === -1 || this.allNodes.length === 0) return;
+    
+    const currentNode = this.allNodes[this.currentNodeIndex];
+    const nodeData = this.getNodeData(currentNode);
+    
+    if (!nodeData) return;
+    
+    // Get the level of current node
+    const currentLevel = this.getNodeLevel(nodeData);
+    
+    // Find all nodes at the same level
+    const sameLevelNodes = this.allNodes.filter((node, index) => {
+      const data = this.getNodeData(node);
+      if (!data) return false;
+      
+      const nodeLevel = this.getNodeLevel(data);
+      return nodeLevel === currentLevel;
+    });
+    
+    // Sort nodes by their position in the array (left to right)
+    sameLevelNodes.sort((a, b) => {
+      const indexA = this.allNodes.indexOf(a);
+      const indexB = this.allNodes.indexOf(b);
+      return indexA - indexB;
+    });
+    
+    // Find current node position among same-level nodes
+    const currentIndex = sameLevelNodes.findIndex(node => {
+      const data = this.getNodeData(node);
+      return data && data.id === nodeData.id;
+    });
+    
+    if (currentIndex > 0) {
+      // Go to previous node at same level
+      const previousNode = sameLevelNodes[currentIndex - 1];
+      const previousNodeIndex = this.allNodes.indexOf(previousNode);
+      this.selectNode(previousNodeIndex);
+    } else {
+      // We're at the first node of this level, try to go to last node of previous level
+      this.navigateToLastNodeOfPreviousLevel(currentLevel);
+    }
+  },
+  
+  // Navigate to first node of next level
+  navigateToFirstNodeOfNextLevel: function(currentLevel) {
+    const nextLevel = currentLevel + 1;
+    
+    // Find all nodes at the next level
+    const nextLevelNodes = this.allNodes.filter((node, index) => {
+      const data = this.getNodeData(node);
+      if (!data) return false;
+      
+      const nodeLevel = this.getNodeLevel(data);
+      return nodeLevel === nextLevel;
+    });
+    
+    if (nextLevelNodes.length > 0) {
+      // Sort by position and select the first one
+      nextLevelNodes.sort((a, b) => {
+        const indexA = this.allNodes.indexOf(a);
+        const indexB = this.allNodes.indexOf(b);
+        return indexA - indexB;
+      });
+      
+      const firstNodeOfNextLevel = nextLevelNodes[0];
+      const firstNodeIndex = this.allNodes.indexOf(firstNodeOfNextLevel);
+      this.selectNode(firstNodeIndex);
+    }
+  },
+  
+  // Navigate to last node of previous level
+  navigateToLastNodeOfPreviousLevel: function(currentLevel) {
+    const previousLevel = currentLevel - 1;
+    
+    if (previousLevel < 0) return; // Can't go below level 0
+    
+    // Find all nodes at the previous level
+    const previousLevelNodes = this.allNodes.filter((node, index) => {
+      const data = this.getNodeData(node);
+      if (!data) return false;
+      
+      const nodeLevel = this.getNodeLevel(data);
+      return nodeLevel === previousLevel;
+    });
+    
+    if (previousLevelNodes.length > 0) {
+      // Sort by position and select the last one
+      previousLevelNodes.sort((a, b) => {
+        const indexA = this.allNodes.indexOf(a);
+        const indexB = this.allNodes.indexOf(b);
+        return indexA - indexB;
+      });
+      
+      const lastNodeOfPreviousLevel = previousLevelNodes[previousLevelNodes.length - 1];
+      const lastNodeIndex = this.allNodes.indexOf(lastNodeOfPreviousLevel);
+      this.selectNode(lastNodeIndex);
+    }
+  },
+  
+  // Navigate to first node
+  navigateToFirst: function() {
+    if (this.allNodes.length === 0) return;
+    this.currentNodeIndex = 0;
+    this.selectNode(this.currentNodeIndex);
+  },
+  
+  // Navigate to last node
+  navigateToLast: function() {
+    if (this.allNodes.length === 0) return;
+    this.currentNodeIndex = this.allNodes.length - 1;
+    this.selectNode(this.currentNodeIndex);
+  },
+  
+  // Select a specific node by index
+  selectNode: function(index) {
+    if (index < 0 || index >= this.allNodes.length) return;
+    
+    // Clear previous selection
+    this.clearSelection();
+    
+    // Select new node
+    const node = this.allNodes[index];
+    if (node) {
+      node.classList.add('node-selected');
+      this.currentNodeIndex = index;
+      
+      // Get node data and open side panel
+      const nodeData = this.getNodeData(node);
+      if (nodeData) {
+        openSidePanel(nodeData);
+      }
+      
+      // Scroll node into view
+      this.scrollNodeIntoView(node);
+      
+      console.log('[Keyboard Navigation] Selected node:', index, nodeData?.name || 'Unknown');
+    }
+  },
+  
+  // Clear current selection
+  clearSelection: function() {
+    document.querySelectorAll('.node-selected').forEach(node => {
+      node.classList.remove('node-selected');
+    });
+    this.currentNodeIndex = -1;
+    closeSidePanel();
+    console.log('[Keyboard Navigation] Selection cleared');
+  },
+  
+  // Get node data from DOM element
+  getNodeData: function(nodeElement) {
+    // Try to get data from the node element
+    const nodeId = nodeElement.getAttribute('data-id') || 
+                   nodeElement.querySelector('[data-id]')?.getAttribute('data-id');
+    
+    if (!nodeId) return null;
+    
+    // Find the corresponding data in the global data structure
+    // This assumes the data is stored globally when the diagram is loaded
+    if (window.swDiagrams.currentData) {
+      return window.swDiagrams.currentData.find(item => item.id === nodeId);
+    }
+    
+    return null;
+  },
+  
+  // Calculate the hierarchical level of a node
+  getNodeLevel: function(nodeData) {
+    if (!nodeData) return 0;
+    
+    let level = 0;
+    let current = nodeData;
+    
+    // Count how many levels up we need to go to reach the root
+    while (current.parent) {
+      level++;
+      current = window.swDiagrams.currentData.find(item => item.id === current.parent);
+      if (!current) break;
+    }
+    
+    return level;
+  },
+  
+  // Scroll node into view
+  scrollNodeIntoView: function(node) {
+    const svg = document.getElementById('main-diagram-svg');
+    if (!svg) return;
+    
+    const nodeRect = node.getBoundingClientRect();
+    const svgRect = svg.getBoundingClientRect();
+    
+    // Calculate if node is outside viewport
+    const isOutsideTop = nodeRect.top < svgRect.top;
+    const isOutsideBottom = nodeRect.bottom > svgRect.bottom;
+    const isOutsideLeft = nodeRect.left < svgRect.left;
+    const isOutsideRight = nodeRect.right > svgRect.right;
+    
+    if (isOutsideTop || isOutsideBottom || isOutsideLeft || isOutsideRight) {
+      // Use smooth scrolling if available
+      node.scrollIntoView({
+        behavior: 'smooth',
+        block: 'center',
+        inline: 'center'
+      });
+    }
+  }
+};
 // DO NOT define default diagrams here
 window.swDiagrams.getDiagramIndexFromURL = function() {
     const urlParams = new URLSearchParams(window.location.search);
@@ -1351,6 +1830,51 @@ window.getStorageKey = getStorageKey;
 window.getOppositeTheme = getOppositeTheme;
 window.isLightTheme = isLightTheme;
 
+// Create keyboard navigation instructions panel
+function createKeyboardInstructionsPanel() {
+  // Remove existing panel if it exists
+  const existingPanel = document.querySelector('.keyboard-instructions');
+  if (existingPanel) {
+    existingPanel.remove();
+  }
+  
+  const instructionsPanel = document.createElement('div');
+  instructionsPanel.className = 'keyboard-instructions';
+  instructionsPanel.innerHTML = `
+    <h3>⌨️ Navegación por teclado</h3>
+    <div class="instructions-grid">
+      <span class="key">↑</span>
+      <span class="description">Nodo padre</span>
+      <span class="key">↓</span>
+      <span class="description">Primer hijo</span>
+      <span class="key">←</span>
+      <span class="description">Nodo anterior del mismo nivel</span>
+      <span class="key">→</span>
+      <span class="description">Nodo siguiente del mismo nivel</span>
+      <span class="key">Home</span>
+      <span class="description">Primer nodo</span>
+      <span class="key">End</span>
+      <span class="description">Último nodo</span>
+      <span class="key">Esc</span>
+      <span class="description">Deseleccionar</span>
+    </div>
+  `;
+  
+  document.body.appendChild(instructionsPanel);
+  
+  // Show/hide panel based on keyboard navigation state
+  window.swDiagrams.keyboardNavigation.showInstructions = function() {
+    instructionsPanel.style.display = 'block';
+  };
+  
+  window.swDiagrams.keyboardNavigation.hideInstructions = function() {
+    instructionsPanel.style.display = 'none';
+  };
+  
+  // Initially hide the panel (temporarily)
+  instructionsPanel.style.display = 'none';
+}
+
 // Helper function to check if URL is accessible
 window.checkUrlAccessibility = function(url) {
   return new Promise((resolve) => {
@@ -1399,6 +1923,14 @@ window.tryDiagramFallbacks = function(originalUrl, onComplete, retryCount = 0) {
 // Initialize when DOM is ready
 document.addEventListener("DOMContentLoaded", () => {
   setupClosePanelOnSvgClick();
+  
+  // Create keyboard instructions panel
+  createKeyboardInstructionsPanel();
+  
+  // Initialize keyboard navigation system
+  if (window.swDiagrams.keyboardNavigation) {
+    window.swDiagrams.keyboardNavigation.init();
+  }
   
   // Setup dropdown functionality
   const dropdownBtn = document.getElementById('diagram-dropdown-btn');

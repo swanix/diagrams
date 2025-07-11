@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verificación XDiagrams</title>
+    
+    <!-- Theme loader for FOUC prevention -->
+    <script src="xloader.js"></script>
+    
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            transition: all 0.3s ease;
+        }
+        
+        .theme-snow {
+            background-color: #ffffff;
+            color: #333333;
+        }
+        
+        .theme-onyx {
+            background-color: #1a1a1a;
+            color: #ffffff;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            border: 2px solid #ccc;
+            border-radius: 8px;
+        }
+        
+        .status {
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        .status.warning {
+            background: #fff3cd;
+            color: #856404;
+        }
+        
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        
+        .btn {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        
+        .btn:hover {
+            background: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Verificación del Sistema XDiagrams</h1>
+        
+        <div id="status" class="status"></div>
+        
+        <div class="test-section">
+            <h2>1. Verificación del Sistema de Temas</h2>
+            <p><strong>Estado del sistema:</strong> <span id="system-status">Verificando...</span></p>
+            <p><strong>Tema actual:</strong> <span id="current-theme">Verificando...</span></p>
+            <p><strong>Clases del body:</strong> <span id="body-classes">Verificando...</span></p>
+            <p><strong>Clave de storage:</strong> <span id="storage-key">Verificando...</span></p>
+        </div>
+        
+        <div class="test-section">
+            <h2>2. Controles de Tema</h2>
+            <button class="btn" onclick="testToggle()">Toggle Tema</button>
+            <button class="btn" onclick="testSetTheme('snow')">Snow</button>
+            <button class="btn" onclick="testSetTheme('onyx')">Onyx</button>
+            <button class="btn" onclick="testRefresh()">Refrescar Página</button>
+        </div>
+        
+        <div class="test-section">
+            <h2>3. Verificación de XDiagrams</h2>
+            <p><strong>Configuración XDiagrams:</strong> <span id="xdiagrams-config">Verificando...</span></p>
+            <p><strong>Estado XDiagrams:</strong> <span id="xdiagrams-status">Verificando...</span></p>
+            <p><strong>Versión:</strong> <span id="xdiagrams-version">Verificando...</span></p>
+        </div>
+        
+        <div class="test-section">
+            <h2>4. Log de Eventos</h2>
+            <div id="log" style="background: #f8f9fa; padding: 10px; border-radius: 5px; font-family: monospace; font-size: 12px; max-height: 200px; overflow-y: auto;">
+                Iniciando verificación...
+            </div>
+        </div>
+        
+        <div class="test-section">
+            <h2>5. Próximos Pasos</h2>
+            <ol>
+                <li>Verifica que el tema se aplique sin flash</li>
+                <li>Cambia el tema y refresca la página</li>
+                <li>Confirma que el tema se mantiene</li>
+                <li>Si todo está bien, el sistema está funcionando correctamente</li>
+            </ol>
+        </div>
+    </div>
+    
+    <!-- Sistema principal -->
+    <script src="xdiagrams.js"></script>
+    
+    <script>
+        // Función para mostrar log
+        function log(message) {
+            const logEl = document.getElementById('log');
+            const timestamp = new Date().toLocaleTimeString();
+            logEl.innerHTML += `[${timestamp}] ${message}<br>`;
+            logEl.scrollTop = logEl.scrollHeight;
+            console.log(message);
+        }
+        
+        // Función para mostrar status
+        function showStatus(message, type = 'success') {
+            const statusEl = document.getElementById('status');
+            statusEl.textContent = message;
+            statusEl.className = `status ${type}`;
+            
+            setTimeout(() => {
+                statusEl.textContent = '';
+                statusEl.className = 'status';
+            }, 5000);
+        }
+        
+        // Función para actualizar información
+        function updateInfo() {
+            // Sistema de temas
+            const currentTheme = window.$xDiagrams?.themeState?.current || 'no disponible';
+            const storageKey = getStorageKey();
+            const bodyClasses = document.body.className;
+            const systemStatus = window.$xDiagrams?.themeState?.isInitialized ? 'Inicializado' : 'No inicializado';
+            
+            document.getElementById('current-theme').textContent = currentTheme;
+            document.getElementById('storage-key').textContent = storageKey;
+            document.getElementById('body-classes').textContent = bodyClasses;
+            document.getElementById('system-status').textContent = systemStatus;
+            
+            // XDiagrams
+            const xdiagramsConfig = window.$xDiagrams ? 'Disponible' : 'No disponible';
+            const xdiagramsStatus = window.$xDiagrams?.name || 'No configurado';
+            const xdiagramsVersion = window.$xDiagrams?.version || 'No disponible';
+            
+            document.getElementById('xdiagrams-config').textContent = xdiagramsConfig;
+            document.getElementById('xdiagrams-status').textContent = xdiagramsStatus;
+            document.getElementById('xdiagrams-version').textContent = xdiagramsVersion;
+        }
+        
+        // Test de toggle
+        function testToggle() {
+            log('Ejecutando toggleTheme()...');
+            try {
+                toggleTheme();
+                showStatus('Toggle ejecutado correctamente', 'success');
+            } catch (error) {
+                log(`Error en toggle: ${error.message}`);
+                showStatus(`Error: ${error.message}`, 'error');
+            }
+        }
+        
+        // Test de setTheme
+        function testSetTheme(theme) {
+            log(`Ejecutando setTheme('${theme}')...`);
+            try {
+                setTheme(theme);
+                showStatus(`Tema ${theme} establecido`, 'success');
+            } catch (error) {
+                log(`Error en setTheme: ${error.message}`);
+                showStatus(`Error: ${error.message}`, 'error');
+            }
+        }
+        
+        // Test de refresh
+        function testRefresh() {
+            log('Refrescando página...');
+            setTimeout(() => {
+                window.location.reload();
+            }, 1000);
+        }
+        
+        // Inicializar cuando DOM esté listo
+        document.addEventListener('DOMContentLoaded', function() {
+            log('DOM cargado, iniciando verificación...');
+            
+            // Esperar a que el sistema se inicialice
+            setTimeout(() => {
+                log('Sistema de temas inicializado');
+                updateInfo();
+                
+                // Actualizar cada segundo
+                setInterval(() => {
+                    updateInfo();
+                }, 1000);
+                
+                // Verificar estado inicial
+                const currentTheme = window.$xDiagrams?.themeState?.current;
+                const bodyClasses = document.body.className;
+                const xdiagramsAvailable = window.$xDiagrams;
+                
+                if (currentTheme && bodyClasses.includes(`theme-${currentTheme}`)) {
+                    log('✅ Sistema de temas funcionando correctamente');
+                    showStatus('Sistema de temas funcionando correctamente', 'success');
+                } else {
+                    log('⚠️ Problema detectado en el sistema de temas');
+                    showStatus('Problema detectado en el sistema de temas', 'warning');
+                }
+                
+                if (xdiagramsAvailable) {
+                    log('✅ XDiagrams configurado correctamente');
+                    showStatus('XDiagrams configurado correctamente', 'success');
+                } else {
+                    log('⚠️ XDiagrams no está configurado');
+                    showStatus('XDiagrams no está configurado', 'warning');
+                }
+                
+                log('Verificación completada');
+            }, 2000);
+        });
+        
+        // Log de eventos del sistema
+        const originalLog = console.log;
+        console.log = function(...args) {
+            originalLog.apply(console, args);
+            if (args[0] && typeof args[0] === 'string' && (args[0].includes('[XTheme]') || args[0].includes('[XDiagrams]'))) {
+                log(args.join(' '));
+            }
+        };
+    </script>
+</body>
+</html> 

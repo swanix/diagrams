@@ -53,7 +53,7 @@ A powerful JavaScript library for creating interactive, hierarchical SVG diagram
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
 </head>
 <body>
-    <div class="sw-diagram-container" 
+    <div class="xcanvas" 
          data-themes='{
            "light": "snow",
            "dark": "onyx"
@@ -92,7 +92,7 @@ A powerful JavaScript library for creating interactive, hierarchical SVG diagram
 ### Advanced Configuration
 
 ```html
-<div class="sw-diagram-container" 
+<div class="xcanvas" 
      data-themes='{
        "light": "pastel",
        "dark": "neon"

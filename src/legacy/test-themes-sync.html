@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Sincronización de Temas</title>
+    
+    <!-- Theme loader for FOUC prevention -->
+    <script src="xloader.js"></script>
+    
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            transition: all 0.3s ease;
+        }
+        
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            border: 2px solid #ccc;
+            border-radius: 8px;
+        }
+        
+        .theme-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+        
+        .theme-card {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .theme-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        
+        .theme-card.active {
+            border-color: #007bff;
+            box-shadow: 0 0 0 2px rgba(0,123,255,0.25);
+        }
+        
+        .theme-name {
+            font-weight: bold;
+            margin-bottom: 10px;
+            font-size: 18px;
+        }
+        
+        .theme-preview {
+            height: 60px;
+            border-radius: 4px;
+            margin: 10px 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+        
+        .theme-variables {
+            font-family: monospace;
+            font-size: 11px;
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 4px;
+            max-height: 100px;
+            overflow-y: auto;
+        }
+        
+        .btn {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        
+        .btn:hover {
+            background: #0056b3;
+        }
+        
+        .status {
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        .status.warning {
+            background: #fff3cd;
+            color: #856404;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Test Sincronización de Temas con xthemes.json</h1>
+        
+        <div id="status" class="status"></div>
+        
+        <div>
+            <h2>Controles</h2>
+            <button class="btn" onclick="testAllThemes()">Probar Todos los Temas</button>
+            <button class="btn" onclick="checkVariables()">Verificar Variables</button>
+            <button class="btn" onclick="debugLoader()">Debug Loader</button>
+        </div>
+        
+        <div>
+            <h2>Información del Sistema</h2>
+            <p><strong>Tema actual:</strong> <span id="current-theme">Cargando...</span></p>
+            <p><strong>Variables cargadas:</strong> <span id="variables-count">Cargando...</span></p>
+            <p><strong>Fuente de datos:</strong> <span id="data-source">Cargando...</span></p>
+        </div>
+        
+        <div>
+            <h2>Selector de Temas</h2>
+            <div id="theme-grid" class="theme-grid">
+                Cargando temas...
+            </div>
+        </div>
+        
+        <div>
+            <h2>Log de Eventos</h2>
+            <div id="log" style="background: #f8f9fa; padding: 10px; border-radius: 5px; font-family: monospace; font-size: 12px; max-height: 200px; overflow-y: auto;">
+                Iniciando test de sincronización...
+            </div>
+        </div>
+    </div>
+    
+    <!-- Sistema principal -->
+    <script src="xdiagrams.js"></script>
+    
+    <script>
+        // Función para mostrar log
+        function log(message) {
+            const logEl = document.getElementById('log');
+            const timestamp = new Date().toLocaleTimeString();
+            logEl.innerHTML += `[${timestamp}] ${message}<br>`;
+            logEl.scrollTop = logEl.scrollHeight;
+            console.log(message);
+        }
+        
+        // Función para mostrar status
+        function showStatus(message, type = 'success') {
+            const statusEl = document.getElementById('status');
+            statusEl.textContent = message;
+            statusEl.className = `status ${type}`;
+            
+            setTimeout(() => {
+                statusEl.textContent = '';
+                statusEl.className = 'status';
+            }, 5000);
+        }
+        
+        // Función para actualizar información
+        function updateInfo() {
+            const currentTheme = window.$xDiagrams?.themeState?.current || 'no disponible';
+            const variablesCount = Object.keys(window.themeVariables || {}).length;
+            const dataSource = window.themeVariables ? 'xthemes.json' : 'fallback';
+            
+            document.getElementById('current-theme').textContent = currentTheme;
+            document.getElementById('variables-count').textContent = variablesCount;
+            document.getElementById('data-source').textContent = dataSource;
+        }
+        
+        // Función para crear tarjetas de tema
+        function createThemeCards() {
+            const themeGrid = document.getElementById('theme-grid');
+            const themes = ['snow', 'onyx', 'vintage', 'pastel', 'neon', 'forest'];
+            
+            themeGrid.innerHTML = '';
+            
+            themes.forEach(theme => {
+                const card = document.createElement('div');
+                card.className = 'theme-card';
+                card.onclick = () => testTheme(theme);
+                
+                const variables = window.themeVariables?.[theme] || {};
+                const bgColor = variables['--bg-color'] || '#ffffff';
+                const textColor = variables['--text-color'] || '#000000';
+                
+                card.innerHTML = `
+                    <div class="theme-name">${theme.toUpperCase()}</div>
+                    <div class="theme-preview" style="background-color: ${bgColor}; color: ${textColor};">
+                        ${theme}
+                    </div>
+                    <div class="theme-variables">
+                        Variables: ${Object.keys(variables).length}<br>
+                        BG: ${bgColor}<br>
+                        Text: ${textColor}
+                    </div>
+                `;
+                
+                themeGrid.appendChild(card);
+            });
+        }
+        
+        // Función para probar un tema específico
+        function testTheme(theme) {
+            log(`Probando tema: ${theme}`);
+            try {
+                setTheme(theme);
+                showStatus(`Tema ${theme} aplicado`, 'success');
+                
+                // Actualizar tarjeta activa
+                document.querySelectorAll('.theme-card').forEach(card => {
+                    card.classList.remove('active');
+                });
+                event.target.closest('.theme-card').classList.add('active');
+            } catch (error) {
+                log(`Error aplicando tema ${theme}: ${error.message}`);
+                showStatus(`Error: ${error.message}`, 'error');
+            }
+        }
+        
+        // Función para probar todos los temas
+        function testAllThemes() {
+            log('Probando todos los temas...');
+            const themes = ['snow', 'onyx', 'vintage', 'pastel', 'neon', 'forest'];
+            
+            themes.forEach((theme, index) => {
+                setTimeout(() => {
+                    testTheme(theme);
+                }, index * 1000);
+            });
+        }
+        
+        // Función para verificar variables
+        function checkVariables() {
+            log('Verificando variables CSS...');
+            const themes = Object.keys(window.themeVariables || {});
+            
+            themes.forEach(theme => {
+                const variables = window.themeVariables[theme];
+                const essentialVars = ['--bg-color', '--text-color', '--node-fill'];
+                const missing = essentialVars.filter(varName => !variables[varName]);
+                
+                if (missing.length > 0) {
+                    log(`⚠️ Tema ${theme} falta variables: ${missing.join(', ')}`);
+                } else {
+                    log(`✅ Tema ${theme} tiene todas las variables esenciales`);
+                }
+            });
+        }
+        
+        // Función para debug del loader
+        function debugLoader() {
+            if (window.debugLoaderState) {
+                window.debugLoaderState();
+                log('Debug del loader ejecutado');
+            } else {
+                log('Función debugLoaderState no disponible');
+            }
+        }
+        
+        // Inicializar cuando DOM esté listo
+        document.addEventListener('DOMContentLoaded', function() {
+            log('DOM cargado, inicializando test...');
+            
+            // Esperar a que el sistema se inicialice
+            setTimeout(() => {
+                log('Sistema de temas inicializado');
+                updateInfo();
+                createThemeCards();
+                
+                // Actualizar cada segundo
+                setInterval(() => {
+                    updateInfo();
+                }, 1000);
+                
+                // Verificar estado inicial
+                const currentTheme = window.$xDiagrams?.themeState?.current;
+                const variablesLoaded = window.themeVariables && Object.keys(window.themeVariables).length > 0;
+                
+                if (currentTheme && variablesLoaded) {
+                    log('✅ Sistema funcionando correctamente');
+                    showStatus('Sistema funcionando correctamente', 'success');
+                } else {
+                    log('⚠️ Problema detectado en el sistema');
+                    showStatus('Problema detectado en el sistema', 'warning');
+                }
+                
+                log('Test de sincronización completado');
+            }, 2000);
+        });
+        
+        // Log de eventos del sistema
+        const originalLog = console.log;
+        console.log = function(...args) {
+            originalLog.apply(console, args);
+            if (args[0] && typeof args[0] === 'string' && (args[0].includes('[Theme Loader]') || args[0].includes('[XTheme]'))) {
+                log(args.join(' '));
+            }
+        };
+    </script>
+</body>
+</html> 

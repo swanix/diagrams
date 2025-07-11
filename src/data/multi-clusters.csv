@@ -6,6 +6,7 @@ A1-1-1,Nieto 1,A1-1,detail
 A1-1-2,Nieto 2,A1-1,detail
 A1-2-1,Nieto 1,A1-2,detail
 A1-2-2,Nieto 2,A1-2,detail
+
 B1,Cluster 2,,detail
 B1-1,Hijo 1,B1,detail
 B1-2,Hijo 2,B1,detail
@@ -13,6 +14,7 @@ B1-1-1,Nieto 1,B1-1,detail
 B1-1-2,Nieto 2,B1-1,detail
 B1-2-1,Nieto 1,B1-2,detail
 B1-2-2,Nieto 2,B1-2,detail
+
 C1,Cluster 3,,detail
 C1-1,Hijo 1,C1,detail
 C1-2,Hijo 2,C1,detail
@@ -20,6 +22,7 @@ C1-1-1,Nieto 1,C1-1,detail
 C1-1-2,Nieto 2,C1-1,detail
 C1-2-1,Nieto 1,C1-2,detail
 C1-2-2,Nieto 2,C1-2,detail
+
 D1,Cluster 4,,detail
 D1-1,Hijo 1,D1,detail
 D1-2,Hijo 2,D1,detail
@@ -27,6 +30,7 @@ D1-1-1,Nieto 1,D1-1,detail
 D1-1-2,Nieto 2,D1-1,detail
 D1-2-1,Nieto 1,D1-2,detail
 D1-2-2,Nieto 2,D1-2,detail
+
 E1,Cluster 5,,detail
 E1-1,Hijo 1,E1,detail
 E1-2,Hijo 2,E1,detail
@@ -34,6 +38,7 @@ E1-1-1,Nieto 1,E1-1,detail
 E1-1-2,Nieto 2,E1-1,detail
 E1-2-1,Nieto 1,E1-2,detail
 E1-2-2,Nieto 2,E1-2,detail
+
 F1,Cluster 6,,detail
 F1-1,Hijo 1,F1,detail
 F1-2,Hijo 2,F1,detail

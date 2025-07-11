@@ -1,6 +1,0 @@
-Node,Name,Description,Parent,Thumbnail,url,Type
-1,Root Node,This is a fallback diagram,,"",,root
-2,Child 1,First child of root,1,"",,child
-3,Child 2,Second child of root,1,"",,child
-4,Grandchild 1,Child of Child 1,2,"",,grandchild
-5,Grandchild 2,Child of Child 1,2,"",,grandchild 

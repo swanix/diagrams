@@ -286,6 +286,16 @@ function buildHierarchies(data) {
   const columnConfig = getColumnConfiguration();
 
   data.forEach(d => {
+    // Skip completely empty rows
+    const isEmptyRow = Object.values(d).every(value => 
+      value === undefined || value === null || value === "" || value.toString().trim() === ""
+    );
+    
+    if (isEmptyRow) {
+      console.log('[CSV Processing] Skipping empty row:', d);
+      return; // Skip this row
+    }
+    
     // Use custom column configuration with fallbacks
     let id = getColumnValue(d, columnConfig.id, "");
     let name = getColumnValue(d, columnConfig.name, "Nodo sin nombre");
@@ -296,6 +306,12 @@ function buildHierarchies(data) {
     let parent = getColumnValue(d, columnConfig.parent, "");
     let url = getColumnValue(d, columnConfig.url, "");
     let type = getColumnValue(d, columnConfig.type, "");
+
+    // Skip nodes without essential data (id or name)
+    if (!id || !name || id.trim() === "" || name.trim() === "") {
+      console.log('[CSV Processing] Skipping node without essential data:', { id, name });
+      return; // Skip this row
+    }
 
     let node = { 
       id, 

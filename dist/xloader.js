@@ -1,8 +1,8 @@
 // Swanix Diagrams - THEME LOADER JS
-// v0.2.0
+// v0.3.0
 
 // Theme Loader - Applies the saved theme before the main CSS loads
-// This file must be loaded BEFORE sw-diagrams.css to avoid FOUC (flash of unstyled content)
+// This file must be loaded BEFORE xdiagrams.css to avoid FOUC (flash of unstyled content)
 
 (function() {
   'use strict';
@@ -11,12 +11,12 @@
   function getStorageKey() {
     const path = window.location.pathname;
     const filename = path.split('/').pop() || 'index.html';
-    return `selectedTheme_${filename}`;
+    return `xdiagrams-theme-${filename}`;
   }
   
   // Get theme configuration from HTML
   function getThemeConfiguration() {
-    const container = document.querySelector('.sw-diagram-container');
+    const container = document.querySelector('.xcanvas');
     if (!container) {
       return { lightTheme: 'snow', darkTheme: 'onyx' };
     }
@@ -42,8 +42,8 @@
     };
   }
   
-  // Essential CSS variables for themes (only the essentials to avoid FOUC)
-  const themeVariables = {
+  // Essential CSS variables for immediate application (prevents flash)
+  const essentialThemeVariables = {
     snow: {
       '--bg-color': '#f6f7f9',
       '--text-color': '#222',
@@ -196,50 +196,121 @@
     }
   };
   
-  // Apply theme immediately
+  // Load theme variables from xthemes.json (for complete variables)
+  let completeThemeVariables = {};
+  
+  async function loadCompleteThemeVariables() {
+    try {
+      const response = await fetch('xthemes.json');
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      const themes = await response.json();
+      completeThemeVariables = themes;
+      console.log('[Theme Loader] Variables completas cargadas desde xthemes.json');
+      
+      // Re-apply current theme with complete variables
+      const currentTheme = getCurrentTheme();
+      if (currentTheme && completeThemeVariables[currentTheme]) {
+        applyThemeVariables(completeThemeVariables[currentTheme]);
+        console.log('[Theme Loader] Tema actualizado con variables completas:', currentTheme);
+      }
+    } catch (error) {
+      console.warn('[Theme Loader] Error cargando xthemes.json, usando variables esenciales:', error);
+    }
+  }
+  
+  // Apply theme variables to document
+  function applyThemeVariables(variables) {
+    if (variables) {
+      Object.keys(variables).forEach(varName => {
+        document.documentElement.style.setProperty(varName, variables[varName]);
+        document.body.style.setProperty(varName, variables[varName]);
+      });
+    }
+  }
+  
+  // Apply theme immediately (with essential variables first)
   function applyThemeEarly(themeId) {
     // Apply class to body
     document.body.classList.add('theme-' + themeId);
     
-    // Apply essential CSS variables
-    const variables = themeVariables[themeId] || themeVariables.snow;
-    Object.keys(variables).forEach(varName => {
-      document.documentElement.style.setProperty(varName, variables[varName]);
-      document.body.style.setProperty(varName, variables[varName]);
-    });
+    // Apply essential CSS variables immediately (prevents flash)
+    const essentialVariables = essentialThemeVariables[themeId] || essentialThemeVariables.snow;
+    applyThemeVariables(essentialVariables);
     
-    console.log('[Theme Loader] Theme applied early:', themeId);
+    console.log('[Theme Loader] Theme applied early with essential variables:', themeId);
+  }
+  
+  // Get current theme from localStorage
+  function getCurrentTheme() {
+    const storageKey = getStorageKey();
+    let currentTheme = localStorage.getItem(storageKey);
+    
+    if (!currentTheme) {
+      // Try global theme preference
+      currentTheme = localStorage.getItem('selectedTheme');
+    }
+    
+    if (!currentTheme) {
+      // Try theme mode
+      const themeMode = localStorage.getItem('themeMode');
+      if (themeMode === 'dark') {
+        currentTheme = 'onyx';
+      } else if (themeMode === 'light') {
+        currentTheme = 'snow';
+      }
+    }
+    
+    if (!currentTheme) {
+      // Use default light theme
+      const config = getThemeConfiguration();
+      currentTheme = config.lightTheme;
+    }
+    
+    return currentTheme;
   }
   
   // Main function
   function initEarlyTheme() {
+    const currentTheme = getCurrentTheme();
+    console.log('[Theme Loader] Using theme:', currentTheme);
+    
+    // Save the theme to both locations for consistency
+    const storageKey = getStorageKey();
+    localStorage.setItem(storageKey, currentTheme);
+    localStorage.setItem('selectedTheme', currentTheme);
+    localStorage.setItem('themeMode', isLightTheme(currentTheme) ? 'light' : 'dark');
+    
+    // Apply the theme immediately with essential variables (prevents flash)
+    applyThemeEarly(currentTheme);
+    
+    // Load complete variables in background (non-blocking)
+    loadCompleteThemeVariables();
+  }
+  
+  // Helper function to check if theme is light
+  function isLightTheme(themeId) {
+    const lightThemes = ['snow', 'vintage', 'pastel'];
+    return lightThemes.includes(themeId);
+  }
+  
+  // Debug function to check loader state
+  window.debugLoaderState = function() {
+    console.log('[Loader Debug] === ESTADO DEL LOADER ===');
     const storageKey = getStorageKey();
     const config = getThemeConfiguration();
+    const savedTheme = localStorage.getItem(storageKey);
+    const bodyClasses = document.body.className;
     
-    // Check if this is the first time for this specific file
-    const isFirstTime = !localStorage.getItem(`themeSystemInitialized_${storageKey}`);
-    
-    let currentTheme;
-    if (isFirstTime) {
-      // First time: use the default light theme from HTML
-      currentTheme = config.lightTheme;
-      localStorage.setItem(`themeSystemInitialized_${storageKey}`, 'true');
-      localStorage.setItem(storageKey, currentTheme);
-      console.log('[Theme Loader] First time, using default theme:', currentTheme);
-    } else {
-      // Not the first time: use the theme saved in localStorage
-      currentTheme = localStorage.getItem(storageKey);
-      if (!currentTheme) {
-        // If no theme saved, use the default light theme
-        currentTheme = config.lightTheme;
-        localStorage.setItem(storageKey, currentTheme);
-      }
-      console.log('[Theme Loader] Using saved theme:', currentTheme);
-    }
-    
-    // Apply the theme immediately
-    applyThemeEarly(currentTheme);
-  }
+    console.log('[Loader Debug] Clave de almacenamiento:', storageKey);
+    console.log('[Loader Debug] Configuración:', config);
+    console.log('[Loader Debug] Tema guardado:', savedTheme);
+    console.log('[Loader Debug] Clases del body:', bodyClasses);
+    console.log('[Loader Debug] Variables esenciales cargadas:', Object.keys(essentialThemeVariables));
+    console.log('[Loader Debug] Variables completas cargadas:', Object.keys(completeThemeVariables));
+    console.log('[Loader Debug] === FIN DEL ESTADO ===');
+  };
   
   // Run immediately if DOM is ready, or wait
   if (document.readyState === 'loading') {

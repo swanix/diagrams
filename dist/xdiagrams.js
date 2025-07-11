@@ -1,5 +1,5 @@
 // Swanix Diagrams - JS
-// v0.2.0
+// v0.3.0
 
 // Global zoom behavior - defined at the beginning to avoid scope issues
 const zoom = d3.zoom()
@@ -33,16 +33,28 @@ function initDiagram(csvUrl, onComplete, retryCount = 0) {
       try {
         const trees = buildHierarchies(results.data);
         drawTrees(trees);
-        createSidePanel();
+        
+        // Create side panel only if enabled
+        if (isOptionEnabled('sidePanel') !== false) {
+          createSidePanel();
+        }
         
         // Preserve current theme after loading diagram
-        setTimeout(() => {
+        setTimeout(async () => {
           if (window.preserveCurrentTheme) {
-            window.preserveCurrentTheme();
+            await window.preserveCurrentTheme();
           }
         }, 100);
         
         console.log("Diagrama cargado completamente");
+        
+        // Trigger onLoad hook
+        triggerHook('onLoad', { 
+          url: csvUrl, 
+          data: results.data, 
+          trees: trees,
+          timestamp: new Date().toISOString()
+        });
         
         if (onComplete && typeof onComplete === 'function') {
           onComplete();
@@ -111,9 +123,110 @@ function getColumnValue(row, possibleNames, defaultValue = "") {
   return defaultValue;
 }
 
-// Get column configuration from HTML attributes
+// ============================================================================
+// XDIAGRAMS CONFIGURATION SYSTEM
+// ============================================================================
+
+// Get configuration from window.$xDiagrams (modern style)
+function getXDiagramsConfiguration() {
+  return window.$xDiagrams || {};
+}
+
+// Get diagram options
+function getDiagramOptions() {
+  const config = getXDiagramsConfiguration();
+  return config.options || {};
+}
+
+// Get hooks (callbacks)
+function getHooks() {
+  const config = getXDiagramsConfiguration();
+  return config.hooks || {};
+}
+
+// Trigger a hook if it exists
+function triggerHook(hookName, data) {
+  const hooks = getHooks();
+  if (hooks[hookName] && typeof hooks[hookName] === 'function') {
+    try {
+      hooks[hookName](data);
+    } catch (error) {
+      console.error(`Error in hook ${hookName}:`, error);
+    }
+  }
+}
+
+// Check if an option is enabled with sensible defaults
+function isOptionEnabled(optionName) {
+  const options = getDiagramOptions();
+  
+  // Define default values for each option
+  const defaultOptions = {
+    autoZoom: true,           // Auto-zoom enabled by default
+    sidePanel: true,          // Side panel enabled by default
+    keyboardNavigation: true, // Keyboard navigation enabled by default
+    tooltips: true,           // Tooltips enabled by default
+    responsive: true          // Responsive design enabled by default
+  };
+  
+  // If the option is explicitly set in the configuration, use that value
+  if (options.hasOwnProperty(optionName)) {
+    return options[optionName] === true;
+  }
+  
+  // Otherwise, use the default value
+  return defaultOptions[optionName] === true;
+}
+
+// Get diagrams from modern configuration
+function getDiagrams() {
+  const config = getXDiagramsConfiguration();
+  
+  // Try modern configuration first
+  if (config.diagrams && Array.isArray(config.diagrams)) {
+    return config.diagrams;
+  }
+  
+  // Fallback to legacy configuration
+  return window.$xDiagrams?.diagrams || [];
+}
+
+// Get column configuration with modern style fallback
 function getColumnConfiguration() {
-  const container = document.querySelector('.sw-diagram-container');
+  const config = getXDiagramsConfiguration();
+  
+  // Try modern configuration first
+  if (config.columns) {
+    const columns = config.columns;
+    const columnConfig = {
+      id: [columns.id || 'Node'],
+      name: [columns.name || 'Name'],
+      subtitle: [columns.subtitle || 'Description'],
+      img: [columns.img || 'Type'],
+      parent: [columns.parent || 'Parent'],
+      url: [columns.url || 'url'],
+      type: [columns.type || 'Type']
+    };
+
+    // Add fallback names for each field
+    columnConfig.id.push('node', 'Node', 'NODE', 'id', 'Id', 'ID');
+    columnConfig.name.push('name', 'Name', 'NAME', 'title', 'Title', 'TITLE');
+    columnConfig.subtitle.push('subtitle', 'Subtitle', 'SUBTITLE', 'description', 'Description', 'DESCRIPTION', 'desc', 'Desc', 'DESC');
+    columnConfig.img.push('thumbnail', 'Thumbnail', 'THUMBNAIL', 'img', 'Img', 'IMG', 'type', 'Type', 'TYPE', 'icon', 'Icon', 'ICON');
+    columnConfig.parent.push('parent', 'Parent', 'PARENT');
+    columnConfig.url.push('url', 'Url', 'URL', 'link', 'Link', 'LINK');
+    columnConfig.type.push('type', 'Type', 'TYPE');
+
+    return columnConfig;
+  }
+  
+  // Fallback to legacy configuration
+  return getColumnConfigurationLegacy();
+}
+
+// Legacy column configuration (for backward compatibility)
+function getColumnConfigurationLegacy() {
+  const container = document.querySelector('.xcanvas');
   if (!container) {
     // Fallback to default configuration
     return {
@@ -189,6 +302,16 @@ function buildHierarchies(data) {
   const columnConfig = getColumnConfiguration();
 
   data.forEach(d => {
+    // Skip completely empty rows
+    const isEmptyRow = Object.values(d).every(value => 
+      value === undefined || value === null || value === "" || value.toString().trim() === ""
+    );
+    
+    if (isEmptyRow) {
+      console.log('[CSV Processing] Skipping empty row:', d);
+      return; // Skip this row
+    }
+    
     // Use custom column configuration with fallbacks
     let id = getColumnValue(d, columnConfig.id, "");
     let name = getColumnValue(d, columnConfig.name, "Nodo sin nombre");
@@ -199,6 +322,14 @@ function buildHierarchies(data) {
     let parent = getColumnValue(d, columnConfig.parent, "");
     let url = getColumnValue(d, columnConfig.url, "");
     let type = getColumnValue(d, columnConfig.type, "");
+
+
+
+    // Skip nodes without essential data (id or name)
+    if (!id || !name || id.trim() === "" || name.trim() === "") {
+      console.log('[CSV Processing] Skipping node without essential data:', { id, name });
+      return; // Skip this row
+    }
 
     let node = { 
       id, 
@@ -237,17 +368,17 @@ function drawTrees(trees) {
   svg.classList.remove('loaded');
   
   // Store all node data globally for keyboard navigation
-  window.swDiagrams.currentData = [];
+  window.$xDiagrams.currentData = [];
   trees.forEach(tree => {
     const collectNodes = (node) => {
-      window.swDiagrams.currentData.push(node);
+      window.$xDiagrams.currentData.push(node);
       if (node.children) {
         node.children.forEach(collectNodes);
       }
     };
     collectNodes(tree);
   });
-  console.log('[Keyboard Navigation] Stored', window.swDiagrams.currentData.length, 'nodes for navigation');
+  console.log('[Keyboard Navigation] Stored', window.$xDiagrams.currentData.length, 'nodes for navigation');
   
   try {
     const g = d3.select(svg).append("g");
@@ -341,19 +472,20 @@ function drawTrees(trees) {
           .on("click", function(event, d) {
             event.stopPropagation();
             
-            // Enable keyboard navigation when a node is clicked
-            if (window.swDiagrams.keyboardNavigation) {
-              window.swDiagrams.keyboardNavigation.enable();
+            // Enable keyboard navigation when a node is clicked (only if enabled)
+            if (isOptionEnabled('keyboardNavigation') && window.$xDiagrams.keyboardNavigation) {
+              window.$xDiagrams.keyboardNavigation.enable();
               
               // Find the index of this node in the global data
-              const nodeIndex = window.swDiagrams.currentData.findIndex(item => item.id === d.data.id);
+              const nodeIndex = window.$xDiagrams.currentData.findIndex(item => item.id === d.data.id);
               if (nodeIndex !== -1) {
-                window.swDiagrams.keyboardNavigation.currentNodeIndex = nodeIndex;
-                window.swDiagrams.keyboardNavigation.selectNode(nodeIndex);
+                window.$xDiagrams.keyboardNavigation.currentNodeIndex = nodeIndex;
+                window.$xDiagrams.keyboardNavigation.selectNode(nodeIndex);
               }
             }
             
-            if (window.openSidePanel) {
+            // Open side panel only if enabled
+            if (isOptionEnabled('sidePanel') !== false && window.openSidePanel) {
               window.openSidePanel(d.data);
             }
           });
@@ -686,9 +818,9 @@ function applyAutoZoom() {
   console.log('[Zoom] Zoom automático aplicado exitosamente');
   
   // Preserve current theme after zoom
-  setTimeout(() => {
+  setTimeout(async () => {
     if (window.preserveCurrentTheme) {
-      window.preserveCurrentTheme();
+      await window.preserveCurrentTheme();
     }
   }, 100);
 }
@@ -701,7 +833,7 @@ function ensureZoomBehavior() {
     svg.style('pointer-events', 'auto');
     
       // Store reference to current zoom for external access
-  window.swDiagrams.currentZoom = zoom;
+  window.$xDiagrams.currentZoom = zoom;
   
   console.log('[Zoom] Zoom behavior aplicado');
   }
@@ -713,6 +845,8 @@ function wrap(text, width) {
   text.each(function() {
     const textElement = d3.select(this);
     let originalText = textElement.text();
+
+
 
     // Si hay saltos de línea, solo se consideran los dos primeros segmentos
     let lines = originalText.split('\n');
@@ -729,8 +863,10 @@ function wrap(text, width) {
       .attr('y', getComputedStyle(document.documentElement).getPropertyValue('--label-y'))
       .attr('dy', (parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--label-dy')) || 0) + 'em')
       .attr('text-anchor', 'middle')
+      .style('font-size', getComputedStyle(document.documentElement).getPropertyValue('--label-font-size'))
       .text('');
     let usedWords = 0;
+    
     for (let i = 0; i < words.length; i++) {
       let testLine = currentLine ? currentLine + ' ' + words[i] : words[i];
       tspan1.text(testLine);
@@ -753,15 +889,21 @@ function wrap(text, width) {
       // Si quedaron palabras sin usar, forman la segunda línea
       secondLineText = words.slice(usedWords).join(' ');
     }
+
+
     if (secondLineText) {
       let tspan2 = textElement.append('tspan')
         .attr('x', getComputedStyle(document.documentElement).getPropertyValue('--label-x'))
         .attr('y', getComputedStyle(document.documentElement).getPropertyValue('--label-y'))
         .attr('dy', lineHeight + 'em')
         .attr('text-anchor', 'middle')
+        .style('font-size', getComputedStyle(document.documentElement).getPropertyValue('--label-font-size'))
         .text('');
       const words2 = secondLineText.split(/\s+/);
       let currentLine2 = '';
+      
+
+      
       for (let i = 0; i < words2.length; i++) {
         let testLine2 = currentLine2 ? currentLine2 + ' ' + words2[i] : words2[i];
         tspan2.text(testLine2 + '...');
@@ -779,7 +921,7 @@ function wrap(text, width) {
 
 // Simplified side panel
 function createSidePanel() {
-  const container = document.querySelector('.sw-diagram-container');
+  const container = document.querySelector('.xcanvas');
   const targetParent = container || document.body;
   
   const sidePanel = document.createElement('div');
@@ -920,6 +1062,12 @@ function openSidePanel(nodeData) {
   }, 100);
   
   sidePanel.classList.add('open');
+  
+  // Trigger onNodeClick hook
+  triggerHook('onNodeClick', { 
+    node: nodeData, 
+    timestamp: new Date().toISOString() 
+  });
 }
 
 // Close side panel
@@ -1041,16 +1189,21 @@ async function setTheme(themeId) {
   // Save theme with unique key per file
   const storageKey = getStorageKey();
   localStorage.setItem(storageKey, themeId);
-  console.log('[Theme System] Tema guardado:', themeId, 'en clave:', storageKey);
+  
+  // Also save to global theme preference for better persistence
+  localStorage.setItem('selectedTheme', themeId);
+  localStorage.setItem('themeMode', isLightTheme(themeId) ? 'light' : 'dark');
+  
+  console.log('[Theme System] Tema guardado:', themeId, 'en clave:', storageKey, 'y global');
   
   // Clear cache before applying theme
-  if (window.swDiagrams && window.swDiagrams.clearCache) {
-    window.swDiagrams.clearCache();
+  if (window.$xDiagrams && window.$xDiagrams.clearCache) {
+    window.$xDiagrams.clearCache();
   }
   
   // Apply theme CSS variables
   const themeVariables = await getThemeVariables(themeId);
-  const targetElement = document.querySelector('.sw-diagram-container') || document.documentElement;
+  const targetElement = document.querySelector('.xcanvas') || document.documentElement;
   
   Object.keys(themeVariables).forEach(varName => {
     targetElement.style.setProperty(varName, themeVariables[varName]);
@@ -1063,6 +1216,12 @@ async function setTheme(themeId) {
   
   // Update switcher colors
   updateSwitcherColors();
+  
+  // Trigger onThemeChange hook
+  triggerHook('onThemeChange', { 
+    theme: themeId, 
+    timestamp: new Date().toISOString() 
+  });
 }
 
 // Cache for themes to avoid repeated fetches
@@ -1076,10 +1235,14 @@ async function getThemeVariables(themeId) {
   }
 
   try {
-    // Load themes from external JSON file
-    const response = await fetch('themes.json');
+    // Load themes from external JSON file (try xthemes.json first, then themes.json as fallback)
+    let response = await fetch('xthemes.json');
     if (!response.ok) {
-      throw new Error(`Failed to load themes: ${response.status}`);
+      console.log('[Theme System] xthemes.json no encontrado, intentando themes.json...');
+      response = await fetch('themes.json');
+      if (!response.ok) {
+        throw new Error(`Failed to load themes: ${response.status}`);
+      }
     }
     
     themesCache = await response.json();
@@ -1146,12 +1309,30 @@ function updateSwitcherColors() {
 function getStorageKey() {
   const path = window.location.pathname;
   const filename = path.split('/').pop() || 'index.html';
-  return `selectedTheme_${filename}`;
+  const key = `selectedTheme_${filename}`;
+  console.log('[Storage Key] Generada clave:', key, 'para archivo:', filename);
+  return key;
 }
 
-// Get theme configuration from HTML
+// Get theme configuration with modern style fallback
 function getThemeConfiguration() {
-  const container = document.querySelector('.sw-diagram-container');
+  const config = getXDiagramsConfiguration();
+  
+  // Try modern configuration first
+  if (config.themes) {
+    return {
+      lightTheme: config.themes.light || 'snow',
+      darkTheme: config.themes.dark || 'onyx'
+    };
+  }
+  
+  // Fallback to legacy configuration
+  return getThemeConfigurationLegacy();
+}
+
+// Legacy theme configuration (for backward compatibility)
+function getThemeConfigurationLegacy() {
+  const container = document.querySelector('.xcanvas');
   if (!container) {
     return { lightTheme: 'snow', darkTheme: 'onyx' };
   }
@@ -1202,37 +1383,113 @@ function getOppositeTheme(currentTheme, config) {
   return isLight ? config.darkTheme : config.lightTheme;
 }
 
-// Initialize theme system (simplified version to use with sw-diagrams-loader.js)
+// ============================================================================
+// NUEVO SISTEMA DE TEMAS SIMPLIFICADO PARA XDIAGRAMS
+// ============================================================================
+
+// Global theme state
+window.$xDiagrams.themeState = {
+  current: 'snow',
+  lightTheme: 'snow',
+  darkTheme: 'onyx',
+  isInitialized: false
+};
+
+// Simple theme toggle function
+async function toggleTheme() {
+  console.log('[XTheme] Toggle de tema iniciado');
+  
+  const state = window.$xDiagrams.themeState;
+  const currentTheme = state.current;
+  const isCurrentLight = isLightTheme(currentTheme);
+  const newTheme = isCurrentLight ? state.darkTheme : state.lightTheme;
+  
+  console.log('[XTheme] Tema actual:', currentTheme, '(es claro:', isCurrentLight, ')');
+  console.log('[XTheme] Cambiando a:', newTheme);
+  
+  // Update state
+  state.current = newTheme;
+  
+  // Save to localStorage FIRST (before applying theme)
+  const storageKey = getStorageKey();
+  localStorage.setItem(storageKey, newTheme);
+  localStorage.setItem('selectedTheme', newTheme);
+  localStorage.setItem('themeMode', isLightTheme(newTheme) ? 'light' : 'dark');
+  
+  console.log('[XTheme] Tema guardado en localStorage:', storageKey, 'y global');
+  
+  // Apply theme
+  await setTheme(newTheme);
+  
+  // Verify the theme was saved correctly
+  const savedTheme = localStorage.getItem(storageKey);
+  console.log('[XTheme] Verificación - Tema guardado:', savedTheme);
+  
+  // Trigger hook
+  triggerHook('onThemeChange', { 
+    theme: newTheme, 
+    timestamp: new Date().toISOString() 
+  });
+  
+  console.log('[XTheme] Tema cambiado exitosamente a:', newTheme);
+}
+
+// Initialize theme system (SIMPLIFIED - NO INTERFERENCE WITH LOADER)
 async function initializeThemeSystem() {
+  console.log('[XTheme] Iniciando sistema de temas (solo toggle)...');
+  
   const config = getThemeConfiguration();
   const storageKey = getStorageKey();
-  console.log('[Theme System] Configuración cargada:', config);
-  console.log('[Theme System] Clave de almacenamiento:', storageKey);
   
-  // If theme was already applied early, just configure the toggle
-  const currentTheme = localStorage.getItem(storageKey) || config.lightTheme;
-  console.log('[Theme System] Tema actual:', currentTheme);
+  // Initialize global state
+  window.$xDiagrams.themeState.lightTheme = config.lightTheme;
+  window.$xDiagrams.themeState.darkTheme = config.darkTheme;
   
-  // Apply complete theme (with all CSS variables)
-  await setTheme(currentTheme);
+  // Get current theme from localStorage (loader already applied it)
+  const savedTheme = localStorage.getItem(storageKey);
+  const currentTheme = savedTheme || config.lightTheme;
   
-  // Configure theme toggle if it exists
+  console.log('[XTheme] Configuración:', config);
+  console.log('[XTheme] Tema actual:', currentTheme);
+  
+  // Update state
+  window.$xDiagrams.themeState.current = currentTheme;
+  
+  // Don't reapply theme - loader already did it
+  console.log('[XTheme] Tema ya aplicado por loader, solo configurando toggle');
+  
+  // Setup theme toggle
+  setupThemeToggle();
+  
+  window.$xDiagrams.themeState.isInitialized = true;
+  console.log('[XTheme] Sistema de temas inicializado correctamente');
+}
+
+// Setup theme toggle button
+function setupThemeToggle() {
+  console.log('[XTheme] Configurando botón de tema...');
+  
   const themeToggle = document.getElementById('theme-toggle');
-  if (themeToggle) {
-    console.log('[Theme System] Botón de tema encontrado, configurando event listener');
-    themeToggle.addEventListener('click', async function() {
-      const currentTheme = localStorage.getItem(storageKey);
-      const isCurrentLight = isLightTheme(currentTheme);
-      const newTheme = getOppositeTheme(currentTheme, config);
-      console.log('[Theme System] Click en botón de tema');
-      console.log('[Theme System] Tema actual:', currentTheme, '(es claro:', isCurrentLight, ')');
-      console.log('[Theme System] Configuración:', config);
-      console.log('[Theme System] Cambiando a:', newTheme);
-      await setTheme(newTheme);
-    });
-  } else {
-    console.warn('[Theme System] Botón de tema NO encontrado');
+  if (!themeToggle) {
+    console.warn('[XTheme] Botón de tema no encontrado');
+    return;
   }
+  
+  console.log('[XTheme] Botón de tema encontrado, configurando...');
+  
+  // Remove existing listeners by cloning
+  const newToggle = themeToggle.cloneNode(true);
+  themeToggle.parentNode.replaceChild(newToggle, themeToggle);
+  
+  // Add new listener
+  newToggle.addEventListener('click', async function(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    console.log('[XTheme] Click en botón de tema detectado');
+    await toggleTheme();
+  });
+  
+  console.log('[XTheme] Botón de tema configurado correctamente');
 }
 
 // Function to force default light theme
@@ -1246,14 +1503,14 @@ async function forceDefaultLightTheme() {
 }
 
 // Function to preserve current theme
-function preserveCurrentTheme() {
+async function preserveCurrentTheme() {
   const storageKey = getStorageKey();
   const currentTheme = localStorage.getItem(storageKey);
   if (currentTheme) {
     console.log('[Theme System] Preservando tema actual:', currentTheme);
     // Apply current theme without changing localStorage
-    const themeVariables = getThemeVariables(currentTheme);
-    const targetElement = document.querySelector('.sw-diagram-container') || document.documentElement;
+    const themeVariables = await getThemeVariables(currentTheme);
+    const targetElement = document.querySelector('.xcanvas') || document.documentElement;
     
     Object.keys(themeVariables).forEach(varName => {
       targetElement.style.setProperty(varName, themeVariables[varName]);
@@ -1270,14 +1527,14 @@ function preserveCurrentTheme() {
 }
 
 // --- Diagram management and switcher (no default diagrams) ---
-window.swDiagrams = window.swDiagrams || {};
-window.swDiagrams.currentDiagramIdx = 0;
-window.swDiagrams.isLoading = false;
-window.swDiagrams.loadedDiagrams = new Map();
-window.swDiagrams.currentUrl = null;
+window.$xDiagrams = window.$xDiagrams || {};
+window.$xDiagrams.currentDiagramIdx = 0;
+window.$xDiagrams.isLoading = false;
+window.$xDiagrams.loadedDiagrams = new Map();
+window.$xDiagrams.currentUrl = null;
 
 // Keyboard navigation system
-window.swDiagrams.keyboardNavigation = {
+window.$xDiagrams.keyboardNavigation = {
   currentNodeIndex: -1,
   allNodes: [],
   isEnabled: false,
@@ -1752,8 +2009,8 @@ window.swDiagrams.keyboardNavigation = {
     
     // Find the corresponding data in the global data structure
     // This assumes the data is stored globally when the diagram is loaded
-    if (window.swDiagrams.currentData) {
-      return window.swDiagrams.currentData.find(item => item.id === nodeId);
+    if (window.$xDiagrams.currentData) {
+      return window.$xDiagrams.currentData.find(item => item.id === nodeId);
     }
     
     return null;
@@ -1769,7 +2026,7 @@ window.swDiagrams.keyboardNavigation = {
     // Count how many levels up we need to go to reach the root
     while (current.parent) {
       level++;
-      current = window.swDiagrams.currentData.find(item => item.id === current.parent);
+      current = window.$xDiagrams.currentData.find(item => item.id === current.parent);
       if (!current) break;
     }
     
@@ -1801,25 +2058,31 @@ window.swDiagrams.keyboardNavigation = {
   }
 };
 // DO NOT define default diagrams here
-window.swDiagrams.getDiagramIndexFromURL = function() {
+window.$xDiagrams.getDiagramIndexFromURL = function() {
     const urlParams = new URLSearchParams(window.location.search);
     const diagramId = urlParams.get('d');
-    if (diagramId !== null && Array.isArray(window.swDiagrams.diagrams)) {
+    const diagrams = getDiagrams();
+    if (diagramId !== null && Array.isArray(diagrams)) {
         const index = parseInt(diagramId);
-        if (!isNaN(index) && index >= 0 && index < window.swDiagrams.diagrams.length) {
+        if (!isNaN(index) && index >= 0 && index < diagrams.length) {
             return index;
         }
     }
     return 0;
 };
-window.swDiagrams.updateTopbarTitle = function(diagramIndex) {
+window.$xDiagrams.updateTopbarTitle = function(diagramIndex) {
     // Title is now fixed and doesn't change based on diagram selection
     // The title is set once during initialization and remains constant
     const titleElement = document.querySelector('.diagram-title');
     if (!titleElement) {
-        // If title element doesn't exist, get the fixed title from HTML or page title
-        const originalContainer = document.querySelector('.sw-diagram-container');
-        let fixedTitle = originalContainer ? originalContainer.getAttribute('data-title') : null;
+        // Get title from $xDiagrams object first, then fallback to HTML
+        let fixedTitle = window.$xDiagrams && window.$xDiagrams.title ? window.$xDiagrams.title : null;
+        
+        // If no title in $xDiagrams, try data-title attribute
+        if (!fixedTitle) {
+            const originalContainer = document.querySelector('.xcanvas');
+            fixedTitle = originalContainer ? originalContainer.getAttribute('data-title') : null;
+        }
         
         // If no data-title is defined, use the HTML <title> element
         if (!fixedTitle) {
@@ -1838,7 +2101,7 @@ window.swDiagrams.updateTopbarTitle = function(diagramIndex) {
         }
     }
 };
-window.swDiagrams.renderDiagramButtons = function() {
+window.$xDiagrams.renderDiagramButtons = function() {
     const dropdown = document.getElementById('diagram-dropdown');
     const dropdownContent = document.getElementById('diagram-dropdown-content');
     const dropdownBtn = document.getElementById('diagram-dropdown-btn');
@@ -1848,7 +2111,8 @@ window.swDiagrams.renderDiagramButtons = function() {
     
     dropdownContent.innerHTML = '';
     
-    if (!Array.isArray(window.swDiagrams.diagrams) || window.swDiagrams.diagrams.length === 0) {
+    const diagrams = getDiagrams();
+    if (!Array.isArray(diagrams) || diagrams.length === 0) {
         // Show centered message
         const msg = document.createElement('div');
         msg.style.textAlign = 'center';
@@ -1862,18 +2126,18 @@ window.swDiagrams.renderDiagramButtons = function() {
     }
     
     // Update dropdown button text with current selection
-    if (dropdownText && window.swDiagrams.diagrams[window.swDiagrams.currentDiagramIdx]) {
-        dropdownText.textContent = window.swDiagrams.diagrams[window.swDiagrams.currentDiagramIdx].name;
+    if (dropdownText && diagrams[window.$xDiagrams.currentDiagramIdx]) {
+        dropdownText.textContent = diagrams[window.$xDiagrams.currentDiagramIdx].name;
     }
     
-    window.swDiagrams.diagrams.forEach((d, idx) => {
+    diagrams.forEach((d, idx) => {
         const link = document.createElement('a');
         link.href = `?d=${idx}`;
-        link.className = 'switcher-btn' + (idx === window.swDiagrams.currentDiagramIdx ? ' active' : '');
+        link.className = 'switcher-btn' + (idx === window.$xDiagrams.currentDiagramIdx ? ' active' : '');
         link.textContent = d.name;
         link.style.textDecoration = 'none';
         
-        if (window.swDiagrams.isLoading) {
+        if (window.$xDiagrams.isLoading) {
             link.style.pointerEvents = 'none';
             link.style.opacity = '0.5';
         }
@@ -1881,24 +2145,24 @@ window.swDiagrams.renderDiagramButtons = function() {
         link.addEventListener('click', (e) => {
             e.preventDefault();
             e.stopPropagation();
-            if (window.swDiagrams.currentDiagramIdx !== idx && !window.swDiagrams.isLoading) {
+            if (window.$xDiagrams.currentDiagramIdx !== idx && !window.$xDiagrams.isLoading) {
                 // Close side panel if open
                 if (window.closeSidePanel) {
                     window.closeSidePanel();
                 }
                 
                 // Clear cache before switching diagrams
-                if (window.swDiagrams.clearCache) {
-                    window.swDiagrams.clearCache();
+                if (window.$xDiagrams.clearCache) {
+                    window.$xDiagrams.clearCache();
                 }
                 
                 const url = new URL(window.location);
                 url.searchParams.set('d', idx.toString());
                 window.history.pushState({}, '', url);
-                window.swDiagrams.currentDiagramIdx = idx;
-                window.swDiagrams.updateTopbarTitle(idx);
-                window.swDiagrams.renderDiagramButtons();
-                window.swDiagrams.loadDiagram(d.url);
+                window.$xDiagrams.currentDiagramIdx = idx;
+                window.$xDiagrams.updateTopbarTitle(idx);
+                window.$xDiagrams.renderDiagramButtons();
+                window.$xDiagrams.loadDiagram(d.url);
                 
                 // Close dropdown after selection
                 dropdown.classList.remove('open');
@@ -1911,23 +2175,24 @@ window.swDiagrams.renderDiagramButtons = function() {
     // Apply current theme colors to the switcher buttons
     updateSwitcherColors();
 };
-window.swDiagrams.loadDiagram = function(url) {
-    if (!Array.isArray(window.swDiagrams.diagrams) || window.swDiagrams.diagrams.length === 0) {
+window.$xDiagrams.loadDiagram = function(url) {
+    const diagrams = getDiagrams();
+    if (!Array.isArray(diagrams) || diagrams.length === 0) {
         // Don't load anything if no diagrams are defined
         return;
     }
-    if (window.swDiagrams.isLoading) return;
+    if (window.$xDiagrams.isLoading) return;
     
     // Close side panel if open
     if (window.closeSidePanel) {
         window.closeSidePanel();
     }
     
-    window.swDiagrams.isLoading = true;
-    window.swDiagrams.currentUrl = url;
+    window.$xDiagrams.isLoading = true;
+    window.$xDiagrams.currentUrl = url;
     
     // Force cache refresh before loading
-    window.swDiagrams.clearCache();
+    window.$xDiagrams.clearCache();
     
     // Add cache buster to URL if it's a Google Sheets URL
     let finalUrl = url;
@@ -1952,7 +2217,10 @@ window.swDiagrams.loadDiagram = function(url) {
     if (error) error.textContent = '';
     if (window.initDiagram) {
         window.initDiagram(finalUrl, function() {
-            if (window.applyAutoZoom) window.applyAutoZoom();
+            // Apply auto zoom only if enabled
+            if (isOptionEnabled('autoZoom') !== false && window.applyAutoZoom) {
+              window.applyAutoZoom();
+            }
             setTimeout(() => {
                 if (loading) loading.style.display = 'none';
                 if (svg) {
@@ -1963,24 +2231,24 @@ window.swDiagrams.loadDiagram = function(url) {
                     if (window.ensureZoomBehavior) window.ensureZoomBehavior();
                     if (window.setupClosePanelOnSvgClick) window.setupClosePanelOnSvgClick();
                 }
-                window.swDiagrams.isLoading = false;
+                window.$xDiagrams.isLoading = false;
             }, 100);
         });
         setTimeout(() => {
-            if (window.swDiagrams.isLoading) {
+            if (window.$xDiagrams.isLoading) {
                 if (loading) loading.style.display = 'none';
                 if (svg) svg.classList.add('loaded');
-                window.swDiagrams.isLoading = false;
-                window.swDiagrams.currentUrl = null;
+                window.$xDiagrams.isLoading = false;
+                window.$xDiagrams.currentUrl = null;
             }
         }, 10000);
     } else {
-        window.swDiagrams.isLoading = false;
+        window.$xDiagrams.isLoading = false;
     }
 };
-window.swDiagrams.clearCache = function() {
-    window.swDiagrams.loadedDiagrams.clear();
-    window.swDiagrams.currentUrl = null;
+window.$xDiagrams.clearCache = function() {
+    window.$xDiagrams.loadedDiagrams.clear();
+    window.$xDiagrams.currentUrl = null;
     
     // Clear browser cache for CSV and SVG files
     if ('caches' in window) {
@@ -2024,10 +2292,10 @@ function renderSwDiagramBase() {
   if (!document.getElementById('sw-diagram')) {
     const container = document.createElement('div');
     container.id = 'sw-diagram';
-    container.className = 'sw-diagram-container';
+    container.className = 'xcanvas';
     
     // Get theme configuration from original container
-    const originalContainer = document.querySelector('.sw-diagram-container');
+    const originalContainer = document.querySelector('.xcanvas');
     if (originalContainer) {
       const jsonThemes = originalContainer.getAttribute('data-themes');
       if (jsonThemes) {
@@ -2052,9 +2320,14 @@ function renderSwDiagramBase() {
       container.setAttribute('data-dark-theme', 'onyx');
     }
     
-    // Get fixed title from HTML or use page title as fallback
-    const titleContainer = document.querySelector('.sw-diagram-container');
-    let fixedTitle = titleContainer ? titleContainer.getAttribute('data-title') : null;
+    // Get fixed title from $xDiagrams object first, then fallback to HTML
+    let fixedTitle = window.$xDiagrams && window.$xDiagrams.title ? window.$xDiagrams.title : null;
+    
+    // If no title in $xDiagrams, try data-title attribute
+    if (!fixedTitle) {
+        const titleContainer = document.querySelector('.xcanvas');
+        fixedTitle = titleContainer ? titleContainer.getAttribute('data-title') : null;
+    }
     
     // If no data-title is defined, use the HTML <title> element
     if (!fixedTitle) {
@@ -2114,29 +2387,39 @@ function renderSwDiagramBase() {
   }
   // Initialize theme system after base structure is rendered
   console.log('[Base Render] Inicializando sistema de temas...');
-  if (window.initializeThemeSystem) {
-    window.initializeThemeSystem().then(() => {
-      console.log('[Base Render] Sistema de temas inicializado correctamente');
-    }).catch(error => {
-      console.error('[Base Render] Error inicializando sistema de temas:', error);
-    });
-  } else {
-    console.warn('[Base Render] initializeThemeSystem no está disponible');
-  }
-  // Automatic initialization of dropdown and diagram when page loads
-  if (document.getElementById('diagram-dropdown')) {
-    window.swDiagrams.currentDiagramIdx = window.swDiagrams.getDiagramIndexFromURL();
-    window.swDiagrams.updateTopbarTitle(window.swDiagrams.currentDiagramIdx);
-    window.swDiagrams.renderDiagramButtons();
-    window.swDiagrams.loadDiagram(window.swDiagrams.diagrams[window.swDiagrams.currentDiagramIdx].url);
-  }
+  initializeThemeSystem().then(() => {
+    console.log('[Base Render] Sistema de temas inicializado correctamente');
+    
+    // Check theme state after initialization
+    setTimeout(() => {
+      checkThemeOnLoad();
+    }, 500);
+  }).catch(error => {
+    console.error('[Base Render] Error inicializando sistema de temas:', error);
+  });
+      // Automatic initialization of dropdown and diagram when page loads
+    if (document.getElementById('diagram-dropdown')) {
+      const diagrams = getDiagrams();
+      window.$xDiagrams.currentDiagramIdx = window.$xDiagrams.getDiagramIndexFromURL();
+      window.$xDiagrams.updateTopbarTitle(window.$xDiagrams.currentDiagramIdx);
+      window.$xDiagrams.renderDiagramButtons();
+      if (diagrams[window.$xDiagrams.currentDiagramIdx]) {
+        window.$xDiagrams.loadDiagram(diagrams[window.$xDiagrams.currentDiagramIdx].url);
+      }
+    }
 }
 
 // Call base rendering function when library loads
 function initializeWhenReady() {
   // Wait for diagrams to be defined
-  if (window.swDiagrams && window.swDiagrams.diagrams && Array.isArray(window.swDiagrams.diagrams)) {
+  const diagrams = getDiagrams();
+  if (diagrams && Array.isArray(diagrams)) {
     renderSwDiagramBase();
+    
+    // Initialize theme system after base structure is rendered
+    if (window.$xDiagrams.themeState && !window.$xDiagrams.themeState.isInitialized) {
+      initializeThemeSystem();
+    }
   } else {
     // Check again in 100ms
     setTimeout(initializeWhenReady, 100);
@@ -2165,6 +2448,279 @@ window.getThemeConfiguration = getThemeConfiguration;
 window.getStorageKey = getStorageKey;
 window.getOppositeTheme = getOppositeTheme;
 window.isLightTheme = isLightTheme;
+
+// Debug function to check theme state
+window.debugThemeState = function() {
+  console.log('[XTheme Debug] === ESTADO ACTUAL DEL TEMA ===');
+  const state = window.$xDiagrams.themeState;
+  const storageKey = getStorageKey();
+  const storedTheme = localStorage.getItem(storageKey);
+  const globalTheme = localStorage.getItem('selectedTheme');
+  const themeMode = localStorage.getItem('themeMode');
+  const bodyClasses = document.body.className;
+  const config = getThemeConfiguration();
+  
+  console.log('[XTheme Debug] Estado global:', state);
+  console.log('[XTheme Debug] Clave de almacenamiento:', storageKey);
+  console.log('[XTheme Debug] Tema en localStorage (específico):', storedTheme);
+  console.log('[XTheme Debug] Tema en localStorage (global):', globalTheme);
+  console.log('[XTheme Debug] Modo de tema:', themeMode);
+  console.log('[XTheme Debug] Clases del body:', bodyClasses);
+  console.log('[XTheme Debug] Configuración:', config);
+  
+  // Check if theme is properly applied
+  const expectedClass = storedTheme ? `theme-${storedTheme}` : 'theme-snow';
+  const isThemeApplied = bodyClasses.includes(expectedClass);
+  console.log('[XTheme Debug] Tema aplicado correctamente:', isThemeApplied, '(esperado:', expectedClass, ')');
+  
+  // Check for inconsistencies
+  if (storedTheme && globalTheme && storedTheme !== globalTheme) {
+    console.log('[XTheme Debug] ⚠️ INCONSISTENCIA: Tema específico y global son diferentes');
+  }
+  
+  // Check all localStorage items for debugging
+  console.log('[XTheme Debug] Todos los items en localStorage:');
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    const value = localStorage.getItem(key);
+    console.log(`[XTheme Debug] ${key}: ${value}`);
+  }
+  
+  console.log('[XTheme Debug] === FIN DEL ESTADO ===');
+};
+
+// Test function to manually trigger theme toggle
+window.testXThemeToggle = async function() {
+  console.log('[XTheme Test] Probando toggle de tema manualmente...');
+  if (window.$xDiagrams.themeState && window.$xDiagrams.themeState.isInitialized) {
+    await toggleTheme();
+    console.log('[XTheme Test] Toggle completado');
+  } else {
+    console.warn('[XTheme Test] Sistema de temas no inicializado');
+  }
+};
+
+// Function to clear theme localStorage and reset
+window.clearThemeStorage = function() {
+  console.log('[XTheme Clear] Limpiando localStorage de temas...');
+  
+  // Clear all theme-related keys
+  const keysToRemove = [];
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    if (key && (key.startsWith('selectedTheme_') || 
+                key.startsWith('themeSystemInitialized_') ||
+                key === 'selectedTheme' ||
+                key === 'theme' ||
+                key === 'themeMode')) {
+      keysToRemove.push(key);
+    }
+  }
+  
+  keysToRemove.forEach(key => {
+    localStorage.removeItem(key);
+    console.log('[XTheme Clear] Removido:', key);
+  });
+  
+  console.log('[XTheme Clear] localStorage limpiado. Recarga la página para probar.');
+};
+
+// Function to clear only global theme preferences
+window.clearGlobalThemePreferences = function() {
+  console.log('[XTheme Clear] Limpiando solo preferencias globales...');
+  
+  const globalKeys = ['selectedTheme', 'theme', 'themeMode'];
+  globalKeys.forEach(key => {
+    if (localStorage.getItem(key)) {
+      localStorage.removeItem(key);
+      console.log('[XTheme Clear] Removida preferencia global:', key);
+    }
+  });
+  
+  console.log('[XTheme Clear] Preferencias globales limpiadas. Cada archivo mantendrá su tema específico.');
+};
+
+// Function to set current file theme preference
+window.setCurrentFileTheme = function(theme) {
+  console.log('[XTheme Set] Estableciendo tema para archivo actual:', theme);
+  
+  const storageKey = getStorageKey();
+  localStorage.setItem(storageKey, theme);
+  
+  // Also save to global theme preference
+  localStorage.setItem('selectedTheme', theme);
+  localStorage.setItem('themeMode', isLightTheme(theme) ? 'light' : 'dark');
+  
+  // Update global state
+  if (window.$xDiagrams.themeState) {
+    window.$xDiagrams.themeState.current = theme;
+  }
+  
+  console.log('[XTheme Set] Tema establecido:', theme, 'en clave:', storageKey, 'y global');
+};
+
+// Function to force theme synchronization
+window.syncThemeState = function() {
+  console.log('[XTheme Sync] Sincronizando estado del tema...');
+  
+  const storageKey = getStorageKey();
+  const specificTheme = localStorage.getItem(storageKey);
+  const globalTheme = localStorage.getItem('selectedTheme');
+  
+  if (specificTheme && globalTheme && specificTheme !== globalTheme) {
+    console.log('[XTheme Sync] Inconsistencia detectada, sincronizando...');
+    localStorage.setItem('selectedTheme', specificTheme);
+    localStorage.setItem('themeMode', isLightTheme(specificTheme) ? 'light' : 'dark');
+    console.log('[XTheme Sync] Tema sincronizado:', specificTheme);
+  } else if (globalTheme && !specificTheme) {
+    console.log('[XTheme Sync] Usando tema global como específico:', globalTheme);
+    localStorage.setItem(storageKey, globalTheme);
+  } else if (specificTheme && !globalTheme) {
+    console.log('[XTheme Sync] Usando tema específico como global:', specificTheme);
+    localStorage.setItem('selectedTheme', specificTheme);
+    localStorage.setItem('themeMode', isLightTheme(specificTheme) ? 'light' : 'dark');
+  }
+  
+  console.log('[XTheme Sync] Sincronización completada');
+};
+
+// Function to force dark theme
+window.forceDarkTheme = function() {
+  console.log('[XTheme Force] Forzando tema oscuro...');
+  
+  const storageKey = getStorageKey();
+  localStorage.setItem(storageKey, 'onyx');
+  localStorage.setItem('selectedTheme', 'onyx');
+  localStorage.setItem('themeMode', 'dark');
+  
+  // Update state
+  if (window.$xDiagrams.themeState) {
+    window.$xDiagrams.themeState.current = 'onyx';
+  }
+  
+  // Apply theme
+  setTheme('onyx');
+  
+  console.log('[XTheme Force] Tema oscuro forzado');
+};
+
+// Function to check theme on page load
+window.checkThemeOnLoad = function() {
+  console.log('[XTheme Load Check] === VERIFICACIÓN DE CARGA ===');
+  
+  const storageKey = getStorageKey();
+  const specificTheme = localStorage.getItem(storageKey);
+  const globalTheme = localStorage.getItem('selectedTheme');
+  const themeMode = localStorage.getItem('themeMode');
+  const bodyClasses = document.body.className;
+  
+  console.log('[XTheme Load Check] Clave específica:', storageKey);
+  console.log('[XTheme Load Check] Tema específico:', specificTheme);
+  console.log('[XTheme Load Check] Tema global:', globalTheme);
+  console.log('[XTheme Load Check] Modo de tema:', themeMode);
+  console.log('[XTheme Load Check] Clases del body:', bodyClasses);
+  
+  // Check if dark theme should be applied
+  const shouldBeDark = specificTheme === 'onyx' || globalTheme === 'onyx' || themeMode === 'dark';
+  const isDarkApplied = bodyClasses.includes('theme-onyx');
+  
+  console.log('[XTheme Load Check] Debería ser oscuro:', shouldBeDark);
+  console.log('[XTheme Load Check] Es oscuro aplicado:', isDarkApplied);
+  
+  if (shouldBeDark && !isDarkApplied) {
+    console.log('[XTheme Load Check] ⚠️ PROBLEMA: Debería ser oscuro pero no está aplicado');
+    forceDarkTheme();
+  } else if (!shouldBeDark && isDarkApplied) {
+    console.log('[XTheme Load Check] ⚠️ PROBLEMA: No debería ser oscuro pero está aplicado');
+  } else {
+    console.log('[XTheme Load Check] ✅ Estado correcto');
+  }
+  
+  console.log('[XTheme Load Check] === FIN DE VERIFICACIÓN ===');
+};
+
+// Function to check if theme toggle button exists
+window.checkThemeToggleButton = function() {
+  console.log('[XTheme Check] Verificando botón de tema...');
+  
+  const themeToggle = document.getElementById('theme-toggle');
+  if (themeToggle) {
+    console.log('[XTheme Check] ✅ Botón de tema encontrado:', themeToggle);
+    console.log('[XTheme Check] Clases del botón:', themeToggle.className);
+    console.log('[XTheme Check] HTML del botón:', themeToggle.outerHTML);
+    
+    // Check if it has event listeners
+    const clone = themeToggle.cloneNode(true);
+    console.log('[XTheme Check] Botón clonado para verificar listeners');
+    
+    return true;
+  } else {
+    console.log('[XTheme Check] ❌ Botón de tema NO encontrado');
+    console.log('[XTheme Check] Elementos con ID theme-toggle:', document.querySelectorAll('#theme-toggle'));
+    console.log('[XTheme Check] Elementos con clase theme-toggle:', document.querySelectorAll('.theme-toggle'));
+    return false;
+  }
+};
+
+// Function to check URL parameters
+window.checkURLParameters = function() {
+  console.log('[URL Debug] === PARÁMETROS DE URL ===');
+  console.log('[URL Debug] URL actual:', window.location.href);
+  console.log('[URL Debug] Search params:', window.location.search);
+  
+  const urlParams = new URLSearchParams(window.location.search);
+  console.log('[URL Debug] Parámetros encontrados:');
+  
+  for (const [key, value] of urlParams.entries()) {
+    console.log(`[URL Debug] ${key}: ${value}`);
+  }
+  
+  // Check if there are any unexpected parameters
+  const expectedParams = ['d'];
+  const unexpectedParams = [];
+  
+  for (const [key, value] of urlParams.entries()) {
+    if (!expectedParams.includes(key)) {
+      unexpectedParams.push({ key, value });
+    }
+  }
+  
+  if (unexpectedParams.length > 0) {
+    console.log('[URL Debug] ⚠️ Parámetros inesperados encontrados:', unexpectedParams);
+  } else {
+    console.log('[URL Debug] ✅ Solo parámetros esperados encontrados');
+  }
+  
+  console.log('[URL Debug] === FIN DE PARÁMETROS ===');
+};
+
+// Function to clean unexpected URL parameters
+window.cleanURLParameters = function() {
+  console.log('[URL Clean] Limpiando parámetros inesperados de la URL...');
+  
+  const url = new URL(window.location);
+  const urlParams = new URLSearchParams(url.search);
+  const expectedParams = ['d'];
+  let cleaned = false;
+  
+  // Remove unexpected parameters
+  for (const [key, value] of urlParams.entries()) {
+    if (!expectedParams.includes(key)) {
+      urlParams.delete(key);
+      console.log(`[URL Clean] Removido parámetro: ${key}=${value}`);
+      cleaned = true;
+    }
+  }
+  
+  if (cleaned) {
+    // Update URL without the unexpected parameters
+    url.search = urlParams.toString();
+    window.history.replaceState({}, '', url);
+    console.log('[URL Clean] URL limpiada:', window.location.href);
+  } else {
+    console.log('[URL Clean] No se encontraron parámetros inesperados');
+  }
+};
 
 // Create keyboard navigation instructions panel
 function createKeyboardInstructionsPanel() {
@@ -2201,11 +2757,11 @@ function createKeyboardInstructionsPanel() {
   document.body.appendChild(instructionsPanel);
   
   // Show/hide panel based on keyboard navigation state
-  window.swDiagrams.keyboardNavigation.showInstructions = function() {
+  window.$xDiagrams.keyboardNavigation.showInstructions = function() {
     instructionsPanel.style.display = 'block';
   };
   
-  window.swDiagrams.keyboardNavigation.hideInstructions = function() {
+  window.$xDiagrams.keyboardNavigation.hideInstructions = function() {
     instructionsPanel.style.display = 'none';
   };
   
@@ -2230,11 +2786,12 @@ window.checkUrlAccessibility = function(url) {
 
 // Function to find diagram by URL and get its fallbacks
 window.findDiagramByUrl = function(url) {
-  if (!window.swDiagrams || !window.swDiagrams.diagrams) {
+  const diagrams = getDiagrams();
+  if (!diagrams) {
     return null;
   }
   
-  return window.swDiagrams.diagrams.find(diagram => diagram.url === url);
+  return diagrams.find(diagram => diagram.url === url);
 };
 
 // Function to try fallback URLs from diagram definition
@@ -2348,13 +2905,18 @@ document.addEventListener("DOMContentLoaded", () => {
   // Create keyboard instructions panel
   createKeyboardInstructionsPanel();
   
-  // Initialize keyboard navigation system
-  if (window.swDiagrams.keyboardNavigation) {
-    window.swDiagrams.keyboardNavigation.init();
+  // Initialize keyboard navigation system only if enabled
+  if (isOptionEnabled('keyboardNavigation') && window.$xDiagrams.keyboardNavigation) {
+    window.$xDiagrams.keyboardNavigation.init();
   }
   
-  // Initialize custom tooltips
-  initializeCustomTooltips();
+  // Initialize custom tooltips only if enabled
+  if (isOptionEnabled('tooltips') !== false) {
+    initializeCustomTooltips();
+  }
+  
+  // Theme system is now handled by the new XTheme system
+  console.log('[DOM Ready] Sistema de temas XTheme ya inicializado automáticamente');
   
   // Setup dropdown functionality
   const dropdownBtn = document.getElementById('diagram-dropdown-btn');
@@ -2384,8 +2946,8 @@ document.addEventListener("DOMContentLoaded", () => {
   
   // Clear cache on page refresh
   window.addEventListener('beforeunload', () => {
-    if (window.swDiagrams && window.swDiagrams.clearCache) {
-      window.swDiagrams.clearCache();
+    if (window.$xDiagrams && window.$xDiagrams.clearCache) {
+      window.$xDiagrams.clearCache();
     }
   });
 }); 

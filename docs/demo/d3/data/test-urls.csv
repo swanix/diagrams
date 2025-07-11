@@ -1,6 +1,0 @@
-ID,Name,Description,Website,Profile,Documentation,Repository,Email,Phone,Notes
-1,John Doe,Software Engineer,https://example.com,https://linkedin.com/in/johndoe,https://docs.example.com,https://github.com/johndoe,john@example.com,555-1234,Regular text note
-2,Jane Smith,Product Manager,www.janesmith.com,linkedin.com/in/janesmith,docs.janesmith.com,github.com/janesmith,jane@janesmith.com,555-5678,Another note
-3,Bob Wilson,Designer,http://bobwilson.design,www.linkedin.com/in/bobwilson,bobwilson.design/docs,gitlab.com/bobwilson,bob@bobwilson.design,555-9012,Check out his portfolio
-4,Alice Brown,Data Scientist,alicebrown.ai,linkedin.com/in/alicebrown,alicebrown.ai/docs,bitbucket.org/alicebrown,alice@alicebrown.ai,555-3456,Great data insights
-5,Charlie Davis,DevOps Engineer,charliedavis.tech,www.linkedin.com/in/charliedavis,charliedavis.tech/docs,github.com/charliedavis,charlie@charliedavis.tech,555-7890,Infrastructure expert 

@@ -156,10 +156,26 @@ function triggerHook(hookName, data) {
   }
 }
 
-// Check if an option is enabled
+// Check if an option is enabled with sensible defaults
 function isOptionEnabled(optionName) {
   const options = getDiagramOptions();
-  return options[optionName] === true;
+  
+  // Define default values for each option
+  const defaultOptions = {
+    autoZoom: true,           // Auto-zoom enabled by default
+    sidePanel: true,          // Side panel enabled by default
+    keyboardNavigation: true, // Keyboard navigation enabled by default
+    tooltips: true,           // Tooltips enabled by default
+    responsive: true          // Responsive design enabled by default
+  };
+  
+  // If the option is explicitly set in the configuration, use that value
+  if (options.hasOwnProperty(optionName)) {
+    return options[optionName] === true;
+  }
+  
+  // Otherwise, use the default value
+  return defaultOptions[optionName] === true;
 }
 
 // Get diagrams from modern configuration
@@ -306,6 +322,8 @@ function buildHierarchies(data) {
     let parent = getColumnValue(d, columnConfig.parent, "");
     let url = getColumnValue(d, columnConfig.url, "");
     let type = getColumnValue(d, columnConfig.type, "");
+
+
 
     // Skip nodes without essential data (id or name)
     if (!id || !name || id.trim() === "" || name.trim() === "") {
@@ -828,6 +846,8 @@ function wrap(text, width) {
     const textElement = d3.select(this);
     let originalText = textElement.text();
 
+
+
     // Si hay saltos de línea, solo se consideran los dos primeros segmentos
     let lines = originalText.split('\n');
     let firstLine = lines[0];
@@ -843,8 +863,10 @@ function wrap(text, width) {
       .attr('y', getComputedStyle(document.documentElement).getPropertyValue('--label-y'))
       .attr('dy', (parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--label-dy')) || 0) + 'em')
       .attr('text-anchor', 'middle')
+      .style('font-size', getComputedStyle(document.documentElement).getPropertyValue('--label-font-size'))
       .text('');
     let usedWords = 0;
+    
     for (let i = 0; i < words.length; i++) {
       let testLine = currentLine ? currentLine + ' ' + words[i] : words[i];
       tspan1.text(testLine);
@@ -867,15 +889,21 @@ function wrap(text, width) {
       // Si quedaron palabras sin usar, forman la segunda línea
       secondLineText = words.slice(usedWords).join(' ');
     }
+
+
     if (secondLineText) {
       let tspan2 = textElement.append('tspan')
         .attr('x', getComputedStyle(document.documentElement).getPropertyValue('--label-x'))
         .attr('y', getComputedStyle(document.documentElement).getPropertyValue('--label-y'))
         .attr('dy', lineHeight + 'em')
         .attr('text-anchor', 'middle')
+        .style('font-size', getComputedStyle(document.documentElement).getPropertyValue('--label-font-size'))
         .text('');
       const words2 = secondLineText.split(/\s+/);
       let currentLine2 = '';
+      
+
+      
       for (let i = 0; i < words2.length; i++) {
         let testLine2 = currentLine2 ? currentLine2 + ' ' + words2[i] : words2[i];
         tspan2.text(testLine2 + '...');

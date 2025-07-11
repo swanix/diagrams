@@ -6,8 +6,8 @@
     <title>Theme Creator - Swanix Diagrams</title>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
-    <script src="sw-diagrams.js"></script>
-    <link href="sw-diagrams.css" rel="stylesheet">
+    <script src="xdiagrams.js"></script>
+    <link href="xdiagrams.css" rel="stylesheet">
     
 
     <style>
@@ -636,8 +636,8 @@
             transform: scale(0.95);
         }
         
-        /* Estilos para el contenedor encapsulado */
-        .swanix-diagram-container {
+        /* Estilos para el contenedor xcanvas (template simple) */
+        .xcanvas {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             background-image: var(--bg-image);
             background-size: cover;
@@ -647,14 +647,14 @@
             color: var(--text-color);
             position: relative;
             height: 100vh;
-                width: 100%;
+            width: 100%;
             overflow: hidden;
             margin: 0;
             padding: 0;
         }
         
         /* Pseudo-elemento para la imagen de fondo */
-        .swanix-diagram-container::before {
+        .xcanvas::before {
             content: '';
             position: absolute;
             top: 0;
@@ -671,7 +671,7 @@
         }
         
         /* Pseudo-elemento para el overlay del color de fondo */
-        .swanix-diagram-container::after {
+        .xcanvas::after {
             content: '';
             position: absolute;
             top: 0;
@@ -684,21 +684,21 @@
             pointer-events: none;
         }
         
-        /* Asegurar que el contenedor tenga las mismas propiedades que el body */
-        .swanix-diagram-container,
-        .swanix-diagram-container * {
+        /* Asegurar que el contenedor tenga las mismas propiedades */
+        .xcanvas,
+        .xcanvas * {
             box-sizing: border-box;
         }
         
         /* Ajustar el SVG para que funcione dentro del contenedor */
-        .swanix-diagram-container svg {
+        .xcanvas svg {
             width: 100%;
-            height: calc(100vh - 60px); /* Restar altura del topbar */
+            height: 100vh;
             display: block;
         }
         
         /* Ajustar el topbar para que funcione dentro del contenedor */
-        .swanix-diagram-container .topbar {
+        .xcanvas .topbar {
             position: relative;
             width: 100%;
             z-index: 10;
@@ -707,7 +707,7 @@
         }
         
         /* Ajustar el loading para que funcione dentro del contenedor */
-        .swanix-diagram-container #loading {
+        .xcanvas #loading {
             position: absolute;
             top: 50%;
             left: 50%;
@@ -716,7 +716,7 @@
         }
         
         /* Ajustar el error message para que funcione dentro del contenedor */
-        .swanix-diagram-container .error-message {
+        .xcanvas .error-message {
             position: absolute;
             bottom: 20px;
             left: 50%;
@@ -725,21 +725,21 @@
         }
         
         /* Ajustar el side panel para que funcione dentro del contenedor */
-        .swanix-diagram-container .side-panel {
+        .xcanvas .side-panel {
             position: absolute;
-            top: 60px; /* Posicionar debajo del topbar */
+            top: 0;
             right: -400px; /* Oculto por defecto */
-            height: calc(100vh - 60px); /* Altura total menos el topbar */
+            height: 100vh;
             z-index: 20;
             transition: right 0.3s ease-in-out;
         }
         
-        .swanix-diagram-container .side-panel.open {
+        .xcanvas .side-panel.open {
             right: 0;
         }
         
         /* Ajustar el side panel overlay para que funcione dentro del contenedor */
-        .swanix-diagram-container .side-panel-overlay {
+        .xcanvas .side-panel-overlay {
             position: absolute;
             top: 0;
             left: 0;
@@ -1009,41 +1009,11 @@
             </div>
     <div class="main-content">
             <div class="diagram-container">
-            <!-- Contenedor encapsulado del diagrama -->
-            <div id="swanix-diagram" class="swanix-diagram-container">
-                <!-- Topbar moderno -->
-                <div class="topbar">
-                    <div class="topbar-left">
-                        <div class="controls-container">
-                            <select id="type-dropdown" class="control-item">
-                                <!-- Se llena dinámicamente -->
-                            </select>
-                            <input type="text" id="search-input" class="control-item" placeholder="Search node...">
-                        </div>
-                    </div>
-                    
-                    <div class="topbar-center">
-                        <h1 class="diagram-title">Swanix Diagrams</h1>
-                    </div>
-                    
-                    <div class="topbar-right">
-                        <select id="theme-selector" class="theme-selector">
-                            <option value="snow">Snow</option>
-                            <option value="onyx">Onyx</option>
-                            <option value="vintage">Vintage</option>
-                            <option value="pastel">Pastel</option>
-                            <option value="neon">Neon</option>
-                        </select>
-                    </div>
+                <!-- Contenedor usando template simple -->
+                <div class="xcanvas">
+                    <!-- El contenido se genera dinámicamente por xdiagrams.js -->
                 </div>
-
-                <svg></svg>
-                <div id="loading" class="loading">
-                    <div class="spinner"></div>
-                </div>
-                <small id="error-message" class="error-message"></small>
             </div>
-        </div>
     </div>
 
     <div id="copy-feedback" class="copy-feedback">
@@ -1051,8 +1021,29 @@
     </div>
 
     <script>
-        // Inicializar el diagrama principal
-        initDiagram("data/tree-simple.csv");
+        // Configuración de XDiagrams usando template simple
+        window.$xDiagrams = {
+            title: "Theme Creator - Swanix Diagrams",
+            diagrams: [
+                {
+                    name: "Sample Diagram", 
+                    url: "data/sample-diagram.csv"
+                }
+            ],
+            options: {
+                autoZoom: true,
+                keyboardNavigation: true,
+                sidePanel: true,
+                tooltips: true,
+                responsive: true
+            }
+        };
+
+        // Inicializar el diagrama principal usando el primer diagrama de la configuración
+        const firstDiagram = window.$xDiagrams.diagrams[0];
+        if (firstDiagram) {
+            initDiagram(firstDiagram.url);
+        }
 
         // Variables CSS por defecto (usando las variables exactas del CSS)
         const defaultValues = {
@@ -1253,8 +1244,8 @@
             document.documentElement.style.setProperty(varName, value);
             document.body.style.setProperty(varName, value);
             
-            // Aplicar también al contenedor encapsulado del diagrama
-            const container = document.querySelector('.swanix-diagram-container');
+            // Aplicar también al contenedor xcanvas del diagrama
+            const container = document.querySelector('.xcanvas');
             if (container) {
                 container.style.setProperty(varName, value);
             }
@@ -1286,18 +1277,22 @@
         }
 
         // Función para resetear un valor individual
-        function resetIndividualValue(varName, originalValue) {
+        async function resetIndividualValue(varName, originalValue) {
             // Obtener el tema actualmente seleccionado
             const selectedTheme = document.getElementById('theme-selector-visible').value;
             
-            // Obtener el valor original del tema actual usando el sistema de temas del diagrama
+            // Obtener el valor original del tema actual usando el sistema de temas de xdiagrams
             let themeValue = originalValue; // Valor por defecto
             
-            if (window.getThemeVariables) {
-                const themeVariables = window.getThemeVariables(selectedTheme);
-                if (themeVariables && themeVariables[varName]) {
-                    themeValue = themeVariables[varName];
+            try {
+                if (window.getThemeVariables) {
+                    const themeVariables = await window.getThemeVariables(selectedTheme);
+                    if (themeVariables && themeVariables[varName]) {
+                        themeValue = themeVariables[varName];
+                    }
                 }
+            } catch (error) {
+                console.warn('Error obteniendo variables del tema:', error);
             }
             
             console.log('Reseteando valor individual:', varName, 'a', themeValue, 'del tema:', selectedTheme);
@@ -1305,7 +1300,7 @@
             // Actualizar variable CSS
             updateCSSVariable(varName, themeValue);
                 
-                // Actualizar input de texto
+            // Actualizar input de texto
             const textInput = document.querySelector('[data-var="' + varName + '"].text-input');
             if (textInput) {
                 textInput.value = themeValue;
@@ -1332,7 +1327,7 @@
             delete customValues[varName];
             localStorage.setItem('customThemeValues', JSON.stringify(customValues));
             
-            // Actualizar SVG dinámicamente
+            // Actualizar SVG dinámicamente usando xdiagrams
             setTimeout(function() {
                 if (window.updateSVGColors) {
                     window.updateSVGColors();
@@ -1398,8 +1393,8 @@
                     document.documentElement.style.setProperty(varName, value);
                     document.body.style.setProperty(varName, value);
                     
-                    // Aplicar también al contenedor encapsulado del diagrama
-                    const container = document.querySelector('.swanix-diagram-container');
+                    // Aplicar también al contenedor xcanvas del diagrama
+                    const container = document.querySelector('.xcanvas');
                     if (container) {
                         container.style.setProperty(varName, value);
                     }
@@ -1459,43 +1454,69 @@
             console.log('Valores custom limpiados');
         }
 
-        // Función para resetear a valores del tema seleccionado
-        function resetToDefault() {
+        // Función para resetear a valores del tema seleccionado usando xdiagrams
+        async function resetToDefault() {
             // Obtener el tema seleccionado actualmente
             const selectedTheme = document.getElementById('theme-selector-visible').value;
-            const themeToReset = themeValues[selectedTheme] || defaultValues;
             
             // Limpiar valores custom
             clearCustomValues();
             
-            Object.keys(themeToReset).forEach(function(varName) {
-                const value = themeToReset[varName];
-                updateCSSVariable(varName, value);
-                
-                // Actualizar controles
-                const textInput = document.querySelector('[data-var="' + varName + '"].text-input');
-                const pickerElement = document.querySelector('[data-var="' + varName + '"].color-picker');
-                const colorInput = pickerElement ? pickerElement.querySelector('input[type="color"]') : null;
-                
-                if (textInput) textInput.value = value;
-                if (colorInput) colorInput.value = value;
-                if (pickerElement && varName !== '--image-filter') {
-                    pickerElement.style.setProperty('--picker-color', value);
-                    pickerElement.style.backgroundColor = value;
+            try {
+                // Usar el sistema de temas de xdiagrams
+                if (window.setTheme) {
+                    await window.setTheme(selectedTheme);
                 }
-            });
 
-            // Actualizar atributos HTML de los color pickers
-            updateColorPickerAttributes(themeToReset);
-            
-            // Actualizar SVG dinámicamente
-            setTimeout(function() {
-                if (window.updateSVGColors) {
-                    window.updateSVGColors();
+                // Obtener las variables del tema desde xdiagrams
+                let themeToReset = {};
+                if (window.getThemeVariables) {
+                    themeToReset = await window.getThemeVariables(selectedTheme);
                 }
-            }, 50);
-            
-            console.log('Reseteado a valores del tema:', selectedTheme);
+
+                // Si no se pudo obtener el tema, usar el fallback local
+                if (!themeToReset || Object.keys(themeToReset).length === 0) {
+                    themeToReset = themeValues[selectedTheme] || defaultValues;
+                    console.warn('Usando tema fallback local para reset:', selectedTheme);
+                }
+                
+                Object.keys(themeToReset).forEach(function(varName) {
+                    const value = themeToReset[varName];
+                    updateCSSVariable(varName, value);
+                    
+                    // Actualizar controles
+                    const textInput = document.querySelector('[data-var="' + varName + '"].text-input');
+                    const pickerElement = document.querySelector('[data-var="' + varName + '"].color-picker');
+                    const colorInput = pickerElement ? pickerElement.querySelector('input[type="color"]') : null;
+                    
+                    if (textInput) textInput.value = value;
+                    if (colorInput) colorInput.value = value;
+                    if (pickerElement && varName !== '--image-filter' && varName !== '--bg-image' && varName !== '--bg-opacity') {
+                        pickerElement.style.setProperty('--picker-color', value);
+                        pickerElement.style.backgroundColor = value;
+                    }
+                });
+
+                // Actualizar atributos HTML de los color pickers
+                updateColorPickerAttributes(themeToReset);
+                
+                // Actualizar SVG dinámicamente usando xdiagrams
+                setTimeout(function() {
+                    if (window.updateSVGColors) {
+                        window.updateSVGColors();
+                    }
+                }, 50);
+                
+                console.log('Reseteado a valores del tema con xdiagrams:', selectedTheme);
+            } catch (error) {
+                console.error('Error reseteando tema con xdiagrams:', error);
+                // Fallback al método anterior
+                const themeToReset = themeValues[selectedTheme] || defaultValues;
+                Object.keys(themeToReset).forEach(function(varName) {
+                    const value = themeToReset[varName];
+                    updateCSSVariable(varName, value);
+                });
+            }
         }
 
         // Función para copiar tema
@@ -1736,93 +1757,113 @@
 
 
 
-        // Función para cargar un tema predefinido
-        function loadPredefinedTheme(themeName) {
-            const theme = themeValues[themeName]; // Usar themeValues en lugar de predefinedThemes
-            if (!theme) return;
+        // Función para cargar un tema predefinido usando xdiagrams
+        async function loadPredefinedTheme(themeName) {
+            console.log('Cargando tema predefinido con xdiagrams:', themeName);
 
-            console.log('Cargando tema predefinido:', themeName);
-
-            // Primero aplicar la clase de tema al body
-            document.body.classList.remove('theme-light', 'theme-dark', 'theme-vintage', 'theme-pastel', 'theme-neon');
-            document.body.classList.add('theme-' + themeName);
-
-            // Aplicar variables CSS y actualizar TODOS los controles
-            Object.keys(theme).forEach(function(varName) {
-                const value = theme[varName];
-                
-                // Aplicar variable CSS solo al document.documentElement (como en sw-diagrams.js)
-                document.documentElement.style.setProperty(varName, value);
-                
-                // Aplicar también al topbar y sidebar para que reciban los estilos
-                const topbar = document.querySelector('.topbar');
-                const sidebar = document.querySelector('.sidebar');
-                const mainContent = document.querySelector('.main-content');
-                
-                if (topbar) topbar.style.setProperty(varName, value);
-                if (sidebar) sidebar.style.setProperty(varName, value);
-                if (mainContent) mainContent.style.setProperty(varName, value);
-                
-                // Debug: Log de variables de imagen de fondo
-                if (varName === '--bg-image' || varName === '--bg-opacity') {
-                    console.log('Variable aplicada:', varName, '=', value);
-                    console.log('Body background-image:', document.body.style.backgroundImage);
-                    console.log('Body background-color:', document.body.style.backgroundColor);
-                    console.log('DocumentElement --bg-image:', getComputedStyle(document.documentElement).getPropertyValue('--bg-image'));
-                    console.log('Body --bg-image:', getComputedStyle(document.body).getPropertyValue('--bg-image'));
+            try {
+                // Usar el sistema de temas de xdiagrams
+                if (window.setTheme) {
+                    await window.setTheme(themeName);
                 }
+
+                // Obtener las variables del tema desde xdiagrams
+                let theme = {};
+                if (window.getThemeVariables) {
+                    theme = await window.getThemeVariables(themeName);
+                }
+
+                // Si no se pudo obtener el tema, usar el fallback local
+                if (!theme || Object.keys(theme).length === 0) {
+                    theme = themeValues[themeName] || {};
+                    console.warn('Usando tema fallback local para:', themeName);
+                }
+
+                // Aplicar variables CSS y actualizar TODOS los controles
+                Object.keys(theme).forEach(function(varName) {
+                    const value = theme[varName];
                     
-                // Actualizar input de texto
-                const textInput = document.querySelector('[data-var="' + varName + '"].text-input');
-                if (textInput) {
-                    textInput.value = value;
-                    console.log('Input de texto actualizado:', varName, '=', value);
-                }
-                
-                // Actualizar color picker (solo para colores, no para filtros)
-                if (varName !== '--image-filter') {
-                    const pickerElement = document.querySelector('[data-var="' + varName + '"].color-picker');
-                    if (pickerElement) {
-                        const colorInput = pickerElement.querySelector('input[type="color"]');
-                        if (colorInput) {
-                            colorInput.value = value;
-                        }
-                        // Actualizar color visual del picker
-                        pickerElement.style.setProperty('--picker-color', value);
-                        pickerElement.style.backgroundColor = value;
-                        // Actualizar también el atributo data-color
-                        pickerElement.setAttribute('data-color', value);
-                        console.log('Color picker actualizado:', varName, '=', value);
+                    // Aplicar variable CSS
+                    document.documentElement.style.setProperty(varName, value);
+                    
+                    // Aplicar también al topbar y sidebar para que reciban los estilos
+                    const topbar = document.querySelector('.topbar');
+                    const sidebar = document.querySelector('.sidebar');
+                    const mainContent = document.querySelector('.main-content');
+                    
+                    if (topbar) topbar.style.setProperty(varName, value);
+                    if (sidebar) sidebar.style.setProperty(varName, value);
+                    if (mainContent) mainContent.style.setProperty(varName, value);
+                    
+                    // Debug: Log de variables de imagen de fondo
+                    if (varName === '--bg-image' || varName === '--bg-opacity') {
+                        console.log('Variable aplicada:', varName, '=', value);
                     }
-                }
-                
-                // Actualizar botón de reset individual con el nuevo valor original
-                const resetBtn = document.querySelector('[onclick*="resetIndividualValue(\'' + varName + '\'"]');
-                if (resetBtn) {
-                    resetBtn.setAttribute('onclick', 'resetIndividualValue(\'' + varName + '\', \'' + value + '\')');
-                    console.log('Botón de reset actualizado para:', varName, '=', value);
-                }
-            });
+                        
+                    // Actualizar input de texto
+                    const textInput = document.querySelector('[data-var="' + varName + '"].text-input');
+                    if (textInput) {
+                        textInput.value = value;
+                        console.log('Input de texto actualizado:', varName, '=', value);
+                    }
+                    
+                    // Actualizar color picker (solo para colores, no para filtros)
+                    if (varName !== '--image-filter' && varName !== '--bg-image' && varName !== '--bg-opacity') {
+                        const pickerElement = document.querySelector('[data-var="' + varName + '"].color-picker');
+                        if (pickerElement) {
+                            const colorInput = pickerElement.querySelector('input[type="color"]');
+                            if (colorInput) {
+                                colorInput.value = value;
+                            }
+                            // Actualizar color visual del picker
+                            pickerElement.style.setProperty('--picker-color', value);
+                            pickerElement.style.backgroundColor = value;
+                            // Actualizar también el atributo data-color
+                            pickerElement.setAttribute('data-color', value);
+                            console.log('Color picker actualizado:', varName, '=', value);
+                        }
+                    }
+                    
+                    // Actualizar botón de reset individual con el nuevo valor original
+                    const resetBtn = document.querySelector('[onclick*="resetIndividualValue(\'' + varName + '\'"]');
+                    if (resetBtn) {
+                        resetBtn.setAttribute('onclick', 'resetIndividualValue(\'' + varName + '\', \'' + value + '\')');
+                        console.log('Botón de reset actualizado para:', varName, '=', value);
+                    }
+                });
 
-            // Actualizar nombre del tema
-            document.getElementById('theme-name').value = themeName + '-custom';
-            
-            // Aplicar valores custom después de cargar el tema base
-            applyCustomValues();
-            
-            // Actualizar atributos HTML de los color pickers
-            updateColorPickerAttributes(theme);
-            
-            // Forzar la actualización del SVG con un pequeño delay
-            setTimeout(function() {
-                if (window.updateSVGColors) {
-                    window.updateSVGColors();
+                // Actualizar nombre del tema
+                document.getElementById('theme-name').value = themeName + '-custom';
+                
+                // Aplicar valores custom después de cargar el tema base
+                applyCustomValues();
+                
+                // Actualizar atributos HTML de los color pickers
+                updateColorPickerAttributes(theme);
+                
+                // Forzar la actualización del SVG con un pequeño delay
+                setTimeout(function() {
+                    if (window.updateSVGColors) {
+                        window.updateSVGColors();
+                    }
+                    // Aplicar tema para asegurar que los color pickers funcionen
+                    applyTheme(false); // Sin mostrar toast
+                }, 100);
+                
+                console.log('Tema', themeName, 'cargado completamente con xdiagrams');
+            } catch (error) {
+                console.error('Error cargando tema con xdiagrams:', error);
+                // Fallback al método anterior
+                const theme = themeValues[themeName];
+                if (theme) {
+                    console.log('Usando fallback local para tema:', themeName);
+                    // Aplicar tema usando el método anterior
+                    Object.keys(theme).forEach(function(varName) {
+                        const value = theme[varName];
+                        updateCSSVariable(varName, value);
+                    });
                 }
-                // Aplicar tema para asegurar que los color pickers funcionen
-                applyTheme(false); // Sin mostrar toast
-            }, 100);
-            
-            console.log('Tema', themeName, 'cargado completamente con valores custom');
+            }
         }
 
         // Event listener para el selector de temas visible
@@ -1859,8 +1900,8 @@
                         document.documentElement.style.setProperty(varName, hexColor);
                         document.body.style.setProperty(varName, hexColor);
                         
-                        // Aplicar también al contenedor encapsulado del diagrama
-                        const container = document.querySelector('.swanix-diagram-container');
+                        // Aplicar también al contenedor xcanvas del diagrama
+                        const container = document.querySelector('.xcanvas');
                         if (container) {
                             container.style.setProperty(varName, hexColor);
                         }
@@ -1904,8 +1945,8 @@
                         document.documentElement.style.setProperty(varName, hexColor);
                         document.body.style.setProperty(varName, hexColor);
                         
-                        // Aplicar también al contenedor encapsulado del diagrama
-                        const container = document.querySelector('.swanix-diagram-container');
+                        // Aplicar también al contenedor xcanvas del diagrama
+                        const container = document.querySelector('.xcanvas');
                         if (container) {
                             container.style.setProperty(varName, hexColor);
                         }
@@ -1952,8 +1993,8 @@
                                 document.documentElement.style.setProperty(varName, newColor);
                                 document.body.style.setProperty(varName, newColor);
                                 
-                                // Aplicar también al contenedor encapsulado del diagrama
-                                const container = document.querySelector('.swanix-diagram-container');
+                                // Aplicar también al contenedor xcanvas del diagrama
+                                const container = document.querySelector('.xcanvas');
                                 if (container) {
                                     container.style.setProperty(varName, newColor);
                                 }
@@ -2032,8 +2073,8 @@
                     document.documentElement.style.setProperty(varName, value);
                     document.body.style.setProperty(varName, value);
                     
-                    // Aplicar también al contenedor encapsulado del diagrama
-                    const container = document.querySelector('.swanix-diagram-container');
+                    // Aplicar también al contenedor xcanvas del diagrama
+                    const container = document.querySelector('.xcanvas');
                     if (container) {
                         container.style.setProperty(varName, value);
                     }
@@ -2109,8 +2150,8 @@
                     document.documentElement.style.setProperty(varName, value);
                     document.body.style.setProperty(varName, value);
                     
-                    // Aplicar también al contenedor encapsulado del diagrama
-                    const container = document.querySelector('.swanix-diagram-container');
+                    // Aplicar también al contenedor xcanvas del diagrama
+                    const container = document.querySelector('.xcanvas');
                     if (container) {
                         container.style.setProperty(varName, value);
                     }
@@ -2155,7 +2196,7 @@
             const hiddenThemeSelector = document.getElementById('theme-selector');
             
             // Sincronizar selectores
-            themeSelector.addEventListener('change', function() {
+            themeSelector.addEventListener('change', async function() {
                 const selectedTheme = this.value;
                 const previousTheme = hiddenThemeSelector.value;
                 hiddenThemeSelector.value = selectedTheme;
@@ -2164,17 +2205,23 @@
                 localStorage.setItem('selectedTheme', selectedTheme);
                 console.log('Tema guardado en localStorage:', selectedTheme);
                 
-                // Siempre cargar el tema predefinido para asegurar que los color pickers se actualicen
-                loadPredefinedTheme(selectedTheme);
-                
-                // También usar el sistema de temas del diagrama si existe
-                if (window.setTheme) {
-                    window.setTheme(selectedTheme);
+                // Usar el sistema de temas de xdiagrams
+                try {
+                    if (window.setTheme) {
+                        await window.setTheme(selectedTheme);
+                    }
+                    
+                    // Cargar el tema predefinido para asegurar que los color pickers se actualicen
+                    await loadPredefinedTheme(selectedTheme);
+                } catch (error) {
+                    console.error('Error cambiando tema con xdiagrams:', error);
+                    // Fallback al método anterior
+                    await loadPredefinedTheme(selectedTheme);
                 }
             });
 
-            // Sincronizar con el selector oculto (para compatibilidad con sw-diagrams.js)
-            hiddenThemeSelector.addEventListener('change', function() {
+            // Sincronizar con el selector oculto (para compatibilidad con xdiagrams.js)
+            hiddenThemeSelector.addEventListener('change', async function() {
                 const selectedTheme = this.value;
                 const previousTheme = themeSelector.value;
                 themeSelector.value = selectedTheme;
@@ -2183,31 +2230,43 @@
                 localStorage.setItem('selectedTheme', selectedTheme);
                 console.log('Tema guardado en localStorage:', selectedTheme);
                 
-                // Siempre cargar el tema predefinido para asegurar que los color pickers se actualicen
-                loadPredefinedTheme(selectedTheme);
-                
-                // También usar el sistema de temas del diagrama si existe
-                if (window.setTheme) {
-                    window.setTheme(selectedTheme);
+                // Usar el sistema de temas de xdiagrams
+                try {
+                    if (window.setTheme) {
+                        await window.setTheme(selectedTheme);
+                    }
+                    
+                    // Cargar el tema predefinido para asegurar que los color pickers se actualicen
+                    await loadPredefinedTheme(selectedTheme);
+                } catch (error) {
+                    console.error('Error cambiando tema con xdiagrams:', error);
+                    // Fallback al método anterior
+                    await loadPredefinedTheme(selectedTheme);
                 }
             });
 
             // Inicializar con tema persistente después de que los color pickers estén listos
-            setTimeout(function() {
-                // Restaurar tema guardado o usar light por defecto
-                const savedTheme = localStorage.getItem('selectedTheme') || 'light';
+            setTimeout(async function() {
+                // Restaurar tema guardado o usar snow por defecto
+                const savedTheme = localStorage.getItem('selectedTheme') || 'snow';
                 console.log('Tema guardado encontrado:', savedTheme);
                 
                 // Establecer el tema guardado como seleccionado
                 themeSelector.value = savedTheme;
                 hiddenThemeSelector.value = savedTheme;
                 
-                // Siempre cargar el tema predefinido para asegurar que los color pickers se actualicen
-                loadPredefinedTheme(savedTheme);
-                
-                // También usar el sistema de temas del diagrama si existe
-                if (window.setTheme) {
-                    window.setTheme(savedTheme);
+                // Usar el sistema de temas de xdiagrams
+                try {
+                    if (window.setTheme) {
+                        await window.setTheme(savedTheme);
+                    }
+                    
+                    // Cargar el tema predefinido para asegurar que los color pickers se actualicen
+                    await loadPredefinedTheme(savedTheme);
+                } catch (error) {
+                    console.error('Error inicializando tema con xdiagrams:', error);
+                    // Fallback al método anterior
+                    await loadPredefinedTheme(savedTheme);
                 }
                 
                 // Aplicar tema inmediatamente para que los color pickers funcionen desde el inicio

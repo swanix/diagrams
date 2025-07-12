@@ -1526,6 +1526,32 @@ function formatUrlForDisplay(url) {
   return formattedUrl;
 }
 
+// Helper function to open URL securely with security attributes
+function openUrlSecurely(url) {
+  try {
+    // Create a temporary link element with security attributes
+    const tempLink = document.createElement('a');
+    tempLink.href = url;
+    tempLink.target = '_blank';
+    tempLink.rel = 'noreferrer noopener'; // Security attributes
+    tempLink.style.display = 'none';
+    
+    // Add to DOM temporarily
+    document.body.appendChild(tempLink);
+    
+    // Programmatically click the link
+    tempLink.click();
+    
+    // Remove from DOM
+    document.body.removeChild(tempLink);
+    
+    return true;
+  } catch (error) {
+    console.error('[Security] Error opening URL securely:', error);
+    return false;
+  }
+}
+
 // Generate panel content
 function generateSidePanelContent(nodeData) {
   if (!nodeData) return '<p>No hay datos disponibles</p>';
@@ -2001,6 +2027,11 @@ window.$xDiagrams.keyboardNavigation = {
           e.preventDefault();
           this.clearSelection();
           break;
+        case ' ':
+        case 'Enter':
+          e.preventDefault();
+          this.openCurrentNodeLink();
+          break;
       }
     });
   },
@@ -2469,6 +2500,43 @@ window.$xDiagrams.keyboardNavigation = {
         inline: 'center'
       });
     }
+  },
+  
+  // Open the link of the currently selected node in a new tab
+  openCurrentNodeLink: function() {
+    if (this.currentNodeIndex === -1 || this.allNodes.length === 0) {
+      console.log('[Keyboard Navigation] No node selected to open link');
+      return;
+    }
+    
+    const currentNode = this.allNodes[this.currentNodeIndex];
+    const nodeData = this.getNodeData(currentNode);
+    
+    if (!nodeData) {
+      console.log('[Keyboard Navigation] No data found for selected node');
+      return;
+    }
+    
+    // Get the URL from the node data
+    const url = nodeData.url;
+    
+    if (!url) {
+      console.log('[Keyboard Navigation] No URL found for node:', nodeData.name);
+      return;
+    }
+    
+    // Validate URL format
+    if (!isUrl(url)) {
+      console.log('[Keyboard Navigation] Invalid URL format:', url);
+      return;
+    }
+    
+    // Open URL in new tab with security attributes
+    if (openUrlSecurely(url)) {
+      console.log('[Keyboard Navigation] Opened link for node:', nodeData.name, 'URL:', url);
+    } else {
+      console.error('[Keyboard Navigation] Failed to open link for node:', nodeData.name);
+    }
   }
 };
 // DO NOT define default diagrams here
@@ -2603,14 +2671,16 @@ window.$xDiagrams.renderDiagramButtons = function() {
                 <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/>
             </svg>
         `;
-        sheetsButton.title = 'Abrir archivo original en Google Sheets';
+        sheetsButton.title = 'Abrir archivo';
         
         sheetsButton.addEventListener('click', (e) => {
             e.preventDefault();
             e.stopPropagation();
             
-            // Open edit URL in new tab
-            window.open(currentDiagram.edit, '_blank');
+            // Open edit URL in new tab with security attributes
+            if (!openUrlSecurely(currentDiagram.edit)) {
+                console.error('[Google Sheets] Failed to open edit link');
+            }
             
             // Close dropdown
             dropdown.classList.remove('open');

@@ -1,6 +1,6 @@
 /*
   Swanix Diagrams - CSS
-  v0.3.0
+  v0.3.1
 */
 
 :root {
@@ -52,6 +52,7 @@
     --control-border: #d1d5db;
     --control-border-hover: #9ca3af;
     --control-border-focus: #1976d2;
+    --control-border-focus-rgb: 25, 118, 210;
     --control-placeholder: #9ca3af;
     --control-shadow: rgba(0, 0, 0, 0.1);
     --control-shadow-focus: rgba(25, 118, 210, 0.2);
@@ -1383,13 +1384,34 @@ body.theme-forest .topbar {
     border: 1px solid var(--switcher-border, #ddd);
     border-radius: 8px;
     z-index: 10001;
-    max-height: 300px;
+    max-height: 70vh;
     overflow-y: auto;
     overflow-x: hidden;
     display: none;
     margin-top: 4px;
     width: 100%;
     box-sizing: border-box;
+    scrollbar-width: thin;
+    scrollbar-color: var(--switcher-border, #ddd) transparent;
+}
+
+/* Estilos para el scrollbar en WebKit (Chrome, Safari, Edge) */
+.diagram-dropdown-content::-webkit-scrollbar {
+    width: 8px;
+}
+
+.diagram-dropdown-content::-webkit-scrollbar-track {
+    background: transparent;
+    border-radius: 4px;
+}
+
+.diagram-dropdown-content::-webkit-scrollbar-thumb {
+    background: var(--switcher-border, #ddd);
+    border-radius: 4px;
+}
+
+.diagram-dropdown-content::-webkit-scrollbar-thumb:hover {
+    background: var(--switcher-btn-border-hover, #9ca3af);
 }
 
 .diagram-dropdown.open .diagram-dropdown-content {
@@ -1596,4 +1618,423 @@ body.theme-neon .theme-toggle .moon-icon {
 #main-diagram-svg.loaded {
     opacity: 1 !important;
     pointer-events: auto;
+}
+
+/* Toast flotante animado */
+.x-toast {
+  position: fixed;
+  right: 32px;
+  bottom: 32px;
+  min-width: 280px;
+  max-width: 400px;
+  background: var(--control-bg, #fff);
+  color: var(--control-text, #222);
+  border-radius: 10px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.18), 0 1.5px 6px rgba(0,0,0,0.08);
+  padding: 18px 28px 18px 20px;
+  font-size: 1rem;
+  z-index: 99999;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(40px) scale(0.98);
+  transition: opacity 0.35s cubic-bezier(.4,0,.2,1), transform 0.35s cubic-bezier(.4,0,.2,1);
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+.x-toast.x-toast-show {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0) scale(1);
+}
+.x-toast.x-toast-success {
+  border-left: 6px solid var(--control-border-focus, #1976d2);
+}
+.x-toast.x-toast-error {
+  border-left: 6px solid var(--control-border, #d1d5db);
+}
+.x-toast.x-toast-mixed {
+  border-left: 6px solid var(--control-border-hover, #9ca3af);
+}
+.x-toast .x-toast-close {
+  background: none;
+  border: none;
+  color: #888;
+  font-size: 1.3em;
+  margin-left: auto;
+  cursor: pointer;
+  padding: 0 0 0 10px;
+  line-height: 1;
+  transition: color 0.2s;
+}
+.x-toast .x-toast-close:hover {
+  color: #222;
+}
+.x-toast .x-toast-icon {
+  font-size: 1.5em;
+  margin-right: 6px;
+  flex-shrink: 0;
+}
+
+/* Diagram Not Found Overlay */
+#diagram-not-found-overlay {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 14px;
+  font-weight: 400;
+  color: var(--text-color);
+  opacity: 0;
+  pointer-events: none;
+  z-index: 1000;
+  text-align: center;
+  transition: opacity 0.8s ease;
+  background: rgba(255, 255, 255, 0.05);
+  padding: 12px 24px;
+  border-radius: 6px;
+  backdrop-filter: blur(1px);
+}
+
+#diagram-not-found-overlay.visible {
+  opacity: 0.6;
+}
+
+/* Immediate removal without transition */
+#diagram-not-found-overlay[style*="transition: none"] {
+  transition: none !important;
+}
+
+/* ===== Drag & Drop Styles ===== */
+.xcanvas {
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+.xcanvas.drag-over {
+  background: rgba(25, 118, 210, 0.1) !important;
+  border: none !important;
+  border-radius: 12px;
+}
+
+.drag-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(var(--control-border-focus-rgb, 25, 118, 210), 0.08);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  pointer-events: none;
+}
+
+.drag-overlay.active {
+  display: flex;
+}
+
+.drag-message {
+  background: var(--control-bg);
+  border: 2px dashed var(--control-border);
+  border-radius: 12px;
+  padding: 20px 30px;
+  font-size: 18px;
+  font-weight: 400;
+  color: var(--control-text);
+  box-shadow: var(--control-shadow);
+  text-align: center;
+}
+
+.drag-message .icon {
+  margin-bottom: 10px;
+  display: block;
+  text-align: center;
+}
+
+.drag-message .icon img {
+  width: 48px;
+  height: 48px;
+  filter: var(--image-filter, none);
+}
+
+.file-drop-zone {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: var(--control-bg);
+  border: 2px solid var(--control-border);
+  border-radius: 12px;
+  padding: 40px;
+  text-align: center;
+  color: var(--control-text);
+  font-size: 16px;
+  opacity: 0;
+  pointer-events: none;
+  transition: all 0.3s ease;
+  z-index: 1000;
+}
+
+.file-drop-zone.active {
+  opacity: 1;
+  pointer-events: auto;
+  border-color: var(--control-border-focus);
+  background: rgba(var(--control-border-focus-rgb, 25, 118, 210), 0.03);
+}
+
+.file-drop-zone .icon {
+  margin-bottom: 20px;
+  display: block;
+  text-align: center;
+}
+
+.file-drop-zone .icon img {
+  width: 64px;
+  height: 64px;
+  filter: var(--image-filter, none);
+  opacity: 0.7;
+}
+
+.file-drop-zone .text {
+  margin-bottom: 10px;
+  font-weight: 500;
+}
+
+.file-drop-zone .subtext {
+  font-size: 14px;
+  opacity: 0.7;
+}
+
+/* ===== RESPONSIVE DESIGN ===== */
+
+/* Tablets y pantallas medianas */
+@media (max-width: 768px) {
+  /* Topbar responsive */
+  .topbar {
+    padding: 0 16px;
+    height: 50px;
+  }
+  
+  .diagram-title {
+    font-size: 0.95rem;
+  }
+  
+  /* Switcher más compacto */
+  .diagram-dropdown-btn {
+    padding: 8px 12px;
+    font-size: 0.85rem;
+    min-width: 160px;
+  }
+  
+  .diagram-dropdown-content .switcher-btn {
+    padding: 8px 10px;
+    font-size: 0.8rem;
+  }
+  
+  /* Dropdown compacto en tablets */
+  .diagram-dropdown-content {
+    max-height: 60vh;
+    margin-top: 3px;
+  }
+  
+  .diagram-dropdown {
+    max-width: 250px;
+  }
+  
+  /* Theme toggle más pequeño */
+  .theme-toggle {
+    width: 36px;
+    height: 36px;
+  }
+  
+  .theme-icon {
+    width: 16px;
+    height: 16px;
+  }
+  
+  /* Side panel ocupa todo el ancho */
+  .side-panel {
+    width: 100vw;
+    right: -100vw;
+    top: 50px; /* Ajustar al nuevo alto del topbar */
+    height: calc(100vh - 50px);
+  }
+  
+  .side-panel.open {
+    right: 0;
+  }
+  
+  /* Toast responsive */
+  .x-toast {
+    right: 16px;
+    bottom: 16px;
+    min-width: 250px;
+    max-width: calc(100vw - 32px);
+    padding: 16px 20px 16px 16px;
+    font-size: 0.9rem;
+  }
+}
+
+/* Móviles pequeños */
+@media (max-width: 480px) {
+  /* Topbar aún más compacto */
+  .topbar {
+    padding: 0 12px;
+    height: 45px;
+  }
+  
+  .diagram-title {
+    font-size: 0.85rem;
+  }
+  
+  /* Switcher muy compacto */
+  .diagram-dropdown-btn {
+    padding: 6px 10px;
+    font-size: 0.8rem;
+    min-width: 140px;
+  }
+  
+  .diagram-dropdown-content .switcher-btn {
+    padding: 6px 8px;
+    font-size: 0.75rem;
+  }
+  
+  /* Dropdown más compacto en móviles */
+  .diagram-dropdown-content {
+    max-height: 50vh;
+    margin-top: 2px;
+  }
+  
+  .diagram-dropdown {
+    max-width: 200px;
+  }
+  
+  /* Theme toggle aún más pequeño */
+  .theme-toggle {
+    width: 32px;
+    height: 32px;
+  }
+  
+  .theme-icon {
+    width: 14px;
+    height: 14px;
+  }
+  
+  /* Side panel ajustado para móviles */
+  .side-panel {
+    top: 45px;
+    height: calc(100vh - 45px);
+  }
+  
+  .side-panel-header {
+    padding: 16px;
+  }
+  
+  .side-panel-title {
+    font-size: 16px;
+  }
+  
+  .side-panel-content {
+    padding: 16px;
+  }
+  
+  /* Toast más compacto */
+  .x-toast {
+    right: 12px;
+    bottom: 12px;
+    min-width: 200px;
+    padding: 14px 16px 14px 12px;
+    font-size: 0.85rem;
+  }
+  
+  /* Drag & drop más compacto */
+  .drag-message {
+    padding: 16px 20px;
+    font-size: 16px;
+  }
+  
+  .drag-message .icon img {
+    width: 40px;
+    height: 40px;
+  }
+  
+  .file-drop-zone {
+    padding: 30px;
+    font-size: 14px;
+  }
+  
+  .file-drop-zone .icon img {
+    width: 48px;
+    height: 48px;
+  }
+}
+
+/* Pantallas muy pequeñas */
+@media (max-width: 360px) {
+  .topbar {
+    padding: 0 8px;
+    height: 40px;
+  }
+  
+  .diagram-title {
+    font-size: 0.8rem;
+  }
+  
+  .diagram-dropdown-btn {
+    padding: 5px 8px;
+    font-size: 0.75rem;
+    min-width: 120px;
+  }
+  
+  .diagram-dropdown-content .switcher-btn {
+    padding: 4px 6px;
+    font-size: 0.7rem;
+  }
+  
+  /* Dropdown aún más compacto */
+  .diagram-dropdown-content {
+    max-height: 40vh;
+    margin-top: 1px;
+  }
+  
+  .diagram-dropdown {
+    max-width: 160px;
+  }
+  
+  .theme-toggle {
+    width: 28px;
+    height: 28px;
+  }
+  
+  .theme-icon {
+    width: 12px;
+    height: 12px;
+  }
+  
+  .side-panel {
+    top: 40px;
+    height: calc(100vh - 40px);
+  }
+  
+  .side-panel-header {
+    padding: 12px;
+  }
+  
+  .side-panel-title {
+    font-size: 14px;
+  }
+  
+  .side-panel-content {
+    padding: 12px;
+  }
+  
+  .x-toast {
+    right: 8px;
+    bottom: 8px;
+    min-width: 180px;
+    padding: 12px 14px 12px 10px;
+    font-size: 0.8rem;
+  }
 }

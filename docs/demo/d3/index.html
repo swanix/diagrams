@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Swanix Diagrams - Complex</title>
+  <title>Swanix Diagrams</title>
   <script src="xloader.js"></script>
   <link href="xdiagrams.css" rel="stylesheet">
   <script src="https://d3js.org/d3.v7.min.js"></script>
@@ -12,55 +12,59 @@
 <body>
 <div class="xcanvas"></div>
 <script>
-window.$xDiagrams = {
-  title: "My Diagrams",
-  diagrams: [
-    {
-      name: "Diagram 1", 
-      url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vT1F3LXPwnGlnF_uOlhoR-5kK1DrWLwlCAKH8Ag6hPrNLzwqWYWU8ofE19xSv4cH1-Cq7ZYm7lPys7V/pub?output=csv"
+  window.$xDiagrams = {
+    title: "Swanix Diagrams",
+    diagrams: [
+      {
+        name: "Diagram 1", 
+        url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vT1F3LXPwnGlnF_uOlhoR-5kK1DrWLwlCAKH8Ag6hPrNLzwqWYWU8ofE19xSv4cH1-Cq7ZYm7lPys7V/pub?output=csv"
+      },
+      {
+        name: "Diagram 2",
+        url: "data/one-cluster.csv"
+      },
+      {
+        name: "Diagram 3",
+        url: "data/multi-clusters.csv"
+      }
+    ],
+    themes: {
+      light: "snow",
+      dark: "onyx",
+      default: "snow"
     },
-    {
-      name: "Diagram 2", 
-      url: "data/one-cluster.csv"
+    columns: {
+      id: "Node",
+      name: "Name", 
+      parent: "Parent",
+      img: "Type",
+      url: "URL",
+      type: "Type",
+      subtitle: "Description"
     },
-    {
-      name: "Diagram 3", 
-      url: "data/multi-clusters.csv"
+    options: {
+      autoZoom: true,
+      keyboardNavigation: true,
+      sidePanel: true,
+      tooltips: true,
+      responsive: true,
+      dragAndDrop: true 
+    },
+    hooks: {
+      onLoad: function(diagram) {
+        console.log('XDiagrams - Diagram loaded:', diagram.name);
+      },
+      onThemeChange: function(theme) {
+        console.log('XDiagrams - Theme changed to:', theme);
+      },
+      onNodeClick: function(node) {
+        console.log('XDiagrams - Node clicked:', node.name);
+      },
+      onFileDrop: function(file) {
+        console.log('XDiagrams - File dropped:', file.name);
+      }
     }
-  ],
-  themes: {
-    light: "snow",
-    dark: "onyx",
-    default: "snow"
-  },
-  columns: {
-    id: "Node",
-    name: "Name", 
-    parent: "Parent",
-    img: "Type",
-    url: "URL",
-    type: "Type",
-    subtitle: "Description"
-  },
-  options: {
-    autoZoom: true,
-    keyboardNavigation: true,
-    sidePanel: true,
-    tooltips: true,
-    responsive: true
-  },
-  hooks: {
-    onLoad: function(diagram) {
-      console.log('XDiagrams - Diagram loaded:', diagram.name);
-    },
-    onThemeChange: function(theme) {
-      console.log('XDiagrams - Theme changed to:', theme);
-    },
-    onNodeClick: function(node) {
-      console.log('XDiagrams - Node clicked:', node.name);
-    }
-  }
-};
+  };
 </script>
 <script src="xdiagrams.js"></script>
 </body>

@@ -2565,8 +2565,8 @@ window.$xDiagrams.renderDiagramButtons = function() {
                     window.closeSidePanel();
                 }
                 
-                // Clear cache before switching diagrams (only for remote URLs)
-                if (window.$xDiagrams.clearCache && typeof d.url === 'string') {
+                // Clear cache before switching diagrams (only for remote files)
+                if (window.$xDiagrams.clearCache && typeof d.file === 'string') {
                     window.$xDiagrams.clearCache();
                 }
                 
@@ -2585,6 +2585,40 @@ window.$xDiagrams.renderDiagramButtons = function() {
         
         dropdownContent.appendChild(link);
     });
+    
+    // Remove any existing Google Sheets button
+    const existingSheetsBtn = dropdown.querySelector('.sheets-btn');
+    if (existingSheetsBtn) {
+        existingSheetsBtn.remove();
+    }
+    
+    // Add Google Sheets button if current diagram is from Google Sheets AND has edit URL
+    const currentDiagram = diagrams[window.$xDiagrams.currentDiagramIdx];
+    if (currentDiagram && currentDiagram.file && currentDiagram.file.includes('docs.google.com/spreadsheets') && currentDiagram.edit) {
+        // Create Google Sheets button
+        const sheetsButton = document.createElement('button');
+        sheetsButton.className = 'sheets-btn';
+        sheetsButton.innerHTML = `
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/>
+            </svg>
+        `;
+        sheetsButton.title = 'Abrir archivo original en Google Sheets';
+        
+        sheetsButton.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            // Open edit URL in new tab
+            window.open(currentDiagram.edit, '_blank');
+            
+            // Close dropdown
+            dropdown.classList.remove('open');
+        });
+        
+        // Insert button after the dropdown content
+        dropdown.appendChild(sheetsButton);
+    }
     
     // Apply current theme colors to the switcher buttons
     updateSwitcherColors();
@@ -2609,37 +2643,37 @@ window.$xDiagrams.loadDiagram = function(input) {
 
     window.$xDiagrams.isLoading = true;
 
-    // Lógica robusta para soportar string, objeto con url, objeto con data
+    // Lógica robusta para soportar string, objeto con file, objeto con data
     let diagramToLoad = input;
     if (typeof input === 'string') {
         // Buscar el objeto diagrama si existe
-        diagramToLoad = diagrams.find(d => d.url === input) || { url: input };
+        diagramToLoad = diagrams.find(d => d.file === input) || { file: input };
         window.$xDiagrams.currentUrl = input;
     } else if (typeof input === 'object' && input !== null) {
         if (input.data) {
             // Es un objeto local (drag & drop)
             diagramToLoad = input;
-            window.$xDiagrams.currentUrl = input.url || null;
-        } else if (input.url) {
-            // Es un objeto con url (local o remota)
+            window.$xDiagrams.currentUrl = input.file || null;
+        } else if (input.file) {
+            // Es un objeto con file (local o remota)
             diagramToLoad = input;
-            window.$xDiagrams.currentUrl = input.url;
+            window.$xDiagrams.currentUrl = input.file;
         }
     }
 
     // Limpia el cache solo si es una URL remota
-    if (diagramToLoad.url && typeof diagramToLoad.url === 'string') {
+    if (diagramToLoad.file && typeof diagramToLoad.file === 'string') {
         window.$xDiagrams.clearCache();
     }
 
     // Decide qué pasar a initDiagram:
     // - Si tiene data, pásalo directo
-    // - Si tiene url, pásale la url
+    // - Si tiene file, pásale la file
     let toInit = diagramToLoad;
     if (diagramToLoad.data) {
         toInit = diagramToLoad;
-    } else if (diagramToLoad.url) {
-        toInit = diagramToLoad.url;
+    } else if (diagramToLoad.file) {
+        toInit = diagramToLoad.file;
     }
 
     // Limpieza visual
@@ -3302,19 +3336,19 @@ window.checkUrlAccessibility = function(url) {
   });
 };
 
-// Function to find diagram by URL and get its fallbacks
-window.findDiagramByUrl = function(url) {
+// Function to find diagram by file and get its fallbacks
+window.findDiagramByFile = function(file) {
   const diagrams = getDiagrams();
   if (!diagrams) {
     return null;
   }
   
-  return diagrams.find(diagram => diagram.url === url);
+  return diagrams.find(diagram => diagram.file === file);
 };
 
-// Function to try fallback URLs from diagram definition
-window.tryDiagramFallbacks = function(originalUrl, onComplete, retryCount = 0) {
-  const diagram = window.findDiagramByUrl(originalUrl);
+// Function to try fallback files from diagram definition
+window.tryDiagramFallbacks = function(originalFile, onComplete, retryCount = 0) {
+  const diagram = window.findDiagramByFile(originalFile);
   
   if (!diagram || !diagram.fallbacks || !Array.isArray(diagram.fallbacks)) {
     console.log('[Fallback] No fallbacks defined for this diagram');
@@ -3322,15 +3356,15 @@ window.tryDiagramFallbacks = function(originalUrl, onComplete, retryCount = 0) {
   }
   
   if (retryCount >= diagram.fallbacks.length) {
-    console.error('[Fallback] No more fallback URLs available');
+    console.error('[Fallback] No more fallback files available');
     return false;
   }
   
-  const fallbackUrl = diagram.fallbacks[retryCount];
-  console.log(`[Fallback] Trying fallback URL ${retryCount + 1}:`, fallbackUrl);
+  const fallbackFile = diagram.fallbacks[retryCount];
+  console.log(`[Fallback] Trying fallback file ${retryCount + 1}:`, fallbackFile);
   
-  // Try the fallback URL with error handling
-  window.initDiagram(fallbackUrl, onComplete, 0); // Reset retry count for fallback
+  // Try the fallback file with error handling
+  window.initDiagram(fallbackFile, onComplete, 0); // Reset retry count for fallback
   
   return true;
 };
@@ -3509,9 +3543,9 @@ window.showToast = function(message, type = 'success', duration = 4200) {
 // Función para verificar si un diagrama ya está cargado
 window.isDiagramDuplicate = function(diagram) {
   const diagrams = window.$xDiagrams && window.$xDiagrams.diagrams ? window.$xDiagrams.diagrams : [];
-  if (diagram.url) {
-    // Duplicado por URL (remoto o local por ruta)
-    return diagrams.some(d => d.url === diagram.url);
+  if (diagram.file) {
+    // Duplicado por file (remoto o local por ruta)
+    return diagrams.some(d => d.file === diagram.file);
   } else if (diagram.name && diagram.hash) {
     // Duplicado por nombre+hash (local drag & drop)
     return diagrams.some(d => d.name === diagram.name && d.hash === diagram.hash);
@@ -3523,11 +3557,11 @@ window.isDiagramDuplicate = function(diagram) {
 window.addAndLoadDiagram = function(diagram) {
   const diagrams = window.$xDiagrams && window.$xDiagrams.diagrams ? window.$xDiagrams.diagrams : [];
   if (window.isDiagramDuplicate(diagram)) {
-    showToast(`El archivo '${diagram.name || diagram.url}' ya se encuentra subido.`, 'mixed');
+    showToast(`El archivo '${diagram.name || diagram.file}' ya se encuentra subido.`, 'mixed');
     return;
   }
   // Si es local y el nombre ya existe pero el hash es diferente, renombrar
-  if (!diagram.url && diagram.name) {
+  if (!diagram.file && diagram.name) {
     let baseName = diagram.name.replace(/ \(\d+\)$/, '');
     let count = 1;
     let newName = diagram.name;

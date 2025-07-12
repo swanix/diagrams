@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Test - Name Formatting</title>
+  <script src="xloader.js"></script>
+  <link href="xdiagrams.css" rel="stylesheet">
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <script src="https://unpkg.com/papaparse@5.3.0/papaparse.min.js"></script>
+</head>
+<body>
+  <div class="xcanvas" data-title="Test - Name Formatting">
+    <div class="topbar">
+      <div class="topbar-left">
+        <h1>Test - Name Formatting</h1>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Configuration with various name formats to test
+    window.$xDiagrams = {
+      title: "Test - Name Formatting",
+      diagrams: [
+        {
+          name: "one-cluster.csv",
+          url: "data/one-cluster.csv"
+        },
+        {
+          name: "multi-clusters.csv",
+          url: "data/multi-clusters.csv"
+        },
+        {
+          name: "my_diagram_file.csv",
+          url: "data/one-cluster.csv"
+        },
+        {
+          name: "UPPERCASE-FILE.csv",
+          url: "data/one-cluster.csv"
+        },
+        {
+          name: "mixed-case-file.csv",
+          url: "data/one-cluster.csv"
+        },
+        {
+          name: "file_with_underscores_and-hyphens.csv",
+          url: "data/one-cluster.csv"
+        }
+      ],
+      options: {
+        dragAndDrop: true,
+        autoZoom: true,
+        sidePanel: true
+      }
+    };
+
+    // Test the formatting function directly
+    function testFormatting() {
+      const testNames = [
+        "one-cluster.csv",
+        "multi-clusters.csv", 
+        "my_diagram_file.csv",
+        "UPPERCASE-FILE.csv",
+        "mixed-case-file.csv",
+        "file_with_underscores_and-hyphens.csv"
+      ];
+      
+      console.log('Testing name formatting:');
+      testNames.forEach(name => {
+        const formatted = window.formatDiagramName ? window.formatDiagramName(name) : name;
+        console.log(`${name} -> ${formatted}`);
+      });
+    }
+
+    // Run test when page loads
+    window.addEventListener('load', testFormatting);
+  </script>
+  <script src="xdiagrams.js"></script>
+</body>
+</html> 

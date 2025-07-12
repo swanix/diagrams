@@ -8,6 +8,24 @@ const zoom = d3.zoom()
     d3.select("#main-diagram-svg g").attr("transform", event.transform);
   });
 
+// Function to format diagram name for display
+window.formatDiagramName = function(name) {
+  if (!name || typeof name !== 'string') {
+    return name;
+  }
+  
+  // Replace hyphens and underscores with spaces
+  let formatted = name.replace(/[-_]/g, ' ');
+  
+  // Capitalize first letter of each word
+  formatted = formatted.replace(/\b\w/g, (char) => char.toUpperCase());
+  
+  // Remove file extensions
+  formatted = formatted.replace(/\.(csv|json|xml|txt)$/i, '');
+  
+  return formatted;
+}
+
 // Function to show "Diagram not found" message with fade effect
 window.showDiagramNotFound = function() {
   const svg = document.getElementById("main-diagram-svg");
@@ -2256,14 +2274,14 @@ window.$xDiagrams.renderDiagramButtons = function() {
     
     // Update dropdown button text with current selection
     if (dropdownText && diagrams[window.$xDiagrams.currentDiagramIdx]) {
-        dropdownText.textContent = diagrams[window.$xDiagrams.currentDiagramIdx].name;
+        dropdownText.textContent = formatDiagramName(diagrams[window.$xDiagrams.currentDiagramIdx].name);
     }
     
     diagrams.forEach((d, idx) => {
         const link = document.createElement('a');
         link.href = `?d=${idx}`;
         link.className = 'switcher-btn' + (idx === window.$xDiagrams.currentDiagramIdx ? ' active' : '');
-        link.textContent = d.name;
+        link.textContent = formatDiagramName(d.name);
         link.style.textDecoration = 'none';
         
         if (window.$xDiagrams.isLoading) {

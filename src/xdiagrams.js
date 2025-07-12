@@ -18,9 +18,56 @@ function initDiagram(csvUrl, onComplete, retryCount = 0) {
   if (loadingElement) loadingElement.style.display = "block";
   if (errorElement) errorElement.style.display = "none";
 
+  // Check if this is a local diagram (with data instead of URL)
+  if (csvUrl && typeof csvUrl === 'object' && csvUrl.data) {
+    console.log("Cargando diagrama local:", csvUrl.name);
+    
+    try {
+      const trees = buildHierarchies(csvUrl.data);
+      drawTrees(trees);
+      
+      // Create side panel only if enabled
+      if (isOptionEnabled('sidePanel') !== false) {
+        createSidePanel();
+      }
+      
+      // Preserve current theme after loading diagram
+      setTimeout(async () => {
+        if (window.preserveCurrentTheme) {
+          await window.preserveCurrentTheme();
+        }
+      }, 100);
+      
+      console.log("Diagrama local cargado completamente");
+      
+      // Trigger onLoad hook
+      triggerHook('onLoad', { 
+        name: csvUrl.name,
+        data: csvUrl.data, 
+        trees: trees,
+        isLocal: true,
+        timestamp: new Date().toISOString()
+      });
+      
+      if (onComplete && typeof onComplete === 'function') {
+        onComplete();
+      }
+    } catch (error) {
+      console.error("Error durante la inicialización del diagrama local:", error);
+      if (errorElement) errorElement.innerText = `Error: ${error.message}`;
+      if (loadingElement) loadingElement.style.display = "none";
+      
+      if (onComplete && typeof onComplete === 'function') {
+        onComplete();
+      }
+    }
+    return;
+  }
+
+  // Handle remote URLs (original functionality)
   // Add cache-busting parameter to force fresh data
   const cacheBuster = `?t=${Date.now()}`;
-  const urlWithCacheBuster = csvUrl.includes('?') ? `${csvUrl}&_cb=${Date.now()}` : `${csvUrl}${cacheBuster}`;
+  const urlWithCacheBuster = typeof csvUrl === 'string' && csvUrl.includes('?') ? `${csvUrl}&_cb=${Date.now()}` : `${csvUrl}${cacheBuster}`;
   
   console.log('[Cache] Loading with cache buster:', urlWithCacheBuster);
 
@@ -2151,8 +2198,8 @@ window.$xDiagrams.renderDiagramButtons = function() {
                     window.closeSidePanel();
                 }
                 
-                // Clear cache before switching diagrams
-                if (window.$xDiagrams.clearCache) {
+                // Clear cache before switching diagrams (only for remote URLs)
+                if (window.$xDiagrams.clearCache && typeof d.url === 'string') {
                     window.$xDiagrams.clearCache();
                 }
                 
@@ -2162,7 +2209,7 @@ window.$xDiagrams.renderDiagramButtons = function() {
                 window.$xDiagrams.currentDiagramIdx = idx;
                 window.$xDiagrams.updateTopbarTitle(idx);
                 window.$xDiagrams.renderDiagramButtons();
-                window.$xDiagrams.loadDiagram(d.url);
+                window.$xDiagrams.loadDiagram(d);
                 
                 // Close dropdown after selection
                 dropdown.classList.remove('open');
@@ -2175,32 +2222,54 @@ window.$xDiagrams.renderDiagramButtons = function() {
     // Apply current theme colors to the switcher buttons
     updateSwitcherColors();
 };
-window.$xDiagrams.loadDiagram = function(url) {
+window.$xDiagrams.loadDiagram = function(input) {
     const diagrams = getDiagrams();
     if (!Array.isArray(diagrams) || diagrams.length === 0) {
-        // Don't load anything if no diagrams are defined
         return;
     }
     if (window.$xDiagrams.isLoading) return;
-    
-    // Close side panel if open
+
+    // Cierra el panel lateral si está abierto
     if (window.closeSidePanel) {
         window.closeSidePanel();
     }
-    
+
     window.$xDiagrams.isLoading = true;
-    window.$xDiagrams.currentUrl = url;
-    
-    // Force cache refresh before loading
-    window.$xDiagrams.clearCache();
-    
-    // Add cache buster to URL if it's a Google Sheets URL
-    let finalUrl = url;
-    if (url.includes('docs.google.com') || url.includes('sheets.google.com')) {
-        const cacheBuster = `&_cb=${Date.now()}`;
-        finalUrl = url.includes('?') ? `${url}${cacheBuster}` : `${url}?${cacheBuster}`;
-        console.log('[Cache] Google Sheets URL with cache buster:', finalUrl);
+
+    // Lógica robusta para soportar string, objeto con url, objeto con data
+    let diagramToLoad = input;
+    if (typeof input === 'string') {
+        // Buscar el objeto diagrama si existe
+        diagramToLoad = diagrams.find(d => d.url === input) || { url: input };
+        window.$xDiagrams.currentUrl = input;
+    } else if (typeof input === 'object' && input !== null) {
+        if (input.data) {
+            // Es un objeto local (drag & drop)
+            diagramToLoad = input;
+            window.$xDiagrams.currentUrl = input.url || null;
+        } else if (input.url) {
+            // Es un objeto con url (local o remota)
+            diagramToLoad = input;
+            window.$xDiagrams.currentUrl = input.url;
+        }
     }
+
+    // Limpia el cache solo si es una URL remota
+    if (diagramToLoad.url && typeof diagramToLoad.url === 'string') {
+        window.$xDiagrams.clearCache();
+    }
+
+    // Decide qué pasar a initDiagram:
+    // - Si tiene data, pásalo directo
+    // - Si tiene url, pásale la url
+    let toInit = diagramToLoad;
+    if (diagramToLoad.data) {
+        toInit = diagramToLoad;
+    } else if (diagramToLoad.url) {
+        toInit = diagramToLoad.url;
+    }
+
+    // Limpieza visual
     const svgD3 = d3.select("#main-diagram-svg");
     if (!svgD3.empty()) svgD3.interrupt();
     const loading = document.getElementById('loading');
@@ -2215,11 +2284,11 @@ window.$xDiagrams.loadDiagram = function(url) {
     }
     const error = document.getElementById('error-message');
     if (error) error.textContent = '';
+
     if (window.initDiagram) {
-        window.initDiagram(finalUrl, function() {
-            // Apply auto zoom only if enabled
+        window.initDiagram(toInit, function() {
             if (isOptionEnabled('autoZoom') !== false && window.applyAutoZoom) {
-              window.applyAutoZoom();
+                window.applyAutoZoom();
             }
             setTimeout(() => {
                 if (loading) loading.style.display = 'none';
@@ -2293,6 +2362,21 @@ function renderSwDiagramBase() {
     const container = document.createElement('div');
     container.id = 'sw-diagram';
     container.className = 'xcanvas';
+    
+    // Preserve drag & drop elements from the original container
+    const originalCanvas = document.querySelector('.xcanvas:not(#sw-diagram)');
+    let dragDropElements = '';
+    if (originalCanvas) {
+      const fileDropZone = originalCanvas.querySelector('#fileDropZone');
+      const dragOverlay = document.querySelector('#dragOverlay');
+      
+      if (fileDropZone) {
+        dragDropElements += fileDropZone.outerHTML;
+      }
+      if (dragOverlay) {
+        dragDropElements += dragOverlay.outerHTML;
+      }
+    }
     
     // Get theme configuration from original container
     const originalContainer = document.querySelector('.xcanvas');
@@ -2382,6 +2466,7 @@ function renderSwDiagramBase() {
       <svg id="main-diagram-svg"></svg>
       <div id="loading" class="loading"><div class="spinner"></div></div>
       <small id="error-message" class="error-message"></small>
+      ${dragDropElements}
     `;
     document.body.appendChild(container);
   }
@@ -2404,7 +2489,7 @@ function renderSwDiagramBase() {
       window.$xDiagrams.updateTopbarTitle(window.$xDiagrams.currentDiagramIdx);
       window.$xDiagrams.renderDiagramButtons();
       if (diagrams[window.$xDiagrams.currentDiagramIdx]) {
-        window.$xDiagrams.loadDiagram(diagrams[window.$xDiagrams.currentDiagramIdx].url);
+        window.$xDiagrams.loadDiagram(diagrams[window.$xDiagrams.currentDiagramIdx]);
       }
     }
 }
@@ -2448,6 +2533,43 @@ window.getThemeConfiguration = getThemeConfiguration;
 window.getStorageKey = getStorageKey;
 window.getOppositeTheme = getOppositeTheme;
 window.isLightTheme = isLightTheme;
+
+// Function to reload the diagram system (for drag & drop functionality)
+window.reloadDiagramSystem = function() {
+    console.log('[Reload] Recargando sistema de diagramas...');
+    
+    // Load the last added diagram
+    const diagrams = getDiagrams();
+    if (diagrams && diagrams.length > 0) {
+        const lastDiagram = diagrams[diagrams.length - 1];
+        const lastIndex = diagrams.length - 1;
+        
+        // Update current diagram index FIRST
+        window.$xDiagrams.currentDiagramIdx = lastIndex;
+        
+        // Update URL
+        const url = new URL(window.location);
+        url.searchParams.set('d', lastIndex.toString());
+        window.history.pushState({}, '', url);
+        
+        // Update topbar title
+        if (window.$xDiagrams.updateTopbarTitle) {
+            window.$xDiagrams.updateTopbarTitle(lastIndex);
+        }
+        
+        // Re-render diagram buttons AFTER updating the index
+        if (window.$xDiagrams.renderDiagramButtons) {
+            window.$xDiagrams.renderDiagramButtons();
+        }
+        
+        // Load the diagram with a small delay to ensure UI updates
+        if (window.$xDiagrams.loadDiagram) {
+            setTimeout(() => {
+                window.$xDiagrams.loadDiagram(lastDiagram);
+            }, 50);
+        }
+    }
+};
 
 // Debug function to check theme state
 window.debugThemeState = function() {
@@ -2951,3 +3073,39 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 }); 
+
+// Toast flotante global
+window.showToast = function(message, type = 'success', duration = 4200) {
+  // type: 'success', 'error', 'mixed'
+  // Elimina cualquier toast anterior
+  const prev = document.querySelector('.x-toast');
+  if (prev) prev.remove();
+
+  const toast = document.createElement('div');
+  toast.className = `x-toast x-toast-${type}`;
+  toast.innerHTML = `<span>${message.replace(/\n/g, '<br>')}</span><button class='x-toast-close' title='Cerrar'>&times;</button>`;
+
+  document.body.appendChild(toast);
+  setTimeout(() => toast.classList.add('x-toast-show'), 10);
+
+  // Cerrar manual
+  toast.querySelector('.x-toast-close').onclick = () => {
+    toast.classList.remove('x-toast-show');
+    setTimeout(() => toast.remove(), 350);
+  };
+
+  // Cerrar automático
+  setTimeout(() => {
+    toast.classList.remove('x-toast-show');
+    setTimeout(() => toast.remove(), 350);
+  }, duration);
+};
+
+// Reemplazar alert en carga múltiple de archivos
+// Busca y reemplaza en la función de feedback de carga múltiple:
+// alert(msg) => showToast(msg, tipo)
+// Determina tipo:
+// - Si todos exitosos: 'success'
+// - Si todos fallaron: 'error'
+// - Si mixto: 'mixed'
+// ... código posterior ...

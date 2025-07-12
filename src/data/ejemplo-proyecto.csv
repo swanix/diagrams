@@ -1,0 +1,11 @@
+Node,Name,Parent,Type,URL,Description
+1,Inicio del Proyecto,,form,https://example.com/start,Punto de inicio
+2,Análisis,1,list,https://example.com/analysis,Análisis de requerimientos
+3,Diseño,1,detail,https://example.com/design,Diseño de la solución
+4,Desarrollo,2,report,https://example.com/development,Implementación
+5,Testing,4,settings,https://example.com/testing,Pruebas del sistema
+6,Despliegue,5,mosaic,https://example.com/deploy,Despliegue a producción
+7,Documentación,6,modal,https://example.com/docs,Documentación final
+8,Requerimientos,2,document,https://example.com/reqs,Especificación de requerimientos
+9,Arquitectura,3,file-csv,https://example.com/arch,Arquitectura del sistema
+10,Pruebas Unitarias,5,file-pdf,https://example.com/unit,Pruebas unitarias 

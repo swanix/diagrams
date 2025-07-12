@@ -175,7 +175,7 @@ window.$xDiagrams = {
 (function() {
   'use strict';
   
-  const canvas = document.querySelector('.xcanvas');
+  let canvas = document.querySelector('.xcanvas');
   const fileDropZone = document.getElementById('fileDropZone');
   const dragOverlay = document.getElementById('dragOverlay');
   
@@ -225,9 +225,12 @@ window.$xDiagrams = {
           const csvContent = e.target.result;
           Papa.parse(csvContent, {
             header: true,
+            skipEmptyLines: true,
             complete: function(results) {
-              if (results.errors.length > 0) {
-                reject(new Error('Error parsing CSV: ' + results.errors[0].message));
+              // Ignorar errores de tipo 'TooFewFields'
+              const fatalErrors = results.errors.filter(err => err.code !== 'TooFewFields');
+              if (fatalErrors.length > 0) {
+                reject(new Error('Error parsing CSV: ' + fatalErrors[0].message));
                 return;
               }
               
@@ -294,20 +297,60 @@ window.$xDiagrams = {
     
     const files = e.dataTransfer.files;
     if (files.length > 0) {
-      const file = files[0];
+      // Filter only CSV files
+      const csvFiles = Array.from(files).filter(file => 
+        file.type === 'text/csv' || file.name.toLowerCase().endsWith('.csv')
+      );
       
-      // Check if it's a CSV file
-      if (file.type === 'text/csv' || file.name.toLowerCase().endsWith('.csv')) {
+      if (csvFiles.length === 0) {
+        alert('Por favor, selecciona archivos CSV válidos.');
+        return;
+      }
+      
+      if (csvFiles.length === 1) {
+        // Single file - process normally
+        const file = csvFiles[0];
+        console.log('📁 Procesando archivo CSV:', file.name);
+        
         processCSVFile(file)
           .then(diagram => {
+            console.log('✅ Archivo procesado exitosamente:', diagram.name);
             addAndLoadDiagram(diagram);
           })
           .catch(error => {
-            console.error('Error processing file:', error);
+            console.error('❌ Error procesando archivo:', error);
             alert('Error al procesar el archivo: ' + error.message);
           });
       } else {
-        alert('Por favor, selecciona un archivo CSV válido.');
+        // Multiple files - process all
+        console.log(`📁 Procesando ${csvFiles.length} archivos CSV...`);
+        
+        // Show progress message
+        const progressMsg = `Procesando ${csvFiles.length} archivos...`;
+        console.log(progressMsg);
+        
+        // Process all files in parallel
+        Promise.allSettled(csvFiles.map(file => processCSVFile(file)))
+          .then(results => {
+            const successful = results.filter(r => r.status === 'fulfilled').map(r => r.value);
+            const failed = results
+              .map((r, i) => r.status === 'rejected' ? { name: csvFiles[i].name, reason: r.reason && r.reason.message ? r.reason.message : r.reason } : null)
+              .filter(Boolean);
+
+            // Agrega todos los diagramas exitosos
+            successful.forEach(diagram => {
+              addAndLoadDiagram(diagram);
+            });
+
+            // Feedback detallado
+            if (failed.length > 0) {
+              let msg = `${successful.length} diagramas agregados exitosamente\n❌ ${failed.length} fallaron:\n`;
+              msg += failed.map(f => `- ${f.name}: ${f.reason}`).join('\n');
+              showToast(msg, 'mixed');
+            } else {
+              showToast(`${successful.length} diagramas agregados exitosamente`, 'success');
+            }
+          });
       }
     }
   }
@@ -361,7 +404,7 @@ window.$xDiagrams = {
     });
   }
   
-  // Initialize when DOM is ready
+  // Initialize when DOM is ready and after sw-diagram is created
   function initDragAndDropDelayed() {
     // Wait for the sw-diagram container to be created
     const swDiagram = document.getElementById('sw-diagram');

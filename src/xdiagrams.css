@@ -1383,8 +1383,8 @@ body.theme-forest .topbar {
     border: 1px solid var(--switcher-border, #ddd);
     border-radius: 8px;
     z-index: 10001;
-    max-height: 300px;
-    overflow-y: auto;
+    /* max-height: 300px; */
+    /* overflow-y: auto; */
     overflow-x: hidden;
     display: none;
     margin-top: 4px;
@@ -1596,4 +1596,60 @@ body.theme-neon .theme-toggle .moon-icon {
 #main-diagram-svg.loaded {
     opacity: 1 !important;
     pointer-events: auto;
+}
+
+/* Toast flotante animado */
+.x-toast {
+  position: fixed;
+  right: 32px;
+  bottom: 32px;
+  min-width: 280px;
+  max-width: 400px;
+  background: var(--control-bg, #fff);
+  color: var(--control-text, #222);
+  border-radius: 10px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.18), 0 1.5px 6px rgba(0,0,0,0.08);
+  padding: 18px 28px 18px 20px;
+  font-size: 1rem;
+  z-index: 99999;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(40px) scale(0.98);
+  transition: opacity 0.35s cubic-bezier(.4,0,.2,1), transform 0.35s cubic-bezier(.4,0,.2,1);
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+.x-toast.x-toast-show {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0) scale(1);
+}
+.x-toast.x-toast-success {
+  border-left: 6px solid #4caf50;
+}
+.x-toast.x-toast-error {
+  border-left: 6px solid #e53935;
+}
+.x-toast.x-toast-mixed {
+  border-left: 6px solid #ff9800;
+}
+.x-toast .x-toast-close {
+  background: none;
+  border: none;
+  color: #888;
+  font-size: 1.3em;
+  margin-left: auto;
+  cursor: pointer;
+  padding: 0 0 0 10px;
+  line-height: 1;
+  transition: color 0.2s;
+}
+.x-toast .x-toast-close:hover {
+  color: #222;
+}
+.x-toast .x-toast-icon {
+  font-size: 1.5em;
+  margin-right: 6px;
+  flex-shrink: 0;
 }

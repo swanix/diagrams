@@ -1,0 +1,6 @@
+Node,Name,Parent,Type,URL,Description
+1,Inicio,,form,https://example.com,Diagrama de ejemplo
+2,Proceso A,1,list,https://example.com/a,Proceso principal
+3,Proceso B,1,detail,https://example.com/b,Proceso secundario
+4,Final A,2,report,https://example.com/final-a,Resultado del proceso A
+5,Final B,3,settings,https://example.com/final-b,Resultado del proceso B 

@@ -1,0 +1,16 @@
+Node,Parent,Name,Description,Type,Thumbnail,Color
+NODE-2,,Cluster,CTO,detail,detail.svg,#f39c12
+NODE-6,NODE-2,Development Team,Web development,detail,detail.svg,#3498db
+NODE-7,NODE-2,Design Team,UX/UI design,detail,detail.svg,#e67e22
+NODE-11,NODE-6,Frontend Development,React development,detail,detail.svg,#16a085
+NODE-12,NODE-6,Backend Development,Node.js development,detail,detail.svg,#d35400
+NODE-13,NODE-7,UI Design,Interface design,detail,detail.svg,#c0392b
+NODE-14,NODE-7,UX Research,User research,detail,detail.svg,#2980b9
+NODE-18,NODE-11,Homepage,Main page,detail,detail.svg,#34495e
+NODE-19,NODE-11,About Us,Company info,detail,detail.svg,#27ae60
+NODE-20,NODE-12,Contact Form,Contact page,detail,detail.svg,#e67e22
+NODE-21,NODE-12,User Dashboard,User panel,detail,detail.svg,#3498db
+NODE-22,NODE-13,Product Catalog,Product catalog,detail,detail.svg,#95a5a6
+NODE-23,NODE-13,Services Page,Services page,detail,detail.svg,#1abc9c
+NODE-24,NODE-14,Blog Section,Blog section,detail,detail.svg,#8e44ad
+NODE-25,NODE-14,FAQ Page,FAQ page,detail,detail.svg,#16a085 

@@ -8,6 +8,41 @@ const zoom = d3.zoom()
     d3.select("#main-diagram-svg g").attr("transform", event.transform);
   });
 
+// Function to show "Diagram not found" message with fade effect
+window.showDiagramNotFound = function() {
+  const svg = document.getElementById("main-diagram-svg");
+  if (!svg) return;
+  
+  // Clear SVG
+  svg.innerHTML = "";
+  svg.style.opacity = '0';
+  svg.classList.remove('loaded');
+  
+  // Remove existing overlay if any (immediate removal)
+  const existingOverlay = document.getElementById('diagram-not-found-overlay');
+  if (existingOverlay) {
+    existingOverlay.style.transition = 'none';
+    existingOverlay.remove();
+  }
+  
+  // Create HTML overlay
+  const overlay = document.createElement('div');
+  overlay.id = 'diagram-not-found-overlay';
+  overlay.textContent = 'Diagram not found';
+  
+  // Add overlay to the container
+  const container = svg.parentElement;
+  if (container) {
+    container.style.position = 'relative';
+    container.appendChild(overlay);
+    
+    // Animate the overlay with fade in effect
+    setTimeout(() => {
+      overlay.classList.add('visible');
+    }, 100);
+  }
+}
+
 // Main function to initialize diagram
 function initDiagram(csvUrl, onComplete, retryCount = 0) {
   console.log("Iniciando carga del diagrama...", retryCount > 0 ? `(intento ${retryCount + 1})` : '');
@@ -23,6 +58,17 @@ function initDiagram(csvUrl, onComplete, retryCount = 0) {
     console.log("Cargando diagrama local:", csvUrl.name);
     
     try {
+      // Check if data is valid
+      if (!csvUrl.data || !Array.isArray(csvUrl.data) || csvUrl.data.length === 0) {
+        console.log('[Local File] Empty or invalid data, showing "Diagram not found"');
+        showDiagramNotFound();
+        if (loadingElement) loadingElement.style.display = "none";
+        if (onComplete && typeof onComplete === 'function') {
+          onComplete();
+        }
+        return;
+      }
+      
       const trees = buildHierarchies(csvUrl.data);
       drawTrees(trees);
       
@@ -54,7 +100,8 @@ function initDiagram(csvUrl, onComplete, retryCount = 0) {
       }
     } catch (error) {
       console.error("Error durante la inicialización del diagrama local:", error);
-      if (errorElement) errorElement.innerText = `Error: ${error.message}`;
+      console.log('[Local File] Error processing data, showing "Diagram not found"');
+      showDiagramNotFound();
       if (loadingElement) loadingElement.style.display = "none";
       
       if (onComplete && typeof onComplete === 'function') {
@@ -65,6 +112,17 @@ function initDiagram(csvUrl, onComplete, retryCount = 0) {
   }
 
   // Handle remote URLs (original functionality)
+  // Check if URL is valid
+  if (!csvUrl || typeof csvUrl !== 'string' || csvUrl.trim() === '') {
+    console.log('[URL] Invalid or empty URL, showing "Diagram not found"');
+    showDiagramNotFound();
+    if (loadingElement) loadingElement.style.display = "none";
+    if (onComplete && typeof onComplete === 'function') {
+      onComplete();
+    }
+    return;
+  }
+  
   // Add cache-busting parameter to force fresh data
   const cacheBuster = `?t=${Date.now()}`;
   const urlWithCacheBuster = typeof csvUrl === 'string' && csvUrl.includes('?') ? `${csvUrl}&_cb=${Date.now()}` : `${csvUrl}${cacheBuster}`;
@@ -141,6 +199,24 @@ function initDiagram(csvUrl, onComplete, retryCount = 0) {
         if (window.tryDiagramFallbacks && window.tryDiagramFallbacks(csvUrl, onComplete)) {
           return;
         }
+      }
+      
+      // Check if it's a file not found error (404, network error, etc.)
+      let isFileNotFound = errorMessage.includes('404') || 
+                          errorMessage.includes('Not Found') ||
+                          errorMessage.includes('Failed to fetch') ||
+                          errorMessage.includes('NetworkError') ||
+                          errorMessage.includes('ERR_NAME_NOT_RESOLVED') ||
+                          errorMessage.includes('ERR_CONNECTION_REFUSED');
+      
+      if (isFileNotFound) {
+        console.log('[File Not Found] Showing "Diagram not found" message');
+        showDiagramNotFound();
+        if (loadingElement) loadingElement.style.display = "none";
+        if (onComplete && typeof onComplete === 'function') {
+          onComplete();
+        }
+        return;
       }
       
       if (isCorsError) {
@@ -407,6 +483,12 @@ function drawTrees(trees) {
   if (!svg) {
     console.error("No se encontró el SVG principal");
     return;
+  }
+  
+  // Remove diagram not found overlay if present
+  const overlay = document.getElementById('diagram-not-found-overlay');
+  if (overlay) {
+    overlay.remove();
   }
   
   // Clear SVG and hide it during rendering
@@ -2234,6 +2316,12 @@ window.$xDiagrams.loadDiagram = function(input) {
         window.closeSidePanel();
     }
 
+    // Remove diagram not found overlay immediately without fade
+    const overlay = document.getElementById('diagram-not-found-overlay');
+    if (overlay) {
+        overlay.remove();
+    }
+
     window.$xDiagrams.isLoading = true;
 
     // Lógica robusta para soportar string, objeto con url, objeto con data
@@ -3109,3 +3197,59 @@ window.showToast = function(message, type = 'success', duration = 4200) {
 // - Si todos fallaron: 'error'
 // - Si mixto: 'mixed'
 // ... código posterior ...
+
+// Función para verificar si un diagrama ya está cargado
+window.isDiagramDuplicate = function(diagram) {
+  const diagrams = window.$xDiagrams && window.$xDiagrams.diagrams ? window.$xDiagrams.diagrams : [];
+  if (diagram.url) {
+    // Duplicado por URL (remoto o local por ruta)
+    return diagrams.some(d => d.url === diagram.url);
+  } else if (diagram.name && diagram.hash) {
+    // Duplicado por nombre+hash (local drag & drop)
+    return diagrams.some(d => d.name === diagram.name && d.hash === diagram.hash);
+  }
+  return false;
+};
+
+// Modifica addAndLoadDiagram para evitar duplicados y renombrar si es necesario
+window.addAndLoadDiagram = function(diagram) {
+  const diagrams = window.$xDiagrams && window.$xDiagrams.diagrams ? window.$xDiagrams.diagrams : [];
+  if (window.isDiagramDuplicate(diagram)) {
+    showToast(`El archivo '${diagram.name || diagram.url}' ya se encuentra subido.`, 'mixed');
+    return;
+  }
+  // Si es local y el nombre ya existe pero el hash es diferente, renombrar
+  if (!diagram.url && diagram.name) {
+    let baseName = diagram.name.replace(/ \(\d+\)$/, '');
+    let count = 1;
+    let newName = diagram.name;
+    while (diagrams.some(d => d.name === newName && d.hash !== diagram.hash)) {
+      count++;
+      newName = `${baseName} (${count})`;
+    }
+    diagram.name = newName;
+  }
+  // Add to configuration
+  window.$xDiagrams.diagrams.push(diagram);
+  // Save to localStorage
+  if (typeof saveDiagramToStorage === 'function') saveDiagramToStorage(diagram);
+  // Trigger hook
+  if (window.$xDiagrams.hooks && window.$xDiagrams.hooks.onFileDrop) {
+    window.$xDiagrams.hooks.onFileDrop(diagram);
+  }
+  // Reload the diagram system to include the new diagram
+  if (window.reloadDiagramSystem) {
+    window.reloadDiagramSystem();
+  } else {
+    setTimeout(() => { window.location.reload(); }, 500);
+  }
+};
+
+// Hash simple para string (djb2)
+window.simpleHash = function(str) {
+  let hash = 5381;
+  for (let i = 0; i < str.length; i++) {
+    hash = ((hash << 5) + hash) + str.charCodeAt(i);
+  }
+  return hash >>> 0;
+};

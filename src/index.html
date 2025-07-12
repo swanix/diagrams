@@ -237,7 +237,8 @@ window.$xDiagrams = {
                 url: null, // Local file, no URL
                 data: results.data,
                 isLocal: true,
-                timestamp: new Date().toISOString()
+                timestamp: new Date().toISOString(),
+                hash: window.simpleHash(csvContent)
               };
               
               resolve(diagram);
@@ -300,7 +301,7 @@ window.$xDiagrams = {
       if (file.type === 'text/csv' || file.name.toLowerCase().endsWith('.csv')) {
         processCSVFile(file)
           .then(diagram => {
-            addAndLoadDiagram(diagram);
+            window.addAndLoadDiagram(diagram);
           })
           .catch(error => {
             console.error('Error processing file:', error);

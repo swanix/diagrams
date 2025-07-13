@@ -871,8 +871,13 @@ function drawClusterGrid(trees, svg) {
           clusterGroups.forEach((c, i) => {
             const col = i % cols;
             const row = Math.floor(i / cols);
-            const x = marginX + col * (c.width + spacingX) + c.width / 2;
-            const y = marginY + row * (c.height + spacingY) + c.height / 2;
+            let x = marginX + col * (c.width + spacingX) + c.width / 2;
+            let y = marginY + row * (c.height + spacingY) + c.height / 2;
+            // Si solo hay un cluster, centrarlo en la pantalla
+            if (clusterGroups.length === 1) {
+              x = window.innerWidth / 2;
+              y = window.innerHeight / 2;
+            }
             c.group.attr("transform", `translate(${x},${y})`);
             // Medir bounds en la nueva posición
             const bounds = c.group.node().getBBox();
@@ -949,17 +954,8 @@ function drawTrees(trees) {
   
   // Check layout type and choose appropriate rendering method
   if (isFlatList(trees)) {
-    console.log('[Layout] Detected flat list, using grid layout');
-    // Extract all nodes from the flat list
-    const allNodes = [];
-    trees.forEach(tree => {
-      if (tree.children && tree.children.length > 0) {
-        allNodes.push(...tree.children);
-      } else {
-        allNodes.push(tree);
-      }
-    });
-    drawGridLayout(allNodes, svg);
+    console.log('[Layout] Detected flat list, using cluster grid layout');
+    drawClusterGrid(trees, svg);
   } else if (shouldUseClusterGrid(trees)) {
     console.log('[Layout] Detected multiple clusters, using cluster grid layout');
     drawClusterGrid(trees, svg);
@@ -1343,6 +1339,8 @@ function applyAutoZoom() {
   const diagramGroupCount = diagramGroups.size();
   const isSmallDiagram = nodeCount <= 4;
   const isSingleGroup = diagramGroupCount === 1;
+  const isFlatListDiagram = !isSingleGroup && nodeCount === diagramGroupCount; // todos los clusters son nodos raíz sin hijos
+  console.log('[Zoom] ¿Lista plana?', isFlatListDiagram);
   
   console.log('[Zoom] Diagramas:', diagramGroupCount, 'Nodos:', nodeCount, '¿Grupo único?', isSingleGroup);
   
@@ -1383,10 +1381,17 @@ function applyAutoZoom() {
         }
       }
       
-      // Position first cluster from the left with negative margin
+      // Position first cluster from the left with margin configurable
       const firstClusterLeftEdge = firstClusterBounds.x + firstClusterOffsetX;
-              translateX = -150 - firstClusterLeftEdge * scale; // -150px margin from the left
-      console.log('[Zoom] Primer cluster desde la izquierda con margen negativo. translateX:', translateX);
+      const zoomVarsLeft = getComputedStyle(document.documentElement);
+      if (isFlatListDiagram) {
+        const flatLeftMargin = parseFloat(zoomVarsLeft.getPropertyValue('--flatlist-left-margin')) || 20; // px
+        translateX = flatLeftMargin - firstClusterLeftEdge * scale;
+        console.log('[Zoom] Margen izquierdo para lista plana:', flatLeftMargin, 'translateX:', translateX);
+      } else {
+        translateX = -150 - firstClusterLeftEdge * scale; // margen fijo para clusters jerárquicos
+      }
+      console.log('[Zoom] Primer cluster desde la izquierda con margen aplicado. translateX:', translateX);
           } else {
         // Fallback to original logic
       const leftEdge = totalBounds.x * scale + translateX;
@@ -1404,7 +1409,9 @@ function applyAutoZoom() {
     // Ajuste dinámico para múltiples clusters (evitar hueco arriba, configurable)
     translateY = svgCenterY - contentCenterY * scale;
     const zoomVars = getComputedStyle(document.documentElement);
-    const desiredTopMargin = parseFloat(zoomVars.getPropertyValue('--cluster-top-margin')) || 10; // px
+    const desiredTopMargin = isFlatListDiagram ?
+      (parseFloat(zoomVars.getPropertyValue('--flatlist-top-margin')) || 50) :
+      (parseFloat(zoomVars.getPropertyValue('--cluster-top-margin')) || 10); // px
     const topEdge = totalBounds.y * scale + translateY; // posición Y del borde superior tras transform
     if (topEdge > desiredTopMargin) {
       translateY -= (topEdge - desiredTopMargin);

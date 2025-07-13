@@ -20,6 +20,8 @@
     --node-selection-hover: #bdbdbd;
     --node-selection-selected: #1976d2;
     --cluster-top-margin: -120px;
+    --flatlist-top-margin: 50px; /* Margen superior para listas planas */
+    --flatlist-left-margin: 20px; /* Margen izquierdo para listas planas */
 
     /* ===== Links and Labels ===== */
     --link-color: #999;

@@ -19,6 +19,7 @@
     --node-selection-focus: #1976d2;
     --node-selection-hover: #bdbdbd;
     --node-selection-selected: #1976d2;
+    --cluster-top-margin: -120px;
 
     /* ===== Links and Labels ===== */
     --link-color: #999;

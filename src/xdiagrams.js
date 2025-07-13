@@ -1396,7 +1396,20 @@ function applyAutoZoom() {
     }
   }
   
-  const translateY = svgCenterY - contentCenterY * scale - 50;
+  let translateY;
+  if (isSingleGroup) {
+    // Comportamiento original para un solo cluster
+    translateY = svgCenterY - contentCenterY * scale - 50;
+  } else {
+    // Ajuste dinámico para múltiples clusters (evitar hueco arriba, configurable)
+    translateY = svgCenterY - contentCenterY * scale;
+    const zoomVars = getComputedStyle(document.documentElement);
+    const desiredTopMargin = parseFloat(zoomVars.getPropertyValue('--cluster-top-margin')) || 10; // px
+    const topEdge = totalBounds.y * scale + translateY; // posición Y del borde superior tras transform
+    if (topEdge > desiredTopMargin) {
+      translateY -= (topEdge - desiredTopMargin);
+    }
+  }
 
   // Apply transformation
   const transform = d3.zoomIdentity

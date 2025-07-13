@@ -833,8 +833,14 @@ function drawClusterGrid(trees, svg) {
         if (clusterGroups.length === trees.length) {
           // Paso 2: Calcular cuadrícula óptima
           const marginX = 50, marginY = 50, spacingX = 60, spacingY = 60;
+          // ===== Configuración global =====
+          // Permitir definir columnas deseadas vía CSS custom property --cluster-grid-cols; por defecto 4
+          const themeVarsGlobal = getComputedStyle(document.documentElement);
+          const desiredGridCols = parseInt(themeVarsGlobal.getPropertyValue('--cluster-grid-cols')) || 4;
+          // ... existing code ...
           const maxCols = Math.floor((window.innerWidth - 2 * marginX) / (Math.max(...clusterGroups.map(c => c.width)) + spacingX));
-          const cols = Math.max(1, Math.min(maxCols, clusterGroups.length));
+          // Forzamos el número deseado de columnas si es menor o igual al número de clusters; de lo contrario usamos clusters.length
+          const cols = Math.min(desiredGridCols, clusterGroups.length);
           const rows = Math.ceil(clusterGroups.length / cols);
           // Paso 3: Reposicionar clusters y dibujar fondo/título
           clusterGroups.forEach((c, i) => {

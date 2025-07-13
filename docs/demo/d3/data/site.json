@@ -1,0 +1,227 @@
+[
+    {
+        "ID": "AA00",
+        "Parent": "",
+        "Name": "Site Basic",
+        "Type": "",
+        "Subtitle": "",
+        "URL": "https://awwwards.com",
+        "Img": ""
+    },
+    {
+        "ID": "HM00",
+        "Parent": "AA00",
+        "Name": "Home",
+        "Type": "mosaic",
+        "Subtitle": "Subtitle 2",
+        "URL": "https://swanix.org/diagrams/lib/form.svg",
+        "Img": ""
+    },
+    {
+        "ID": "HM01",
+        "Parent": "HM00",
+        "Name": "News",
+        "Type": "list",
+        "Subtitle": "",
+        "URL": "",
+        "Img": ""
+    },
+    {
+        "ID": "PR00",
+        "Parent": "AA00",
+        "Name": "Projects",
+        "Type": "list",
+        "Subtitle": "Subtitle 3",
+        "URL": "https://swanix.org/diagrams/lib/form.svg",
+        "Img": ""
+    },
+    {
+        "ID": "PR01",
+        "Parent": "PR00",
+        "Name": "New Project",
+        "Type": "form",
+        "Subtitle": "",
+        "URL": "",
+        "Img": ""
+    },
+    {
+        "ID": "PR02",
+        "Parent": "PR01",
+        "Name": "Project",
+        "Type": "detail",
+        "Subtitle": "",
+        "URL": "",
+        "Img": ""
+    },
+    {
+        "ID": "GR00",
+        "Parent": "AA00",
+        "Name": "Gallery",
+        "Type": "mosaic",
+        "Subtitle": "Subtitle 4",
+        "URL": "https://awwwards.com",
+        "Img": ""
+    },
+    {
+        "ID": "GR01",
+        "Parent": "GR00",
+        "Name": "New Album",
+        "Type": "form",
+        "Subtitle": "",
+        "URL": "",
+        "Img": ""
+    },
+    {
+        "ID": "GR02",
+        "Parent": "GR01",
+        "Name": "Album",
+        "Type": "detail",
+        "Subtitle": "",
+        "URL": "",
+        "Img": ""
+    },
+    {
+        "ID": "AR00",
+        "Parent": "AA00",
+        "Name": "Articles",
+        "Type": "detail",
+        "Subtitle": "Subtitle 5",
+        "URL": "https://swanix.org/diagrams/lib/form.svg",
+        "Img": ""
+    },
+    {
+        "ID": "AR01",
+        "Parent": "AR00",
+        "Name": "New Article",
+        "Type": "form",
+        "Subtitle": "",
+        "URL": "",
+        "Img": ""
+    },
+    {
+        "ID": "AR02",
+        "Parent": "AR01",
+        "Name": "Article",
+        "Type": "document",
+        "Subtitle": "",
+        "URL": "",
+        "Img": ""
+    },
+    {
+        "ID": "AR03",
+        "Parent": "AR02",
+        "Name": "Article (PDF)",
+        "Type": "file-pdf",
+        "Subtitle": "",
+        "URL": "",
+        "Img": ""
+    },
+    {
+        "ID": "CH00",
+        "Parent": "AA00",
+        "Name": "Charts",
+        "Type": "mosaic",
+        "Subtitle": "Subtitle 6",
+        "URL": "https://swanix.org/diagrams/lib/form.svg",
+        "Img": ""
+    },
+    {
+        "ID": "CH01",
+        "Parent": "CH00",
+        "Name": "New Chart",
+        "Type": "form",
+        "Subtitle": "",
+        "URL": "",
+        "Img": ""
+    },
+    {
+        "ID": "CH02",
+        "Parent": "CH01",
+        "Name": "Chart",
+        "Type": "report",
+        "Subtitle": "",
+        "URL": "",
+        "Img": ""
+    },
+    {
+        "ID": "CH03",
+        "Parent": "CH02",
+        "Name": "Chart (CSV)",
+        "Type": "file-csv",
+        "Subtitle": "",
+        "URL": "",
+        "Img": ""
+    },
+    {
+        "ID": "CT00",
+        "Parent": "AA00",
+        "Name": "Contact",
+        "Type": "detail",
+        "Subtitle": "Subtitle 7",
+        "URL": "https://swanix.org/diagrams/lib/form.svg",
+        "Img": ""
+    },
+    {
+        "ID": "CT01",
+        "Parent": "CT00",
+        "Name": "New message",
+        "Type": "modal",
+        "Subtitle": "",
+        "URL": "",
+        "Img": ""
+    },
+    {
+        "ID": "CT02",
+        "Parent": "CT01",
+        "Name": "Message",
+        "Type": "detail",
+        "Subtitle": "",
+        "URL": "",
+        "Img": ""
+    },
+    {
+        "ID": "AC00",
+        "Parent": "AA00",
+        "Name": "My Account",
+        "Type": "detail",
+        "Subtitle": "Subtitle 8",
+        "URL": "https://swanix.org/diagrams/lib/form.svg",
+        "Img": ""
+    },
+    {
+        "ID": "AC01",
+        "Parent": "AC00",
+        "Name": "Edit Profile",
+        "Type": "form",
+        "Subtitle": "",
+        "URL": "",
+        "Img": ""
+    },
+    {
+        "ID": "AC02",
+        "Parent": "AC01",
+        "Name": "Profile",
+        "Type": "detail",
+        "Subtitle": "",
+        "URL": "",
+        "Img": ""
+    },
+    {
+        "ID": "ST00",
+        "Parent": "AA00",
+        "Name": "Settings",
+        "Type": "settings",
+        "Subtitle": "Subtitle 9",
+        "URL": "https://swanix.org/diagrams/lib/form.svg",
+        "Img": ""
+    },
+    {
+        "ID": "ST01",
+        "Parent": "ST00",
+        "Name": "General Info",
+        "Type": "form",
+        "Subtitle": "",
+        "URL": "",
+        "Img": ""
+    }
+]

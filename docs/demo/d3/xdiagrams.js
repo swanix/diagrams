@@ -1,5 +1,5 @@
 // Swanix Diagrams - JS
-// v0.3.1
+// v0.4.0
 
 // Global zoom behavior - defined at the beginning to avoid scope issues
 const zoom = d3.zoom()
@@ -113,6 +113,51 @@ function processCSVFile(file) {
   });
 }
 
+// Process JSON file
+function processJSONFile(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+
+    reader.onload = function(e) {
+      try {
+        const jsonContent = e.target.result;
+        let jsonData;
+        try {
+          jsonData = JSON.parse(jsonContent);
+        } catch (parseErr) {
+          return reject(new Error('Error parsing JSON: ' + parseErr.message));
+        }
+
+        // Convert JSON to internal array-of-objects format
+        const dataArray = convertJsonToCsvFormat(jsonData);
+
+        if (!Array.isArray(dataArray) || dataArray.length === 0) {
+          return reject(new Error('JSON vacío o en formato no reconocido'));
+        }
+
+        // Create diagram object
+        const diagram = {
+          name: file.name.replace(/\.json$/i, ''),
+          url: null, // Local file, no URL
+          data: dataArray,
+          isLocal: true,
+          timestamp: new Date().toISOString()
+        };
+
+        resolve(diagram);
+      } catch (error) {
+        reject(error);
+      }
+    };
+
+    reader.onerror = function() {
+      reject(new Error('Error reading file'));
+    };
+
+    reader.readAsText(file);
+  });
+}
+
 // Add diagram to switcher and load it
 window.addAndLoadDiagram = function(diagram) {
   // Add to configuration
@@ -152,22 +197,32 @@ function handleFileDrop(e) {
   
   const files = e.dataTransfer.files;
   if (files.length > 0) {
-    // Filter only CSV files
-    const csvFiles = Array.from(files).filter(file => 
-      file.type === 'text/csv' || file.name.toLowerCase().endsWith('.csv')
-    );
-    
-    if (csvFiles.length === 0) {
-      showToast('Por favor, selecciona archivos CSV válidos.', 'error');
+    // Filtrar archivos CSV o JSON compatibles
+    const supportedFiles = Array.from(files).filter(file => {
+      const name = file.name.toLowerCase();
+      const type = file.type;
+      return (
+        type === 'text/csv' || name.endsWith('.csv') ||
+        type === 'application/json' || type === 'text/json' || name.endsWith('.json')
+      );
+    });
+
+    if (supportedFiles.length === 0) {
+      showToast('Por favor, selecciona archivos CSV o JSON válidos.', 'error');
       return;
     }
-    
-    if (csvFiles.length === 1) {
-      // Single file - process normally
-      const file = csvFiles[0];
-      console.log('📁 Procesando archivo CSV:', file.name);
-      
-      processCSVFile(file)
+
+    const processFile = (file) => {
+      const isCsv = file.name.toLowerCase().endsWith('.csv') || file.type === 'text/csv';
+      return isCsv ? processCSVFile(file) : processJSONFile(file);
+    };
+
+    if (supportedFiles.length === 1) {
+      // Single file
+      const file = supportedFiles[0];
+      console.log('📁 Procesando archivo:', file.name);
+
+      processFile(file)
         .then(diagram => {
           console.log('✅ Archivo procesado exitosamente:', diagram.name);
           window.addAndLoadDiagram(diagram);
@@ -177,27 +232,22 @@ function handleFileDrop(e) {
           showToast('Error al procesar el archivo: ' + error.message, 'error');
         });
     } else {
-      // Multiple files - process all
-      console.log(`📁 Procesando ${csvFiles.length} archivos CSV...`);
-      
-      // Show progress message
-      const progressMsg = `Procesando ${csvFiles.length} archivos...`;
-      console.log(progressMsg);
-      
-      // Process all files in parallel
-      Promise.allSettled(csvFiles.map(file => processCSVFile(file)))
+      // Multiple files
+      console.log(`📁 Procesando ${supportedFiles.length} archivos...`);
+
+      Promise.allSettled(supportedFiles.map(file => processFile(file)))
         .then(results => {
           const successful = results.filter(r => r.status === 'fulfilled').map(r => r.value);
           const failed = results
-            .map((r, i) => r.status === 'rejected' ? { name: csvFiles[i].name, reason: r.reason && r.reason.message ? r.reason.message : r.reason } : null)
+            .map((r, i) => r.status === 'rejected' ? { name: supportedFiles[i].name, reason: r.reason && r.reason.message ? r.reason.message : r.reason } : null)
             .filter(Boolean);
 
-          // Agrega todos los diagramas exitosos
+          // Agregar los diagramas exitosos
           successful.forEach(diagram => {
             window.addAndLoadDiagram(diagram);
           });
 
-          // Feedback detallado
+          // Feedback
           if (failed.length > 0) {
             let msg = `${successful.length} diagramas agregados exitosamente\n❌ ${failed.length} fallaron:\n`;
             msg += failed.map(f => `- ${f.name}: ${f.reason}`).join('\n');
@@ -238,7 +288,8 @@ function handleDragLeave(e) {
 
 // Initialize drag & drop
 function initDragAndDrop() {
-  if (!window.$xDiagrams.options || !window.$xDiagrams.options.dragAndDrop) {
+  // Utilizar el helper isOptionEnabled para que el valor por defecto sea TRUE
+  if (!isOptionEnabled('dragAndDrop')) {
     console.log('[Drag & Drop] Opción dragAndDrop deshabilitada');
     return;
   }
@@ -327,197 +378,12 @@ window.showDiagramNotFound = function() {
   }
 }
 
-// Main function to initialize diagram
-function initDiagram(csvUrl, onComplete, retryCount = 0) {
-  console.log("Iniciando carga del diagrama...", retryCount > 0 ? `(intento ${retryCount + 1})` : '');
+// Main function to initialize diagram (now uses data source abstraction)
+function initDiagram(source, onComplete, retryCount = 0) {
+          console.log("Iniciando carga del diagrama...", retryCount > 0 ? `(intento ${retryCount + 1})` : '');
   
-  const loadingElement = document.querySelector("#loading");
-  const errorElement = document.querySelector("#error-message");
-  
-  if (loadingElement) loadingElement.style.display = "block";
-  if (errorElement) errorElement.style.display = "none";
-
-  // Check if this is a local diagram (with data instead of URL)
-  if (csvUrl && typeof csvUrl === 'object' && csvUrl.data) {
-    console.log("Cargando diagrama local:", csvUrl.name);
-    
-    try {
-      // Check if data is valid
-      if (!csvUrl.data || !Array.isArray(csvUrl.data) || csvUrl.data.length === 0) {
-        console.log('[Local File] Empty or invalid data, showing "Diagram not found"');
-        showDiagramNotFound();
-        if (loadingElement) loadingElement.style.display = "none";
-        if (onComplete && typeof onComplete === 'function') {
-          onComplete();
-        }
-        return;
-      }
-      
-      const trees = buildHierarchies(csvUrl.data);
-      drawTrees(trees);
-      
-      // Create side panel only if enabled
-      if (isOptionEnabled('sidePanel') !== false) {
-        createSidePanel();
-      }
-      
-      // Preserve current theme after loading diagram
-      setTimeout(async () => {
-        if (window.preserveCurrentTheme) {
-          await window.preserveCurrentTheme();
-        }
-      }, 100);
-      
-      console.log("Diagrama local cargado completamente");
-      
-      // Trigger onLoad hook
-      triggerHook('onLoad', { 
-        name: csvUrl.name,
-        data: csvUrl.data, 
-        trees: trees,
-        isLocal: true,
-        timestamp: new Date().toISOString()
-      });
-      
-      if (onComplete && typeof onComplete === 'function') {
-        onComplete();
-      }
-    } catch (error) {
-      console.error("Error durante la inicialización del diagrama local:", error);
-      console.log('[Local File] Error processing data, showing "Diagram not found"');
-      showDiagramNotFound();
-      if (loadingElement) loadingElement.style.display = "none";
-      
-      if (onComplete && typeof onComplete === 'function') {
-        onComplete();
-      }
-    }
-    return;
-  }
-
-  // Handle remote URLs (original functionality)
-  // Check if URL is valid
-  if (!csvUrl || typeof csvUrl !== 'string' || csvUrl.trim() === '') {
-    console.log('[URL] Invalid or empty URL, showing "Diagram not found"');
-    showDiagramNotFound();
-    if (loadingElement) loadingElement.style.display = "none";
-    if (onComplete && typeof onComplete === 'function') {
-      onComplete();
-    }
-    return;
-  }
-  
-  // Add cache-busting parameter to force fresh data
-  const cacheBuster = `?t=${Date.now()}`;
-  const urlWithCacheBuster = typeof csvUrl === 'string' && csvUrl.includes('?') ? `${csvUrl}&_cb=${Date.now()}` : `${csvUrl}${cacheBuster}`;
-  
-  console.log('[Cache] Loading with cache buster:', urlWithCacheBuster);
-
-  Papa.parse(urlWithCacheBuster, {
-    download: true,
-    header: true,
-    complete: function(results) {
-      console.log("CSV cargado exitosamente:", results.data.length, "filas");
-      
-      try {
-        const trees = buildHierarchies(results.data);
-        drawTrees(trees);
-        
-        // Create side panel only if enabled
-        if (isOptionEnabled('sidePanel') !== false) {
-          createSidePanel();
-        }
-        
-        // Preserve current theme after loading diagram
-        setTimeout(async () => {
-          if (window.preserveCurrentTheme) {
-            await window.preserveCurrentTheme();
-          }
-        }, 100);
-        
-        console.log("Diagrama cargado completamente");
-        
-        // Trigger onLoad hook
-        triggerHook('onLoad', { 
-          url: csvUrl, 
-          data: results.data, 
-          trees: trees,
-          timestamp: new Date().toISOString()
-        });
-        
-        if (onComplete && typeof onComplete === 'function') {
-          onComplete();
-        }
-      } catch (error) {
-        console.error("Error durante la inicialización:", error);
-        if (errorElement) errorElement.innerText = `Error: ${error.message}`;
-        if (loadingElement) loadingElement.style.display = "none";
-        
-        if (onComplete && typeof onComplete === 'function') {
-          onComplete();
-        }
-      }
-    },
-    error: function(err) {
-      console.error("Error al cargar CSV:", err);
-      
-      // Handle CORS errors specifically
-      let errorMessage = err.message || 'Error desconocido';
-      let isCorsError = errorMessage.includes('CORS') || 
-                       errorMessage.includes('cross-origin') ||
-                       errorMessage.includes('mismo origen') ||
-                       errorMessage.includes('origin');
-      
-      // Auto-retry for CORS errors (up to 2 retries)
-      if (isCorsError && retryCount < 2) {
-        console.log(`[Retry] CORS error detected, retrying in 2 seconds... (attempt ${retryCount + 1})`);
-        setTimeout(() => {
-          initDiagram(csvUrl, onComplete, retryCount + 1);
-        }, 2000);
-        return;
-      }
-      
-      // Try fallback URLs if available
-      if (isCorsError) {
-        console.log('[Fallback] Attempting to use fallback URLs...');
-        if (window.tryDiagramFallbacks && window.tryDiagramFallbacks(csvUrl, onComplete)) {
-          return;
-        }
-      }
-      
-      // Check if it's a file not found error (404, network error, etc.)
-      let isFileNotFound = errorMessage.includes('404') || 
-                          errorMessage.includes('Not Found') ||
-                          errorMessage.includes('Failed to fetch') ||
-                          errorMessage.includes('NetworkError') ||
-                          errorMessage.includes('ERR_NAME_NOT_RESOLVED') ||
-                          errorMessage.includes('ERR_CONNECTION_REFUSED');
-      
-      if (isFileNotFound) {
-        console.log('[File Not Found] Showing "Diagram not found" message');
-        showDiagramNotFound();
-        if (loadingElement) loadingElement.style.display = "none";
-        if (onComplete && typeof onComplete === 'function') {
-          onComplete();
-        }
-        return;
-      }
-      
-      if (isCorsError) {
-        errorMessage = 'Error de CORS: No se puede acceder al archivo desde este dominio. Intenta refrescar la página o usar un archivo local.';
-      }
-      
-      if (errorElement) {
-        errorElement.innerText = errorMessage;
-        errorElement.style.display = "block";
-      }
-      if (loadingElement) loadingElement.style.display = "none";
-      
-      if (onComplete && typeof onComplete === 'function') {
-        onComplete();
-      }
-    }
-  });
+  // Use the new data source abstraction layer
+  detectAndLoadDataSource(source, onComplete, retryCount);
 }
 
 // Helper function to get column value case-insensitively
@@ -705,6 +571,7 @@ function getColumnConfigurationLegacy() {
 function buildHierarchies(data) {
   let roots = [];
   let nodeMap = new Map();
+  let autoIdCounter = 1;
   
   // Get column configuration
   const columnConfig = getColumnConfiguration();
@@ -731,11 +598,15 @@ function buildHierarchies(data) {
     let url = getColumnValue(d, columnConfig.url, "");
     let type = getColumnValue(d, columnConfig.type, "");
 
+    // Generate auto ID if not provided or empty
+    if (!id || id.trim() === "") {
+      id = `auto_${autoIdCounter++}`;
+      console.log('[CSV Processing] Generated auto ID:', id, 'for node:', name);
+    }
 
-
-    // Skip nodes without essential data (id or name)
-    if (!id || !name || id.trim() === "" || name.trim() === "") {
-      console.log('[CSV Processing] Skipping node without essential data:', { id, name });
+    // Skip nodes without essential data (name is the only truly required field)
+    if (!name || name.trim() === "") {
+      console.log('[CSV Processing] Skipping node without name:', { id, name });
       return; // Skip this row
     }
 
@@ -760,6 +631,356 @@ function buildHierarchies(data) {
   });
 
   return roots;
+}
+
+// Detect if data is a flat list (no hierarchy)
+function isFlatList(trees) {
+  // If there's only one root and it has no children, it's a flat list
+  if (trees.length === 1 && (!trees[0].children || trees[0].children.length === 0)) {
+    return true;
+  }
+  
+  // If there are multiple roots and none have children, it's also a flat list
+  if (trees.length > 1 && trees.every(tree => !tree.children || tree.children.length === 0)) {
+    return true;
+  }
+  
+  return false;
+}
+
+// Detect if data has multiple clusters that should be arranged in grid
+function shouldUseClusterGrid(trees) {
+  // If there are multiple root clusters, arrange them in grid
+  if (trees.length > 1) {
+    return true;
+  }
+  
+  return false;
+}
+
+// Draw grid layout for flat lists
+function drawGridLayout(nodes, svg) {
+  const g = d3.select(svg).append("g");
+  
+  // Get viewport dimensions
+  const viewportWidth = window.innerWidth;
+  const viewportHeight = window.innerHeight;
+  
+  // Grid configuration
+  const nodeWidth = 120;  // Width of each node
+  const nodeHeight = 80;  // Height of each node
+  const nodeSpacingX = 40; // Horizontal spacing between nodes
+  const nodeSpacingY = 40; // Vertical spacing between nodes
+  const marginX = 50;     // Left/right margin
+  const marginY = 50;     // Top/bottom margin
+  
+  // Calculate how many nodes fit per row
+  const availableWidth = viewportWidth - (2 * marginX);
+  const nodesPerRow = Math.floor(availableWidth / (nodeWidth + nodeSpacingX));
+  
+  // Calculate positions for each node
+  const positionedNodes = nodes.map((node, index) => {
+    const row = Math.floor(index / nodesPerRow);
+    const col = index % nodesPerRow;
+    
+    const x = marginX + (col * (nodeWidth + nodeSpacingX)) + (nodeWidth / 2);
+    const y = marginY + (row * (nodeHeight + nodeSpacingY)) + (nodeHeight / 2);
+    
+    return {
+      ...node,
+      x: x,
+      y: y,
+      row: row,
+      col: col
+    };
+  });
+  
+  // Render nodes in grid
+  const nodeGroups = g.selectAll(".node")
+    .data(positionedNodes)
+    .enter().append("g")
+    .attr("class", "node node-clickable")
+    .attr("data-id", d => d.id)
+    .attr("transform", d => `translate(${d.x},${d.y})`)
+    .on("click", function(event, d) {
+      event.stopPropagation();
+      
+      // Enable keyboard navigation when a node is clicked (only if enabled)
+      if (isOptionEnabled('keyboardNavigation') && window.$xDiagrams.keyboardNavigation) {
+        window.$xDiagrams.keyboardNavigation.enable();
+        
+        // Find the index of this node in the global data
+        const nodeIndex = window.$xDiagrams.currentData.findIndex(item => item.id === d.id);
+        if (nodeIndex !== -1) {
+          window.$xDiagrams.keyboardNavigation.currentNodeIndex = nodeIndex;
+          window.$xDiagrams.keyboardNavigation.selectNode(nodeIndex);
+        }
+      }
+      
+      // Open side panel only if enabled
+      if (isOptionEnabled('sidePanel') !== false && window.openSidePanel) {
+        window.openSidePanel(d);
+      }
+    });
+
+  // Node rectangle
+  nodeGroups.append("rect")
+    .style("stroke-width", "var(--node-bg-stroke, 2)")
+    .attr("x", -nodeWidth/2)
+    .attr("y", -nodeHeight/2)
+    .attr("width", nodeWidth)
+    .attr("height", nodeHeight);
+
+  // Node image
+  nodeGroups.append("image")
+    .attr("href", d => {
+      const baseUrl = d.img ? `img/${d.img}.svg` : "img/detail.svg";
+      const cacheBuster = `?t=${Date.now()}`;
+      return baseUrl.includes('?') ? `${baseUrl}&_cb=${Date.now()}` : `${baseUrl}${cacheBuster}`;
+    })
+    .attr("x", -15)
+    .attr("y", -25)
+    .attr("class", "image-base image-filter")
+    .attr("width", 30)
+    .attr("height", 30)
+    .on("error", function() {
+      const fallbackUrl = `img/detail.svg?t=${Date.now()}`;
+      d3.select(this).attr("href", fallbackUrl);
+    });
+
+  // Node text
+  const textGroup = nodeGroups.append("g").attr("class", "text-group");
+  
+  // Node name (centered)
+  const nameText = textGroup.append("text")
+    .attr("class", "label-text")
+    .attr("x", 0)
+    .attr("y", 15)
+    .attr("text-anchor", "middle")
+    .style("font-size", "12px")
+    .text(d => d.name);
+
+  // Apply text wrapping for grid layout
+  wrap(nameText, nodeWidth - 10);
+  
+  console.log('[Grid Layout] Rendered', positionedNodes.length, 'nodes in grid layout');
+}
+
+// Draw clusters in grid layout (solución avanzada)
+function drawClusterGrid(trees, svg) {
+  const g = d3.select(svg).append("g");
+  // Paso 1: Renderizar cada cluster en posición temporal (apilados verticalmente)
+  const clusterGroups = [];
+  trees.forEach((tree, index) => {
+    try {
+      const themeVars = getComputedStyle(document.documentElement);
+      const treeVertical = parseFloat(themeVars.getPropertyValue('--tree-vertical-spacing')) || 100;
+      const treeHorizontal = parseFloat(themeVars.getPropertyValue('--tree-horizontal-spacing')) || 180;
+      const clusterPaddingX = parseFloat(themeVars.getPropertyValue('--cluster-padding-x')) || 220;
+      const clusterPaddingY = parseFloat(themeVars.getPropertyValue('--cluster-padding-y')) || 220;
+      const root = d3.hierarchy(tree);
+      const treeLayout = d3.tree().nodeSize([treeVertical, treeHorizontal]);
+      treeLayout(root);
+      // Render en posición temporal (x=0, y=index*1000)
+      const treeGroup = g.append("g")
+        .attr("class", "diagram-group")
+        .attr("data-root-id", root.data.id)
+        .attr("transform", `translate(0, ${index * 1000})`);
+      // Render links
+      treeGroup.selectAll(".link")
+        .data(root.links())
+        .enter().append("path")
+        .attr("class", "link")
+        .attr("d", d => `M ${d.source.x} ${d.source.y} V ${(d.source.y + d.target.y) / 2} H ${d.target.x} V ${d.target.y}`);
+      // Render nodes
+      const node = treeGroup.selectAll(".node")
+        .data(root.descendants())
+        .enter().append("g")
+        .attr("class", "node node-clickable")
+        .attr("data-id", d => d.data.id)
+        .attr("transform", d => `translate(${d.x},${d.y})`)
+        .on("click", function(event, d) {
+          event.stopPropagation();
+          if (isOptionEnabled('keyboardNavigation') && window.$xDiagrams.keyboardNavigation) {
+            window.$xDiagrams.keyboardNavigation.enable();
+            const nodeIndex = window.$xDiagrams.currentData.findIndex(item => item.id === d.data.id);
+            if (nodeIndex !== -1) {
+              window.$xDiagrams.keyboardNavigation.currentNodeIndex = nodeIndex;
+              window.$xDiagrams.keyboardNavigation.selectNode(nodeIndex);
+            }
+          }
+          if (isOptionEnabled('sidePanel') !== false && window.openSidePanel) {
+            window.openSidePanel(d.data);
+          }
+        });
+      node.append("rect")
+        .style("stroke-width", "var(--node-bg-stroke, 2)")
+        .attr("x", parseFloat(themeVars.getPropertyValue('--node-bg-x')) || -30)
+        .attr("y", parseFloat(themeVars.getPropertyValue('--node-bg-y')) || -20)
+        .attr("width", parseFloat(themeVars.getPropertyValue('--node-bg-width')) || 60)
+        .attr("height", parseFloat(themeVars.getPropertyValue('--node-bg-height')) || 40);
+      node.append("image")
+        .attr("href", d => {
+          const baseUrl = d.data.img ? `img/${d.data.img}.svg` : "img/detail.svg";
+          const cacheBuster = `?t=${Date.now()}`;
+          return baseUrl.includes('?') ? `${baseUrl}&_cb=${Date.now()}` : `${baseUrl}${cacheBuster}`;
+        })
+        .attr("x", parseFloat(themeVars.getPropertyValue('--image-x')))
+        .attr("y", parseFloat(themeVars.getPropertyValue('--image-y')))
+        .attr("class", "image-base image-filter")
+        .attr("width", parseFloat(themeVars.getPropertyValue('--image-width')))
+        .attr("height", parseFloat(themeVars.getPropertyValue('--image-height')))
+        .on("error", function() {
+          const fallbackUrl = `img/detail.svg?t=${Date.now()}`;
+          d3.select(this).attr("href", fallbackUrl);
+        });
+      const textGroup = node.append("g").attr("class", "text-group");
+      textGroup.append("text")
+        .attr("class", "label-id")
+        .attr("x", parseFloat(themeVars.getPropertyValue('--label-id-x')))
+        .attr("y", parseFloat(themeVars.getPropertyValue('--label-id-y')))
+        .attr("dy", themeVars.getPropertyValue('--label-id-dy'))
+        .attr("text-anchor", themeVars.getPropertyValue('--label-id-anchor'))
+        .style("font-size", themeVars.getPropertyValue('--label-id-font-size'))
+        .style("fill", themeVars.getPropertyValue('--label-id-text-color'))
+        .text(d => d.data.id);
+      const nameText = textGroup.append("text")
+        .attr("class", "label-text")
+        .attr("x", parseFloat(themeVars.getPropertyValue('--label-x')))
+        .attr("y", parseFloat(themeVars.getPropertyValue('--label-y')))
+        .attr("dy", themeVars.getPropertyValue('--label-dy'))
+        .style("font-size", themeVars.getPropertyValue('--label-font-size'))
+        .text(d => d.data.name);
+      const maxWidth = parseFloat(themeVars.getPropertyValue('--label-max-width')) || 68;
+      wrap(nameText, maxWidth);
+      textGroup.append("text")
+        .attr("class", "subtitle-text")
+        .attr("transform", "rotate(270)")
+        .attr("x", parseFloat(themeVars.getPropertyValue('--subtitle-x')))
+        .attr("y", parseFloat(themeVars.getPropertyValue('--subtitle-y')))
+        .attr("text-anchor", themeVars.getPropertyValue('--subtitle-anchor'))
+        .style("font-size", themeVars.getPropertyValue('--subtitle-font-size'))
+        .style("fill", themeVars.getPropertyValue('--text-subtitle-color'))
+        .text(d => {
+          const subtitleText = d.data.subtitle || "";
+          const maxSubtitleChars = 35;
+          if (subtitleText.length > maxSubtitleChars) {
+            return subtitleText.substring(0, maxSubtitleChars) + "...";
+          }
+          return subtitleText;
+        });
+      setTimeout(() => {
+        const bounds = treeGroup.node().getBBox();
+        clusterGroups.push({
+          group: treeGroup,
+          width: bounds.width + 2 * clusterPaddingX,
+          height: bounds.height + 2 * clusterPaddingY,
+          innerWidth: bounds.width,
+          innerHeight: bounds.height,
+          paddingX: clusterPaddingX,
+          paddingY: clusterPaddingY,
+          id: root.data.id
+        });
+        if (clusterGroups.length === trees.length) {
+          // Paso 2: Calcular cuadrícula óptima
+          const marginX = 50, marginY = 50, spacingX = 60, spacingY = 60;
+          // ===== Configuración global =====
+          // 1. Valor por defecto
+          let desiredGridCols = 4;
+
+          // 2. Variable CSS (menor prioridad)
+          const themeVarsGlobal = getComputedStyle(document.documentElement);
+          const cssCols = parseInt(themeVarsGlobal.getPropertyValue('--cluster-grid-cols'));
+          if (!Number.isNaN(cssCols) && cssCols > 0) {
+            desiredGridCols = cssCols;
+          }
+
+          // 3. Atributo HTML en el contenedor (data-cluster-cols)
+          const containerElem = document.querySelector('.xcanvas');
+          if (containerElem) {
+            const attrCols = parseInt(containerElem.getAttribute('data-cluster-cols'));
+            if (!Number.isNaN(attrCols) && attrCols > 0) {
+              desiredGridCols = attrCols;
+            }
+          }
+
+          // 4. Configuración JS (window.$xDiagrams.options.clusterGridCols) – máxima prioridad
+          const diagramOptions = getDiagramOptions();
+          if (diagramOptions.clusterGridCols) {
+            const optCols = parseInt(diagramOptions.clusterGridCols);
+            if (!Number.isNaN(optCols) && optCols > 0) {
+              desiredGridCols = optCols;
+            }
+          }
+
+          // 5. Configuración específica del diagrama (propiedad "grid" en el objeto diagrama)
+          const diagramsList = getDiagrams();
+          if (Array.isArray(diagramsList) && window.$xDiagrams && typeof window.$xDiagrams.currentDiagramIdx === 'number') {
+            const currentDiagramObj = diagramsList[window.$xDiagrams.currentDiagramIdx];
+            if (currentDiagramObj && currentDiagramObj.grid) {
+              const diagCols = parseInt(currentDiagramObj.grid);
+              if (!Number.isNaN(diagCols) && diagCols > 0) {
+                desiredGridCols = diagCols;
+              }
+            }
+          }
+
+          // ... existing code ...
+          const maxCols = Math.floor((window.innerWidth - 2 * marginX) / (Math.max(...clusterGroups.map(c => c.width)) + spacingX));
+          // Ya no limitamos por ancho de pantalla
+          const cols = Math.max(1, Math.min(desiredGridCols, clusterGroups.length));
+          const rows = Math.ceil(clusterGroups.length / cols);
+          // Paso 3: Reposicionar clusters y dibujar fondo/título
+          clusterGroups.forEach((c, i) => {
+            const col = i % cols;
+            const row = Math.floor(i / cols);
+            let x = marginX + col * (c.width + spacingX) + c.width / 2;
+            let y = marginY + row * (c.height + spacingY) + c.height / 2;
+            // Si solo hay un cluster, centrarlo en la pantalla
+            if (clusterGroups.length === 1) {
+              x = window.innerWidth / 2;
+              y = window.innerHeight / 2;
+            }
+            c.group.attr("transform", `translate(${x},${y})`);
+            // Medir bounds en la nueva posición
+            const bounds = c.group.node().getBBox();
+            const paddingX = c.paddingX || 80;
+            const paddingY = c.paddingY || 80;
+            const minX = bounds.x - paddingX;
+            const minY = bounds.y - paddingY - 30;
+            const width = bounds.width + 2 * paddingX;
+            const height = bounds.height + 2 * paddingY;
+            // Fondo del cluster
+            c.group.insert("rect", ":first-child")
+              .attr("class", "cluster-rect")
+              .attr("x", minX)
+              .attr("y", minY)
+              .attr("width", width)
+              .attr("height", height)
+              .attr("rx", 18)
+              .attr("ry", 18)
+              .style("fill", "var(--cluster-bg, rgba(0,0,0,0.02))")
+              .style("stroke", "var(--cluster-stroke, #222)")
+              .style("stroke-width", 2)
+              .style("stroke-dasharray", "6,4");
+            // Título del cluster
+            c.group.append("text")
+              .attr("class", "cluster-title")
+              .attr("x", minX + 32)
+              .attr("y", minY + 40)
+              .attr("text-anchor", "start")
+              .style("font-size", "1.5em")
+              .style("font-weight", "bold")
+              .style("fill", "var(--cluster-title-color, #222)")
+              .text(c.id);
+          });
+          console.log('[Cluster Grid Layout] Rendered', clusterGroups.length, 'clusters in dynamic grid layout');
+        }
+      }, 0);
+    } catch (err) {
+      console.error(`Error al renderizar cluster ${index + 1}:`, err);
+    }
+  });
 }
 
 // Draw simplified trees
@@ -793,6 +1014,16 @@ function drawTrees(trees) {
     collectNodes(tree);
   });
   console.log('[Keyboard Navigation] Stored', window.$xDiagrams.currentData.length, 'nodes for navigation');
+  
+  // Check layout type and choose appropriate rendering method
+  if (isFlatList(trees)) {
+    console.log('[Layout] Detected flat list, using cluster grid layout');
+    drawClusterGrid(trees, svg);
+  } else if (shouldUseClusterGrid(trees)) {
+    console.log('[Layout] Detected multiple clusters, using cluster grid layout');
+    drawClusterGrid(trees, svg);
+  } else {
+    console.log('[Layout] Detected single hierarchical tree, using traditional tree layout');
   
   try {
     const g = d3.select(svg).append("g");
@@ -1082,6 +1313,7 @@ function drawTrees(trees) {
   } catch (err) {
     console.error('Error general en drawTrees:', err);
   }
+  } // End of else block for tree layout
 }
 
 // Function to recalculate spacing between clusters
@@ -1170,6 +1402,8 @@ function applyAutoZoom() {
   const diagramGroupCount = diagramGroups.size();
   const isSmallDiagram = nodeCount <= 4;
   const isSingleGroup = diagramGroupCount === 1;
+  const isFlatListDiagram = !isSingleGroup && nodeCount === diagramGroupCount; // todos los clusters son nodos raíz sin hijos
+  console.log('[Zoom] ¿Lista plana?', isFlatListDiagram);
   
   console.log('[Zoom] Diagramas:', diagramGroupCount, 'Nodos:', nodeCount, '¿Grupo único?', isSingleGroup);
   
@@ -1210,10 +1444,17 @@ function applyAutoZoom() {
         }
       }
       
-      // Position first cluster from the left with negative margin
+      // Position first cluster from the left with margin configurable
       const firstClusterLeftEdge = firstClusterBounds.x + firstClusterOffsetX;
-              translateX = -150 - firstClusterLeftEdge * scale; // -150px margin from the left
-      console.log('[Zoom] Primer cluster desde la izquierda con margen negativo. translateX:', translateX);
+      const zoomVarsLeft = getComputedStyle(document.documentElement);
+      if (isFlatListDiagram) {
+        const flatLeftMargin = parseFloat(zoomVarsLeft.getPropertyValue('--flatlist-left-margin')) || 20; // px
+        translateX = flatLeftMargin - firstClusterLeftEdge * scale;
+        console.log('[Zoom] Margen izquierdo para lista plana:', flatLeftMargin, 'translateX:', translateX);
+      } else {
+        translateX = -150 - firstClusterLeftEdge * scale; // margen fijo para clusters jerárquicos
+      }
+      console.log('[Zoom] Primer cluster desde la izquierda con margen aplicado. translateX:', translateX);
           } else {
         // Fallback to original logic
       const leftEdge = totalBounds.x * scale + translateX;
@@ -1223,7 +1464,22 @@ function applyAutoZoom() {
     }
   }
   
-  const translateY = svgCenterY - contentCenterY * scale - 50;
+  let translateY;
+  if (isSingleGroup) {
+    // Comportamiento original para un solo cluster
+    translateY = svgCenterY - contentCenterY * scale - 50;
+  } else {
+    // Ajuste dinámico para múltiples clusters (evitar hueco arriba, configurable)
+    translateY = svgCenterY - contentCenterY * scale;
+    const zoomVars = getComputedStyle(document.documentElement);
+    const desiredTopMargin = isFlatListDiagram ?
+      (parseFloat(zoomVars.getPropertyValue('--flatlist-top-margin')) || 50) :
+      (parseFloat(zoomVars.getPropertyValue('--cluster-top-margin')) || 10); // px
+    const topEdge = totalBounds.y * scale + translateY; // posición Y del borde superior tras transform
+    if (topEdge > desiredTopMargin) {
+      translateY -= (topEdge - desiredTopMargin);
+    }
+  }
 
   // Apply transformation
   const transform = d3.zoomIdentity
@@ -1526,6 +1782,32 @@ function formatUrlForDisplay(url) {
   }
   
   return formattedUrl;
+}
+
+// Helper function to open URL securely with security attributes
+function openUrlSecurely(url) {
+  try {
+    // Create a temporary link element with security attributes
+    const tempLink = document.createElement('a');
+    tempLink.href = url;
+    tempLink.target = '_blank';
+    tempLink.rel = 'noreferrer noopener'; // Security attributes
+    tempLink.style.display = 'none';
+    
+    // Add to DOM temporarily
+    document.body.appendChild(tempLink);
+    
+    // Programmatically click the link
+    tempLink.click();
+    
+    // Remove from DOM
+    document.body.removeChild(tempLink);
+    
+    return true;
+  } catch (error) {
+    console.error('[Security] Error opening URL securely:', error);
+    return false;
+  }
 }
 
 // Generate panel content
@@ -2003,6 +2285,11 @@ window.$xDiagrams.keyboardNavigation = {
           e.preventDefault();
           this.clearSelection();
           break;
+        case ' ':
+        case 'Enter':
+          e.preventDefault();
+          this.openCurrentNodeLink();
+          break;
       }
     });
   },
@@ -2045,8 +2332,18 @@ window.$xDiagrams.keyboardNavigation = {
         this.selectNode(parentIndex);
       }
     } else {
-      // No parent found, wrap around to the root node (level 0)
-      this.navigateToRootNode();
+      // No parent found. Si todos los nodos son raíz (lista plana), usamos navegación vertical por columnas (grid)
+      const isFlat = this.allNodes.every(n => {
+        const d = this.getNodeData(n);
+        return d && !d.parent;
+      });
+
+      if (isFlat) {
+        this.navigateToNodeAbove();
+      } else {
+        // Caso estándar: ir al primer nodo raíz
+        this.navigateToRootNode();
+      }
     }
   },
   
@@ -2067,13 +2364,21 @@ window.$xDiagrams.keyboardNavigation = {
       if (childIndex !== -1) {
         this.selectNode(childIndex);
       } else {
-        // No children found, try to go to first node of next level
-        const currentLevel = this.getNodeLevel(nodeData);
-        const nextLevelResult = this.navigateToFirstNodeOfNextLevel(currentLevel);
-        
-        // If no next level found, wrap around to the first node of the diagram
-        if (!nextLevelResult) {
-          this.navigateToFirst();
+        // No children. Si es lista plana navegamos verticalmente hacia abajo (grid)
+        const isFlat = this.allNodes.every(n => {
+          const d = this.getNodeData(n);
+          return d && !d.parent;
+        });
+
+        if (isFlat) {
+          this.navigateToNodeBelow();
+        } else {
+          // Comportamiento original
+          const currentLevel = this.getNodeLevel(nodeData);
+          const nextLevelResult = this.navigateToFirstNodeOfNextLevel(currentLevel);
+          if (!nextLevelResult) {
+            this.navigateToFirst();
+          }
         }
       }
     }
@@ -2471,6 +2776,117 @@ window.$xDiagrams.keyboardNavigation = {
         inline: 'center'
       });
     }
+  },
+  
+  // Open the link of the currently selected node in a new tab
+  openCurrentNodeLink: function() {
+    if (this.currentNodeIndex === -1 || this.allNodes.length === 0) {
+      console.log('[Keyboard Navigation] No node selected to open link');
+      return;
+    }
+    
+    const currentNode = this.allNodes[this.currentNodeIndex];
+    const nodeData = this.getNodeData(currentNode);
+    
+    if (!nodeData) {
+      console.log('[Keyboard Navigation] No data found for selected node');
+      return;
+    }
+    
+    // Get the URL from the node data
+    const url = nodeData.url;
+    
+    if (!url) {
+      console.log('[Keyboard Navigation] No URL found for node:', nodeData.name);
+      return;
+    }
+    
+    // Validate URL format
+    if (!isUrl(url)) {
+      console.log('[Keyboard Navigation] Invalid URL format:', url);
+      return;
+    }
+    
+    // Open URL in new tab with security attributes
+    if (openUrlSecurely(url)) {
+      console.log('[Keyboard Navigation] Opened link for node:', nodeData.name, 'URL:', url);
+    } else {
+      console.error('[Keyboard Navigation] Failed to open link for node:', nodeData.name);
+    }
+  },
+  
+  // Navegar al nodo inmediatamente arriba en una lista plana mostrada en grid
+  navigateToNodeAbove: function() {
+    if (this.currentNodeIndex === -1 || this.allNodes.length === 0) return;
+
+    const currentNode = this.allNodes[this.currentNodeIndex];
+    const currentRect = currentNode.getBoundingClientRect();
+    const currentCenterX = currentRect.left + currentRect.width / 2;
+    const currentCenterY = currentRect.top + currentRect.height / 2;
+
+    let bestIndex = -1;
+    let bestDY = Infinity;
+    let bestDX = Infinity;
+
+    this.allNodes.forEach((node, idx) => {
+      if (idx === this.currentNodeIndex) return;
+      const rect = node.getBoundingClientRect();
+      const centerX = rect.left + rect.width / 2;
+      const centerY = rect.top + rect.height / 2;
+
+      const deltaY = centerY - currentCenterY; // negativo si está arriba
+      if (deltaY >= -2) return; // sólo considerar nodos con Y menor (arriba)
+
+      const dy = Math.abs(deltaY);
+      const dx = Math.abs(centerX - currentCenterX);
+
+      if (dy < bestDY || (dy === bestDY && dx < bestDX)) {
+        bestDY = dy;
+        bestDX = dx;
+        bestIndex = idx;
+      }
+    });
+
+    if (bestIndex !== -1) {
+      this.selectNode(bestIndex);
+    }
+  },
+
+  // Navegar al nodo inmediatamente abajo en una lista plana mostrada en grid
+  navigateToNodeBelow: function() {
+    if (this.currentNodeIndex === -1 || this.allNodes.length === 0) return;
+
+    const currentNode = this.allNodes[this.currentNodeIndex];
+    const currentRect = currentNode.getBoundingClientRect();
+    const currentCenterX = currentRect.left + currentRect.width / 2;
+    const currentCenterY = currentRect.top + currentRect.height / 2;
+
+    let bestIndex = -1;
+    let bestDY = Infinity;
+    let bestDX = Infinity;
+
+    this.allNodes.forEach((node, idx) => {
+      if (idx === this.currentNodeIndex) return;
+      const rect = node.getBoundingClientRect();
+      const centerX = rect.left + rect.width / 2;
+      const centerY = rect.top + rect.height / 2;
+
+      const deltaY = centerY - currentCenterY; // positivo si está abajo
+      if (deltaY <= 2) return; // sólo considerar nodos con Y mayor (abajo)
+
+      const dy = deltaY; // ya positivo
+      const dx = Math.abs(centerX - currentCenterX);
+
+      if (dy < bestDY || (dy === bestDY && dx < bestDX)) {
+        bestDY = dy;
+        bestDX = dx;
+        bestIndex = idx;
+      }
+    });
+
+    if (bestIndex !== -1) {
+      this.selectNode(bestIndex);
+    }
   }
 };
 // DO NOT define default diagrams here
@@ -2567,8 +2983,8 @@ window.$xDiagrams.renderDiagramButtons = function() {
                     window.closeSidePanel();
                 }
                 
-                // Clear cache before switching diagrams (only for remote URLs)
-                if (window.$xDiagrams.clearCache && typeof d.url === 'string') {
+                // Clear cache before switching diagrams (only for remote files)
+                if (window.$xDiagrams.clearCache && typeof d.file === 'string') {
                     window.$xDiagrams.clearCache();
                 }
                 
@@ -2587,6 +3003,102 @@ window.$xDiagrams.renderDiagramButtons = function() {
         
         dropdownContent.appendChild(link);
     });
+    
+    // Remove any existing Google Sheets button and cache refresh button
+    const existingSheetsBtn = dropdown.querySelector('.sheets-btn');
+    const existingCacheBtn = dropdown.querySelector('.cache-refresh-btn');
+    if (existingSheetsBtn) {
+        existingSheetsBtn.remove();
+    }
+    if (existingCacheBtn) {
+        existingCacheBtn.remove();
+    }
+    
+    // Add Google Sheets button if current diagram is from Google Sheets AND has edit URL
+    let sheetsButton = null;
+    const currentDiagram = diagrams[window.$xDiagrams.currentDiagramIdx];
+    if (currentDiagram && currentDiagram.file && currentDiagram.file.includes('docs.google.com/spreadsheets') && currentDiagram.edit) {
+        // Create Google Sheets button
+        sheetsButton = document.createElement('button');
+        sheetsButton.className = 'sheets-btn';
+        sheetsButton.innerHTML = `
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/>
+            </svg>
+        `;
+        sheetsButton.title = 'Abrir archivo';
+        
+        sheetsButton.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            // Open edit URL in new tab with security attributes
+            if (!openUrlSecurely(currentDiagram.edit)) {
+                console.error('[Google Sheets] Failed to open edit link');
+            }
+            
+            // Close dropdown
+            dropdown.classList.remove('open');
+        });
+        
+        // Insert button after the dropdown content
+        dropdown.appendChild(sheetsButton);
+    }
+    
+    // Add cache refresh button SOLO para diagramas que se cargan desde una API REST
+    if (currentDiagram && (currentDiagram.url || currentDiagram.file) && typeof isRestApiEndpoint === 'function' && isRestApiEndpoint(currentDiagram.url || currentDiagram.file)) {
+        const cacheButton = document.createElement('button');
+        cacheButton.className = 'cache-refresh-btn';
+        cacheButton.innerHTML = `
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M17.65,6.35C16.2,4.9 14.21,4 12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20C15.73,20 18.84,17.45 19.73,14H17.65C16.83,16.33 14.61,18 12,18A6,6 0 0,1 6,12A6,6 0 0,1 12,6C13.66,6 15.14,6.69 16.22,7.78L13,11H20V4L17.65,6.35Z"/>
+            </svg>
+        `;
+        cacheButton.title = 'Refrescar caché y recargar';
+        
+        // Si NO hay botón de Sheets, agrego clase 'solo' para ajustar posición
+        if (!sheetsButton) {
+            cacheButton.classList.add('solo');
+        }
+        
+        cacheButton.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            // Add loading animation
+            cacheButton.classList.add('loading');
+            
+            // Get the URL to clear cache for
+            const diagramUrl = currentDiagram.url || currentDiagram.file;
+            
+            // Clear cache for this specific URL
+            if (window.xDiagramsCache && window.xDiagramsCache.clear) {
+                window.xDiagramsCache.clear(diagramUrl);
+                console.log('🗑️ Cache cleared for:', diagramUrl);
+            }
+            
+            // Also clear legacy cache
+            if (window.$xDiagrams.clearCache) {
+                window.$xDiagrams.clearCache();
+            }
+            
+            // Reload the current diagram after a short delay
+            setTimeout(() => {
+                window.$xDiagrams.loadDiagram(currentDiagram);
+                
+                // Remove loading animation after a bit more delay
+                setTimeout(() => {
+                    cacheButton.classList.remove('loading');
+                }, 1000);
+            }, 100);
+            
+            // Close dropdown
+            dropdown.classList.remove('open');
+        });
+        
+        // Insert button after the dropdown content (before sheets button if it exists)
+        dropdown.appendChild(cacheButton);
+    }
     
     // Apply current theme colors to the switcher buttons
     updateSwitcherColors();
@@ -2611,37 +3123,50 @@ window.$xDiagrams.loadDiagram = function(input) {
 
     window.$xDiagrams.isLoading = true;
 
-    // Lógica robusta para soportar string, objeto con url, objeto con data
+    // Lógica robusta para soportar string, objeto con url/file, objeto con data
     let diagramToLoad = input;
     if (typeof input === 'string') {
-        // Buscar el objeto diagrama si existe
-        diagramToLoad = diagrams.find(d => d.url === input) || { url: input };
+        // Buscar el objeto diagrama si existe (por url o file)
+        diagramToLoad = diagrams.find(d => d.url === input || d.file === input) || { url: input };
         window.$xDiagrams.currentUrl = input;
     } else if (typeof input === 'object' && input !== null) {
         if (input.data) {
             // Es un objeto local (drag & drop)
             diagramToLoad = input;
-            window.$xDiagrams.currentUrl = input.url || null;
+            window.$xDiagrams.currentUrl = input.url || input.file || null;
         } else if (input.url) {
             // Es un objeto con url (local o remota)
             diagramToLoad = input;
             window.$xDiagrams.currentUrl = input.url;
+        } else if (input.file) {
+            // Es un objeto con file (compatibilidad)
+            diagramToLoad = input;
+            window.$xDiagrams.currentUrl = input.file;
         }
     }
 
     // Limpia el cache solo si es una URL remota
-    if (diagramToLoad.url && typeof diagramToLoad.url === 'string') {
+    if ((diagramToLoad.url && typeof diagramToLoad.url === 'string') || 
+        (diagramToLoad.file && typeof diagramToLoad.file === 'string')) {
         window.$xDiagrams.clearCache();
     }
 
     // Decide qué pasar a initDiagram:
     // - Si tiene data, pásalo directo
     // - Si tiene url, pásale la url
+    // - Si tiene file, pásale la file (compatibilidad)
     let toInit = diagramToLoad;
     if (diagramToLoad.data) {
         toInit = diagramToLoad;
+        console.log('🔍 Pasando objeto con data a initDiagram');
     } else if (diagramToLoad.url) {
         toInit = diagramToLoad.url;
+        console.log('🔍 Pasando URL a initDiagram:', diagramToLoad.url);
+    } else if (diagramToLoad.file) {
+        toInit = diagramToLoad.file;
+        console.log('🔍 Pasando file a initDiagram:', diagramToLoad.file);
+    } else {
+        console.log('⚠️ No se encontró data, url o file en el diagrama:', diagramToLoad);
     }
 
     // Limpieza visual
@@ -2716,17 +3241,23 @@ window.$xDiagrams.clearCache = function() {
         }
     });
     
-    // Clear any stored data in localStorage that might be causing issues
+    // Limpia solo claves de caché obsoletas o no utilizadas, pero
+    // preserva las claves del nuevo sistema de caché (xdiagrams_cache_*)
     const keysToRemove = [];
     for (let i = 0; i < localStorage.length; i++) {
         const key = localStorage.key(i);
+        // Mantener la nueva caché inteligente y sus estadísticas
+        if (key && (key.startsWith('xdiagrams_cache_') || key === 'xdiagrams_cache_stats')) {
+            continue; // no eliminar
+        }
+        // Eliminar entradas antiguas o irrelevantes
         if (key && (key.includes('diagram') || key.includes('cache') || key.includes('data'))) {
             keysToRemove.push(key);
         }
     }
     keysToRemove.forEach(key => localStorage.removeItem(key));
     
-    console.log('[Cache] Cache cleared and images refreshed');
+    console.log('[Cache] Cache cleared (legacy only) and images refreshed');
 };
 
 // --- End diagram management ---
@@ -2897,7 +3428,7 @@ function initializeWhenReady() {
     }
     
     // Initialize drag & drop if enabled
-    if (window.$xDiagrams.options && window.$xDiagrams.options.dragAndDrop) {
+    if (isOptionEnabled('dragAndDrop')) {
       console.log('[Initialize] Inicializando drag & drop...');
       setTimeout(() => {
         initDragAndDropDelayed();
@@ -2931,6 +3462,58 @@ window.getThemeConfiguration = getThemeConfiguration;
 window.getStorageKey = getStorageKey;
 window.getOppositeTheme = getOppositeTheme;
 window.isLightTheme = isLightTheme;
+
+// Cache management functions (for console access)
+window.xDiagramsCache = {
+  // Get cache statistics
+  stats: function() {
+    const stats = CacheManager.getStats();
+            console.log('Cache Statistics:', stats);
+    return stats;
+  },
+  
+  // Clear specific cache entry
+  clear: function(url) {
+    CacheManager.clear(url);
+    console.log('🗑️ Cache cleared for:', url);
+  },
+  
+  // Clear all cache
+  clearAll: function() {
+    CacheManager.clearAll();
+    console.log('🗑️ All cache cleared');
+  },
+  
+  // Get cache size
+  size: function() {
+    const size = CacheManager.getCacheSize();
+    console.log('📏 Cache size:', size.toFixed(2), 'MB');
+    return size;
+  },
+  
+  // List all cached URLs
+  list: function() {
+    const keys = Object.keys(localStorage);
+    const cacheKeys = keys.filter(key => key.startsWith('xdiagrams_cache_'));
+    
+    console.log('📋 Cached URLs:');
+    cacheKeys.forEach(key => {
+      try {
+        const data = JSON.parse(localStorage.getItem(key));
+        const age = Math.floor((Date.now() - data.timestamp) / (1000 * 60)); // minutes
+        console.log(`  - ${data.url} (${age} min ago)`);
+      } catch (e) {
+        console.log(`  - ${key} (invalid data)`);
+      }
+    });
+  },
+  
+  // Force refresh (clear cache and reload)
+  refresh: function(url) {
+    CacheManager.clear(url);
+    console.log('🔄 Cache cleared, next load will fetch fresh data for:', url);
+  }
+};
 
 // Function to reload the diagram system (for drag & drop functionality)
 window.reloadDiagramSystem = function() {
@@ -3304,19 +3887,19 @@ window.checkUrlAccessibility = function(url) {
   });
 };
 
-// Function to find diagram by URL and get its fallbacks
-window.findDiagramByUrl = function(url) {
+// Function to find diagram by file and get its fallbacks
+window.findDiagramByFile = function(file) {
   const diagrams = getDiagrams();
   if (!diagrams) {
     return null;
   }
   
-  return diagrams.find(diagram => diagram.url === url);
+  return diagrams.find(diagram => diagram.file === file);
 };
 
-// Function to try fallback URLs from diagram definition
-window.tryDiagramFallbacks = function(originalUrl, onComplete, retryCount = 0) {
-  const diagram = window.findDiagramByUrl(originalUrl);
+// Function to try fallback files from diagram definition
+window.tryDiagramFallbacks = function(originalFile, onComplete, retryCount = 0) {
+  const diagram = window.findDiagramByFile(originalFile);
   
   if (!diagram || !diagram.fallbacks || !Array.isArray(diagram.fallbacks)) {
     console.log('[Fallback] No fallbacks defined for this diagram');
@@ -3324,15 +3907,15 @@ window.tryDiagramFallbacks = function(originalUrl, onComplete, retryCount = 0) {
   }
   
   if (retryCount >= diagram.fallbacks.length) {
-    console.error('[Fallback] No more fallback URLs available');
+    console.error('[Fallback] No more fallback files available');
     return false;
   }
   
-  const fallbackUrl = diagram.fallbacks[retryCount];
-  console.log(`[Fallback] Trying fallback URL ${retryCount + 1}:`, fallbackUrl);
+  const fallbackFile = diagram.fallbacks[retryCount];
+  console.log(`[Fallback] Trying fallback file ${retryCount + 1}:`, fallbackFile);
   
-  // Try the fallback URL with error handling
-  window.initDiagram(fallbackUrl, onComplete, 0); // Reset retry count for fallback
+  // Try the fallback file with error handling
+  window.initDiagram(fallbackFile, onComplete, 0); // Reset retry count for fallback
   
   return true;
 };
@@ -3511,9 +4094,9 @@ window.showToast = function(message, type = 'success', duration = 4200) {
 // Función para verificar si un diagrama ya está cargado
 window.isDiagramDuplicate = function(diagram) {
   const diagrams = window.$xDiagrams && window.$xDiagrams.diagrams ? window.$xDiagrams.diagrams : [];
-  if (diagram.url) {
-    // Duplicado por URL (remoto o local por ruta)
-    return diagrams.some(d => d.url === diagram.url);
+  if (diagram.file) {
+    // Duplicado por file (remoto o local por ruta)
+    return diagrams.some(d => d.file === diagram.file);
   } else if (diagram.name && diagram.hash) {
     // Duplicado por nombre+hash (local drag & drop)
     return diagrams.some(d => d.name === diagram.name && d.hash === diagram.hash);
@@ -3525,11 +4108,11 @@ window.isDiagramDuplicate = function(diagram) {
 window.addAndLoadDiagram = function(diagram) {
   const diagrams = window.$xDiagrams && window.$xDiagrams.diagrams ? window.$xDiagrams.diagrams : [];
   if (window.isDiagramDuplicate(diagram)) {
-    showToast(`El archivo '${diagram.name || diagram.url}' ya se encuentra subido.`, 'mixed');
+    showToast(`El archivo '${diagram.name || diagram.file}' ya se encuentra subido.`, 'mixed');
     return;
   }
   // Si es local y el nombre ya existe pero el hash es diferente, renombrar
-  if (!diagram.url && diagram.name) {
+  if (!diagram.file && diagram.name) {
     let baseName = diagram.name.replace(/ \(\d+\)$/, '');
     let count = 1;
     let newName = diagram.name;
@@ -3563,3 +4146,786 @@ window.simpleHash = function(str) {
   }
   return hash >>> 0;
 };
+
+// ============================================================================
+// DATA SOURCE ABSTRACTION LAYER
+// ============================================================================
+
+// Detect data source type and load accordingly
+function detectAndLoadDataSource(source, onComplete, retryCount = 0) {
+  console.log("🔍 Detectando tipo de fuente de datos:", source);
+  
+  // Case 1: Object with data (already processed)
+  if (source && typeof source === 'object' && source.data) {
+            console.log("Fuente detectada: Datos pre-procesados");
+    return loadFromObject(source, onComplete);
+  }
+  
+  // Case 2: String URL - detect type
+  if (typeof source === 'string') {
+    const url = source.trim();
+    
+    // Check if it's a REST API endpoint
+    if (isRestApiEndpoint(url)) {
+      console.log("🌐 Fuente detectada: API REST");
+      return loadFromRestApi(url, onComplete, retryCount);
+    }
+    
+    // Check if it's a CSV URL
+    if (isCsvUrl(url)) {
+      console.log("📄 Fuente detectada: URL CSV");
+      return loadFromCsvUrl(url, onComplete, retryCount);
+    }
+    
+    // Default: treat as CSV URL
+    console.log("📄 Fuente detectada: URL (tratada como CSV)");
+    return loadFromCsvUrl(url, onComplete, retryCount);
+  }
+  
+  // Case 3: Invalid source
+  console.log("❌ Fuente de datos inválida");
+  showDiagramNotFound();
+  if (onComplete && typeof onComplete === 'function') {
+    onComplete();
+  }
+}
+
+// Check if URL is a REST API endpoint
+function isRestApiEndpoint(url) {
+  // Common REST API patterns
+  const restPatterns = [
+    /api\./i,
+    /\.json$/i,
+    /\/api\//i,
+    /sheetdb\.io/i,
+    /sheetson\.com/i,
+    /sheetbest\.com/i,
+    /airtable\.com/i,
+    /notion\.so/i
+  ];
+  
+  const isRest = restPatterns.some(pattern => pattern.test(url));
+  console.log('🔍 [Cache] Checking if URL is REST API:', url, '→', isRest);
+  
+  // Debug: show which pattern matched
+  if (isRest) {
+    const matchedPattern = restPatterns.find(pattern => pattern.test(url));
+    console.log('🔍 [Cache] Matched pattern:', matchedPattern);
+  }
+  
+  return isRest;
+}
+
+// Check if URL is a CSV file
+function isCsvUrl(url) {
+  return /\.csv$/i.test(url) || 
+         /output=csv/i.test(url) || 
+         /google\.com\/spreadsheets/i.test(url);
+}
+
+// Load data from REST API (now uses intelligent caching)
+function loadFromRestApi(apiUrl, onComplete, retryCount = 0) {
+  // Use the enhanced version with caching
+  loadFromRestApiWithCache(apiUrl, onComplete, retryCount);
+}
+
+// Load data from CSV URL (existing functionality)
+function loadFromCsvUrl(csvUrl, onComplete, retryCount = 0) {
+  console.log("📄 Cargando desde URL CSV:", csvUrl);
+  
+  const loadingElement = document.querySelector("#loading");
+  const errorElement = document.querySelector("#error-message");
+  
+  if (loadingElement) loadingElement.style.display = "block";
+  if (errorElement) errorElement.style.display = "none";
+
+  // Add cache-busting parameter to force fresh data
+  const cacheBuster = `?t=${Date.now()}`;
+  const urlWithCacheBuster = csvUrl.includes('?') ? `${csvUrl}&_cb=${Date.now()}` : `${csvUrl}${cacheBuster}`;
+  
+  console.log('[Cache] Loading with cache buster:', urlWithCacheBuster);
+
+  Papa.parse(urlWithCacheBuster, {
+    download: true,
+    header: true,
+    complete: function(results) {
+      console.log("CSV cargado exitosamente:", results.data.length, "filas");
+      
+      try {
+        const trees = buildHierarchies(results.data);
+        drawTrees(trees);
+        
+        // Create side panel only if enabled
+        if (isOptionEnabled('sidePanel') !== false) {
+          createSidePanel();
+        }
+        
+        // Preserve current theme after loading diagram
+        setTimeout(async () => {
+          if (window.preserveCurrentTheme) {
+            await window.preserveCurrentTheme();
+          }
+        }, 100);
+        
+        console.log("Diagrama cargado desde: CSV URL | URL: " + csvUrl + " | Registros: " + results.data.length);
+        
+        // Trigger onLoad hook
+        triggerHook('onLoad', { 
+          url: csvUrl, 
+          data: results.data, 
+          trees: trees,
+          sourceType: 'csv-url',
+          timestamp: new Date().toISOString()
+        });
+        
+        if (onComplete && typeof onComplete === 'function') {
+          onComplete();
+        }
+      } catch (error) {
+        console.error("Error durante la inicialización:", error);
+        if (errorElement) errorElement.innerText = `Error: ${error.message}`;
+        if (loadingElement) loadingElement.style.display = "none";
+        
+        if (onComplete && typeof onComplete === 'function') {
+          onComplete();
+        }
+      }
+    },
+    error: function(err) {
+      console.error("Error al cargar CSV:", err);
+      
+      // Handle CORS errors specifically
+      let errorMessage = err.message || 'Error desconocido';
+      let isCorsError = errorMessage.includes('CORS') || 
+                       errorMessage.includes('cross-origin') ||
+                       errorMessage.includes('mismo origen') ||
+                       errorMessage.includes('origin');
+      
+      // Auto-retry for CORS errors (up to 2 retries)
+      if (isCorsError && retryCount < 2) {
+        console.log(`[Retry] CORS error detected, retrying in 2 seconds... (attempt ${retryCount + 1})`);
+        setTimeout(() => {
+          loadFromCsvUrl(csvUrl, onComplete, retryCount + 1);
+        }, 2000);
+        return;
+      }
+      
+      // Try fallback URLs if available
+      if (isCorsError) {
+        console.log('[Fallback] Attempting to use fallback URLs...');
+        if (window.tryDiagramFallbacks && window.tryDiagramFallbacks(csvUrl, onComplete)) {
+          return;
+        }
+      }
+      
+      // Check if it's a file not found error (404, network error, etc.)
+      let isFileNotFound = errorMessage.includes('404') || 
+                          errorMessage.includes('Not Found') ||
+                          errorMessage.includes('Failed to fetch') ||
+                          errorMessage.includes('NetworkError') ||
+                          errorMessage.includes('ERR_NAME_NOT_RESOLVED') ||
+                          errorMessage.includes('ERR_CONNECTION_REFUSED');
+      
+      if (isFileNotFound) {
+        console.log('[File Not Found] Showing "Diagram not found" message');
+        showDiagramNotFound();
+        if (loadingElement) loadingElement.style.display = "none";
+        if (onComplete && typeof onComplete === 'function') {
+          onComplete();
+        }
+        return;
+      }
+      
+      if (isCorsError) {
+        errorMessage = 'Error de CORS: No se puede acceder al archivo desde este dominio. Intenta refrescar la página o usar un archivo local.';
+      }
+      
+      if (errorElement) {
+        errorElement.innerText = errorMessage;
+        errorElement.style.display = "block";
+      }
+      if (loadingElement) loadingElement.style.display = "none";
+      
+      if (onComplete && typeof onComplete === 'function') {
+        onComplete();
+      }
+    }
+  });
+}
+
+// Load data from object (existing functionality)
+function loadFromObject(diagramObject, onComplete) {
+          console.log("Cargando desde objeto:", diagramObject.name);
+  
+  const loadingElement = document.querySelector("#loading");
+  const errorElement = document.querySelector("#error-message");
+  
+  if (loadingElement) loadingElement.style.display = "block";
+  if (errorElement) errorElement.style.display = "none";
+
+  try {
+    // Check if data is valid
+    if (!diagramObject.data || !Array.isArray(diagramObject.data) || diagramObject.data.length === 0) {
+      console.log('[Object] Empty or invalid data, showing "Diagram not found"');
+      showDiagramNotFound();
+      if (loadingElement) loadingElement.style.display = "none";
+      if (onComplete && typeof onComplete === 'function') {
+        onComplete();
+      }
+      return;
+    }
+    
+    const trees = buildHierarchies(diagramObject.data);
+    drawTrees(trees);
+    
+    // Create side panel only if enabled
+    if (isOptionEnabled('sidePanel') !== false) {
+      createSidePanel();
+    }
+    
+    // Preserve current theme after loading diagram
+    setTimeout(async () => {
+      if (window.preserveCurrentTheme) {
+        await window.preserveCurrentTheme();
+      }
+    }, 100);
+    
+    console.log("Diagrama cargado desde: OBJETO | Nombre: " + (diagramObject.name || 'Sin nombre') + " | Registros: " + diagramObject.data.length);
+    
+    // Trigger onLoad hook
+    triggerHook('onLoad', { 
+      name: diagramObject.name,
+      data: diagramObject.data, 
+      trees: trees,
+      sourceType: 'object',
+      isLocal: true,
+      timestamp: new Date().toISOString()
+    });
+    
+    if (onComplete && typeof onComplete === 'function') {
+      onComplete();
+    }
+  } catch (error) {
+    console.error("Error durante la inicialización del diagrama desde objeto:", error);
+    console.log('[Object] Error processing data, showing "Diagram not found"');
+    showDiagramNotFound();
+    if (loadingElement) loadingElement.style.display = "none";
+    
+    if (onComplete && typeof onComplete === 'function') {
+      onComplete();
+    }
+  }
+}
+
+// Convert JSON response to CSV-like format
+function convertJsonToCsvFormat(jsonData) {
+  console.log("🔄 Convirtiendo JSON a formato CSV:", jsonData);
+  
+  // Handle different JSON response formats
+  let dataArray = [];
+  
+  // Case 1: Array of objects (most common)
+  if (Array.isArray(jsonData)) {
+    dataArray = jsonData;
+  }
+  // Case 2: Object with data property
+  else if (jsonData && typeof jsonData === 'object' && jsonData.data && Array.isArray(jsonData.data)) {
+    dataArray = jsonData.data;
+  }
+  // Case 3: Object with records property (Airtable-like)
+  else if (jsonData && typeof jsonData === 'object' && jsonData.records && Array.isArray(jsonData.records)) {
+    dataArray = jsonData.records.map(record => record.fields || record);
+  }
+  // Case 4: Single object (convert to array)
+  else if (jsonData && typeof jsonData === 'object' && !Array.isArray(jsonData)) {
+    dataArray = [jsonData];
+  }
+  else {
+    console.warn("⚠️ Formato JSON no reconocido:", jsonData);
+    return [];
+  }
+  
+  console.log("✅ Datos convertidos:", dataArray.length, "registros");
+  return dataArray;
+}
+
+// ============================================================================
+// INTELLIGENT CACHE SYSTEM
+// ============================================================================
+
+// Cache TTL constants for easy configuration
+const CACHE_TTL = {
+  // Short durations (development/testing)
+  ONE_MINUTE: 1 * 60 * 1000,
+  FIVE_MINUTES: 5 * 60 * 1000,
+  FIFTEEN_MINUTES: 15 * 60 * 1000,
+  THIRTY_MINUTES: 30 * 60 * 1000,
+  
+  // Medium durations (production)
+  ONE_HOUR: 60 * 60 * 1000,
+  TWO_HOURS: 2 * 60 * 60 * 1000,
+  FOUR_HOURS: 4 * 60 * 60 * 1000,
+  SIX_HOURS: 6 * 60 * 60 * 1000,
+  
+  // Long durations (stable data)
+  TWELVE_HOURS: 12 * 60 * 60 * 1000,
+  ONE_DAY: 24 * 60 * 60 * 1000,
+  THREE_DAYS: 3 * 24 * 60 * 60 * 1000,
+  ONE_WEEK: 7 * 24 * 60 * 60 * 1000,
+  
+  // Special values
+  NO_CACHE: 0,
+  INFINITE: -1
+};
+
+// Cache configuration
+const CACHE_CONFIG = {
+  // Cache duration in milliseconds (default: 1 hour)
+  DEFAULT_TTL: CACHE_TTL.ONE_HOUR,
+  // Maximum cache size in MB
+  MAX_SIZE: 10,
+  // Cache version for invalidation
+  VERSION: '1.0'
+};
+
+// Get cache configuration from user settings or use defaults
+function getCacheConfig() {
+  const userConfig = window.$xDiagrams?.cache || {};
+  return {
+    ttl: userConfig.ttl || CACHE_CONFIG.DEFAULT_TTL,
+    maxSize: userConfig.maxSize || CACHE_CONFIG.MAX_SIZE,
+    version: CACHE_CONFIG.VERSION
+  };
+}
+
+// Cache management functions
+const CacheManager = {
+  // Generate cache key for URL
+  getCacheKey: function(url) {
+    // Use a simple hash function to avoid issues with btoa and special characters
+    let hash = 0;
+    for (let i = 0; i < url.length; i++) {
+      const char = url.charCodeAt(i);
+      hash = ((hash << 5) - hash) + char;
+      hash = hash & hash; // Convert to 32-bit integer
+    }
+    const key = `xdiagrams_cache_${Math.abs(hash)}`;
+    console.log('🔑 [Cache] Generated key for URL:', url, '→', key);
+    return key;
+  },
+
+  // Get cached data
+  get: function(url) {
+    try {
+      const key = this.getCacheKey(url);
+      console.log('🔍 [Cache] Looking for key:', key);
+      const cached = localStorage.getItem(key);
+      console.log('🔍 [Cache] Raw cached data:', cached ? 'EXISTS' : 'NULL');
+      
+      if (!cached) {
+        console.log('📦 [Cache] No cached data found for:', url);
+        return null;
+      }
+
+      const data = JSON.parse(cached);
+      
+      // Check if cache is expired
+      if (data.expires && Date.now() > data.expires) {
+        console.log('📦 [Cache] Cache expired for:', url);
+        localStorage.removeItem(key);
+        return null;
+      }
+
+      // Check cache version
+      const config = getCacheConfig();
+      if (data.version !== config.version) {
+        console.log('📦 [Cache] Cache version mismatch, clearing:', url);
+        localStorage.removeItem(key);
+        return null;
+      }
+
+      console.log('📦 [Cache] Using cached data for:', url);
+      return data.data;
+    } catch (error) {
+      console.error('📦 [Cache] Error reading cache:', error);
+      return null;
+    }
+  },
+
+  // Set cached data
+  set: function(url, data) {
+    try {
+      const key = this.getCacheKey(url);
+      const config = getCacheConfig();
+      const cacheData = {
+        data: data,
+        timestamp: Date.now(),
+        expires: Date.now() + config.ttl,
+        version: config.version,
+        url: url
+      };
+
+      // Check cache size before storing
+      if (this.getCacheSize() > config.maxSize) {
+        console.log('📦 [Cache] Cache size limit reached, cleaning old entries');
+        this.cleanup();
+      }
+
+      localStorage.setItem(key, JSON.stringify(cacheData));
+      console.log('📦 [Cache] Data cached for:', url);
+      
+      // Update cache statistics
+      this.updateStats();
+    } catch (error) {
+      console.error('📦 [Cache] Error writing cache:', error);
+    }
+  },
+
+  // Clear specific cache entry
+  clear: function(url) {
+    try {
+      const key = this.getCacheKey(url);
+      localStorage.removeItem(key);
+      console.log('📦 [Cache] Cleared cache for:', url);
+    } catch (error) {
+      console.error('📦 [Cache] Error clearing cache:', error);
+    }
+  },
+
+  // Clear all cache
+  clearAll: function() {
+    try {
+      const keys = Object.keys(localStorage);
+      const cacheKeys = keys.filter(key => key.startsWith('xdiagrams_cache_'));
+      
+      cacheKeys.forEach(key => localStorage.removeItem(key));
+      console.log('📦 [Cache] All cache cleared');
+    } catch (error) {
+      console.error('📦 [Cache] Error clearing all cache:', error);
+    }
+  },
+
+  // Get cache size in MB
+  getCacheSize: function() {
+    try {
+      const keys = Object.keys(localStorage);
+      const cacheKeys = keys.filter(key => key.startsWith('xdiagrams_cache_'));
+      
+      let totalSize = 0;
+      cacheKeys.forEach(key => {
+        totalSize += localStorage.getItem(key).length;
+      });
+      
+      return totalSize / (1024 * 1024); // Convert to MB
+    } catch (error) {
+      console.error('📦 [Cache] Error calculating cache size:', error);
+      return 0;
+    }
+  },
+
+  // Cleanup old cache entries
+  cleanup: function() {
+    try {
+      const keys = Object.keys(localStorage);
+      const cacheKeys = keys.filter(key => key.startsWith('xdiagrams_cache_'));
+      
+      const cacheEntries = cacheKeys.map(key => {
+        try {
+          const data = JSON.parse(localStorage.getItem(key));
+          return { key, timestamp: data.timestamp, expires: data.expires };
+        } catch {
+          return { key, timestamp: 0, expires: 0 };
+        }
+      });
+
+      // Sort by timestamp (oldest first)
+      cacheEntries.sort((a, b) => a.timestamp - b.timestamp);
+
+      // Remove oldest entries until we're under the limit
+      const config = getCacheConfig();
+      const maxEntries = Math.floor(config.maxSize * 2); // Rough estimate
+      if (cacheEntries.length > maxEntries) {
+        const toRemove = cacheEntries.slice(0, cacheEntries.length - maxEntries);
+        toRemove.forEach(entry => {
+          localStorage.removeItem(entry.key);
+        });
+        console.log('📦 [Cache] Cleaned up', toRemove.length, 'old entries');
+      }
+    } catch (error) {
+      console.error('📦 [Cache] Error during cleanup:', error);
+    }
+  },
+
+  // Update cache statistics
+  updateStats: function() {
+    try {
+      const keys = Object.keys(localStorage);
+      const cacheKeys = keys.filter(key => key.startsWith('xdiagrams_cache_'));
+      
+      const stats = {
+        entries: cacheKeys.length,
+        size: this.getCacheSize(),
+        timestamp: Date.now()
+      };
+
+      localStorage.setItem('xdiagrams_cache_stats', JSON.stringify(stats));
+    } catch (error) {
+      console.error('📦 [Cache] Error updating stats:', error);
+    }
+  },
+
+  // Get cache statistics
+  getStats: function() {
+    try {
+      const stats = localStorage.getItem('xdiagrams_cache_stats');
+      return stats ? JSON.parse(stats) : { entries: 0, size: 0, timestamp: 0 };
+    } catch (error) {
+      console.error('📦 [Cache] Error reading stats:', error);
+      return { entries: 0, size: 0, timestamp: 0 };
+    }
+  },
+
+  // Check if URL should be cached
+  shouldCache: function(url) {
+    // Only cache REST API URLs
+    const shouldCache = isRestApiEndpoint(url);
+    console.log('🔍 [Cache] shouldCache check for:', url, '→', shouldCache);
+    return shouldCache;
+  }
+};
+
+// Debug commands for console
+window.cacheDebug = {
+  // Show cache status
+  status: function() {
+    const keys = Object.keys(localStorage);
+    const cacheKeys = keys.filter(key => key.startsWith('xdiagrams_cache_'));
+            console.log('Cache Status:');
+    console.log('- Total entries:', cacheKeys.length);
+    console.log('- Cache keys:', cacheKeys);
+    
+    if (cacheKeys.length > 0) {
+      console.log('\n📋 Cache Details:');
+      cacheKeys.forEach(key => {
+        try {
+          const data = JSON.parse(localStorage.getItem(key));
+          const age = Math.floor((Date.now() - data.timestamp) / 1000);
+          const expires = Math.floor((data.expires - Date.now()) / 1000);
+          console.log(`- ${key}: age=${age}s, expires=${expires}s, version=${data.version}`);
+        } catch (e) {
+          console.log(`- ${key}: ERROR parsing`);
+        }
+      });
+    }
+  },
+  
+  // Test cache for specific URL
+  test: function(url) {
+    console.log('🧪 Testing cache for URL:', url);
+    const key = CacheManager.getCacheKey(url);
+    console.log('🔑 Generated key:', key);
+    const cached = localStorage.getItem(key);
+    console.log('📦 Raw cached data:', cached ? 'EXISTS' : 'NULL');
+    
+    if (cached) {
+      try {
+        const data = JSON.parse(cached);
+        console.log('📦 Parsed data:', data);
+        return data;
+      } catch (e) {
+        console.log('❌ Error parsing cache data:', e);
+        return null;
+      }
+    }
+    return null;
+  },
+  
+  // Clear all cache
+  clear: function() {
+    const keys = Object.keys(localStorage);
+    const cacheKeys = keys.filter(key => key.startsWith('xdiagrams_cache_'));
+    cacheKeys.forEach(key => localStorage.removeItem(key));
+    console.log('🗑️ All cache cleared');
+  },
+  
+  // Show cache content
+  content: function() {
+    const keys = Object.keys(localStorage);
+    const cacheKeys = keys.filter(key => key.startsWith('xdiagrams_cache_'));
+    
+    console.log('📦 Cache Content:');
+    cacheKeys.forEach(key => {
+      try {
+        const data = JSON.parse(localStorage.getItem(key));
+        console.log(`\n🔑 Key: ${key}`);
+        console.log('📄 Data:', data);
+      } catch (e) {
+        console.log(`\n🔑 Key: ${key}`);
+        console.log('❌ Error:', e.message);
+      }
+    });
+  }
+};
+
+// Enhanced loadFromRestApi with intelligent caching
+function loadFromRestApiWithCache(apiUrl, onComplete, retryCount = 0) {
+  console.log("🌐 Cargando desde API REST:", apiUrl);
+  console.log("🔍 [Cache] Function called with URL:", apiUrl);
+  
+  // Debug: Check all cache entries before processing
+  const allKeys = Object.keys(localStorage);
+  const cacheKeys = allKeys.filter(key => key.startsWith('xdiagrams_cache_'));
+  console.log("🔍 [Cache] All cache keys before processing:", cacheKeys);
+  if (cacheKeys.length > 0) {
+    cacheKeys.forEach(key => {
+      try {
+        const data = JSON.parse(localStorage.getItem(key));
+        console.log("🔍 [Cache] Found cache entry:", key, "for URL:", data.url);
+      } catch (e) {
+        console.log("🔍 [Cache] Invalid cache entry:", key);
+      }
+    });
+  }
+  
+  const loadingElement = document.querySelector("#loading");
+  const errorElement = document.querySelector("#error-message");
+  
+  if (loadingElement) loadingElement.style.display = "block";
+  if (errorElement) errorElement.style.display = "none";
+
+  // Check cache first
+  console.log("🔍 [Cache] Checking if should cache:", apiUrl);
+  const shouldCache = CacheManager.shouldCache(apiUrl);
+  console.log("🔍 [Cache] Should cache result:", shouldCache);
+  
+  if (shouldCache) {
+    console.log("✅ [Cache] URL is cacheable, checking cache...");
+    const cachedData = CacheManager.get(apiUrl);
+    console.log("🔍 [Cache] Cache result:", cachedData ? "FOUND" : "NOT FOUND");
+    if (cachedData) {
+      console.log("📦 [Cache] Using cached data, skipping API call");
+      
+      try {
+        const trees = buildHierarchies(cachedData);
+        drawTrees(trees);
+        
+        // Create side panel only if enabled
+        if (isOptionEnabled('sidePanel') !== false) {
+          createSidePanel();
+        }
+        
+        // Preserve current theme after loading diagram
+        setTimeout(async () => {
+          if (window.preserveCurrentTheme) {
+            await window.preserveCurrentTheme();
+          }
+        }, 100);
+        
+        console.log("Diagrama cargado desde: CACHE | URL: " + apiUrl + " | Registros: " + cachedData.length);
+        
+        // Trigger onLoad hook
+        triggerHook('onLoad', { 
+          url: apiUrl, 
+          data: cachedData, 
+          trees: trees,
+          sourceType: 'rest-api-cached',
+          timestamp: new Date().toISOString()
+        });
+        
+        if (onComplete && typeof onComplete === 'function') {
+          onComplete();
+        }
+        return;
+      } catch (error) {
+        console.error("❌ Error procesando datos del cache:", error);
+        // Fall back to API call
+        console.log("🔄 Fallback: cargando desde API...");
+      }
+    }
+  }
+
+  // Add cache-busting parameter (only if not using cache)
+  const cacheBuster = `?t=${Date.now()}`;
+  const urlWithCacheBuster = apiUrl.includes('?') ? `${apiUrl}&_cb=${Date.now()}` : `${apiUrl}${cacheBuster}`;
+  
+  fetch(urlWithCacheBuster)
+    .then(response => {
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+      return response.json();
+    })
+    .then(jsonData => {
+      console.log("✅ JSON cargado exitosamente:", jsonData);
+      
+      // Convert JSON to CSV-like format
+      const csvData = convertJsonToCsvFormat(jsonData);
+      
+      if (!csvData || csvData.length === 0) {
+        throw new Error('No se encontraron datos válidos en la respuesta JSON');
+      }
+
+      // Cache the data if appropriate
+      console.log("🔍 [Cache] Checking if should cache after fetch:", apiUrl);
+      if (CacheManager.shouldCache(apiUrl)) {
+        console.log("✅ [Cache] Caching data for:", apiUrl);
+        CacheManager.set(apiUrl, csvData);
+      } else {
+        console.log("❌ [Cache] Not caching data for:", apiUrl);
+      }
+      
+      // Process the data
+      const trees = buildHierarchies(csvData);
+      drawTrees(trees);
+      
+      // Create side panel only if enabled
+      if (isOptionEnabled('sidePanel') !== false) {
+        createSidePanel();
+      }
+      
+      // Preserve current theme after loading diagram
+      setTimeout(async () => {
+        if (window.preserveCurrentTheme) {
+          await window.preserveCurrentTheme();
+        }
+      }, 100);
+      
+      console.log("Diagrama cargado desde: API REST | URL: " + apiUrl + " | Registros: " + csvData.length);
+      
+      // Trigger onLoad hook
+      triggerHook('onLoad', { 
+        url: apiUrl, 
+        data: csvData, 
+        trees: trees,
+        sourceType: 'rest-api',
+        timestamp: new Date().toISOString()
+      });
+      
+      if (onComplete && typeof onComplete === 'function') {
+        onComplete();
+      }
+    })
+    .catch(error => {
+      console.error("❌ Error cargando desde API REST:", error);
+      
+      // Handle retry logic for network errors
+      if (retryCount < 2 && (error.message.includes('Failed to fetch') || error.message.includes('NetworkError'))) {
+        console.log(`[Retry] Network error detected, retrying in 2 seconds... (attempt ${retryCount + 1})`);
+        setTimeout(() => {
+          loadFromRestApiWithCache(apiUrl, onComplete, retryCount + 1);
+        }, 2000);
+        return;
+      }
+      
+      // Show error
+      if (errorElement) {
+        errorElement.innerText = `Error cargando API: ${error.message}`;
+        errorElement.style.display = "block";
+      }
+      if (loadingElement) loadingElement.style.display = "none";
+      
+      if (onComplete && typeof onComplete === 'function') {
+        onComplete();
+      }
+    });
+}

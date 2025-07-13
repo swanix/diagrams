@@ -13,11 +13,25 @@
 <div class="xcanvas"></div>
 <script>
 window.$xDiagrams = {
-  title: "My Diagram",
+  title: "API Test - Cache Debug",
   diagrams: [
     {
-      name: "Diagram", 
-      url: "data/one-cluster.csv"
+      name: "JSON Example",
+      url: "data/site.json"
+    },
+    {
+      name: "SheetDB Example", 
+      url: "https://sheetdb.io/api/v1/4mbxxv45hcsip"
+    },
+    {
+      name: "Flat Diagram",
+      url: "data/flat-list-example.json",
+      grid: 5
+    },
+    {
+      name: "Flat Diagram (No ID)",
+      url: "data/flat-list-simple.csv",
+      grid: 4
     }
   ]
 };

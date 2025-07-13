@@ -17,15 +17,20 @@
     diagrams: [
       {
         name: "Diagram 1", 
-        url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vT1F3LXPwnGlnF_uOlhoR-5kK1DrWLwlCAKH8Ag6hPrNLzwqWYWU8ofE19xSv4cH1-Cq7ZYm7lPys7V/pub?output=csv"
+        file: "https://docs.google.com/spreadsheets/d/e/2PACX-1vT1F3LXPwnGlnF_uOlhoR-5kK1DrWLwlCAKH8Ag6hPrNLzwqWYWU8ofE19xSv4cH1-Cq7ZYm7lPys7V/pub?output=csv",
+        edit: "https://docs.google.com/spreadsheets/d/12XSWGm6CAkv7SVSeBU0dtS3dhqc1dLasoxWqsW2AX40/edit?gid=0#gid=0"
       },
       {
         name: "Diagram 2",
-        url: "data/one-cluster.csv"
+        file: "data/one-cluster.csv"
       },
       {
         name: "Diagram 3",
-        url: "data/multi-clusters.csv"
+        file: "data/multi-clusters.csv"
+      },
+      {
+        name: "Test con URLs",
+        file: "data/test-with-urls.csv"
       }
     ],
     themes: {
@@ -48,7 +53,7 @@
       sidePanel: true,
       tooltips: true,
       responsive: true,
-      dragAndDrop: true 
+      dragAndDrop: true
     },
     hooks: {
       onLoad: function(diagram) {

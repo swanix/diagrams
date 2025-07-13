@@ -1,5 +1,5 @@
 // Swanix Diagrams - JS
-// v0.3.1
+// v0.4.0
 
 // Global zoom behavior - defined at the beginning to avoid scope issues
 const zoom = d3.zoom()

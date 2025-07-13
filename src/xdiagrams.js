@@ -794,11 +794,41 @@ function drawGridLayout(nodes, svg) {
   console.log('[Grid Layout] Rendered', positionedNodes.length, 'nodes in grid layout');
 }
 
-// Draw clusters in grid layout (solución avanzada)
+// Draw clusters in masonry-like grid layout
 function drawClusterGrid(trees, svg) {
   const g = d3.select(svg).append("g");
-  // Paso 1: Renderizar cada cluster en posición temporal (apilados verticalmente)
   const clusterGroups = [];
+  
+  // Calcular la profundidad máxima de cada árbol ANTES de renderizar
+  const isFlat = isFlatList(trees);
+  let treeDepths = null;
+  let maxDepth = 0;
+  
+  if (!isFlat) {
+    treeDepths = trees.map(tree => getMaxTreeDepth(tree));
+    maxDepth = Math.max(...treeDepths);
+    
+    console.log('[Debug] Tree depths:', treeDepths);
+    console.log('[Debug] Max depth:', maxDepth);
+    
+    // Mostrar estructura de los primeros 3 árboles para depuración
+    console.log('[Debug] First 3 trees structure:');
+    for (let i = 0; i < Math.min(3, trees.length); i++) {
+      console.log(`[Debug] Tree ${i + 1} (${trees[i].id || trees[i].name}):`);
+      debugTreeStructure(trees[i]);
+    }
+    
+    // Encontrar el árbol con más niveles para usar como referencia
+    const treeWithMaxDepth = trees.find((tree, index) => {
+      return treeDepths[index] === maxDepth;
+    });
+    
+    if (treeWithMaxDepth) {
+      console.log(`[Height Calculation] Found tree with ${maxDepth} levels:`, treeWithMaxDepth.id || treeWithMaxDepth.name);
+    }
+  }
+  
+  // Paso 1: Renderizar cada cluster en posición temporal para medir su tamaño real
   trees.forEach((tree, index) => {
     try {
       const themeVars = getComputedStyle(document.documentElement);
@@ -806,20 +836,24 @@ function drawClusterGrid(trees, svg) {
       const treeHorizontal = parseFloat(themeVars.getPropertyValue('--tree-horizontal-spacing')) || 180;
       const clusterPaddingX = parseFloat(themeVars.getPropertyValue('--cluster-padding-x')) || 220;
       const clusterPaddingY = parseFloat(themeVars.getPropertyValue('--cluster-padding-y')) || 220;
+      
       const root = d3.hierarchy(tree);
       const treeLayout = d3.tree().nodeSize([treeVertical, treeHorizontal]);
       treeLayout(root);
+      
       // Render en posición temporal (x=0, y=index*1000)
       const treeGroup = g.append("g")
         .attr("class", "diagram-group")
         .attr("data-root-id", root.data.id)
         .attr("transform", `translate(0, ${index * 1000})`);
+      
       // Render links
       treeGroup.selectAll(".link")
         .data(root.links())
         .enter().append("path")
         .attr("class", "link")
         .attr("d", d => `M ${d.source.x} ${d.source.y} V ${(d.source.y + d.target.y) / 2} H ${d.target.x} V ${d.target.y}`);
+      
       // Render nodes
       const node = treeGroup.selectAll(".node")
         .data(root.descendants())
@@ -841,12 +875,14 @@ function drawClusterGrid(trees, svg) {
             window.openSidePanel(d.data);
           }
         });
+      
       node.append("rect")
         .style("stroke-width", "var(--node-bg-stroke, 2)")
         .attr("x", parseFloat(themeVars.getPropertyValue('--node-bg-x')) || -30)
         .attr("y", parseFloat(themeVars.getPropertyValue('--node-bg-y')) || -20)
         .attr("width", parseFloat(themeVars.getPropertyValue('--node-bg-width')) || 60)
         .attr("height", parseFloat(themeVars.getPropertyValue('--node-bg-height')) || 40);
+      
       node.append("image")
         .attr("href", d => {
           const baseUrl = d.data.img ? `img/${d.data.img}.svg` : "img/detail.svg";
@@ -862,6 +898,7 @@ function drawClusterGrid(trees, svg) {
           const fallbackUrl = `img/detail.svg?t=${Date.now()}`;
           d3.select(this).attr("href", fallbackUrl);
         });
+      
       const textGroup = node.append("g").attr("class", "text-group");
       textGroup.append("text")
         .attr("class", "label-id")
@@ -872,15 +909,18 @@ function drawClusterGrid(trees, svg) {
         .style("font-size", themeVars.getPropertyValue('--label-id-font-size'))
         .style("fill", themeVars.getPropertyValue('--label-id-text-color'))
         .text(d => d.data.id);
+      
       const nameText = textGroup.append("text")
         .attr("class", "label-text")
         .attr("x", parseFloat(themeVars.getPropertyValue('--label-x')))
         .attr("y", parseFloat(themeVars.getPropertyValue('--label-y')))
-        .attr("dy", themeVars.getPropertyValue('--label-dy'))
+        .attr("dy", parseFloat(themeVars.getPropertyValue('--label-dy')))
         .style("font-size", themeVars.getPropertyValue('--label-font-size'))
         .text(d => d.data.name);
+      
       const maxWidth = parseFloat(themeVars.getPropertyValue('--label-max-width')) || 68;
       wrap(nameText, maxWidth);
+      
       textGroup.append("text")
         .attr("class", "subtitle-text")
         .attr("transform", "rotate(270)")
@@ -897,118 +937,229 @@ function drawClusterGrid(trees, svg) {
           }
           return subtitleText;
         });
+      
+      // Medir el tamaño real del cluster después de renderizarlo
       setTimeout(() => {
         const bounds = treeGroup.node().getBBox();
+        const clusterHeight = bounds.height + 2 * clusterPaddingY;
+        
         clusterGroups.push({
           group: treeGroup,
           width: bounds.width + 2 * clusterPaddingX,
-          height: bounds.height + 2 * clusterPaddingY,
+          height: clusterHeight,
           innerWidth: bounds.width,
           innerHeight: bounds.height,
           paddingX: clusterPaddingX,
           paddingY: clusterPaddingY,
-          id: root.data.id
+          id: root.data.id,
+          index: index,
+          treeDepth: treeDepths ? treeDepths[index] : null
         });
+        
         if (clusterGroups.length === trees.length) {
-          // Paso 2: Calcular cuadrícula óptima
-          const marginX = 50, marginY = 50, spacingX = 60, spacingY = 60;
-          // ===== Configuración global =====
-          // 1. Valor por defecto
-          let desiredGridCols = 4;
-
-          // 2. Variable CSS (menor prioridad)
-          const themeVarsGlobal = getComputedStyle(document.documentElement);
-          const cssCols = parseInt(themeVarsGlobal.getPropertyValue('--cluster-grid-cols'));
-          if (!Number.isNaN(cssCols) && cssCols > 0) {
-            desiredGridCols = cssCols;
-          }
-
-          // 3. Atributo HTML en el contenedor (data-cluster-cols)
-          const containerElem = document.querySelector('.xcanvas');
-          if (containerElem) {
-            const attrCols = parseInt(containerElem.getAttribute('data-cluster-cols'));
-            if (!Number.isNaN(attrCols) && attrCols > 0) {
-              desiredGridCols = attrCols;
-            }
-          }
-
-          // 4. Configuración JS (window.$xDiagrams.options.clusterGridCols) – máxima prioridad
-          const diagramOptions = getDiagramOptions();
-          if (diagramOptions.clusterGridCols) {
-            const optCols = parseInt(diagramOptions.clusterGridCols);
-            if (!Number.isNaN(optCols) && optCols > 0) {
-              desiredGridCols = optCols;
-            }
-          }
-
-          // 5. Configuración específica del diagrama (propiedad "grid" en el objeto diagrama)
-          const diagramsList = getDiagrams();
-          if (Array.isArray(diagramsList) && window.$xDiagrams && typeof window.$xDiagrams.currentDiagramIdx === 'number') {
-            const currentDiagramObj = diagramsList[window.$xDiagrams.currentDiagramIdx];
-            if (currentDiagramObj && currentDiagramObj.grid) {
-              const diagCols = parseInt(currentDiagramObj.grid);
-              if (!Number.isNaN(diagCols) && diagCols > 0) {
-                desiredGridCols = diagCols;
+          // Paso 2: Calcular altura uniforme basada en el cluster con más niveles
+          let uniformHeight = null;
+          
+          if (!isFlat && treeDepths) {
+            // Comprobar si hay variación en la profundidad (niveles)
+            const minDepth = Math.min(...treeDepths);
+            const depthVariation = maxDepth !== minDepth;
+            
+            if (depthVariation) {
+              // Tomar como referencia cualquier cluster cuyo árbol tenga la profundidad máxima
+              const clusterWithMaxDepth = clusterGroups.find((cluster, idx) => treeDepths[idx] === maxDepth);
+              if (clusterWithMaxDepth) {
+                uniformHeight = clusterWithMaxDepth.height;
+                console.log(`[Height Calculation] Usando cluster con profundidad ${maxDepth} niveles (alto: ${uniformHeight}px)`);
+                console.log('[Debug] Profundidad mínima:', minDepth, 'Profundidad máxima:', maxDepth);
               }
+            } else {
+              console.log('[Debug] Todos los clusters tienen la misma profundidad; no se aplica altura uniforme');
             }
           }
-
-          // ... existing code ...
-          const maxCols = Math.floor((window.innerWidth - 2 * marginX) / (Math.max(...clusterGroups.map(c => c.width)) + spacingX));
-          // Ya no limitamos por ancho de pantalla
-          const cols = Math.max(1, Math.min(desiredGridCols, clusterGroups.length));
-          const rows = Math.ceil(clusterGroups.length / cols);
-          // Paso 3: Reposicionar clusters y dibujar fondo/título
-          clusterGroups.forEach((c, i) => {
-            const col = i % cols;
-            const row = Math.floor(i / cols);
-            let x = marginX + col * (c.width + spacingX) + c.width / 2;
-            let y = marginY + row * (c.height + spacingY) + c.height / 2;
-            // Si solo hay un cluster, centrarlo en la pantalla
-            if (clusterGroups.length === 1) {
-              x = window.innerWidth / 2;
-              y = window.innerHeight / 2;
-            }
-            c.group.attr("transform", `translate(${x},${y})`);
-            // Medir bounds en la nueva posición
-            const bounds = c.group.node().getBBox();
-            const paddingX = c.paddingX || 80;
-            const paddingY = c.paddingY || 80;
-            const minX = bounds.x - paddingX;
-            const minY = bounds.y - paddingY - 30;
-            const width = bounds.width + 2 * paddingX;
-            const height = bounds.height + 2 * paddingY;
-            // Fondo del cluster
-            c.group.insert("rect", ":first-child")
-              .attr("class", "cluster-rect")
-              .attr("x", minX)
-              .attr("y", minY)
-              .attr("width", width)
-              .attr("height", height)
-              .attr("rx", 18)
-              .attr("ry", 18)
-              .style("fill", "var(--cluster-bg, rgba(0,0,0,0.02))")
-              .style("stroke", "var(--cluster-stroke, #222)")
-              .style("stroke-width", 2)
-              .style("stroke-dasharray", "6,4");
-            // Título del cluster
-            c.group.append("text")
-              .attr("class", "cluster-title")
-              .attr("x", minX + 32)
-              .attr("y", minY + 40)
-              .attr("text-anchor", "start")
-              .style("font-size", "1.5em")
-              .style("font-weight", "bold")
-              .style("fill", "var(--cluster-title-color, #222)")
-              .text(c.id);
-          });
-          console.log('[Cluster Grid Layout] Rendered', clusterGroups.length, 'clusters in dynamic grid layout');
+          
+          // Paso 3: Implementar layout tipo Masonry
+          applyMasonryLayout(clusterGroups, g, trees, uniformHeight);
         }
       }, 0);
+      
     } catch (err) {
       console.error(`Error al renderizar cluster ${index + 1}:`, err);
     }
   });
+}
+
+// Función para calcular la profundidad máxima de un árbol
+function getMaxTreeDepth(node) {
+  if (!node.children || node.children.length === 0) {
+    return 1; // Nodo hoja
+  }
+  
+  let maxDepth = 1;
+  for (const child of node.children) {
+    const childDepth = getMaxTreeDepth(child);
+    maxDepth = Math.max(maxDepth, childDepth + 1);
+  }
+  
+  return maxDepth;
+}
+
+// Función de depuración para mostrar la estructura de un árbol
+function debugTreeStructure(node, level = 0) {
+  const indent = '  '.repeat(level);
+  console.log(`${indent}${node.id || node.name} (level ${level + 1})`);
+  
+  if (node.children && node.children.length > 0) {
+    for (const child of node.children) {
+      debugTreeStructure(child, level + 1);
+    }
+  }
+}
+
+// Función para aplicar layout horizontal simple
+function applyMasonryLayout(clusterGroups, container, originalTrees, preCalculatedUniformHeight = null) {
+  const marginX = 50;
+  const marginY = 50;
+  const spacingX = 60;
+  
+  // Si solo hay un cluster, centrarlo
+  if (clusterGroups.length === 1) {
+    const cluster = clusterGroups[0];
+    const x = window.innerWidth / 2;
+    const y = window.innerHeight / 2;
+    cluster.group.attr("transform", `translate(${x},${y})`);
+    addClusterBackground(cluster);
+    console.log('[Horizontal Layout] Single cluster centered');
+    return;
+  }
+  
+  // Detectar si es un diagrama plano (flat list) usando los árboles originales
+  const isFlat = isFlatList(originalTrees);
+  
+  // Detectar si todos los clusters tienen el mismo tamaño
+  const heights = clusterGroups.map(c => c.height);
+  const widths = clusterGroups.map(c => c.width);
+  const minHeight = Math.min(...heights);
+  const maxHeight = Math.max(...heights);
+  const minWidth = Math.min(...widths);
+  const maxWidth = Math.max(...widths);
+  const allSameHeight = minHeight === maxHeight;
+  const allSameWidth = minWidth === maxWidth;
+  
+  // Ajustar lógica de altura uniforme
+  let uniformHeight = null;
+  if (!isFlat && preCalculatedUniformHeight !== null) {
+    uniformHeight = preCalculatedUniformHeight;
+    console.log(`[Height Calculation] Usando altura uniforme pre-calculada: ${uniformHeight}px`);
+  }
+  
+  // Layout horizontal simple: todos los clusters en una fila
+  let currentX = marginX;
+  const centerY = window.innerHeight / 2;
+  
+  clusterGroups.forEach((cluster, index) => {
+    // Posicionar cluster en la fila horizontal
+    const x = currentX + cluster.width / 2;
+    const y = centerY;
+    
+    cluster.group.attr("transform", `translate(${x},${y})`);
+    
+    // Para diagramas planos, siempre usar altura original
+    if (isFlat) {
+      addClusterBackground(cluster);
+    } else {
+      if (uniformHeight !== null) {
+        addClusterBackgroundWithUniformHeight(cluster, uniformHeight);
+      } else {
+        addClusterBackground(cluster);
+      }
+    }
+    
+    // Siguiente cluster empieza después del actual + gap
+    currentX += cluster.width + spacingX;
+  });
+  
+  let layoutType;
+  if (isFlat) {
+    layoutType = 'flat list - original heights';
+  } else {
+    layoutType = uniformHeight !== null ? 'hierarchical - uniform height' : 'hierarchical - original heights';
+  }
+  console.log('[Horizontal Layout] Rendered', clusterGroups.length, 'clusters in horizontal layout with', layoutType, uniformHeight !== null ? `(${uniformHeight}px)` : '');
+}
+
+// Función auxiliar para agregar fondo y título al cluster
+function addClusterBackground(cluster) {
+  const bounds = cluster.group.node().getBBox();
+  const paddingX = cluster.paddingX || 80;
+  const paddingY = cluster.paddingY || 80;
+  const minX = bounds.x - paddingX;
+  const minY = bounds.y - paddingY - 30;
+  const width = bounds.width + 2 * paddingX;
+  const height = bounds.height + 2 * paddingY;
+  
+  // Fondo del cluster
+  cluster.group.insert("rect", ":first-child")
+    .attr("class", "cluster-rect")
+    .attr("x", minX)
+    .attr("y", minY)
+    .attr("width", width)
+    .attr("height", height)
+    .attr("rx", 18)
+    .attr("ry", 18)
+    .style("fill", "var(--cluster-bg, rgba(0,0,0,0.02))")
+    .style("stroke", "var(--cluster-stroke, #222)")
+    .style("stroke-width", 2)
+    .style("stroke-dasharray", "6,4");
+  
+  // Título del cluster
+  cluster.group.append("text")
+    .attr("class", "cluster-title")
+    .attr("x", minX + 32)
+    .attr("y", minY + 40)
+    .attr("text-anchor", "start")
+    .style("font-size", "1.5em")
+    .style("font-weight", "bold")
+    .style("fill", "var(--cluster-title-color, #222)")
+    .text(cluster.id);
+}
+
+// Función auxiliar para agregar fondo con altura uniforme
+function addClusterBackgroundWithUniformHeight(cluster, uniformHeight) {
+  const bounds = cluster.group.node().getBBox();
+  const paddingX = cluster.paddingX || 80;
+  const paddingY = cluster.paddingY || 80;
+  const minX = bounds.x - paddingX;
+  const minY = bounds.y - paddingY - 30;
+  const width = bounds.width + 2 * paddingX;
+  
+  // Usar la altura uniforme tal cual (sin reducción adicional)
+  const height = uniformHeight;
+  
+  // Fondo del cluster con altura uniforme reducida
+  cluster.group.insert("rect", ":first-child")
+    .attr("class", "cluster-rect")
+    .attr("x", minX)
+    .attr("y", minY)
+    .attr("width", width)
+    .attr("height", height)
+    .attr("rx", 18)
+    .attr("ry", 18)
+    .style("fill", "var(--cluster-bg, rgba(0,0,0,0.02))")
+    .style("stroke", "var(--cluster-stroke, #222)")
+    .style("stroke-width", 2)
+    .style("stroke-dasharray", "6,4");
+  
+  // Título del cluster
+  cluster.group.append("text")
+    .attr("class", "cluster-title")
+    .attr("x", minX + 32)
+    .attr("y", minY + 40)
+    .attr("text-anchor", "start")
+    .style("font-size", "1.5em")
+    .style("font-weight", "bold")
+    .style("fill", "var(--cluster-title-color, #222)")
+    .text(cluster.id);
 }
 
 // Draw simplified trees

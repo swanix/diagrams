@@ -1,0 +1,1171 @@
+[
+  {
+    "id": "root",
+    "name": "Organización Principal",
+    "parent": null,
+    "type": "organization",
+    "description": "Nodo raíz de la organización"
+  },
+  {
+    "id": "dept-1",
+    "name": "Departamento de Desarrollo",
+    "parent": "root",
+    "type": "department",
+    "description": "Departamento principal de desarrollo"
+  },
+  {
+    "id": "dept-2",
+    "name": "Departamento de QA",
+    "parent": "root",
+    "type": "department",
+    "description": "Departamento principal de qa"
+  },
+  {
+    "id": "dept-3",
+    "name": "Departamento de DevOps",
+    "parent": "root",
+    "type": "department",
+    "description": "Departamento principal de devops"
+  },
+  {
+    "id": "dept-4",
+    "name": "Departamento de Frontend",
+    "parent": "root",
+    "type": "department",
+    "description": "Departamento principal de frontend"
+  },
+  {
+    "id": "dept-5",
+    "name": "Departamento de Backend",
+    "parent": "root",
+    "type": "department",
+    "description": "Departamento principal de backend"
+  },
+  {
+    "id": "dept-6",
+    "name": "Departamento de Mobile",
+    "parent": "root",
+    "type": "department",
+    "description": "Departamento principal de mobile"
+  },
+  {
+    "id": "team-0",
+    "name": "Equipo Desarrollo 1",
+    "parent": "dept-1",
+    "type": "team",
+    "description": "Equipo especializado en desarrollo"
+  },
+  {
+    "id": "person-0-0",
+    "name": "Ana Carlos",
+    "parent": "team-0",
+    "type": "person",
+    "description": "Director desarrollo"
+  },
+  {
+    "id": "person-0-1",
+    "name": "Carlos María",
+    "parent": "team-0",
+    "type": "person",
+    "description": "Gerente desarrollo"
+  },
+  {
+    "id": "person-0-2",
+    "name": "María Juan",
+    "parent": "team-0",
+    "type": "person",
+    "description": "Líder desarrollo"
+  },
+  {
+    "id": "person-0-3",
+    "name": "Juan Laura",
+    "parent": "team-0",
+    "type": "person",
+    "description": "Senior desarrollo"
+  },
+  {
+    "id": "person-0-4",
+    "name": "Laura Pedro",
+    "parent": "team-0",
+    "type": "person",
+    "description": "Junior desarrollo"
+  },
+  {
+    "id": "person-0-5",
+    "name": "Pedro Sofia",
+    "parent": "team-0",
+    "type": "person",
+    "description": "Analista desarrollo"
+  },
+  {
+    "id": "person-0-6",
+    "name": "Sofia Miguel",
+    "parent": "team-0",
+    "type": "person",
+    "description": "Especialista desarrollo"
+  },
+  {
+    "id": "team-1",
+    "name": "Equipo QA 2",
+    "parent": "dept-1",
+    "type": "team",
+    "description": "Equipo especializado en qa"
+  },
+  {
+    "id": "person-1-0",
+    "name": "Valentina Andrés",
+    "parent": "team-1",
+    "type": "person",
+    "description": "Practicante qa"
+  },
+  {
+    "id": "person-1-1",
+    "name": "Andrés Camila",
+    "parent": "team-1",
+    "type": "person",
+    "description": "Consultor qa"
+  },
+  {
+    "id": "person-1-2",
+    "name": "Camila Luis",
+    "parent": "team-1",
+    "type": "person",
+    "description": "Director qa"
+  },
+  {
+    "id": "person-1-3",
+    "name": "Luis Gabriela",
+    "parent": "team-1",
+    "type": "person",
+    "description": "Gerente qa"
+  },
+  {
+    "id": "person-1-4",
+    "name": "Gabriela Roberto",
+    "parent": "team-1",
+    "type": "person",
+    "description": "Líder qa"
+  },
+  {
+    "id": "person-1-5",
+    "name": "Roberto Daniela",
+    "parent": "team-1",
+    "type": "person",
+    "description": "Senior qa"
+  },
+  {
+    "id": "team-2",
+    "name": "Equipo DevOps 3",
+    "parent": "dept-1",
+    "type": "team",
+    "description": "Equipo especializado en devops"
+  },
+  {
+    "id": "person-2-0",
+    "name": "Paula Javier",
+    "parent": "team-2",
+    "type": "person",
+    "description": "Supervisor devops"
+  },
+  {
+    "id": "person-2-1",
+    "name": "Javier Carolina",
+    "parent": "team-2",
+    "type": "person",
+    "description": "Asistente devops"
+  },
+  {
+    "id": "person-2-2",
+    "name": "Carolina Alejandro",
+    "parent": "team-2",
+    "type": "person",
+    "description": "Practicante devops"
+  },
+  {
+    "id": "person-2-3",
+    "name": "Alejandro Monica",
+    "parent": "team-2",
+    "type": "person",
+    "description": "Consultor devops"
+  },
+  {
+    "id": "person-2-4",
+    "name": "Monica David",
+    "parent": "team-2",
+    "type": "person",
+    "description": "Director devops"
+  },
+  {
+    "id": "team-3",
+    "name": "Equipo Frontend 4",
+    "parent": "dept-4",
+    "type": "team",
+    "description": "Equipo especializado en frontend"
+  },
+  {
+    "id": "person-3-0",
+    "name": "Elena Antonio",
+    "parent": "team-3",
+    "type": "person",
+    "description": "Especialista frontend"
+  },
+  {
+    "id": "person-3-1",
+    "name": "Antonio Rosa",
+    "parent": "team-3",
+    "type": "person",
+    "description": "Coordinador frontend"
+  },
+  {
+    "id": "person-3-2",
+    "name": "Rosa Jorge",
+    "parent": "team-3",
+    "type": "person",
+    "description": "Supervisor frontend"
+  },
+  {
+    "id": "person-3-3",
+    "name": "Jorge Carmen",
+    "parent": "team-3",
+    "type": "person",
+    "description": "Asistente frontend"
+  },
+  {
+    "id": "person-3-4",
+    "name": "Carmen Alberto",
+    "parent": "team-3",
+    "type": "person",
+    "description": "Practicante frontend"
+  },
+  {
+    "id": "team-4",
+    "name": "Equipo Backend 5",
+    "parent": "dept-5",
+    "type": "team",
+    "description": "Equipo especializado en backend"
+  },
+  {
+    "id": "person-4-0",
+    "name": "Juan Laura",
+    "parent": "team-4",
+    "type": "person",
+    "description": "Director backend"
+  },
+  {
+    "id": "person-4-1",
+    "name": "Laura Pedro",
+    "parent": "team-4",
+    "type": "person",
+    "description": "Gerente backend"
+  },
+  {
+    "id": "person-4-2",
+    "name": "Pedro Sofia",
+    "parent": "team-4",
+    "type": "person",
+    "description": "Líder backend"
+  },
+  {
+    "id": "person-4-3",
+    "name": "Sofia Miguel",
+    "parent": "team-4",
+    "type": "person",
+    "description": "Senior backend"
+  },
+  {
+    "id": "person-4-4",
+    "name": "Miguel Valentina",
+    "parent": "team-4",
+    "type": "person",
+    "description": "Junior backend"
+  },
+  {
+    "id": "person-4-5",
+    "name": "Valentina Andrés",
+    "parent": "team-4",
+    "type": "person",
+    "description": "Analista backend"
+  },
+  {
+    "id": "team-5",
+    "name": "Equipo Mobile 6",
+    "parent": "dept-6",
+    "type": "team",
+    "description": "Equipo especializado en mobile"
+  },
+  {
+    "id": "person-5-0",
+    "name": "Andrés Camila",
+    "parent": "team-5",
+    "type": "person",
+    "description": "Director mobile"
+  },
+  {
+    "id": "person-5-1",
+    "name": "Camila Luis",
+    "parent": "team-5",
+    "type": "person",
+    "description": "Gerente mobile"
+  },
+  {
+    "id": "person-5-2",
+    "name": "Luis Gabriela",
+    "parent": "team-5",
+    "type": "person",
+    "description": "Líder mobile"
+  },
+  {
+    "id": "person-5-3",
+    "name": "Gabriela Roberto",
+    "parent": "team-5",
+    "type": "person",
+    "description": "Senior mobile"
+  },
+  {
+    "id": "person-5-4",
+    "name": "Roberto Daniela",
+    "parent": "team-5",
+    "type": "person",
+    "description": "Junior mobile"
+  },
+  {
+    "id": "team-6",
+    "name": "Equipo QA Avanzado 7",
+    "parent": "dept-2",
+    "type": "team",
+    "description": "Equipo especializado en qa avanzado"
+  },
+  {
+    "id": "person-6-0",
+    "name": "Daniela Francisco",
+    "parent": "team-6",
+    "type": "person",
+    "description": "Director qa avanzado"
+  },
+  {
+    "id": "person-6-1",
+    "name": "Francisco Claudia",
+    "parent": "team-6",
+    "type": "person",
+    "description": "Gerente qa avanzado"
+  },
+  {
+    "id": "person-6-2",
+    "name": "Claudia Manuel",
+    "parent": "team-6",
+    "type": "person",
+    "description": "Líder qa avanzado"
+  },
+  {
+    "id": "person-6-3",
+    "name": "Manuel Teresa",
+    "parent": "team-6",
+    "type": "person",
+    "description": "Senior qa avanzado"
+  },
+  {
+    "id": "person-6-4",
+    "name": "Teresa Ana",
+    "parent": "team-6",
+    "type": "person",
+    "description": "Junior qa avanzado"
+  },
+  {
+    "id": "team-7",
+    "name": "Equipo DevOps Cloud 8",
+    "parent": "dept-3",
+    "type": "team",
+    "description": "Equipo especializado en devops cloud"
+  },
+  {
+    "id": "person-7-0",
+    "name": "Ana Carlos",
+    "parent": "team-7",
+    "type": "person",
+    "description": "Director devops cloud"
+  },
+  {
+    "id": "person-7-1",
+    "name": "Carlos María",
+    "parent": "team-7",
+    "type": "person",
+    "description": "Gerente devops cloud"
+  },
+  {
+    "id": "person-7-2",
+    "name": "María Juan",
+    "parent": "team-7",
+    "type": "person",
+    "description": "Líder devops cloud"
+  },
+  {
+    "id": "person-7-3",
+    "name": "Juan Laura",
+    "parent": "team-7",
+    "type": "person",
+    "description": "Senior devops cloud"
+  },
+  {
+    "id": "person-7-4",
+    "name": "Laura Pedro",
+    "parent": "team-7",
+    "type": "person",
+    "description": "Junior devops cloud"
+  },
+  {
+    "id": "team-8",
+    "name": "Equipo Frontend React 9",
+    "parent": "dept-4",
+    "type": "team",
+    "description": "Equipo especializado en frontend react"
+  },
+  {
+    "id": "person-8-0",
+    "name": "Pedro Sofia",
+    "parent": "team-8",
+    "type": "person",
+    "description": "Director frontend react"
+  },
+  {
+    "id": "person-8-1",
+    "name": "Sofia Miguel",
+    "parent": "team-8",
+    "type": "person",
+    "description": "Gerente frontend react"
+  },
+  {
+    "id": "person-8-2",
+    "name": "Miguel Valentina",
+    "parent": "team-8",
+    "type": "person",
+    "description": "Líder frontend react"
+  },
+  {
+    "id": "person-8-3",
+    "name": "Valentina Andrés",
+    "parent": "team-8",
+    "type": "person",
+    "description": "Senior frontend react"
+  },
+  {
+    "id": "person-8-4",
+    "name": "Andrés Camila",
+    "parent": "team-8",
+    "type": "person",
+    "description": "Junior frontend react"
+  },
+  {
+    "id": "team-9",
+    "name": "Equipo Backend Node 10",
+    "parent": "dept-5",
+    "type": "team",
+    "description": "Equipo especializado en backend node"
+  },
+  {
+    "id": "person-9-0",
+    "name": "Camila Luis",
+    "parent": "team-9",
+    "type": "person",
+    "description": "Director backend node"
+  },
+  {
+    "id": "person-9-1",
+    "name": "Luis Gabriela",
+    "parent": "team-9",
+    "type": "person",
+    "description": "Gerente backend node"
+  },
+  {
+    "id": "person-9-2",
+    "name": "Gabriela Roberto",
+    "parent": "team-9",
+    "type": "person",
+    "description": "Líder backend node"
+  },
+  {
+    "id": "person-9-3",
+    "name": "Roberto Daniela",
+    "parent": "team-9",
+    "type": "person",
+    "description": "Senior backend node"
+  },
+  {
+    "id": "person-9-4",
+    "name": "Daniela Francisco",
+    "parent": "team-9",
+    "type": "person",
+    "description": "Junior backend node"
+  },
+  {
+    "id": "team-10",
+    "name": "Equipo Mobile iOS 11",
+    "parent": "dept-6",
+    "type": "team",
+    "description": "Equipo especializado en mobile ios"
+  },
+  {
+    "id": "person-10-0",
+    "name": "Francisco Claudia",
+    "parent": "team-10",
+    "type": "person",
+    "description": "Director mobile ios"
+  },
+  {
+    "id": "person-10-1",
+    "name": "Claudia Manuel",
+    "parent": "team-10",
+    "type": "person",
+    "description": "Gerente mobile ios"
+  },
+  {
+    "id": "person-10-2",
+    "name": "Manuel Teresa",
+    "parent": "team-10",
+    "type": "person",
+    "description": "Líder mobile ios"
+  },
+  {
+    "id": "person-10-3",
+    "name": "Teresa Ana",
+    "parent": "team-10",
+    "type": "person",
+    "description": "Senior mobile ios"
+  },
+  {
+    "id": "person-10-4",
+    "name": "Ana Carlos",
+    "parent": "team-10",
+    "type": "person",
+    "description": "Junior mobile ios"
+  },
+  {
+    "id": "team-11",
+    "name": "Equipo Mobile Android 12",
+    "parent": "dept-6",
+    "type": "team",
+    "description": "Equipo especializado en mobile android"
+  },
+  {
+    "id": "person-11-0",
+    "name": "Carlos María",
+    "parent": "team-11",
+    "type": "person",
+    "description": "Director mobile android"
+  },
+  {
+    "id": "person-11-1",
+    "name": "María Juan",
+    "parent": "team-11",
+    "type": "person",
+    "description": "Gerente mobile android"
+  },
+  {
+    "id": "person-11-2",
+    "name": "Juan Laura",
+    "parent": "team-11",
+    "type": "person",
+    "description": "Líder mobile android"
+  },
+  {
+    "id": "person-11-3",
+    "name": "Laura Pedro",
+    "parent": "team-11",
+    "type": "person",
+    "description": "Senior mobile android"
+  },
+  {
+    "id": "person-11-4",
+    "name": "Pedro Sofia",
+    "parent": "team-11",
+    "type": "person",
+    "description": "Junior mobile android"
+  },
+  {
+    "id": "team-12",
+    "name": "Equipo QA Automatización 13",
+    "parent": "dept-2",
+    "type": "team",
+    "description": "Equipo especializado en qa automatización"
+  },
+  {
+    "id": "person-12-0",
+    "name": "Sofia Miguel",
+    "parent": "team-12",
+    "type": "person",
+    "description": "Director qa automatización"
+  },
+  {
+    "id": "person-12-1",
+    "name": "Miguel Valentina",
+    "parent": "team-12",
+    "type": "person",
+    "description": "Gerente qa automatización"
+  },
+  {
+    "id": "person-12-2",
+    "name": "Valentina Andrés",
+    "parent": "team-12",
+    "type": "person",
+    "description": "Líder qa automatización"
+  },
+  {
+    "id": "person-12-3",
+    "name": "Andrés Camila",
+    "parent": "team-12",
+    "type": "person",
+    "description": "Senior qa automatización"
+  },
+  {
+    "id": "person-12-4",
+    "name": "Camila Luis",
+    "parent": "team-12",
+    "type": "person",
+    "description": "Junior qa automatización"
+  },
+  {
+    "id": "team-13",
+    "name": "Equipo DevOps Kubernetes 14",
+    "parent": "dept-3",
+    "type": "team",
+    "description": "Equipo especializado en devops kubernetes"
+  },
+  {
+    "id": "person-13-0",
+    "name": "Luis Gabriela",
+    "parent": "team-13",
+    "type": "person",
+    "description": "Director devops kubernetes"
+  },
+  {
+    "id": "person-13-1",
+    "name": "Gabriela Roberto",
+    "parent": "team-13",
+    "type": "person",
+    "description": "Gerente devops kubernetes"
+  },
+  {
+    "id": "person-13-2",
+    "name": "Roberto Daniela",
+    "parent": "team-13",
+    "type": "person",
+    "description": "Líder devops kubernetes"
+  },
+  {
+    "id": "person-13-3",
+    "name": "Daniela Francisco",
+    "parent": "team-13",
+    "type": "person",
+    "description": "Senior devops kubernetes"
+  },
+  {
+    "id": "person-13-4",
+    "name": "Francisco Claudia",
+    "parent": "team-13",
+    "type": "person",
+    "description": "Junior devops kubernetes"
+  },
+  {
+    "id": "team-14",
+    "name": "Equipo Frontend Vue 15",
+    "parent": "dept-4",
+    "type": "team",
+    "description": "Equipo especializado en frontend vue"
+  },
+  {
+    "id": "person-14-0",
+    "name": "Claudia Manuel",
+    "parent": "team-14",
+    "type": "person",
+    "description": "Director frontend vue"
+  },
+  {
+    "id": "person-14-1",
+    "name": "Manuel Teresa",
+    "parent": "team-14",
+    "type": "person",
+    "description": "Gerente frontend vue"
+  },
+  {
+    "id": "person-14-2",
+    "name": "Teresa Ana",
+    "parent": "team-14",
+    "type": "person",
+    "description": "Líder frontend vue"
+  },
+  {
+    "id": "person-14-3",
+    "name": "Ana Carlos",
+    "parent": "team-14",
+    "type": "person",
+    "description": "Senior frontend vue"
+  },
+  {
+    "id": "person-14-4",
+    "name": "Carlos María",
+    "parent": "team-14",
+    "type": "person",
+    "description": "Junior frontend vue"
+  },
+  {
+    "id": "team-15",
+    "name": "Equipo Backend Python 16",
+    "parent": "dept-5",
+    "type": "team",
+    "description": "Equipo especializado en backend python"
+  },
+  {
+    "id": "person-15-0",
+    "name": "María Juan",
+    "parent": "team-15",
+    "type": "person",
+    "description": "Director backend python"
+  },
+  {
+    "id": "person-15-1",
+    "name": "Juan Laura",
+    "parent": "team-15",
+    "type": "person",
+    "description": "Gerente backend python"
+  },
+  {
+    "id": "person-15-2",
+    "name": "Laura Pedro",
+    "parent": "team-15",
+    "type": "person",
+    "description": "Líder backend python"
+  },
+  {
+    "id": "person-15-3",
+    "name": "Pedro Sofia",
+    "parent": "team-15",
+    "type": "person",
+    "description": "Senior backend python"
+  },
+  {
+    "id": "person-15-4",
+    "name": "Sofia Miguel",
+    "parent": "team-15",
+    "type": "person",
+    "description": "Junior backend python"
+  },
+  {
+    "id": "project-0",
+    "name": "Proyecto E-commerce 1",
+    "parent": "root",
+    "type": "project",
+    "description": "Proyecto estratégico de e-commerce"
+  },
+  {
+    "id": "project-person-0-0",
+    "name": "Miguel Valentina",
+    "parent": "project-0",
+    "type": "person",
+    "description": "Director del proyecto"
+  },
+  {
+    "id": "project-person-0-1",
+    "name": "Valentina Andrés",
+    "parent": "project-0",
+    "type": "person",
+    "description": "Gerente del proyecto"
+  },
+  {
+    "id": "project-person-0-2",
+    "name": "Andrés Camila",
+    "parent": "project-0",
+    "type": "person",
+    "description": "Líder del proyecto"
+  },
+  {
+    "id": "project-person-0-3",
+    "name": "Camila Luis",
+    "parent": "project-0",
+    "type": "person",
+    "description": "Senior del proyecto"
+  },
+  {
+    "id": "project-person-0-4",
+    "name": "Luis Gabriela",
+    "parent": "project-0",
+    "type": "person",
+    "description": "Junior del proyecto"
+  },
+  {
+    "id": "project-1",
+    "name": "Proyecto CRM 2",
+    "parent": "root",
+    "type": "project",
+    "description": "Proyecto estratégico de crm"
+  },
+  {
+    "id": "project-person-1-0",
+    "name": "Gabriela Roberto",
+    "parent": "project-1",
+    "type": "person",
+    "description": "Director del proyecto"
+  },
+  {
+    "id": "project-person-1-1",
+    "name": "Roberto Daniela",
+    "parent": "project-1",
+    "type": "person",
+    "description": "Gerente del proyecto"
+  },
+  {
+    "id": "project-person-1-2",
+    "name": "Daniela Francisco",
+    "parent": "project-1",
+    "type": "person",
+    "description": "Líder del proyecto"
+  },
+  {
+    "id": "project-person-1-3",
+    "name": "Francisco Claudia",
+    "parent": "project-1",
+    "type": "person",
+    "description": "Senior del proyecto"
+  },
+  {
+    "id": "project-person-1-4",
+    "name": "Claudia Manuel",
+    "parent": "project-1",
+    "type": "person",
+    "description": "Junior del proyecto"
+  },
+  {
+    "id": "project-2",
+    "name": "Proyecto Analytics 3",
+    "parent": "root",
+    "type": "project",
+    "description": "Proyecto estratégico de analytics"
+  },
+  {
+    "id": "project-person-2-0",
+    "name": "Manuel Teresa",
+    "parent": "project-2",
+    "type": "person",
+    "description": "Director del proyecto"
+  },
+  {
+    "id": "project-person-2-1",
+    "name": "Teresa Ana",
+    "parent": "project-2",
+    "type": "person",
+    "description": "Gerente del proyecto"
+  },
+  {
+    "id": "project-person-2-2",
+    "name": "Ana Carlos",
+    "parent": "project-2",
+    "type": "person",
+    "description": "Líder del proyecto"
+  },
+  {
+    "id": "project-person-2-3",
+    "name": "Carlos María",
+    "parent": "project-2",
+    "type": "person",
+    "description": "Senior del proyecto"
+  },
+  {
+    "id": "project-person-2-4",
+    "name": "María Juan",
+    "parent": "project-2",
+    "type": "person",
+    "description": "Junior del proyecto"
+  },
+  {
+    "id": "project-3",
+    "name": "Proyecto API Gateway 4",
+    "parent": "root",
+    "type": "project",
+    "description": "Proyecto estratégico de api gateway"
+  },
+  {
+    "id": "project-person-3-0",
+    "name": "Juan Laura",
+    "parent": "project-3",
+    "type": "person",
+    "description": "Director del proyecto"
+  },
+  {
+    "id": "project-person-3-1",
+    "name": "Laura Pedro",
+    "parent": "project-3",
+    "type": "person",
+    "description": "Gerente del proyecto"
+  },
+  {
+    "id": "project-person-3-2",
+    "name": "Pedro Sofia",
+    "parent": "project-3",
+    "type": "person",
+    "description": "Líder del proyecto"
+  },
+  {
+    "id": "project-person-3-3",
+    "name": "Sofia Miguel",
+    "parent": "project-3",
+    "type": "person",
+    "description": "Senior del proyecto"
+  },
+  {
+    "id": "project-person-3-4",
+    "name": "Miguel Valentina",
+    "parent": "project-3",
+    "type": "person",
+    "description": "Junior del proyecto"
+  },
+  {
+    "id": "project-4",
+    "name": "Proyecto Mobile App 5",
+    "parent": "root",
+    "type": "project",
+    "description": "Proyecto estratégico de mobile app"
+  },
+  {
+    "id": "project-person-4-0",
+    "name": "Valentina Andrés",
+    "parent": "project-4",
+    "type": "person",
+    "description": "Director del proyecto"
+  },
+  {
+    "id": "project-person-4-1",
+    "name": "Andrés Camila",
+    "parent": "project-4",
+    "type": "person",
+    "description": "Gerente del proyecto"
+  },
+  {
+    "id": "project-person-4-2",
+    "name": "Camila Luis",
+    "parent": "project-4",
+    "type": "person",
+    "description": "Líder del proyecto"
+  },
+  {
+    "id": "project-person-4-3",
+    "name": "Luis Gabriela",
+    "parent": "project-4",
+    "type": "person",
+    "description": "Senior del proyecto"
+  },
+  {
+    "id": "project-person-4-4",
+    "name": "Gabriela Roberto",
+    "parent": "project-4",
+    "type": "person",
+    "description": "Junior del proyecto"
+  },
+  {
+    "id": "project-5",
+    "name": "Proyecto Data Science 6",
+    "parent": "root",
+    "type": "project",
+    "description": "Proyecto estratégico de data science"
+  },
+  {
+    "id": "project-person-5-0",
+    "name": "Roberto Daniela",
+    "parent": "project-5",
+    "type": "person",
+    "description": "Director del proyecto"
+  },
+  {
+    "id": "project-person-5-1",
+    "name": "Daniela Francisco",
+    "parent": "project-5",
+    "type": "person",
+    "description": "Gerente del proyecto"
+  },
+  {
+    "id": "project-person-5-2",
+    "name": "Francisco Claudia",
+    "parent": "project-5",
+    "type": "person",
+    "description": "Líder del proyecto"
+  },
+  {
+    "id": "project-person-5-3",
+    "name": "Claudia Manuel",
+    "parent": "project-5",
+    "type": "person",
+    "description": "Senior del proyecto"
+  },
+  {
+    "id": "project-person-5-4",
+    "name": "Manuel Teresa",
+    "parent": "project-5",
+    "type": "person",
+    "description": "Junior del proyecto"
+  },
+  {
+    "id": "project-6",
+    "name": "Proyecto Marketing Digital 7",
+    "parent": "root",
+    "type": "project",
+    "description": "Proyecto estratégico de marketing digital"
+  },
+  {
+    "id": "project-person-6-0",
+    "name": "Teresa Ana",
+    "parent": "project-6",
+    "type": "person",
+    "description": "Director del proyecto"
+  },
+  {
+    "id": "project-person-6-1",
+    "name": "Ana Carlos",
+    "parent": "project-6",
+    "type": "person",
+    "description": "Gerente del proyecto"
+  },
+  {
+    "id": "project-person-6-2",
+    "name": "Carlos María",
+    "parent": "project-6",
+    "type": "person",
+    "description": "Líder del proyecto"
+  },
+  {
+    "id": "project-person-6-3",
+    "name": "María Juan",
+    "parent": "project-6",
+    "type": "person",
+    "description": "Senior del proyecto"
+  },
+  {
+    "id": "project-person-6-4",
+    "name": "Juan Laura",
+    "parent": "project-6",
+    "type": "person",
+    "description": "Junior del proyecto"
+  },
+  {
+    "id": "project-7",
+    "name": "Proyecto SEO 8",
+    "parent": "root",
+    "type": "project",
+    "description": "Proyecto estratégico de seo"
+  },
+  {
+    "id": "project-person-7-0",
+    "name": "Laura Pedro",
+    "parent": "project-7",
+    "type": "person",
+    "description": "Director del proyecto"
+  },
+  {
+    "id": "project-person-7-1",
+    "name": "Pedro Sofia",
+    "parent": "project-7",
+    "type": "person",
+    "description": "Gerente del proyecto"
+  },
+  {
+    "id": "project-person-7-2",
+    "name": "Sofia Miguel",
+    "parent": "project-7",
+    "type": "person",
+    "description": "Líder del proyecto"
+  },
+  {
+    "id": "project-person-7-3",
+    "name": "Miguel Valentina",
+    "parent": "project-7",
+    "type": "person",
+    "description": "Senior del proyecto"
+  },
+  {
+    "id": "project-person-7-4",
+    "name": "Valentina Andrés",
+    "parent": "project-7",
+    "type": "person",
+    "description": "Junior del proyecto"
+  },
+  {
+    "id": "project-8",
+    "name": "Proyecto Social Media 9",
+    "parent": "root",
+    "type": "project",
+    "description": "Proyecto estratégico de social media"
+  },
+  {
+    "id": "project-person-8-0",
+    "name": "Andrés Camila",
+    "parent": "project-8",
+    "type": "person",
+    "description": "Director del proyecto"
+  },
+  {
+    "id": "project-person-8-1",
+    "name": "Camila Luis",
+    "parent": "project-8",
+    "type": "person",
+    "description": "Gerente del proyecto"
+  },
+  {
+    "id": "project-person-8-2",
+    "name": "Luis Gabriela",
+    "parent": "project-8",
+    "type": "person",
+    "description": "Líder del proyecto"
+  },
+  {
+    "id": "project-person-8-3",
+    "name": "Gabriela Roberto",
+    "parent": "project-8",
+    "type": "person",
+    "description": "Senior del proyecto"
+  },
+  {
+    "id": "project-person-8-4",
+    "name": "Roberto Daniela",
+    "parent": "project-8",
+    "type": "person",
+    "description": "Junior del proyecto"
+  },
+  {
+    "id": "project-9",
+    "name": "Proyecto Content Marketing 10",
+    "parent": "root",
+    "type": "project",
+    "description": "Proyecto estratégico de content marketing"
+  },
+  {
+    "id": "project-person-9-0",
+    "name": "Daniela Francisco",
+    "parent": "project-9",
+    "type": "person",
+    "description": "Director del proyecto"
+  },
+  {
+    "id": "project-person-9-1",
+    "name": "Francisco Claudia",
+    "parent": "project-9",
+    "type": "person",
+    "description": "Gerente del proyecto"
+  },
+  {
+    "id": "project-person-9-2",
+    "name": "Claudia Manuel",
+    "parent": "project-9",
+    "type": "person",
+    "description": "Líder del proyecto"
+  },
+  {
+    "id": "project-person-9-3",
+    "name": "Manuel Teresa",
+    "parent": "project-9",
+    "type": "person",
+    "description": "Senior del proyecto"
+  },
+  {
+    "id": "project-person-9-4",
+    "name": "Teresa Ana",
+    "parent": "project-9",
+    "type": "person",
+    "description": "Junior del proyecto"
+  }
+] 

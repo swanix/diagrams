@@ -834,13 +834,38 @@ function drawClusterGrid(trees, svg) {
           // Paso 2: Calcular cuadrícula óptima
           const marginX = 50, marginY = 50, spacingX = 60, spacingY = 60;
           // ===== Configuración global =====
-          // Permitir definir columnas deseadas vía CSS custom property --cluster-grid-cols; por defecto 4
+          // 1. Valor por defecto
+          let desiredGridCols = 4;
+
+          // 2. Variable CSS (menor prioridad)
           const themeVarsGlobal = getComputedStyle(document.documentElement);
-          const desiredGridCols = parseInt(themeVarsGlobal.getPropertyValue('--cluster-grid-cols')) || 4;
+          const cssCols = parseInt(themeVarsGlobal.getPropertyValue('--cluster-grid-cols'));
+          if (!Number.isNaN(cssCols) && cssCols > 0) {
+            desiredGridCols = cssCols;
+          }
+
+          // 3. Atributo HTML en el contenedor (data-cluster-cols)
+          const containerElem = document.querySelector('.xcanvas');
+          if (containerElem) {
+            const attrCols = parseInt(containerElem.getAttribute('data-cluster-cols'));
+            if (!Number.isNaN(attrCols) && attrCols > 0) {
+              desiredGridCols = attrCols;
+            }
+          }
+
+          // 4. Configuración JS (window.$xDiagrams.options.clusterGridCols) – máxima prioridad
+          const diagramOptions = getDiagramOptions();
+          if (diagramOptions.clusterGridCols) {
+            const optCols = parseInt(diagramOptions.clusterGridCols);
+            if (!Number.isNaN(optCols) && optCols > 0) {
+              desiredGridCols = optCols;
+            }
+          }
+
           // ... existing code ...
           const maxCols = Math.floor((window.innerWidth - 2 * marginX) / (Math.max(...clusterGroups.map(c => c.width)) + spacingX));
-          // Forzamos el número deseado de columnas si es menor o igual al número de clusters; de lo contrario usamos clusters.length
-          const cols = Math.min(desiredGridCols, clusterGroups.length);
+          // Ya no limitamos por ancho de pantalla
+          const cols = Math.max(1, Math.min(desiredGridCols, clusterGroups.length));
           const rows = Math.ceil(clusterGroups.length / cols);
           // Paso 3: Reposicionar clusters y dibujar fondo/título
           clusterGroups.forEach((c, i) => {

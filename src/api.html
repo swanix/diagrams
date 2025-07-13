@@ -16,22 +16,20 @@ window.$xDiagrams = {
   title: "API Test - Cache Debug",
   diagrams: [
     {
-      name: "JSON Example",
-      url: "data/site.json"
+      name: "Local JSON Example",
+      url: "data/site.json",
+      cols: {
+        name: "mi nombre custom",
+        img: "Imagenes"
+      }
+    },
+    {
+      name: "SheetBest Example", 
+      url: "https://api.sheetbest.com/sheets/e5d98c88-3e44-4793-9e66-f0a26981e281"
     },
     {
       name: "SheetDB Example", 
       url: "https://sheetdb.io/api/v1/4mbxxv45hcsip"
-    },
-    {
-      name: "Flat Diagram",
-      url: "data/flat-list-example.json",
-      grid: 5
-    },
-    {
-      name: "Flat Diagram (No ID)",
-      url: "data/flat-list-simple.csv",
-      grid: 4
     }
   ]
 };

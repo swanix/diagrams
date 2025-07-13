@@ -89,7 +89,7 @@
     --switcher-btn-shadow-hover: none;
     --switcher-btn-border-radius: 8px;
     --switcher-btn-padding: 10px 20px;
-    --switcher-btn-min-width: 200px;
+    --switcher-btn-min-width: 240px;
 
     /* Theme Toggle Button */
     --theme-toggle-bg: #ffffff;
@@ -1222,11 +1222,11 @@ svg {
 .theme-toggle:hover {
   border-color: var(--control-border-hover);
   box-shadow: 0 0 0 2px var(--control-shadow);
-  transform: translateY(-1px);
+  transform: scale(1.05);
 }
 
 .theme-toggle:active {
-  transform: translateY(0);
+  transform: scale(0.95);
 }
 
 .theme-toggle:focus {
@@ -1319,8 +1319,8 @@ body.theme-forest .topbar {
 .diagram-dropdown {
     position: relative;
     display: inline-block;
-    width: 180px;
-    max-width: 250px;
+    width: 220px; /* ancho aumentado */
+    max-width: 300px;
     margin-right: 40px; /* Espacio para el botón */
 }
 
@@ -1330,15 +1330,15 @@ body.theme-forest .topbar {
     border: 1px solid var(--switcher-btn-border, var(--control-border, #d1d5db));
     border-radius: var(--switcher-btn-border-radius, 8px);
     padding: 8px 12px 8px 16px;
-    font-size: 0.9rem;
+    font-size: 0.85rem; /* texto ligeramente más pequeño */
     font-weight: 500;
     cursor: pointer;
     display: flex;
     align-items: center;
     gap: 12px;
     transition: all 0.2s ease;
-    min-width: 180px;
-    max-width: 250px;
+    min-width: 220px;
+    max-width: 300px;
     justify-content: space-between;
     box-sizing: border-box;
     white-space: nowrap;
@@ -1473,13 +1473,13 @@ body.theme-forest .topbar {
     border: 2px solid var(--switcher-btn-border, var(--control-border, #d1d5db));
     border-radius: var(--switcher-btn-border-radius, 8px);
     padding: var(--switcher-btn-padding, 10px 20px);
-    font-size: 0.9rem;
+    font-size: 0.85rem; /* texto ligeramente más pequeño */
     font-weight: 500;
     cursor: pointer;
     box-shadow: var(--switcher-btn-shadow, none);
     transition: all 0.2s ease;
     text-align: left;
-    min-width: var(--switcher-btn-min-width, 200px);
+    min-width: var(--switcher-btn-min-width, 240px);
     pointer-events: auto;
     position: relative;
     z-index: 10001;
@@ -2255,4 +2255,45 @@ body.theme-neon .theme-toggle .moon-icon {
     white-space: nowrap;
     display: flex;
     align-items: center;
+}
+
+/* Animación de carga para el botón de refresco global */
+.data-refresh-btn.loading svg {
+    animation: spin 1s linear infinite;
+}
+
+/* Data refresh button */
+.data-refresh-btn {
+    background: var(--theme-toggle-bg, var(--control-bg, #fff));
+    color: var(--theme-toggle-text, var(--control-text, #333));
+    border: 1px solid var(--theme-toggle-border, var(--control-border, #ddd));
+    border-radius: 50%;
+    padding: 6px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    width: var(--theme-toggle-size, 40px);
+    height: var(--theme-toggle-size, 40px);
+    position: relative;
+}
+
+.data-refresh-btn svg {
+    width: var(--theme-icon-size, 18px);
+    height: var(--theme-icon-size, 18px);
+    flex-shrink: 0;
+    opacity: 0.8;
+    position: static;
+    transform: none;
+}
+
+.data-refresh-btn:hover {
+    border-color: var(--theme-toggle-border-hover, var(--control-border-hover, #9ca3af));
+    transform: scale(1.05);
+    box-shadow: 0 0 0 2px var(--theme-toggle-shadow, var(--control-shadow, rgba(0, 0, 0, 0.1)));    
+}
+
+.data-refresh-btn:hover svg {
+    opacity: 1;
 }

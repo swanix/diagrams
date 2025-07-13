@@ -379,11 +379,11 @@ window.showDiagramNotFound = function() {
 }
 
 // Main function to initialize diagram (now uses data source abstraction)
-function initDiagram(source, onComplete, retryCount = 0) {
+function initDiagram(source, onComplete, retryCount = 0, diagramConfig = null) {
           console.log("Iniciando carga del diagrama...", retryCount > 0 ? `(intento ${retryCount + 1})` : '');
   
   // Use the new data source abstraction layer
-  detectAndLoadDataSource(source, onComplete, retryCount);
+  detectAndLoadDataSource(source, onComplete, retryCount, diagramConfig);
 }
 
 // Helper function to get column value case-insensitively
@@ -466,10 +466,36 @@ function getDiagrams() {
 }
 
 // Get column configuration with modern style fallback
-function getColumnConfiguration() {
+function getColumnConfiguration(diagramConfig = null) {
   const config = getXDiagramsConfiguration();
   
-  // Try modern configuration first
+  // Try diagram-specific configuration first
+  if (diagramConfig && diagramConfig.cols) {
+    const columns = diagramConfig.cols;
+    const columnConfig = {
+      id: [columns.id || 'Node'],
+      name: [columns.name || 'Name'],
+      subtitle: [columns.subtitle || 'Description'],
+      img: [columns.img || 'Type'],
+      parent: [columns.parent || 'Parent'],
+      url: [columns.url || 'url'],
+      type: [columns.type || 'Type']
+    };
+
+    // Add fallback names for each field
+    columnConfig.id.push('node', 'Node', 'NODE', 'id', 'Id', 'ID');
+    columnConfig.name.push('name', 'Name', 'NAME', 'title', 'Title', 'TITLE');
+    columnConfig.subtitle.push('subtitle', 'Subtitle', 'SUBTITLE', 'description', 'Description', 'DESCRIPTION', 'desc', 'Desc', 'DESC');
+    columnConfig.img.push('thumbnail', 'Thumbnail', 'THUMBNAIL', 'img', 'Img', 'IMG', 'type', 'Type', 'TYPE', 'icon', 'Icon', 'ICON');
+    columnConfig.parent.push('parent', 'Parent', 'PARENT');
+    columnConfig.url.push('url', 'Url', 'URL', 'link', 'Link', 'LINK');
+    columnConfig.type.push('type', 'Type', 'TYPE');
+
+    console.log('🔧 [Columns] Using diagram-specific column config:', columnConfig);
+    return columnConfig;
+  }
+  
+  // Try global configuration second
   if (config.columns) {
     const columns = config.columns;
     const columnConfig = {
@@ -491,10 +517,12 @@ function getColumnConfiguration() {
     columnConfig.url.push('url', 'Url', 'URL', 'link', 'Link', 'LINK');
     columnConfig.type.push('type', 'Type', 'TYPE');
 
+    console.log('🔧 [Columns] Using global column config:', columnConfig);
     return columnConfig;
   }
   
   // Fallback to legacy configuration
+  console.log('🔧 [Columns] Using legacy column config');
   return getColumnConfigurationLegacy();
 }
 
@@ -568,13 +596,13 @@ function getColumnConfigurationLegacy() {
 }
 
 // Build simplified hierarchies
-function buildHierarchies(data) {
+function buildHierarchies(data, diagramConfig = null) {
   let roots = [];
   let nodeMap = new Map();
   let autoIdCounter = 1;
   
-  // Get column configuration
-  const columnConfig = getColumnConfiguration();
+  // Get column configuration (with diagram-specific config if available)
+  const columnConfig = getColumnConfiguration(diagramConfig);
 
   data.forEach(d => {
     // Skip completely empty rows
@@ -3045,59 +3073,73 @@ window.$xDiagrams.renderDiagramButtons = function() {
         dropdown.appendChild(sheetsButton);
     }
     
-    // Add cache refresh button SOLO para diagramas que se cargan desde una API REST
-    if (currentDiagram && (currentDiagram.url || currentDiagram.file) && typeof isRestApiEndpoint === 'function' && isRestApiEndpoint(currentDiagram.url || currentDiagram.file)) {
-        const cacheButton = document.createElement('button');
-        cacheButton.className = 'cache-refresh-btn';
-        cacheButton.innerHTML = `
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M17.65,6.35C16.2,4.9 14.21,4 12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20C15.73,20 18.84,17.45 19.73,14H17.65C16.83,16.33 14.61,18 12,18A6,6 0 0,1 6,12A6,6 0 0,1 12,6C13.66,6 15.14,6.69 16.22,7.78L13,11H20V4L17.65,6.35Z"/>
-            </svg>
-        `;
-        cacheButton.title = 'Refrescar caché y recargar';
-        
-        // Si NO hay botón de Sheets, agrego clase 'solo' para ajustar posición
-        if (!sheetsButton) {
-            cacheButton.classList.add('solo');
+    // Add cache refresh button SOLO para diagramas que se cargan desde una API REST REMOTA (no local)
+    if (currentDiagram && (currentDiagram.url || currentDiagram.file) && typeof isRestApiEndpoint === 'function') {
+        const diagramUrl = currentDiagram.url || currentDiagram.file;
+        // Detectar si la URL pertenece al mismo origen (local) o es relativa → tratar como local
+        let isLocalResource = false;
+        try {
+            const parsed = new URL(diagramUrl, window.location.href);
+            isLocalResource = parsed.origin === window.location.origin;
+        } catch (e) {
+            // URL relativa → local
+            isLocalResource = true;
         }
-        
-        cacheButton.addEventListener('click', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
+
+        // Sólo mostrar el botón si ES endpoint REST y NO es recurso local
+        if (isRestApiEndpoint(diagramUrl) && !isLocalResource) {
+            const cacheButton = document.createElement('button');
+            cacheButton.className = 'cache-refresh-btn';
+            cacheButton.innerHTML = `
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M17.65,6.35C16.2,4.9 14.21,4 12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20C15.73,20 18.84,17.45 19.73,14H17.65C16.83,16.33 14.61,18 12,18A6,6 0 0,1 6,12A6,6 0 0,1 12,6C13.66,6 15.14,6.69 16.22,7.78L13,11H20V4L17.65,6.35Z"/>
+                </svg>
+            `;
+            cacheButton.title = 'Refrescar caché y recargar';
             
-            // Add loading animation
-            cacheButton.classList.add('loading');
-            
-            // Get the URL to clear cache for
-            const diagramUrl = currentDiagram.url || currentDiagram.file;
-            
-            // Clear cache for this specific URL
-            if (window.xDiagramsCache && window.xDiagramsCache.clear) {
-                window.xDiagramsCache.clear(diagramUrl);
-                console.log('🗑️ Cache cleared for:', diagramUrl);
+            // Si NO hay botón de Sheets, agrego clase 'solo' para ajustar posición
+            if (!sheetsButton) {
+                cacheButton.classList.add('solo');
             }
             
-            // Also clear legacy cache
-            if (window.$xDiagrams.clearCache) {
-                window.$xDiagrams.clearCache();
-            }
-            
-            // Reload the current diagram after a short delay
-            setTimeout(() => {
-                window.$xDiagrams.loadDiagram(currentDiagram);
+            cacheButton.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
                 
-                // Remove loading animation after a bit more delay
+                // Add loading animation
+                cacheButton.classList.add('loading');
+                
+                // Get the URL to clear cache for
+                const diagramUrl = currentDiagram.url || currentDiagram.file;
+                
+                // Clear cache for this specific URL
+                if (window.xDiagramsCache && window.xDiagramsCache.clear) {
+                    window.xDiagramsCache.clear(diagramUrl);
+                    console.log('🗑️ Cache cleared for:', diagramUrl);
+                }
+                
+                // Also clear legacy cache
+                if (window.$xDiagrams.clearCache) {
+                    window.$xDiagrams.clearCache();
+                }
+                
+                // Reload the current diagram after a short delay
                 setTimeout(() => {
-                    cacheButton.classList.remove('loading');
-                }, 1000);
-            }, 100);
+                    window.$xDiagrams.loadDiagram(currentDiagram);
+                    
+                    // Remove loading animation after a bit more delay
+                    setTimeout(() => {
+                        cacheButton.classList.remove('loading');
+                    }, 1000);
+                }, 100);
+                
+                // Close dropdown
+                dropdown.classList.remove('open');
+            });
             
-            // Close dropdown
-            dropdown.classList.remove('open');
-        });
-        
-        // Insert button after the dropdown content (before sheets button if it exists)
-        dropdown.appendChild(cacheButton);
+            // Insert button after the dropdown content (before sheets button if it exists)
+            dropdown.appendChild(cacheButton);
+        }
     }
     
     // Apply current theme colors to the switcher buttons
@@ -3202,7 +3244,7 @@ window.$xDiagrams.loadDiagram = function(input) {
                 }
                 window.$xDiagrams.isLoading = false;
             }, 100);
-        });
+        }, 0, diagramToLoad);
         setTimeout(() => {
             if (window.$xDiagrams.isLoading) {
                 if (loading) loading.style.display = 'none';
@@ -3362,6 +3404,11 @@ function renderSwDiagramBase() {
                 <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" fill="currentColor"></path>
               </svg>
             </button>
+            <button id="data-refresh" class="theme-toggle data-refresh-btn" title="Refrescar datos">
+              <svg class="theme-icon refresh-icon" width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M17.65,6.35C16.2,4.9 14.21,4 12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20C15.73,20 18.84,17.45 19.73,14H17.65C16.83,16.33 14.61,18 12,18A6,6 0 0,1 6,12A6,6 0 0,1 12,6C13.66,6 15.14,6.69 16.22,7.78L13,11H20V4L17.65,6.35Z"></path>
+              </svg>
+            </button>
           </div>
         </div>
       </div>
@@ -3390,6 +3437,10 @@ function renderSwDiagramBase() {
       ${dragDropElements}
     `;
     document.body.appendChild(container);
+    // Configuro el botón de refresco global
+    if (typeof setupDataRefreshButton === 'function') {
+      setupDataRefreshButton();
+    }
   }
   // Initialize theme system after base structure is rendered
   console.log('[Base Render] Inicializando sistema de temas...');
@@ -3915,7 +3966,7 @@ window.tryDiagramFallbacks = function(originalFile, onComplete, retryCount = 0) 
   console.log(`[Fallback] Trying fallback file ${retryCount + 1}:`, fallbackFile);
   
   // Try the fallback file with error handling
-  window.initDiagram(fallbackFile, onComplete, 0); // Reset retry count for fallback
+  window.initDiagram(fallbackFile, onComplete, 0, diagram); // Reset retry count for fallback
   
   return true;
 };
@@ -4152,13 +4203,13 @@ window.simpleHash = function(str) {
 // ============================================================================
 
 // Detect data source type and load accordingly
-function detectAndLoadDataSource(source, onComplete, retryCount = 0) {
+function detectAndLoadDataSource(source, onComplete, retryCount = 0, diagramConfig = null) {
   console.log("🔍 Detectando tipo de fuente de datos:", source);
   
   // Case 1: Object with data (already processed)
   if (source && typeof source === 'object' && source.data) {
             console.log("Fuente detectada: Datos pre-procesados");
-    return loadFromObject(source, onComplete);
+    return loadFromObject(source, onComplete, diagramConfig);
   }
   
   // Case 2: String URL - detect type
@@ -4168,18 +4219,18 @@ function detectAndLoadDataSource(source, onComplete, retryCount = 0) {
     // Check if it's a REST API endpoint
     if (isRestApiEndpoint(url)) {
       console.log("🌐 Fuente detectada: API REST");
-      return loadFromRestApi(url, onComplete, retryCount);
+      return loadFromRestApi(url, onComplete, retryCount, diagramConfig);
     }
     
     // Check if it's a CSV URL
     if (isCsvUrl(url)) {
       console.log("📄 Fuente detectada: URL CSV");
-      return loadFromCsvUrl(url, onComplete, retryCount);
+      return loadFromCsvUrl(url, onComplete, retryCount, diagramConfig);
     }
     
     // Default: treat as CSV URL
     console.log("📄 Fuente detectada: URL (tratada como CSV)");
-    return loadFromCsvUrl(url, onComplete, retryCount);
+    return loadFromCsvUrl(url, onComplete, retryCount, diagramConfig);
   }
   
   // Case 3: Invalid source
@@ -4224,13 +4275,13 @@ function isCsvUrl(url) {
 }
 
 // Load data from REST API (now uses intelligent caching)
-function loadFromRestApi(apiUrl, onComplete, retryCount = 0) {
+function loadFromRestApi(apiUrl, onComplete, retryCount = 0, diagramConfig = null) {
   // Use the enhanced version with caching
-  loadFromRestApiWithCache(apiUrl, onComplete, retryCount);
+  loadFromRestApiWithCache(apiUrl, onComplete, retryCount, diagramConfig);
 }
 
 // Load data from CSV URL (existing functionality)
-function loadFromCsvUrl(csvUrl, onComplete, retryCount = 0) {
+function loadFromCsvUrl(csvUrl, onComplete, retryCount = 0, diagramConfig = null) {
   console.log("📄 Cargando desde URL CSV:", csvUrl);
   
   const loadingElement = document.querySelector("#loading");
@@ -4252,7 +4303,7 @@ function loadFromCsvUrl(csvUrl, onComplete, retryCount = 0) {
       console.log("CSV cargado exitosamente:", results.data.length, "filas");
       
       try {
-        const trees = buildHierarchies(results.data);
+        const trees = buildHierarchies(results.data, diagramConfig);
         drawTrees(trees);
         
         // Create side panel only if enabled
@@ -4354,7 +4405,7 @@ function loadFromCsvUrl(csvUrl, onComplete, retryCount = 0) {
 }
 
 // Load data from object (existing functionality)
-function loadFromObject(diagramObject, onComplete) {
+function loadFromObject(diagramObject, onComplete, diagramConfig = null) {
           console.log("Cargando desde objeto:", diagramObject.name);
   
   const loadingElement = document.querySelector("#loading");
@@ -4375,7 +4426,7 @@ function loadFromObject(diagramObject, onComplete) {
       return;
     }
     
-    const trees = buildHierarchies(diagramObject.data);
+    const trees = buildHierarchies(diagramObject.data, diagramConfig);
     drawTrees(trees);
     
     // Create side panel only if enabled
@@ -4687,9 +4738,22 @@ const CacheManager = {
 
   // Check if URL should be cached
   shouldCache: function(url) {
-    // Only cache REST API URLs
+    // 1) Evitar caché para archivos locales (mismo origen o rutas relativas)
+    try {
+      const parsed = new URL(url, window.location.href);
+      if (parsed.origin === window.location.origin) {
+        console.log('🔍 [Cache] Local URL detectado, no se aplicará caché:', url);
+        return false;
+      }
+    } catch (e) {
+      // Si falla el parseo asumimos que es una ruta relativa → local
+      console.log('🔍 [Cache] Ruta relativa detectada, no se aplicará caché:', url);
+      return false;
+    }
+
+    // 2) Para URLs remotas, aplicar la caché solo si son endpoints REST
     const shouldCache = isRestApiEndpoint(url);
-    console.log('🔍 [Cache] shouldCache check for:', url, '→', shouldCache);
+    console.log('🔍 [Cache] shouldCache check for URL remota:', url, '→', shouldCache);
     return shouldCache;
   }
 };
@@ -4768,7 +4832,7 @@ window.cacheDebug = {
 };
 
 // Enhanced loadFromRestApi with intelligent caching
-function loadFromRestApiWithCache(apiUrl, onComplete, retryCount = 0) {
+function loadFromRestApiWithCache(apiUrl, onComplete, retryCount = 0, diagramConfig = null) {
   console.log("🌐 Cargando desde API REST:", apiUrl);
   console.log("🔍 [Cache] Function called with URL:", apiUrl);
   
@@ -4806,7 +4870,7 @@ function loadFromRestApiWithCache(apiUrl, onComplete, retryCount = 0) {
       console.log("📦 [Cache] Using cached data, skipping API call");
       
       try {
-        const trees = buildHierarchies(cachedData);
+        const trees = buildHierarchies(cachedData, diagramConfig);
         drawTrees(trees);
         
         // Create side panel only if enabled
@@ -4875,7 +4939,7 @@ function loadFromRestApiWithCache(apiUrl, onComplete, retryCount = 0) {
       }
       
       // Process the data
-      const trees = buildHierarchies(csvData);
+      const trees = buildHierarchies(csvData, diagramConfig);
       drawTrees(trees);
       
       // Create side panel only if enabled
@@ -4928,4 +4992,56 @@ function loadFromRestApiWithCache(apiUrl, onComplete, retryCount = 0) {
         onComplete();
       }
     });
+}
+
+// Nueva función: configurar botón de refresco global
+function setupDataRefreshButton() {
+  const refreshBtn = document.getElementById('data-refresh');
+  if (!refreshBtn) {
+    console.warn('[Refresh] Botón de refresh no encontrado');
+    return;
+  }
+
+  // Eliminar posibles listeners previos clonando el nodo
+  const newBtn = refreshBtn.cloneNode(true);
+  refreshBtn.parentNode.replaceChild(newBtn, refreshBtn);
+
+  newBtn.addEventListener('click', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    console.log('[Refresh] Click en botón de refresh');
+
+    // Animación de carga
+    newBtn.classList.add('loading');
+
+    // Limpiar caché inteligente
+    if (window.xDiagramsCache && window.xDiagramsCache.clearAll) {
+      window.xDiagramsCache.clearAll();
+    }
+    // Limpiar caché heredada
+    if (window.$xDiagrams && window.$xDiagrams.clearCache) {
+      window.$xDiagrams.clearCache();
+    }
+
+    // Vaciar diagramas cargados en memoria
+    if (window.$xDiagrams && window.$xDiagrams.loadedDiagrams) {
+      window.$xDiagrams.loadedDiagrams.clear();
+    }
+
+    // Recargar diagrama actual
+    const diagrams = typeof getDiagrams === 'function' ? getDiagrams() : [];
+    const idx = window.$xDiagrams && typeof window.$xDiagrams.currentDiagramIdx === 'number' ? window.$xDiagrams.currentDiagramIdx : 0;
+    const currentDiagram = diagrams && diagrams[idx] ? diagrams[idx] : null;
+
+    if (currentDiagram && window.$xDiagrams && typeof window.$xDiagrams.loadDiagram === 'function') {
+      setTimeout(() => {
+        window.$xDiagrams.loadDiagram(currentDiagram);
+        // Quitar animación tras recarga
+        setTimeout(() => newBtn.classList.remove('loading'), 1000);
+      }, 120);
+    } else {
+      // Fallback: recargar página
+      setTimeout(() => window.location.reload(), 300);
+    }
+  });
 }

@@ -113,6 +113,51 @@ function processCSVFile(file) {
   });
 }
 
+// Process JSON file
+function processJSONFile(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+
+    reader.onload = function(e) {
+      try {
+        const jsonContent = e.target.result;
+        let jsonData;
+        try {
+          jsonData = JSON.parse(jsonContent);
+        } catch (parseErr) {
+          return reject(new Error('Error parsing JSON: ' + parseErr.message));
+        }
+
+        // Convert JSON to internal array-of-objects format
+        const dataArray = convertJsonToCsvFormat(jsonData);
+
+        if (!Array.isArray(dataArray) || dataArray.length === 0) {
+          return reject(new Error('JSON vacío o en formato no reconocido'));
+        }
+
+        // Create diagram object
+        const diagram = {
+          name: file.name.replace(/\.json$/i, ''),
+          url: null, // Local file, no URL
+          data: dataArray,
+          isLocal: true,
+          timestamp: new Date().toISOString()
+        };
+
+        resolve(diagram);
+      } catch (error) {
+        reject(error);
+      }
+    };
+
+    reader.onerror = function() {
+      reject(new Error('Error reading file'));
+    };
+
+    reader.readAsText(file);
+  });
+}
+
 // Add diagram to switcher and load it
 window.addAndLoadDiagram = function(diagram) {
   // Add to configuration
@@ -152,22 +197,32 @@ function handleFileDrop(e) {
   
   const files = e.dataTransfer.files;
   if (files.length > 0) {
-    // Filter only CSV files
-    const csvFiles = Array.from(files).filter(file => 
-      file.type === 'text/csv' || file.name.toLowerCase().endsWith('.csv')
-    );
-    
-    if (csvFiles.length === 0) {
-      showToast('Por favor, selecciona archivos CSV válidos.', 'error');
+    // Filtrar archivos CSV o JSON compatibles
+    const supportedFiles = Array.from(files).filter(file => {
+      const name = file.name.toLowerCase();
+      const type = file.type;
+      return (
+        type === 'text/csv' || name.endsWith('.csv') ||
+        type === 'application/json' || type === 'text/json' || name.endsWith('.json')
+      );
+    });
+
+    if (supportedFiles.length === 0) {
+      showToast('Por favor, selecciona archivos CSV o JSON válidos.', 'error');
       return;
     }
-    
-    if (csvFiles.length === 1) {
-      // Single file - process normally
-      const file = csvFiles[0];
-      console.log('📁 Procesando archivo CSV:', file.name);
-      
-      processCSVFile(file)
+
+    const processFile = (file) => {
+      const isCsv = file.name.toLowerCase().endsWith('.csv') || file.type === 'text/csv';
+      return isCsv ? processCSVFile(file) : processJSONFile(file);
+    };
+
+    if (supportedFiles.length === 1) {
+      // Single file
+      const file = supportedFiles[0];
+      console.log('📁 Procesando archivo:', file.name);
+
+      processFile(file)
         .then(diagram => {
           console.log('✅ Archivo procesado exitosamente:', diagram.name);
           window.addAndLoadDiagram(diagram);
@@ -177,27 +232,22 @@ function handleFileDrop(e) {
           showToast('Error al procesar el archivo: ' + error.message, 'error');
         });
     } else {
-      // Multiple files - process all
-      console.log(`📁 Procesando ${csvFiles.length} archivos CSV...`);
-      
-      // Show progress message
-      const progressMsg = `Procesando ${csvFiles.length} archivos...`;
-      console.log(progressMsg);
-      
-      // Process all files in parallel
-      Promise.allSettled(csvFiles.map(file => processCSVFile(file)))
+      // Multiple files
+      console.log(`📁 Procesando ${supportedFiles.length} archivos...`);
+
+      Promise.allSettled(supportedFiles.map(file => processFile(file)))
         .then(results => {
           const successful = results.filter(r => r.status === 'fulfilled').map(r => r.value);
           const failed = results
-            .map((r, i) => r.status === 'rejected' ? { name: csvFiles[i].name, reason: r.reason && r.reason.message ? r.reason.message : r.reason } : null)
+            .map((r, i) => r.status === 'rejected' ? { name: supportedFiles[i].name, reason: r.reason && r.reason.message ? r.reason.message : r.reason } : null)
             .filter(Boolean);
 
-          // Agrega todos los diagramas exitosos
+          // Agregar los diagramas exitosos
           successful.forEach(diagram => {
             window.addAndLoadDiagram(diagram);
           });
 
-          // Feedback detallado
+          // Feedback
           if (failed.length > 0) {
             let msg = `${successful.length} diagramas agregados exitosamente\n❌ ${failed.length} fallaron:\n`;
             msg += failed.map(f => `- ${f.name}: ${f.reason}`).join('\n');
@@ -238,7 +288,8 @@ function handleDragLeave(e) {
 
 // Initialize drag & drop
 function initDragAndDrop() {
-  if (!window.$xDiagrams.options || !window.$xDiagrams.options.dragAndDrop) {
+  // Utilizar el helper isOptionEnabled para que el valor por defecto sea TRUE
+  if (!isOptionEnabled('dragAndDrop')) {
     console.log('[Drag & Drop] Opción dragAndDrop deshabilitada');
     return;
   }
@@ -859,6 +910,18 @@ function drawClusterGrid(trees, svg) {
             const optCols = parseInt(diagramOptions.clusterGridCols);
             if (!Number.isNaN(optCols) && optCols > 0) {
               desiredGridCols = optCols;
+            }
+          }
+
+          // 5. Configuración específica del diagrama (propiedad "grid" en el objeto diagrama)
+          const diagramsList = getDiagrams();
+          if (Array.isArray(diagramsList) && window.$xDiagrams && typeof window.$xDiagrams.currentDiagramIdx === 'number') {
+            const currentDiagramObj = diagramsList[window.$xDiagrams.currentDiagramIdx];
+            if (currentDiagramObj && currentDiagramObj.grid) {
+              const diagCols = parseInt(currentDiagramObj.grid);
+              if (!Number.isNaN(diagCols) && diagCols > 0) {
+                desiredGridCols = diagCols;
+              }
             }
           }
 
@@ -2269,8 +2332,18 @@ window.$xDiagrams.keyboardNavigation = {
         this.selectNode(parentIndex);
       }
     } else {
-      // No parent found, wrap around to the root node (level 0)
-      this.navigateToRootNode();
+      // No parent found. Si todos los nodos son raíz (lista plana), usamos navegación vertical por columnas (grid)
+      const isFlat = this.allNodes.every(n => {
+        const d = this.getNodeData(n);
+        return d && !d.parent;
+      });
+
+      if (isFlat) {
+        this.navigateToNodeAbove();
+      } else {
+        // Caso estándar: ir al primer nodo raíz
+        this.navigateToRootNode();
+      }
     }
   },
   
@@ -2291,13 +2364,21 @@ window.$xDiagrams.keyboardNavigation = {
       if (childIndex !== -1) {
         this.selectNode(childIndex);
       } else {
-        // No children found, try to go to first node of next level
-        const currentLevel = this.getNodeLevel(nodeData);
-        const nextLevelResult = this.navigateToFirstNodeOfNextLevel(currentLevel);
-        
-        // If no next level found, wrap around to the first node of the diagram
-        if (!nextLevelResult) {
-          this.navigateToFirst();
+        // No children. Si es lista plana navegamos verticalmente hacia abajo (grid)
+        const isFlat = this.allNodes.every(n => {
+          const d = this.getNodeData(n);
+          return d && !d.parent;
+        });
+
+        if (isFlat) {
+          this.navigateToNodeBelow();
+        } else {
+          // Comportamiento original
+          const currentLevel = this.getNodeLevel(nodeData);
+          const nextLevelResult = this.navigateToFirstNodeOfNextLevel(currentLevel);
+          if (!nextLevelResult) {
+            this.navigateToFirst();
+          }
         }
       }
     }
@@ -2732,6 +2813,80 @@ window.$xDiagrams.keyboardNavigation = {
     } else {
       console.error('[Keyboard Navigation] Failed to open link for node:', nodeData.name);
     }
+  },
+  
+  // Navegar al nodo inmediatamente arriba en una lista plana mostrada en grid
+  navigateToNodeAbove: function() {
+    if (this.currentNodeIndex === -1 || this.allNodes.length === 0) return;
+
+    const currentNode = this.allNodes[this.currentNodeIndex];
+    const currentRect = currentNode.getBoundingClientRect();
+    const currentCenterX = currentRect.left + currentRect.width / 2;
+    const currentCenterY = currentRect.top + currentRect.height / 2;
+
+    let bestIndex = -1;
+    let bestDY = Infinity;
+    let bestDX = Infinity;
+
+    this.allNodes.forEach((node, idx) => {
+      if (idx === this.currentNodeIndex) return;
+      const rect = node.getBoundingClientRect();
+      const centerX = rect.left + rect.width / 2;
+      const centerY = rect.top + rect.height / 2;
+
+      const deltaY = centerY - currentCenterY; // negativo si está arriba
+      if (deltaY >= -2) return; // sólo considerar nodos con Y menor (arriba)
+
+      const dy = Math.abs(deltaY);
+      const dx = Math.abs(centerX - currentCenterX);
+
+      if (dy < bestDY || (dy === bestDY && dx < bestDX)) {
+        bestDY = dy;
+        bestDX = dx;
+        bestIndex = idx;
+      }
+    });
+
+    if (bestIndex !== -1) {
+      this.selectNode(bestIndex);
+    }
+  },
+
+  // Navegar al nodo inmediatamente abajo en una lista plana mostrada en grid
+  navigateToNodeBelow: function() {
+    if (this.currentNodeIndex === -1 || this.allNodes.length === 0) return;
+
+    const currentNode = this.allNodes[this.currentNodeIndex];
+    const currentRect = currentNode.getBoundingClientRect();
+    const currentCenterX = currentRect.left + currentRect.width / 2;
+    const currentCenterY = currentRect.top + currentRect.height / 2;
+
+    let bestIndex = -1;
+    let bestDY = Infinity;
+    let bestDX = Infinity;
+
+    this.allNodes.forEach((node, idx) => {
+      if (idx === this.currentNodeIndex) return;
+      const rect = node.getBoundingClientRect();
+      const centerX = rect.left + rect.width / 2;
+      const centerY = rect.top + rect.height / 2;
+
+      const deltaY = centerY - currentCenterY; // positivo si está abajo
+      if (deltaY <= 2) return; // sólo considerar nodos con Y mayor (abajo)
+
+      const dy = deltaY; // ya positivo
+      const dx = Math.abs(centerX - currentCenterX);
+
+      if (dy < bestDY || (dy === bestDY && dx < bestDX)) {
+        bestDY = dy;
+        bestDX = dx;
+        bestIndex = idx;
+      }
+    });
+
+    if (bestIndex !== -1) {
+      this.selectNode(bestIndex);
+    }
   }
 };
 // DO NOT define default diagrams here
@@ -2890,8 +3045,8 @@ window.$xDiagrams.renderDiagramButtons = function() {
         dropdown.appendChild(sheetsButton);
     }
     
-    // Add cache refresh button for any diagram with a URL (local o remota)
-    if (currentDiagram && (currentDiagram.url || currentDiagram.file)) {
+    // Add cache refresh button SOLO para diagramas que se cargan desde una API REST
+    if (currentDiagram && (currentDiagram.url || currentDiagram.file) && typeof isRestApiEndpoint === 'function' && isRestApiEndpoint(currentDiagram.url || currentDiagram.file)) {
         const cacheButton = document.createElement('button');
         cacheButton.className = 'cache-refresh-btn';
         cacheButton.innerHTML = `
@@ -3273,7 +3428,7 @@ function initializeWhenReady() {
     }
     
     // Initialize drag & drop if enabled
-    if (window.$xDiagrams.options && window.$xDiagrams.options.dragAndDrop) {
+    if (isOptionEnabled('dragAndDrop')) {
       console.log('[Initialize] Inicializando drag & drop...');
       setTimeout(() => {
         initDragAndDropDelayed();

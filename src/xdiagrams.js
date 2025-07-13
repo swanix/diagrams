@@ -1016,11 +1016,12 @@ function debugTreeStructure(node, level = 0) {
   }
 }
 
-// Función para aplicar layout horizontal simple
+// Función para aplicar layout con soporte para grid
 function applyMasonryLayout(clusterGroups, container, originalTrees, preCalculatedUniformHeight = null) {
   const marginX = 50;
   const marginY = 50;
   const spacingX = 60;
+  const spacingY = 60;
   
   // Si solo hay un cluster, centrarlo
   if (clusterGroups.length === 1) {
@@ -1029,22 +1030,36 @@ function applyMasonryLayout(clusterGroups, container, originalTrees, preCalculat
     const y = window.innerHeight / 2;
     cluster.group.attr("transform", `translate(${x},${y})`);
     addClusterBackground(cluster);
-    console.log('[Horizontal Layout] Single cluster centered');
+    console.log('[Layout] Single cluster centered');
     return;
   }
   
   // Detectar si es un diagrama plano (flat list) usando los árboles originales
   const isFlat = isFlatList(originalTrees);
   
-  // Detectar si todos los clusters tienen el mismo tamaño
-  const heights = clusterGroups.map(c => c.height);
-  const widths = clusterGroups.map(c => c.width);
-  const minHeight = Math.min(...heights);
-  const maxHeight = Math.max(...heights);
-  const minWidth = Math.min(...widths);
-  const maxWidth = Math.max(...widths);
-  const allSameHeight = minHeight === maxHeight;
-  const allSameWidth = minWidth === maxWidth;
+  // Obtener el diagrama actual para verificar si tiene parámetro grid
+  const diagramsList = getDiagrams();
+  let currentDiagramObj = null;
+  let useGridLayout = false;
+  let desiredGridCols = 4; // Valor por defecto
+  
+  if (Array.isArray(diagramsList) && window.$xDiagrams && typeof window.$xDiagrams.currentDiagramIdx === 'number') {
+    currentDiagramObj = diagramsList[window.$xDiagrams.currentDiagramIdx];
+    
+    // Verificar si es el diagrama de "20 Clusters - Diferentes Tamaños" que debe mantenerse como está
+    if (currentDiagramObj && currentDiagramObj.name === "20 Clusters - Diferentes Tamaños") {
+      console.log('[Layout] Diagrama de 20 clusters detectado - usando layout horizontal');
+      useGridLayout = false;
+    } else if (currentDiagramObj && currentDiagramObj.grid) {
+      // Si tiene parámetro grid, usarlo
+      const diagCols = parseInt(currentDiagramObj.grid);
+      if (!Number.isNaN(diagCols) && diagCols > 0) {
+        desiredGridCols = diagCols;
+        useGridLayout = true;
+        console.log(`[Layout] Grid layout detectado con ${desiredGridCols} columnas`);
+      }
+    }
+  }
   
   // Ajustar lógica de altura uniforme
   let uniformHeight = null;
@@ -1053,95 +1068,131 @@ function applyMasonryLayout(clusterGroups, container, originalTrees, preCalculat
     console.log(`[Height Calculation] Usando altura uniforme pre-calculada: ${uniformHeight}px`);
   }
   
-  // Layout horizontal simple: todos los clusters en una fila
-  let currentX = marginX;
-  const centerY = window.innerHeight / 2;
-  
-  clusterGroups.forEach((cluster, index) => {
-    // Posicionar cluster en la fila horizontal
-    const x = currentX + cluster.width / 2;
-    const y = centerY;
+  if (useGridLayout) {
+    // GRID LAYOUT: Organizar clusters en cuadrícula
+    const cols = Math.max(1, Math.min(desiredGridCols, clusterGroups.length));
+    const rows = Math.ceil(clusterGroups.length / cols);
     
-    cluster.group.attr("transform", `translate(${x},${y})`);
-    
-    // Para diagramas planos, siempre usar altura original
-    if (isFlat) {
-      addClusterBackground(cluster);
-    } else {
-      if (uniformHeight !== null) {
-        addClusterBackgroundWithUniformHeight(cluster, uniformHeight);
-      } else {
+    clusterGroups.forEach((cluster, index) => {
+      const col = index % cols;
+      const row = Math.floor(index / cols);
+      
+      let x = marginX + col * (cluster.width + spacingX) + cluster.width / 2;
+      let y = marginY + row * (cluster.height + spacingY) + cluster.height / 2;
+      
+      cluster.group.attr("transform", `translate(${x},${y})`);
+      
+      // Para diagramas planos, siempre usar altura original
+      if (isFlat) {
         addClusterBackground(cluster);
-      }
-    }
-    
-    // Siguiente cluster empieza después del actual + gap
-    currentX += cluster.width + spacingX;
-  });
-  
-  let layoutType;
-  if (isFlat) {
-    layoutType = 'flat list - original heights';
-  } else {
-    layoutType = uniformHeight !== null ? 'hierarchical - uniform height' : 'hierarchical - original heights';
-  }
-  console.log('[Horizontal Layout] Rendered', clusterGroups.length, 'clusters in horizontal layout with', layoutType, uniformHeight !== null ? `(${uniformHeight}px)` : '');
-
-  // Helper para reajustar posiciones basadas en rectángulos
-  function adjustPositions() {
-    let currX = marginX;
-    clusterGroups.forEach(cluster => {
-      const rectNode = cluster.group.select('.cluster-rect').node();
-      if (rectNode) {
-        const bbox = rectNode.getBBox();
-        const rectWidth = Math.max(bbox.width, cluster.width);
-        const leftOffset = bbox.x;
-        const newX = currX - leftOffset;
-        cluster.group.attr('transform', `translate(${newX},${centerY})`);
-        currX += rectWidth + spacingX;
       } else {
-        // Fallback
-        const rectWidth = cluster.width;
-        const newX = currX;
-        cluster.group.attr('transform', `translate(${newX},${centerY})`);
-        currX += rectWidth + spacingX;
+        if (uniformHeight !== null) {
+          addClusterBackgroundWithUniformHeight(cluster, uniformHeight);
+        } else {
+          addClusterBackground(cluster);
+        }
       }
     });
-  }
-
-  // --- Estabilización de posiciones ---
-  let prevWidths = [];
-  let adjustAttempts = 0;
-  const maxAttempts = 10;
-  const intervalId = setInterval(() => {
-    adjustAttempts += 1;
-    const currWidths = clusterGroups.map(c => {
-      const r = c.group.select('.cluster-rect').node();
-      const rw = r ? r.getBBox().width : 0;
-      return Math.max(rw, c.width);
+    
+    let layoutType;
+    if (isFlat) {
+      layoutType = 'flat list - original heights';
+    } else {
+      layoutType = uniformHeight !== null ? 'hierarchical - uniform height' : 'hierarchical - original heights';
+    }
+    console.log(`[Grid Layout] Rendered ${clusterGroups.length} clusters in ${cols}x${rows} grid with ${layoutType}`, uniformHeight !== null ? `(${uniformHeight}px)` : '');
+    
+  } else {
+    // HORIZONTAL LAYOUT: Todos los clusters en una fila (comportamiento original)
+    let currentX = marginX;
+    const centerY = window.innerHeight / 2;
+    
+    clusterGroups.forEach((cluster, index) => {
+      // Posicionar cluster en la fila horizontal
+      const x = currentX + cluster.width / 2;
+      const y = centerY;
+      
+      cluster.group.attr("transform", `translate(${x},${y})`);
+      
+      // Para diagramas planos, siempre usar altura original
+      if (isFlat) {
+        addClusterBackground(cluster);
+      } else {
+        if (uniformHeight !== null) {
+          addClusterBackgroundWithUniformHeight(cluster, uniformHeight);
+        } else {
+          addClusterBackground(cluster);
+        }
+      }
+      
+      // Siguiente cluster empieza después del actual + gap
+      currentX += cluster.width + spacingX;
     });
-    // Comprobar si las anchuras han cambiado desde la última medición
-    const changed = prevWidths.length === 0 || currWidths.some((w, i) => Math.abs(w - prevWidths[i]) > 1);
-    if (changed) {
-      prevWidths = currWidths;
-      adjustPositions();
-      console.log(`[Horizontal Layout] Reajuste dinámico #${adjustAttempts}`);
+    
+    let layoutType;
+    if (isFlat) {
+      layoutType = 'flat list - original heights';
+    } else {
+      layoutType = uniformHeight !== null ? 'hierarchical - uniform height' : 'hierarchical - original heights';
     }
-    if (!changed || adjustAttempts >= maxAttempts) {
-      clearInterval(intervalId);
-      console.log('[Horizontal Layout] Estabilización completa');
-    }
-  }, 200);
+    console.log('[Horizontal Layout] Rendered', clusterGroups.length, 'clusters in horizontal layout with', layoutType, uniformHeight !== null ? `(${uniformHeight}px)` : '');
 
-  // Primera llamada inmediata (después de 0 ms) y dos llamadas extra para asegurar carga completa
-  setTimeout(() => {
-    adjustPositions();
-    console.log('[Horizontal Layout] Reajuste 1');
+    // Helper para reajustar posiciones basadas en rectángulos (solo para horizontal layout)
+    function adjustPositions() {
+      let currX = marginX;
+      clusterGroups.forEach(cluster => {
+        const rectNode = cluster.group.select('.cluster-rect').node();
+        if (rectNode) {
+          const bbox = rectNode.getBBox();
+          const rectWidth = Math.max(bbox.width, cluster.width);
+          const leftOffset = bbox.x;
+          const newX = currX - leftOffset;
+          cluster.group.attr('transform', `translate(${newX},${centerY})`);
+          currX += rectWidth + spacingX;
+        } else {
+          // Fallback
+          const rectWidth = cluster.width;
+          const newX = currX;
+          cluster.group.attr('transform', `translate(${newX},${centerY})`);
+          currX += rectWidth + spacingX;
+        }
+      });
+    }
+
+    // --- Estabilización de posiciones (solo para horizontal layout) ---
+    let prevWidths = [];
+    let adjustAttempts = 0;
+    const maxAttempts = 10;
+    const intervalId = setInterval(() => {
+      adjustAttempts += 1;
+      const currWidths = clusterGroups.map(c => {
+        const r = c.group.select('.cluster-rect').node();
+        const rw = r ? r.getBBox().width : 0;
+        return Math.max(rw, c.width);
+      });
+      // Comprobar si las anchuras han cambiado desde la última medición
+      const changed = prevWidths.length === 0 || currWidths.some((w, i) => Math.abs(w - prevWidths[i]) > 1);
+      if (changed) {
+        prevWidths = currWidths;
+        adjustPositions();
+        console.log(`[Horizontal Layout] Reajuste dinámico #${adjustAttempts}`);
+      }
+      if (!changed || adjustAttempts >= maxAttempts) {
+        clearInterval(intervalId);
+        console.log('[Horizontal Layout] Estabilización completa');
+      }
+    }, 200);
+
+    // Primera llamada inmediata (después de 0 ms) y dos llamadas extra para asegurar carga completa
     setTimeout(() => {
       adjustPositions();
-      console.log('[Horizontal Layout] Reajuste 2');
-    }, 300);
-  }, 0);
+      console.log('[Horizontal Layout] Reajuste 1');
+      setTimeout(() => {
+        adjustPositions();
+        console.log('[Horizontal Layout] Reajuste 2');
+      }, 300);
+    }, 0);
+  }
 }
 
 // Función auxiliar para agregar fondo y título al cluster
@@ -4563,7 +4614,7 @@ function loadFromCsvUrl(csvUrl, onComplete, retryCount = 0, diagramConfig = null
       if (isCorsError && retryCount < 2) {
         console.log(`[Retry] CORS error detected, retrying in 2 seconds... (attempt ${retryCount + 1})`);
         setTimeout(() => {
-          loadFromCsvUrl(csvUrl, onComplete, retryCount + 1);
+          loadFromCsvUrl(csvUrl, onComplete, retryCount + 1, diagramConfig);
         }, 2000);
         return;
       }

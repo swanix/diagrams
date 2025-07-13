@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Swanix Diagrams - Simple</title>
+  <script src="xloader.js"></script>
+  <link href="xdiagrams.css" rel="stylesheet">
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <script src="https://unpkg.com/papaparse@5.3.0/papaparse.min.js"></script>
+</head>
+<body>
+<div class="xcanvas"></div>
+<script>
+window.$xDiagrams = {
+  title: "API Test - Cache Debug",
+  diagrams: [
+    {
+      name: "JSON Example",
+      url: "data/site.json"
+    },
+    {
+      name: "SheetDB Example", 
+      url: "https://sheetdb.io/api/v1/4mbxxv45hcsip"
+    },
+    {
+      name: "Listado Plano - Productos",
+      url: "data/flat-list-example.csv"
+    },
+    {
+      name: "Listado Simple (sin ID)",
+      url: "data/flat-list-simple.csv"
+    },
+    {
+      name: "SheetBest Example",
+      url: "https://api.sheetbest.com/sheets/e5d98c88-3e44-4793-9e66-f0a26981e281"
+    }
+  ],
+  columns: {
+    id: "ID",
+    name: "Name", 
+    parent: "Parent",
+    img: "Type",
+    url: "URL",
+    type: "Type",
+    subtitle: "Subtitle"
+  },
+  options: {
+    autoZoom: true,
+    sidePanel: true,
+    dragAndDrop: false
+  }
+};
+</script>
+<script src="xdiagrams.js"></script>
+</body>
+</html> 

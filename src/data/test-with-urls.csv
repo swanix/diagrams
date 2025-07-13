@@ -1,8 +1,0 @@
-Node,Parent,Name,Description,Type,URL
-ROOT,,Swanix,Empresa de tecnología,detail,https://swanix.com
-DEV,ROOT,Desarrollo,Equipo de desarrollo,detail,https://github.com/swanix
-DESIGN,ROOT,Diseño,Equipo de diseño,detail,https://figma.com
-FRONTEND,DEV,Frontend,Desarrollo frontend,detail,https://reactjs.org
-BACKEND,DEV,Backend,Desarrollo backend,detail,https://nodejs.org
-UI,DESIGN,UI Design,Diseño de interfaces,detail,https://material.io
-UX,DESIGN,UX Research,Investigación de usuarios,detail,https://uxdesign.cc 

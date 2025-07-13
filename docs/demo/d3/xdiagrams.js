@@ -801,7 +801,9 @@ function drawTrees(trees) {
 
     // Get spacing variables from theme (CSS)
     const themeVars = getComputedStyle(document.documentElement);
-    const clusterSpacing = parseFloat(themeVars.getPropertyValue('--cluster-spacing')) || 120;
+    // Si --cluster-spacing no está definido, usamos --cluster-padding-x como valor base para evitar solapamientos
+    const clusterPaddingXBase = parseFloat(themeVars.getPropertyValue('--cluster-padding-x')) || 220;
+    const clusterSpacing = parseFloat(themeVars.getPropertyValue('--cluster-spacing')) || clusterPaddingXBase;
 
     trees.forEach((data, index) => {
       try {

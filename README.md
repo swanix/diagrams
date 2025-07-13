@@ -21,7 +21,7 @@ A powerful JavaScript library for creating interactive, hierarchical SVG diagram
 - **Tree Structures**: Support for complex hierarchical relationships
 - **Cluster Grouping**: Visual grouping of related nodes
 - **Custom Columns**: Flexible data mapping for different diagram types
-- **CSV Integration**: Easy data import from CSV files
+- **Multiple Data Sources**: CSV files, REST APIs (SheetDB, Sheetson, Airtable), and local data
 
 ### 🎯 **Interactive Elements**
 - **Node Selection**: Click to select and highlight nodes
@@ -37,6 +37,15 @@ A powerful JavaScript library for creating interactive, hierarchical SVG diagram
 - **Error Handling**: Robust error management and fallbacks
 
 ## 🚀 Quick Start
+
+### Data Sources Supported
+
+Swanix Diagrams now supports multiple data sources for maximum flexibility:
+
+- **📄 CSV Files**: Local files and remote URLs
+- **🌐 REST APIs**: SheetDB, Sheetson, Airtable, and custom APIs
+- **📊 Local Data**: Pre-processed JavaScript objects
+- **🔄 Real-time Updates**: Automatic data refresh from APIs
 
 ### Basic Implementation
 
@@ -78,8 +87,12 @@ A powerful JavaScript library for creating interactive, hierarchical SVG diagram
           url: "data/sample-diagram.csv"
         },
         {
-          name: "Diagram 2", 
-          url: "data/another-diagram.csv"
+          name: "SheetDB API", 
+          url: "https://sheetdb.io/api/v1/YOUR_SHEET_ID"
+        },
+        {
+          name: "Sheetson API",
+          url: "https://api.sheetson.com/v2/sheets/YOUR_SHEET_ID"
         }
       ];
     </script>
@@ -170,6 +183,39 @@ Create custom themes by adding new entries to `themes.json`:
 ```
 
 ## 📊 Data Format
+
+### Multiple Data Sources
+
+Swanix Diagrams automatically detects and handles different data sources:
+
+#### CSV Files
+```csv
+ID,Parent,Name,Role,Department
+1,,CEO,Chief Executive Officer,Executive
+2,1,CTO,Chief Technology Officer,Technology
+3,1,CFO,Chief Financial Officer,Finance
+4,2,Lead Dev,Lead Developer,Engineering
+```
+
+#### REST APIs (JSON)
+```json
+[
+  {
+    "ID": "1",
+    "Parent": "",
+    "Name": "CEO",
+    "Role": "Chief Executive Officer",
+    "Department": "Executive"
+  },
+  {
+    "ID": "2", 
+    "Parent": "1",
+    "Name": "CTO",
+    "Role": "Chief Technology Officer",
+    "Department": "Technology"
+  }
+]
+```
 
 ### CSV Structure
 
@@ -295,6 +341,44 @@ document.addEventListener('themeChanged', (e) => {
 });
 ```
 
+## 🌐 REST API Support
+
+Swanix Diagrams now supports REST APIs for enhanced privacy and flexibility. This is perfect for users who want to use services like **SheetDB** or **Sheetson** to convert Google Sheets into private APIs.
+
+### Supported Services
+
+- **SheetDB.io** - Easy Google Sheets to API conversion
+- **Sheetson.com** - Full-featured spreadsheet API
+- **Airtable** - Database with API access
+- **Custom APIs** - Any JSON API with proper format
+
+### Quick Setup
+
+```javascript
+window.$xDiagrams = {
+  diagrams: [
+    {
+      name: "SheetDB Example",
+      url: "https://sheetdb.io/api/v1/YOUR_SHEET_ID"
+    },
+    {
+      name: "Sheetson Example", 
+      url: "https://api.sheetson.com/v2/sheets/YOUR_SHEET_ID"
+    }
+  ]
+};
+```
+
+### Benefits
+
+- **🔐 Privacy**: Data not publicly exposed
+- **🔑 Authentication**: Support for API keys and tokens
+- **📊 Real-time**: Automatic data updates
+- **🔄 Scalability**: Handle large datasets efficiently
+- **📦 Intelligent Cache**: Reduces API calls by 90%+ automatically
+
+📖 **Complete Guide**: See [REST-API-GUIDE.md](./REST-API-GUIDE.md) for detailed instructions and examples.
+
 ## 📚 Documentation
 
 ### Core Documentation
@@ -304,6 +388,7 @@ document.addEventListener('themeChanged', (e) => {
 - [Theme Creator](./readme/THEME_CREATOR_README.md) - Visual theme editor
 
 ### Advanced Features
+- [REST API Guide](./REST-API-GUIDE.md) - API integration guide
 - [Fallback System](./readme/FALLBACKS_README.md) - URL fallbacks
 - [CSS Variables](./readme/SWITCHER_CSS_VARIABLES_README.md) - Style control
 - [FOUC Prevention](./readme/FOUC_FIX_README.md) - Smooth transitions

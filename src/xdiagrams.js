@@ -1086,6 +1086,62 @@ function applyMasonryLayout(clusterGroups, container, originalTrees, preCalculat
     layoutType = uniformHeight !== null ? 'hierarchical - uniform height' : 'hierarchical - original heights';
   }
   console.log('[Horizontal Layout] Rendered', clusterGroups.length, 'clusters in horizontal layout with', layoutType, uniformHeight !== null ? `(${uniformHeight}px)` : '');
+
+  // Helper para reajustar posiciones basadas en rectángulos
+  function adjustPositions() {
+    let currX = marginX;
+    clusterGroups.forEach(cluster => {
+      const rectNode = cluster.group.select('.cluster-rect').node();
+      if (rectNode) {
+        const bbox = rectNode.getBBox();
+        const rectWidth = Math.max(bbox.width, cluster.width);
+        const leftOffset = bbox.x;
+        const newX = currX - leftOffset;
+        cluster.group.attr('transform', `translate(${newX},${centerY})`);
+        currX += rectWidth + spacingX;
+      } else {
+        // Fallback
+        const rectWidth = cluster.width;
+        const newX = currX;
+        cluster.group.attr('transform', `translate(${newX},${centerY})`);
+        currX += rectWidth + spacingX;
+      }
+    });
+  }
+
+  // --- Estabilización de posiciones ---
+  let prevWidths = [];
+  let adjustAttempts = 0;
+  const maxAttempts = 10;
+  const intervalId = setInterval(() => {
+    adjustAttempts += 1;
+    const currWidths = clusterGroups.map(c => {
+      const r = c.group.select('.cluster-rect').node();
+      const rw = r ? r.getBBox().width : 0;
+      return Math.max(rw, c.width);
+    });
+    // Comprobar si las anchuras han cambiado desde la última medición
+    const changed = prevWidths.length === 0 || currWidths.some((w, i) => Math.abs(w - prevWidths[i]) > 1);
+    if (changed) {
+      prevWidths = currWidths;
+      adjustPositions();
+      console.log(`[Horizontal Layout] Reajuste dinámico #${adjustAttempts}`);
+    }
+    if (!changed || adjustAttempts >= maxAttempts) {
+      clearInterval(intervalId);
+      console.log('[Horizontal Layout] Estabilización completa');
+    }
+  }, 200);
+
+  // Primera llamada inmediata (después de 0 ms) y dos llamadas extra para asegurar carga completa
+  setTimeout(() => {
+    adjustPositions();
+    console.log('[Horizontal Layout] Reajuste 1');
+    setTimeout(() => {
+      adjustPositions();
+      console.log('[Horizontal Layout] Reajuste 2');
+    }, 300);
+  }, 0);
 }
 
 // Función auxiliar para agregar fondo y título al cluster

@@ -298,6 +298,42 @@
     height: var(--image-height); 
     position: relative; 
     object-fit: cover; 
+    /* Prevenir imagen por defecto de Chrome */
+    background: transparent;
+    opacity: 0;
+    transition: opacity 0.2s ease-in-out;
+  }
+
+  /* Mostrar imagen cuando esté cargada */
+  .image-base.loaded {
+    opacity: 1;
+  }
+
+  /* Placeholder mientras carga */
+  .image-base::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: transparent;
+    z-index: -1;
+  }
+
+  /* Prevenir imagen por defecto de Chrome en elementos image de SVG */
+  svg image {
+    background: transparent !important;
+  }
+
+  /* Estilo para imágenes que fallan */
+  .image-base[href*="error"] {
+    display: none;
+  }
+
+  /* Mejorar transición de carga */
+  .image-base:not(.loaded) {
+    opacity: 0;
   }
 
   .image-filter {

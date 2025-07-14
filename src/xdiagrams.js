@@ -628,7 +628,8 @@ function buildHierarchies(data, diagramConfig = null) {
 
     // Generate auto ID if not provided or empty
     if (!id || id.trim() === "") {
-      id = `auto_${autoIdCounter++}`;
+      id = `id-${autoIdCounter.toString().padStart(2, '0')}`;
+      autoIdCounter++;
       console.log('[CSV Processing] Generated auto ID:', id, 'for node:', name);
     }
 
@@ -759,9 +760,10 @@ function drawGridLayout(nodes, svg) {
     .attr("width", nodeWidth)
     .attr("height", nodeHeight);
 
-  // Node image
+  // Node image with enhanced loading
   nodeGroups.append("image")
-    .attr("href", d => {
+    .attr("href", "img/transparent.svg")
+    .attr("data-src", d => {
       const baseUrl = d.img ? `img/${d.img}.svg` : "img/detail.svg";
       const cacheBuster = `?t=${Date.now()}`;
       return baseUrl.includes('?') ? `${baseUrl}&_cb=${Date.now()}` : `${baseUrl}${cacheBuster}`;
@@ -771,9 +773,29 @@ function drawGridLayout(nodes, svg) {
     .attr("class", "image-base image-filter")
     .attr("width", 30)
     .attr("height", 30)
+    .on("load", function() {
+      const element = d3.select(this);
+      const dataSrc = element.attr("data-src");
+      
+      if (dataSrc && element.attr("href") === "img/transparent.svg") {
+        // Cambiar a la imagen real
+        element.attr("href", dataSrc);
+      } else {
+        // Image loaded successfully
+        element.classed("loaded", true);
+      }
+    })
     .on("error", function() {
-      const fallbackUrl = `img/detail.svg?t=${Date.now()}`;
-      d3.select(this).attr("href", fallbackUrl);
+      const element = d3.select(this);
+      const currentSrc = element.attr("href");
+      
+      if (currentSrc !== "img/detail.svg") {
+        const fallbackUrl = `img/detail.svg?t=${Date.now()}`;
+        element.attr("href", fallbackUrl);
+      } else {
+        // Si el fallback también falla, ocultar la imagen
+        element.style("display", "none");
+      }
     });
 
   // Node text
@@ -852,7 +874,17 @@ function drawClusterGrid(trees, svg) {
         .data(root.links())
         .enter().append("path")
         .attr("class", "link")
-        .attr("d", d => `M ${d.source.x} ${d.source.y} V ${(d.source.y + d.target.y) / 2} H ${d.target.x} V ${d.target.y}`);
+        .attr("d", d => {
+          // Ajustar coordenadas para que los links se conecten al centro del rectángulo del nodo
+          const nodeOffsetX = parseFloat(themeVars.getPropertyValue('--node-bg-x')) || -42;
+          const nodeWidth = parseFloat(themeVars.getPropertyValue('--node-bg-width')) || 60;
+          const nodeCenterX = nodeOffsetX + (nodeWidth / 2);
+          
+          const sourceX = d.source.x + nodeCenterX;
+          const targetX = d.target.x + nodeCenterX;
+          
+          return `M ${sourceX} ${d.source.y} V ${(d.source.y + d.target.y) / 2} H ${targetX} V ${d.target.y}`;
+        });
       
       // Render nodes
       const node = treeGroup.selectAll(".node")
@@ -884,7 +916,8 @@ function drawClusterGrid(trees, svg) {
         .attr("height", parseFloat(themeVars.getPropertyValue('--node-bg-height')) || 40);
       
       node.append("image")
-        .attr("href", d => {
+        .attr("href", "img/transparent.svg")
+        .attr("data-src", d => {
           const baseUrl = d.data.img ? `img/${d.data.img}.svg` : "img/detail.svg";
           const cacheBuster = `?t=${Date.now()}`;
           return baseUrl.includes('?') ? `${baseUrl}&_cb=${Date.now()}` : `${baseUrl}${cacheBuster}`;
@@ -894,18 +927,51 @@ function drawClusterGrid(trees, svg) {
         .attr("class", "image-base image-filter")
         .attr("width", parseFloat(themeVars.getPropertyValue('--image-width')))
         .attr("height", parseFloat(themeVars.getPropertyValue('--image-height')))
+        .on("load", function() {
+          const element = d3.select(this);
+          const dataSrc = element.attr("data-src");
+          
+          if (dataSrc && element.attr("href") === "img/transparent.svg") {
+            // Cambiar a la imagen real
+            element.attr("href", dataSrc);
+          } else {
+            // Image loaded successfully
+            element.classed("loaded", true);
+          }
+        })
         .on("error", function() {
-          const fallbackUrl = `img/detail.svg?t=${Date.now()}`;
-          d3.select(this).attr("href", fallbackUrl);
+          const element = d3.select(this);
+          const currentSrc = element.attr("href");
+          
+          if (currentSrc !== "img/detail.svg") {
+            const fallbackUrl = `img/detail.svg?t=${Date.now()}`;
+            element.attr("href", fallbackUrl);
+          } else {
+            // Si el fallback también falla, ocultar la imagen
+            element.style("display", "none");
+          }
         });
       
       const textGroup = node.append("g").attr("class", "text-group");
       textGroup.append("text")
         .attr("class", "label-id")
-        .attr("x", parseFloat(themeVars.getPropertyValue('--label-id-x')))
+        .attr("x", d => {
+          const baseX = parseFloat(themeVars.getPropertyValue('--label-id-x'));
+          // Si el nodo no tiene padre, centrarlo horizontalmente con el nodo
+          if (!d.parent) {
+            const nodeOffsetX = parseFloat(themeVars.getPropertyValue('--node-bg-x')) || -42;
+            const nodeWidth = parseFloat(themeVars.getPropertyValue('--node-bg-width')) || 60;
+            return nodeOffsetX + (nodeWidth / 2);
+          }
+          return baseX;
+        })
         .attr("y", parseFloat(themeVars.getPropertyValue('--label-id-y')))
         .attr("dy", themeVars.getPropertyValue('--label-id-dy'))
-        .attr("text-anchor", themeVars.getPropertyValue('--label-id-anchor'))
+        .attr("text-anchor", d => {
+          const baseAnchor = themeVars.getPropertyValue('--label-id-anchor');
+          // Si el nodo no tiene padre, usar centrado automático
+          return d.parent ? baseAnchor : "middle";
+        })
         .style("font-size", themeVars.getPropertyValue('--label-id-font-size'))
         .style("fill", themeVars.getPropertyValue('--label-id-text-color'))
         .text(d => d.data.id);
@@ -952,6 +1018,7 @@ function drawClusterGrid(trees, svg) {
           paddingX: clusterPaddingX,
           paddingY: clusterPaddingY,
           id: root.data.id,
+          name: root.data.name,
           index: index,
           treeDepth: treeDepths ? treeDepths[index] : null
         });
@@ -1029,7 +1096,9 @@ function applyMasonryLayout(clusterGroups, container, originalTrees, preCalculat
     const x = window.innerWidth / 2;
     const y = window.innerHeight / 2;
     cluster.group.attr("transform", `translate(${x},${y})`);
-    addClusterBackground(cluster);
+    // Detectar si es un diagrama plano (flat list) usando los árboles originales
+    const isFlat = isFlatList(originalTrees);
+    addClusterBackground(cluster, isFlat);
     console.log('[Layout] Single cluster centered');
     return;
   }
@@ -1084,12 +1153,12 @@ function applyMasonryLayout(clusterGroups, container, originalTrees, preCalculat
       
       // Para diagramas planos, siempre usar altura original
       if (isFlat) {
-        addClusterBackground(cluster);
+        addClusterBackground(cluster, isFlat);
       } else {
         if (uniformHeight !== null) {
-          addClusterBackgroundWithUniformHeight(cluster, uniformHeight);
+          addClusterBackgroundWithUniformHeight(cluster, uniformHeight, isFlat);
         } else {
-          addClusterBackground(cluster);
+          addClusterBackground(cluster, isFlat);
         }
       }
     });
@@ -1116,12 +1185,12 @@ function applyMasonryLayout(clusterGroups, container, originalTrees, preCalculat
       
       // Para diagramas planos, siempre usar altura original
       if (isFlat) {
-        addClusterBackground(cluster);
+        addClusterBackground(cluster, isFlat);
       } else {
         if (uniformHeight !== null) {
-          addClusterBackgroundWithUniformHeight(cluster, uniformHeight);
+          addClusterBackgroundWithUniformHeight(cluster, uniformHeight, isFlat);
         } else {
-          addClusterBackground(cluster);
+          addClusterBackground(cluster, isFlat);
         }
       }
       
@@ -1196,7 +1265,7 @@ function applyMasonryLayout(clusterGroups, container, originalTrees, preCalculat
 }
 
 // Función auxiliar para agregar fondo y título al cluster
-function addClusterBackground(cluster) {
+function addClusterBackground(cluster, isFlat = false) {
   const bounds = cluster.group.node().getBBox();
   const paddingX = cluster.paddingX || 80;
   const paddingY = cluster.paddingY || 80;
@@ -1219,7 +1288,8 @@ function addClusterBackground(cluster) {
     .style("stroke-width", 2)
     .style("stroke-dasharray", "6,4");
   
-  // Título del cluster
+  // Título del cluster - usar name para diagramas planos, id para jerárquicos
+  const clusterTitle = isFlat ? (cluster.name || cluster.id) : cluster.id;
   cluster.group.append("text")
     .attr("class", "cluster-title")
     .attr("x", minX + 32)
@@ -1228,11 +1298,11 @@ function addClusterBackground(cluster) {
     .style("font-size", "1.5em")
     .style("font-weight", "bold")
     .style("fill", "var(--cluster-title-color, #222)")
-    .text(cluster.id);
+    .text(clusterTitle);
 }
 
 // Función auxiliar para agregar fondo con altura uniforme
-function addClusterBackgroundWithUniformHeight(cluster, uniformHeight) {
+function addClusterBackgroundWithUniformHeight(cluster, uniformHeight, isFlat = false) {
   const bounds = cluster.group.node().getBBox();
   const paddingX = cluster.paddingX || 80;
   const paddingY = cluster.paddingY || 80;
@@ -1257,7 +1327,8 @@ function addClusterBackgroundWithUniformHeight(cluster, uniformHeight) {
     .style("stroke-width", 2)
     .style("stroke-dasharray", "6,4");
   
-  // Título del cluster
+  // Título del cluster - usar name para diagramas planos, id para jerárquicos
+  const clusterTitle = isFlat ? (cluster.name || cluster.id) : cluster.id;
   cluster.group.append("text")
     .attr("class", "cluster-title")
     .attr("x", minX + 32)
@@ -1266,7 +1337,7 @@ function addClusterBackgroundWithUniformHeight(cluster, uniformHeight) {
     .style("font-size", "1.5em")
     .style("font-weight", "bold")
     .style("fill", "var(--cluster-title-color, #222)")
-    .text(cluster.id);
+    .text(clusterTitle);
 }
 
 // Draw simplified trees
@@ -1388,12 +1459,22 @@ function drawTrees(trees) {
           .data(root.links())
           .enter().append("path")
           .attr("class", "link")
-          .attr("d", d => `
-            M ${d.source.x} ${d.source.y}
-            V ${(d.source.y + d.target.y) / 2}
-            H ${d.target.x}
-            V ${d.target.y}
-          `);
+          .attr("d", d => {
+            // Ajustar coordenadas para que los links se conecten al centro del rectángulo del nodo
+            const nodeOffsetX = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--node-bg-x')) || -42;
+            const nodeWidth = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--node-bg-width')) || 60;
+            const nodeCenterX = nodeOffsetX + (nodeWidth / 2);
+            
+            const sourceX = d.source.x + nodeCenterX;
+            const targetX = d.target.x + nodeCenterX;
+            
+            return `
+              M ${sourceX} ${d.source.y}
+              V ${(d.source.y + d.target.y) / 2}
+              H ${targetX}
+              V ${d.target.y}
+            `;
+          });
 
         // Render nodes
         const node = treeGroup.selectAll(".node")
@@ -1431,9 +1512,10 @@ function drawTrees(trees) {
           .attr("width", parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--node-bg-width')) || 60)
           .attr("height", parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--node-bg-height')) || 40);
 
-        // Node image
+        // Node image with enhanced loading
         node.append("image")
-          .attr("href", d => {
+          .attr("href", "img/transparent.svg")
+          .attr("data-src", d => {
             const baseUrl = d.data.img ? `img/${d.data.img}.svg` : "img/detail.svg";
             // Add cache buster to image URLs
             const cacheBuster = `?t=${Date.now()}`;
@@ -1444,9 +1526,29 @@ function drawTrees(trees) {
           .attr("class", "image-base image-filter")
           .attr("width", parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--image-width')))
           .attr("height", parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--image-height')))
+          .on("load", function() {
+            const element = d3.select(this);
+            const dataSrc = element.attr("data-src");
+            
+            if (dataSrc && element.attr("href") === "img/transparent.svg") {
+              // Cambiar a la imagen real
+              element.attr("href", dataSrc);
+            } else {
+              // Image loaded successfully
+              element.classed("loaded", true);
+            }
+          })
           .on("error", function() {
-            const fallbackUrl = `img/detail.svg?t=${Date.now()}`;
-            d3.select(this).attr("href", fallbackUrl);
+            const element = d3.select(this);
+            const currentSrc = element.attr("href");
+            
+            if (currentSrc !== "img/detail.svg") {
+              const fallbackUrl = `img/detail.svg?t=${Date.now()}`;
+              element.attr("href", fallbackUrl);
+            } else {
+              // Si el fallback también falla, ocultar la imagen
+              element.style("display", "none");
+            }
           });
 
         // Node text
@@ -1455,10 +1557,23 @@ function drawTrees(trees) {
         // Node ID
         textGroup.append("text")
           .attr("class", "label-id")
-          .attr("x", parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--label-id-x')))
+          .attr("x", d => {
+            const baseX = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--label-id-x'));
+            // Si el nodo no tiene padre, centrarlo horizontalmente con el nodo
+            if (!d.parent) {
+              const nodeOffsetX = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--node-bg-x')) || -42;
+              const nodeWidth = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--node-bg-width')) || 60;
+              return nodeOffsetX + (nodeWidth / 2);
+            }
+            return baseX;
+          })
           .attr("y", parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--label-id-y')))
           .attr("dy", getComputedStyle(document.documentElement).getPropertyValue('--label-id-dy'))
-          .attr("text-anchor", getComputedStyle(document.documentElement).getPropertyValue('--label-id-anchor'))
+          .attr("text-anchor", d => {
+            const baseAnchor = getComputedStyle(document.documentElement).getPropertyValue('--label-id-anchor');
+            // Si el nodo no tiene padre, usar centrado automático
+            return d.parent ? baseAnchor : "middle";
+          })
           .style("font-size", getComputedStyle(document.documentElement).getPropertyValue('--label-id-font-size'))
           .style("fill", getComputedStyle(document.documentElement).getPropertyValue('--label-id-text-color'))
           .text(d => d.data.id);
@@ -1954,8 +2069,8 @@ function openSidePanel(nodeData) {
     const nodeName = dataToShow.name || dataToShow.Name || dataToShow.NAME || nodeData.name || 'Nodo sin nombre';
     // Get the type for thumbnail
     const nodeType = dataToShow.type || dataToShow.Type || dataToShow.TYPE || nodeData.type || 'detail';
-    // Create thumbnail HTML
-    const thumbnailHtml = `<img src="img/${nodeType}.svg" alt="${nodeType}" class="side-panel-title-thumbnail" onerror="this.src='img/detail.svg'">`;
+    // Create thumbnail HTML with enhanced loading
+    const thumbnailHtml = `<img src="img/${nodeType}.svg" alt="${nodeType}" class="side-panel-title-thumbnail" style="opacity: 0; transition: opacity 0.2s ease-in-out;" onload="this.style.opacity='1'" onerror="this.src='img/detail.svg'; this.style.opacity='1'">`;
 
     // Truncar el texto del título por ancho disponible antes del botón de cerrar
     function truncateSidePanelTitle(text, maxWidth, fontSize, fontWeight, fontFamily) {
@@ -2105,22 +2220,55 @@ function generateSidePanelContent(nodeData) {
   // Use original CSV data if available, otherwise fall back to processed data
   const dataToShow = nodeData.originalData || nodeData;
   
+  // Always show ID first (either from original data or generated automatically)
+  const nodeId = nodeData.id || dataToShow.id || '';
+  if (nodeId) {
+    html += `
+      <div class="side-panel-field">
+        <div class="side-panel-label">ID</div>
+        <div class="side-panel-value">${nodeId}</div>
+      </div>
+    `;
+  }
+  
   // Show all available fields from the original CSV data
   Object.keys(dataToShow).forEach(key => {
-    // Skip internal properties and name field (already shown in header)
+    // Skip internal properties, name field (already shown in header), and id field (already shown above)
     if (key === 'children' || key === 'parent' || key === 'originalData' || 
-        key.toLowerCase() === 'name') return;
+        key.toLowerCase() === 'name' || key.toLowerCase() === 'id') return;
     
     const value = dataToShow[key] || '';
-    const label = key; // Use the original column name from CSV
+    // Convert label to title case for professional appearance, with special handling for ID and URL
+    let label;
+    if (key.toLowerCase() === 'url') {
+      label = 'URL';
+    } else {
+      label = key
+        .replace(/([a-z])([A-Z])/g, '$1 $2') // Add space between lowercase and uppercase (camelCase)
+        .replace(/([A-Z])([A-Z][a-z])/g, '$1 $2') // Add space between acronym and word (e.g., "URLPath" -> "URL Path")
+        .replace(/[_-]/g, ' ') // Replace underscores and hyphens with spaces
+        .trim() // Remove leading/trailing spaces
+        .toLowerCase() // Convert to lowercase first
+        .replace(/\b\w/g, l => l.toUpperCase()); // Capitalize first letter of each word
+    }
+    const originalLabel = key; // Keep original for tooltip
     
     // Check if the value is a URL
     const isUrlValue = isUrl(value);
-    const displayValue = isUrlValue ? formatUrlForDisplay(value) : value;
     
-    // Add title attribute for tooltip if text is long
-    const labelTitle = label.length > 15 ? label : '';
-    const valueTitle = (value && value.length > 20) ? value : '';
+    // Add title attribute for tooltip if text is long (use original label for tooltip)
+    const labelTitle = originalLabel.length > 15 ? originalLabel : '';
+    
+    // For URLs, show the full URL as clickable text, with tooltip if long
+    // For other values, use existing logic
+    let displayValue, valueTitle;
+    if (isUrlValue) {
+      displayValue = value; // Show full URL as text
+      valueTitle = value.length > 40 ? value : ''; // Tooltip if URL is long
+    } else {
+      displayValue = value;
+      valueTitle = (value && value.length > 20) ? value : '';
+    }
     
     // Debug: Log tooltip information
     if (labelTitle || valueTitle) {
@@ -2135,8 +2283,8 @@ function generateSidePanelContent(nodeData) {
         <div class="side-panel-label" ${labelTitle ? `data-tooltip="${labelTitle}"` : ''}>${label}</div>
         <div class="side-panel-value ${!value ? 'empty' : ''}" ${valueTitle ? `data-tooltip="${valueTitle}"` : ''}>
           ${isUrlValue ? 
-            `<a href="${displayValue}" target="_blank" rel="noreferrer" class="side-panel-url-link">Visit</a>` : 
-            value || '-'
+            `<a href="${value}" target="_blank" rel="noreferrer" class="side-panel-url-link">${displayValue}</a>` : 
+            displayValue || '-'
           }
         </div>
       </div>
@@ -3726,6 +3874,9 @@ function renderSwDiagramBase() {
 
 // Call base rendering function when library loads
 function initializeWhenReady() {
+  // Preload common images to prevent Chrome's default image flash
+  preloadCommonImages();
+  
   // Wait for diagrams to be defined
   const diagrams = getDiagrams();
   if (diagrams && Array.isArray(diagrams)) {
@@ -5302,4 +5453,46 @@ function setupDataRefreshButton() {
       setTimeout(() => window.location.reload(), 300);
     }
   });
+}
+
+// Preload common thumbnail images to prevent Chrome's default image flash
+function preloadCommonImages() {
+  const commonImages = [
+    'detail', 'document', 'settings', 'form', 'list', 'modal', 
+    'mosaic', 'report', 'file-csv', 'file-pdf', 'file-xls', 'file-xml'
+  ];
+  
+  commonImages.forEach(imageName => {
+    const img = new Image();
+    img.src = `img/${imageName}.svg?v=${Date.now()}`;
+  });
+  
+  console.log('🖼️ [Preload] Common images preloaded');
+}
+
+// Enhanced image loading with better error handling
+function createImageElement(baseUrl, fallbackUrl, className = "image-base image-filter") {
+  const img = new Image();
+  const cacheBuster = `?t=${Date.now()}`;
+  const finalUrl = baseUrl.includes('?') ? `${baseUrl}&_cb=${Date.now()}` : `${baseUrl}${cacheBuster}`;
+  
+  img.onload = function() {
+    // Image loaded successfully
+    this.classList.add('loaded');
+  };
+  
+  img.onerror = function() {
+    // Try fallback
+    if (fallbackUrl && this.src !== fallbackUrl) {
+      this.src = fallbackUrl;
+    } else {
+      // If fallback also fails, hide the image
+      this.style.display = 'none';
+    }
+  };
+  
+  img.src = finalUrl;
+  img.className = className;
+  
+  return img;
 }

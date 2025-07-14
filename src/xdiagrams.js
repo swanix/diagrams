@@ -54,12 +54,10 @@ function saveDiagramToStorage(diagram) {
     const saved = localStorage.getItem('xdiagrams-saved-files');
     let savedDiagrams = saved ? JSON.parse(saved) : [];
     
-    // Check if diagram already exists
     const exists = savedDiagrams.find(d => d.name === diagram.name);
     if (!exists) {
       savedDiagrams.push(diagram);
       localStorage.setItem('xdiagrams-saved-files', JSON.stringify(savedDiagrams));
-      console.log('Diagram saved to localStorage:', diagram.name);
     }
   } catch (error) {
     console.error('Error saving diagram to localStorage:', error);
@@ -78,17 +76,15 @@ function processCSVFile(file) {
           header: true,
           skipEmptyLines: true,
           complete: function(results) {
-            // Ignorar errores de tipo 'TooFewFields'
             const fatalErrors = results.errors.filter(err => err.code !== 'TooFewFields');
             if (fatalErrors.length > 0) {
               reject(new Error('Error parsing CSV: ' + fatalErrors[0].message));
               return;
             }
             
-            // Create diagram object
             const diagram = {
               name: file.name.replace('.csv', ''),
-              url: null, // Local file, no URL
+              url: null,
               data: results.data,
               isLocal: true,
               timestamp: new Date().toISOString()
@@ -220,20 +216,20 @@ function handleFileDrop(e) {
     if (supportedFiles.length === 1) {
       // Single file
       const file = supportedFiles[0];
-      console.log('📁 Procesando archivo:', file.name);
+      console.log('Procesando archivo:', file.name);
 
       processFile(file)
         .then(diagram => {
-          console.log('✅ Archivo procesado exitosamente:', diagram.name);
+          console.log('Archivo procesado exitosamente:', diagram.name);
           window.addAndLoadDiagram(diagram);
         })
         .catch(error => {
-          console.error('❌ Error procesando archivo:', error);
+          console.error('Error procesando archivo:', error);
           showToast('Error al procesar el archivo: ' + error.message, 'error');
         });
     } else {
       // Multiple files
-      console.log(`📁 Procesando ${supportedFiles.length} archivos...`);
+      console.log(`Procesando ${supportedFiles.length} archivos...`);
 
       Promise.allSettled(supportedFiles.map(file => processFile(file)))
         .then(results => {
@@ -249,7 +245,7 @@ function handleFileDrop(e) {
 
           // Feedback
           if (failed.length > 0) {
-            let msg = `${successful.length} diagramas agregados exitosamente\n❌ ${failed.length} fallaron:\n`;
+            let msg = `${successful.length} diagramas agregados exitosamente\n${failed.length} fallaron:\n`;
             msg += failed.map(f => `- ${f.name}: ${f.reason}`).join('\n');
             showToast(msg, 'mixed');
           } else {
@@ -288,33 +284,22 @@ function handleDragLeave(e) {
 
 // Initialize drag & drop
 function initDragAndDrop() {
-  // Utilizar el helper isOptionEnabled para que el valor por defecto sea TRUE
   if (!isOptionEnabled('dragAndDrop')) {
-    console.log('[Drag & Drop] Opción dragAndDrop deshabilitada');
     return;
   }
   
-  console.log('[Drag & Drop] Inicializando funcionalidad...');
-  
-  // Load saved diagrams
   loadSavedDiagrams();
   
-  // Use the sw-diagram container instead of .xcanvas
   const canvas = document.getElementById('sw-diagram');
   if (!canvas) {
-    console.log('[Drag & Drop] Contenedor sw-diagram no encontrado');
     return;
   }
   
-  console.log('[Drag & Drop] Agregando event listeners al contenedor:', canvas);
-  
-  // Add event listeners
   canvas.addEventListener('dragenter', handleDragEnter);
   canvas.addEventListener('dragover', handleDragOver);
   canvas.addEventListener('dragleave', handleDragLeave);
   canvas.addEventListener('drop', handleFileDrop);
   
-  // Prevent default drag behaviors on the document
   document.addEventListener('dragenter', function(e) {
     e.preventDefault();
   });
@@ -326,8 +311,6 @@ function initDragAndDrop() {
   document.addEventListener('drop', function(e) {
     e.preventDefault();
   });
-  
-  console.log('[Drag & Drop] Event listeners agregados correctamente');
 }
 
 // Initialize drag & drop when DOM is ready
@@ -380,10 +363,7 @@ window.showDiagramNotFound = function() {
 
 // Main function to initialize diagram (now uses data source abstraction)
 function initDiagram(source, onComplete, retryCount = 0, diagramConfig = null) {
-          console.log("Iniciando carga del diagrama...", retryCount > 0 ? `(intento ${retryCount + 1})` : '');
-  
-  // Use the new data source abstraction layer
-  detectAndLoadDataSource(source, onComplete, retryCount, diagramConfig);
+        detectAndLoadDataSource(source, onComplete, retryCount, diagramConfig);
 }
 
 // Helper function to get column value case-insensitively
@@ -491,7 +471,6 @@ function getColumnConfiguration(diagramConfig = null) {
     columnConfig.url.push('url', 'Url', 'URL', 'link', 'Link', 'LINK');
     columnConfig.type.push('type', 'Type', 'TYPE');
 
-    console.log('🔧 [Columns] Using diagram-specific column config:', columnConfig);
     return columnConfig;
   }
   
@@ -517,12 +496,10 @@ function getColumnConfiguration(diagramConfig = null) {
     columnConfig.url.push('url', 'Url', 'URL', 'link', 'Link', 'LINK');
     columnConfig.type.push('type', 'Type', 'TYPE');
 
-    console.log('🔧 [Columns] Using global column config:', columnConfig);
     return columnConfig;
   }
   
   // Fallback to legacy configuration
-  console.log('🔧 [Columns] Using legacy column config');
   return getColumnConfigurationLegacy();
 }
 
@@ -611,7 +588,6 @@ function buildHierarchies(data, diagramConfig = null) {
     );
     
     if (isEmptyRow) {
-      console.log('[CSV Processing] Skipping empty row:', d);
       return; // Skip this row
     }
     
@@ -630,12 +606,10 @@ function buildHierarchies(data, diagramConfig = null) {
     if (!id || id.trim() === "") {
       id = `id-${autoIdCounter.toString().padStart(2, '0')}`;
       autoIdCounter++;
-      console.log('[CSV Processing] Generated auto ID:', id, 'for node:', name);
     }
 
     // Skip nodes without essential data (name is the only truly required field)
     if (!name || name.trim() === "") {
-      console.log('[CSV Processing] Skipping node without name:', { id, name });
       return; // Skip this row
     }
 
@@ -813,11 +787,10 @@ function drawGridLayout(nodes, svg) {
   // Apply text wrapping for grid layout
   wrap(nameText, nodeWidth - 10);
   
-  console.log('[Grid Layout] Rendered', positionedNodes.length, 'nodes in grid layout');
-}
+    }
 
-// Draw clusters in masonry-like grid layout
-function drawClusterGrid(trees, svg) {
+  // Draw clusters in masonry-like grid layout
+  function drawClusterGrid(trees, svg) {
   const g = d3.select(svg).append("g");
   const clusterGroups = [];
   
@@ -830,24 +803,13 @@ function drawClusterGrid(trees, svg) {
     treeDepths = trees.map(tree => getMaxTreeDepth(tree));
     maxDepth = Math.max(...treeDepths);
     
-    console.log('[Debug] Tree depths:', treeDepths);
-    console.log('[Debug] Max depth:', maxDepth);
-    
-    // Mostrar estructura de los primeros 3 árboles para depuración
-    console.log('[Debug] First 3 trees structure:');
-    for (let i = 0; i < Math.min(3, trees.length); i++) {
-      console.log(`[Debug] Tree ${i + 1} (${trees[i].id || trees[i].name}):`);
-      debugTreeStructure(trees[i]);
-    }
+
     
     // Encontrar el árbol con más niveles para usar como referencia
     const treeWithMaxDepth = trees.find((tree, index) => {
       return treeDepths[index] === maxDepth;
     });
     
-    if (treeWithMaxDepth) {
-      console.log(`[Height Calculation] Found tree with ${maxDepth} levels:`, treeWithMaxDepth.id || treeWithMaxDepth.name);
-    }
   }
   
   // Paso 1: Renderizar cada cluster en posición temporal para medir su tamaño real
@@ -1037,11 +999,7 @@ function drawClusterGrid(trees, svg) {
               const clusterWithMaxDepth = clusterGroups.find((cluster, idx) => treeDepths[idx] === maxDepth);
               if (clusterWithMaxDepth) {
                 uniformHeight = clusterWithMaxDepth.height;
-                console.log(`[Height Calculation] Usando cluster con profundidad ${maxDepth} niveles (alto: ${uniformHeight}px)`);
-                console.log('[Debug] Profundidad mínima:', minDepth, 'Profundidad máxima:', maxDepth);
               }
-            } else {
-              console.log('[Debug] Todos los clusters tienen la misma profundidad; no se aplica altura uniforme');
             }
           }
           
@@ -1071,17 +1029,7 @@ function getMaxTreeDepth(node) {
   return maxDepth;
 }
 
-// Función de depuración para mostrar la estructura de un árbol
-function debugTreeStructure(node, level = 0) {
-  const indent = '  '.repeat(level);
-  console.log(`${indent}${node.id || node.name} (level ${level + 1})`);
-  
-  if (node.children && node.children.length > 0) {
-    for (const child of node.children) {
-      debugTreeStructure(child, level + 1);
-    }
-  }
-}
+
 
 // Función para aplicar layout con soporte para grid
 function applyMasonryLayout(clusterGroups, container, originalTrees, preCalculatedUniformHeight = null) {
@@ -1099,7 +1047,6 @@ function applyMasonryLayout(clusterGroups, container, originalTrees, preCalculat
     // Detectar si es un diagrama plano (flat list) usando los árboles originales
     const isFlat = isFlatList(originalTrees);
     addClusterBackground(cluster, isFlat);
-    console.log('[Layout] Single cluster centered');
     return;
   }
   
@@ -1117,7 +1064,6 @@ function applyMasonryLayout(clusterGroups, container, originalTrees, preCalculat
     
     // Verificar si es el diagrama de "20 Clusters - Diferentes Tamaños" que debe mantenerse como está
     if (currentDiagramObj && currentDiagramObj.name === "20 Clusters - Diferentes Tamaños") {
-      console.log('[Layout] Diagrama de 20 clusters detectado - usando layout horizontal');
       useGridLayout = false;
     } else if (currentDiagramObj && currentDiagramObj.grid) {
       // Si tiene parámetro grid, usarlo
@@ -1125,7 +1071,6 @@ function applyMasonryLayout(clusterGroups, container, originalTrees, preCalculat
       if (!Number.isNaN(diagCols) && diagCols > 0) {
         desiredGridCols = diagCols;
         useGridLayout = true;
-        console.log(`[Layout] Grid layout detectado con ${desiredGridCols} columnas`);
       }
     }
   }
@@ -1134,7 +1079,6 @@ function applyMasonryLayout(clusterGroups, container, originalTrees, preCalculat
   let uniformHeight = null;
   if (!isFlat && preCalculatedUniformHeight !== null) {
     uniformHeight = preCalculatedUniformHeight;
-    console.log(`[Height Calculation] Usando altura uniforme pre-calculada: ${uniformHeight}px`);
   }
   
   if (useGridLayout) {
@@ -1169,7 +1113,6 @@ function applyMasonryLayout(clusterGroups, container, originalTrees, preCalculat
     } else {
       layoutType = uniformHeight !== null ? 'hierarchical - uniform height' : 'hierarchical - original heights';
     }
-    console.log(`[Grid Layout] Rendered ${clusterGroups.length} clusters in ${cols}x${rows} grid with ${layoutType}`, uniformHeight !== null ? `(${uniformHeight}px)` : '');
     
   } else {
     // HORIZONTAL LAYOUT: Todos los clusters en una fila (comportamiento original)
@@ -1204,7 +1147,6 @@ function applyMasonryLayout(clusterGroups, container, originalTrees, preCalculat
     } else {
       layoutType = uniformHeight !== null ? 'hierarchical - uniform height' : 'hierarchical - original heights';
     }
-    console.log('[Horizontal Layout] Rendered', clusterGroups.length, 'clusters in horizontal layout with', layoutType, uniformHeight !== null ? `(${uniformHeight}px)` : '');
 
     // Helper para reajustar posiciones basadas en rectángulos (solo para horizontal layout)
     function adjustPositions() {
@@ -1244,21 +1186,17 @@ function applyMasonryLayout(clusterGroups, container, originalTrees, preCalculat
       if (changed) {
         prevWidths = currWidths;
         adjustPositions();
-        console.log(`[Horizontal Layout] Reajuste dinámico #${adjustAttempts}`);
       }
       if (!changed || adjustAttempts >= maxAttempts) {
         clearInterval(intervalId);
-        console.log('[Horizontal Layout] Estabilización completa');
       }
     }, 200);
 
     // Primera llamada inmediata (después de 0 ms) y dos llamadas extra para asegurar carga completa
     setTimeout(() => {
       adjustPositions();
-      console.log('[Horizontal Layout] Reajuste 1');
       setTimeout(() => {
         adjustPositions();
-        console.log('[Horizontal Layout] Reajuste 2');
       }, 300);
     }, 0);
   }
@@ -1370,17 +1308,13 @@ function drawTrees(trees) {
     };
     collectNodes(tree);
   });
-  console.log('[Keyboard Navigation] Stored', window.$xDiagrams.currentData.length, 'nodes for navigation');
-  
+    
   // Check layout type and choose appropriate rendering method
   if (isFlatList(trees)) {
-    console.log('[Layout] Detected flat list, using cluster grid layout');
     drawClusterGrid(trees, svg);
   } else if (shouldUseClusterGrid(trees)) {
-    console.log('[Layout] Detected multiple clusters, using cluster grid layout');
     drawClusterGrid(trees, svg);
   } else {
-    console.log('[Layout] Detected single hierarchical tree, using traditional tree layout');
   
   try {
     const g = d3.select(svg).append("g");
@@ -1514,7 +1448,7 @@ function drawTrees(trees) {
 
         // Node image with enhanced loading
         node.append("image")
-          .attr("href", "img/transparent.svg")
+          .attr("href", "img/transparent.svg") // No cache buster here
           .attr("data-src", d => {
             const baseUrl = d.data.img ? `img/${d.data.img}.svg` : "img/detail.svg";
             // Add cache buster to image URLs
@@ -1740,13 +1674,10 @@ function recalculateClusterSpacing(clusters, clusterSpacing) {
 
 // Apply simplified auto zoom
 function applyAutoZoom() {
-  console.log('[Zoom] Aplicando zoom automático');
-  
   const svg = d3.select("#main-diagram-svg");
   const g = svg.select("g");
   
   if (g.empty() || g.node().getBBox().width === 0) {
-    console.warn("Contenido no listo para zoom automático");
     return;
   }
 
@@ -1756,7 +1687,6 @@ function applyAutoZoom() {
   const svgHeight = svgElement ? svgElement.clientHeight || svgElement.offsetHeight : window.innerHeight;
 
   if (!bounds.width || !bounds.height) {
-    console.warn("Bounds inválidos para zoom automático");
     return;
   }
 
@@ -1804,10 +1734,6 @@ function applyAutoZoom() {
   const isSmallDiagram = nodeCount <= 4;
   const isSingleGroup = diagramGroupCount === 1;
   const isFlatListDiagram = !isSingleGroup && nodeCount === diagramGroupCount; // todos los clusters son nodos raíz sin hijos
-  console.log('[Zoom] ¿Lista plana?', isFlatListDiagram);
-  
-  console.log('[Zoom] Diagramas:', diagramGroupCount, 'Nodos:', nodeCount, '¿Grupo único?', isSingleGroup);
-  
   let scaleX = (svgWidth - 100) / totalBounds.width;
   let scaleY = (svgHeight - 100) / totalBounds.height;
   let scale = Math.min(scaleX, scaleY, 1);
@@ -1815,12 +1741,10 @@ function applyAutoZoom() {
   // Apply specific zoom based on diagram type
   if (isSingleGroup) {
     // For single cluster: zoom out to show entire cluster with aura
-          scale = Math.min(scale * 0.6, 0.6); // More aggressive zoom out to show aura
-    console.log('[Zoom] Aplicando zoom out para cluster único con aura. Scale:', scale);
-      } else {
-      // For multiple clusters: zoom out with factor 0.6
-          scale = Math.min(scale * 0.6, 0.6); // Zoom out for multiple clusters
-    console.log('[Zoom] Aplicando zoom out para múltiples clusters. Scale:', scale);
+    scale = Math.min(scale * 0.6, 0.6); // More aggressive zoom out to show aura
+  } else {
+    // For multiple clusters: zoom out with factor 0.6
+    scale = Math.min(scale * 0.6, 0.6); // Zoom out for multiple clusters
   }
   
   let translateX = svgCenterX - contentCenterX * scale;
@@ -1829,8 +1753,7 @@ function applyAutoZoom() {
   if (isSingleGroup) {
     // Perfect centering for single groups, without margin adjustments
     translateX = svgCenterX - contentCenterX * scale;
-    console.log('[Zoom] Centrado perfecto para grupo único. translateX:', translateX);
-      } else {
+        } else {
       // For multiple clusters: start from the left
     const firstCluster = diagramGroups.nodes()[0];
     if (firstCluster) {
@@ -1851,11 +1774,9 @@ function applyAutoZoom() {
       if (isFlatListDiagram) {
         const flatLeftMargin = parseFloat(zoomVarsLeft.getPropertyValue('--flatlist-left-margin')) || 20; // px
         translateX = flatLeftMargin - firstClusterLeftEdge * scale;
-        console.log('[Zoom] Margen izquierdo para lista plana:', flatLeftMargin, 'translateX:', translateX);
       } else {
         translateX = -150 - firstClusterLeftEdge * scale; // margen fijo para clusters jerárquicos
       }
-      console.log('[Zoom] Primer cluster desde la izquierda con margen aplicado. translateX:', translateX);
           } else {
         // Fallback to original logic
       const leftEdge = totalBounds.x * scale + translateX;
@@ -1888,8 +1809,6 @@ function applyAutoZoom() {
     .scale(scale);
 
   svg.call(zoom.transform, transform);
-  console.log('[Zoom] Zoom automático aplicado exitosamente');
-  
   // Preserve current theme after zoom
   setTimeout(async () => {
     if (window.preserveCurrentTheme) {
@@ -1905,10 +1824,8 @@ function ensureZoomBehavior() {
     svg.call(zoom);
     svg.style('pointer-events', 'auto');
     
-      // Store reference to current zoom for external access
-  window.$xDiagrams.currentZoom = zoom;
-  
-  console.log('[Zoom] Zoom behavior aplicado');
+    // Store reference to current zoom for external access
+    window.$xDiagrams.currentZoom = zoom;
   }
 }
 
@@ -2130,11 +2047,10 @@ function openSidePanel(nodeData) {
   
   // Re-initialize tooltips after content is generated
   setTimeout(() => {
-    console.log('[Side Panel] Reinicializando tooltips después de generar contenido...');
-    initializeCustomTooltips();
-  }, 100);
-  
-  sidePanel.classList.add('open');
+      initializeCustomTooltips();
+}, 100);
+
+sidePanel.classList.add('open');
   
   // Trigger onNodeClick hook
   triggerHook('onNodeClick', { 
@@ -2270,13 +2186,7 @@ function generateSidePanelContent(nodeData) {
       valueTitle = (value && value.length > 20) ? value : '';
     }
     
-    // Debug: Log tooltip information
-    if (labelTitle || valueTitle) {
-      console.log(`[Tooltip Debug] Field: ${label}, Label title: ${labelTitle}, Value title: ${valueTitle}`);
-    }
-    
-    // Always log for debugging
-    console.log(`[Side Panel] Field: "${label}" (${label.length} chars), Value: "${value}" (${value ? value.length : 0} chars)`);
+
     
     html += `
       <div class="side-panel-field">
@@ -2529,15 +2439,10 @@ window.$xDiagrams.themeState = {
 
 // Simple theme toggle function
 async function toggleTheme() {
-  console.log('[XTheme] Toggle de tema iniciado');
-  
   const state = window.$xDiagrams.themeState;
   const currentTheme = state.current;
   const isCurrentLight = isLightTheme(currentTheme);
   const newTheme = isCurrentLight ? state.darkTheme : state.lightTheme;
-  
-  console.log('[XTheme] Tema actual:', currentTheme, '(es claro:', isCurrentLight, ')');
-  console.log('[XTheme] Cambiando a:', newTheme);
   
   // Update state
   state.current = newTheme;
@@ -2548,28 +2453,18 @@ async function toggleTheme() {
   localStorage.setItem('selectedTheme', newTheme);
   localStorage.setItem('themeMode', isLightTheme(newTheme) ? 'light' : 'dark');
   
-  console.log('[XTheme] Tema guardado en localStorage:', storageKey, 'y global');
-  
   // Apply theme
   await setTheme(newTheme);
-  
-  // Verify the theme was saved correctly
-  const savedTheme = localStorage.getItem(storageKey);
-  console.log('[XTheme] Verificación - Tema guardado:', savedTheme);
   
   // Trigger hook
   triggerHook('onThemeChange', { 
     theme: newTheme, 
     timestamp: new Date().toISOString() 
   });
-  
-  console.log('[XTheme] Tema cambiado exitosamente a:', newTheme);
 }
 
 // Initialize theme system (SIMPLIFIED - NO INTERFERENCE WITH LOADER)
 async function initializeThemeSystem() {
-  console.log('[XTheme] Iniciando sistema de temas (solo toggle)...');
-  
   const config = getThemeConfiguration();
   const storageKey = getStorageKey();
   
@@ -2581,33 +2476,22 @@ async function initializeThemeSystem() {
   const savedTheme = localStorage.getItem(storageKey);
   const currentTheme = savedTheme || config.lightTheme;
   
-  console.log('[XTheme] Configuración:', config);
-  console.log('[XTheme] Tema actual:', currentTheme);
-  
   // Update state
   window.$xDiagrams.themeState.current = currentTheme;
-  
-  // Don't reapply theme - loader already did it
-  console.log('[XTheme] Tema ya aplicado por loader, solo configurando toggle');
   
   // Setup theme toggle
   setupThemeToggle();
   
   window.$xDiagrams.themeState.isInitialized = true;
-  console.log('[XTheme] Sistema de temas inicializado correctamente');
 }
 
 // Setup theme toggle button
 function setupThemeToggle() {
-  console.log('[XTheme] Configurando botón de tema...');
-  
   const themeToggle = document.getElementById('theme-toggle');
   if (!themeToggle) {
     console.warn('[XTheme] Botón de tema no encontrado');
     return;
   }
-  
-  console.log('[XTheme] Botón de tema encontrado, configurando...');
   
   // Remove existing listeners by cloning
   const newToggle = themeToggle.cloneNode(true);
@@ -2617,11 +2501,8 @@ function setupThemeToggle() {
   newToggle.addEventListener('click', async function(e) {
     e.preventDefault();
     e.stopPropagation();
-    console.log('[XTheme] Click en botón de tema detectado');
     await toggleTheme();
   });
-  
-  console.log('[XTheme] Botón de tema configurado correctamente');
 }
 
 // Function to force default light theme
@@ -2674,8 +2555,7 @@ window.$xDiagrams.keyboardNavigation = {
   // Initialize keyboard navigation
   init: function() {
     this.setupKeyboardListeners();
-    console.log('[Keyboard Navigation] System initialized');
-  },
+    },
   
   // Setup keyboard event listeners
   setupKeyboardListeners: function() {
@@ -2731,21 +2611,18 @@ window.$xDiagrams.keyboardNavigation = {
   // Update the list of all nodes
   updateNodesList: function() {
     this.allNodes = Array.from(document.querySelectorAll('.node'));
-    console.log('[Keyboard Navigation] Updated nodes list:', this.allNodes.length, 'nodes');
   },
   
   // Enable keyboard navigation
   enable: function() {
     this.isEnabled = true;
     this.updateNodesList();
-    console.log('[Keyboard Navigation] Enabled');
   },
   
   // Disable keyboard navigation
   disable: function() {
     this.isEnabled = false;
     this.currentNodeIndex = -1;
-    console.log('[Keyboard Navigation] Disabled');
   },
   
   // Navigate to parent node
@@ -3140,7 +3017,6 @@ window.$xDiagrams.keyboardNavigation = {
       // Scroll node into view
       this.scrollNodeIntoView(node);
       
-      console.log('[Keyboard Navigation] Selected node:', index, nodeData?.name || 'Unknown');
     }
   },
   
@@ -3151,7 +3027,6 @@ window.$xDiagrams.keyboardNavigation = {
     });
     this.currentNodeIndex = -1;
     closeSidePanel();
-    console.log('[Keyboard Navigation] Selection cleared');
   },
   
   // Get node data from DOM element
@@ -3215,7 +3090,6 @@ window.$xDiagrams.keyboardNavigation = {
   // Open the link of the currently selected node in a new tab
   openCurrentNodeLink: function() {
     if (this.currentNodeIndex === -1 || this.allNodes.length === 0) {
-      console.log('[Keyboard Navigation] No node selected to open link');
       return;
     }
     
@@ -3223,7 +3097,6 @@ window.$xDiagrams.keyboardNavigation = {
     const nodeData = this.getNodeData(currentNode);
     
     if (!nodeData) {
-      console.log('[Keyboard Navigation] No data found for selected node');
       return;
     }
     
@@ -3231,20 +3104,16 @@ window.$xDiagrams.keyboardNavigation = {
     const url = nodeData.url;
     
     if (!url) {
-      console.log('[Keyboard Navigation] No URL found for node:', nodeData.name);
       return;
     }
     
     // Validate URL format
     if (!isUrl(url)) {
-      console.log('[Keyboard Navigation] Invalid URL format:', url);
       return;
     }
     
     // Open URL in new tab with security attributes
-    if (openUrlSecurely(url)) {
-      console.log('[Keyboard Navigation] Opened link for node:', nodeData.name, 'URL:', url);
-    } else {
+    if (!openUrlSecurely(url)) {
       console.error('[Keyboard Navigation] Failed to open link for node:', nodeData.name);
     }
   },
@@ -3451,7 +3320,8 @@ window.$xDiagrams.renderDiagramButtons = function() {
     // Add Google Sheets button if current diagram is from Google Sheets AND has edit URL
     let sheetsButton = null;
     const currentDiagram = diagrams[window.$xDiagrams.currentDiagramIdx];
-    if (currentDiagram && currentDiagram.file && currentDiagram.file.includes('docs.google.com/spreadsheets') && currentDiagram.edit) {
+    const diagramUrl = currentDiagram?.url || currentDiagram?.file;
+    if (currentDiagram && diagramUrl && diagramUrl.includes('docs.google.com/spreadsheets') && currentDiagram.edit) {
         // Create Google Sheets button
         sheetsButton = document.createElement('button');
         sheetsButton.className = 'sheets-btn';
@@ -3521,7 +3391,7 @@ window.$xDiagrams.renderDiagramButtons = function() {
                 // Clear cache for this specific URL
                 if (window.xDiagramsCache && window.xDiagramsCache.clear) {
                     window.xDiagramsCache.clear(diagramUrl);
-                    console.log('🗑️ Cache cleared for:', diagramUrl);
+                    console.log('Cache cleared for:', diagramUrl);
                 }
                 
                 // Also clear legacy cache
@@ -3606,15 +3476,15 @@ window.$xDiagrams.loadDiagram = function(input) {
     let toInit = diagramToLoad;
     if (diagramToLoad.data) {
         toInit = diagramToLoad;
-        console.log('🔍 Pasando objeto con data a initDiagram');
+        console.log('Pasando objeto con data a initDiagram');
     } else if (diagramToLoad.url) {
         toInit = diagramToLoad.url;
-        console.log('🔍 Pasando URL a initDiagram:', diagramToLoad.url);
+        console.log('Pasando URL a initDiagram:', diagramToLoad.url);
     } else if (diagramToLoad.file) {
         toInit = diagramToLoad.file;
-        console.log('🔍 Pasando file a initDiagram:', diagramToLoad.file);
+        console.log('Pasando file a initDiagram:', diagramToLoad.file);
     } else {
-        console.log('⚠️ No se encontró data, url o file en el diagrama:', diagramToLoad);
+        console.log('No se encontró data, url o file en el diagrama:', diagramToLoad);
     }
 
     // Limpieza visual
@@ -3849,10 +3719,7 @@ function renderSwDiagramBase() {
     }
   }
   // Initialize theme system after base structure is rendered
-  console.log('[Base Render] Inicializando sistema de temas...');
   initializeThemeSystem().then(() => {
-    console.log('[Base Render] Sistema de temas inicializado correctamente');
-    
     // Check theme state after initialization
     setTimeout(() => {
       checkThemeOnLoad();
@@ -3889,10 +3756,9 @@ function initializeWhenReady() {
     
     // Initialize drag & drop if enabled
     if (isOptionEnabled('dragAndDrop')) {
-      console.log('[Initialize] Inicializando drag & drop...');
-      setTimeout(() => {
-        initDragAndDropDelayed();
-      }, 200);
+        setTimeout(() => {
+    initDragAndDropDelayed();
+  }, 200);
     }
   } else {
     // Check again in 100ms
@@ -3935,7 +3801,7 @@ window.xDiagramsCache = {
   // Clear specific cache entry
   clear: function(url) {
     CacheManager.clear(url);
-    console.log('🗑️ Cache cleared for:', url);
+    console.log('Cache cleared for:', url);
   },
   
   // Clear all cache
@@ -3971,7 +3837,7 @@ window.xDiagramsCache = {
   // Force refresh (clear cache and reload)
   refresh: function(url) {
     CacheManager.clear(url);
-    console.log('🔄 Cache cleared, next load will fetch fresh data for:', url);
+    console.log('Cache cleared, next load will fetch fresh data for:', url);
   }
 };
 
@@ -4012,96 +3878,13 @@ window.reloadDiagramSystem = function() {
     }
 };
 
-// Debug function to check theme state
-window.debugThemeState = function() {
-  console.log('[XTheme Debug] === ESTADO ACTUAL DEL TEMA ===');
-  const state = window.$xDiagrams.themeState;
-  const storageKey = getStorageKey();
-  const storedTheme = localStorage.getItem(storageKey);
-  const globalTheme = localStorage.getItem('selectedTheme');
-  const themeMode = localStorage.getItem('themeMode');
-  const bodyClasses = document.body.className;
-  const config = getThemeConfiguration();
-  
-  console.log('[XTheme Debug] Estado global:', state);
-  console.log('[XTheme Debug] Clave de almacenamiento:', storageKey);
-  console.log('[XTheme Debug] Tema en localStorage (específico):', storedTheme);
-  console.log('[XTheme Debug] Tema en localStorage (global):', globalTheme);
-  console.log('[XTheme Debug] Modo de tema:', themeMode);
-  console.log('[XTheme Debug] Clases del body:', bodyClasses);
-  console.log('[XTheme Debug] Configuración:', config);
-  
-  // Check if theme is properly applied
-  const expectedClass = storedTheme ? `theme-${storedTheme}` : 'theme-snow';
-  const isThemeApplied = bodyClasses.includes(expectedClass);
-  console.log('[XTheme Debug] Tema aplicado correctamente:', isThemeApplied, '(esperado:', expectedClass, ')');
-  
-  // Check for inconsistencies
-  if (storedTheme && globalTheme && storedTheme !== globalTheme) {
-    console.log('[XTheme Debug] ⚠️ INCONSISTENCIA: Tema específico y global son diferentes');
-  }
-  
-  // Check all localStorage items for debugging
-  console.log('[XTheme Debug] Todos los items en localStorage:');
-  for (let i = 0; i < localStorage.length; i++) {
-    const key = localStorage.key(i);
-    const value = localStorage.getItem(key);
-    console.log(`[XTheme Debug] ${key}: ${value}`);
-  }
-  
-  console.log('[XTheme Debug] === FIN DEL ESTADO ===');
-};
 
-// Test function to manually trigger theme toggle
-window.testXThemeToggle = async function() {
-  console.log('[XTheme Test] Probando toggle de tema manualmente...');
-  if (window.$xDiagrams.themeState && window.$xDiagrams.themeState.isInitialized) {
-    await toggleTheme();
-    console.log('[XTheme Test] Toggle completado');
-  } else {
-    console.warn('[XTheme Test] Sistema de temas no inicializado');
-  }
-};
 
-// Function to clear theme localStorage and reset
-window.clearThemeStorage = function() {
-  console.log('[XTheme Clear] Limpiando localStorage de temas...');
-  
-  // Clear all theme-related keys
-  const keysToRemove = [];
-  for (let i = 0; i < localStorage.length; i++) {
-    const key = localStorage.key(i);
-    if (key && (key.startsWith('selectedTheme_') || 
-                key.startsWith('themeSystemInitialized_') ||
-                key === 'selectedTheme' ||
-                key === 'theme' ||
-                key === 'themeMode')) {
-      keysToRemove.push(key);
-    }
-  }
-  
-  keysToRemove.forEach(key => {
-    localStorage.removeItem(key);
-    console.log('[XTheme Clear] Removido:', key);
-  });
-  
-  console.log('[XTheme Clear] localStorage limpiado. Recarga la página para probar.');
-};
 
-// Function to clear only global theme preferences
-window.clearGlobalThemePreferences = function() {
-  console.log('[XTheme Clear] Limpiando solo preferencias globales...');
-  
-  const globalKeys = ['selectedTheme', 'theme', 'themeMode'];
-  globalKeys.forEach(key => {
-    if (localStorage.getItem(key)) {
-      localStorage.removeItem(key);
-      console.log('[XTheme Clear] Removida preferencia global:', key);
-    }
-  });
-  
-  console.log('[XTheme Clear] Preferencias globales limpiadas. Cada archivo mantendrá su tema específico.');
-};
+
+
+
+
 
 // Function to set current file theme preference
 window.setCurrentFileTheme = function(theme) {
@@ -4191,99 +3974,23 @@ window.checkThemeOnLoad = function() {
   console.log('[XTheme Load Check] Es oscuro aplicado:', isDarkApplied);
   
   if (shouldBeDark && !isDarkApplied) {
-    console.log('[XTheme Load Check] ⚠️ PROBLEMA: Debería ser oscuro pero no está aplicado');
+    console.log('[XTheme Load Check] PROBLEMA: Debería ser oscuro pero no está aplicado');
     forceDarkTheme();
   } else if (!shouldBeDark && isDarkApplied) {
-    console.log('[XTheme Load Check] ⚠️ PROBLEMA: No debería ser oscuro pero está aplicado');
+    console.log('[XTheme Load Check] PROBLEMA: No debería ser oscuro pero está aplicado');
   } else {
-    console.log('[XTheme Load Check] ✅ Estado correcto');
+    console.log('[XTheme Load Check] Estado correcto');
   }
   
   console.log('[XTheme Load Check] === FIN DE VERIFICACIÓN ===');
 };
 
 // Function to check if theme toggle button exists
-window.checkThemeToggleButton = function() {
-  console.log('[XTheme Check] Verificando botón de tema...');
-  
-  const themeToggle = document.getElementById('theme-toggle');
-  if (themeToggle) {
-    console.log('[XTheme Check] ✅ Botón de tema encontrado:', themeToggle);
-    console.log('[XTheme Check] Clases del botón:', themeToggle.className);
-    console.log('[XTheme Check] HTML del botón:', themeToggle.outerHTML);
-    
-    // Check if it has event listeners
-    const clone = themeToggle.cloneNode(true);
-    console.log('[XTheme Check] Botón clonado para verificar listeners');
-    
-    return true;
-  } else {
-    console.log('[XTheme Check] ❌ Botón de tema NO encontrado');
-    console.log('[XTheme Check] Elementos con ID theme-toggle:', document.querySelectorAll('#theme-toggle'));
-    console.log('[XTheme Check] Elementos con clase theme-toggle:', document.querySelectorAll('.theme-toggle'));
-    return false;
-  }
-};
 
-// Function to check URL parameters
-window.checkURLParameters = function() {
-  console.log('[URL Debug] === PARÁMETROS DE URL ===');
-  console.log('[URL Debug] URL actual:', window.location.href);
-  console.log('[URL Debug] Search params:', window.location.search);
-  
-  const urlParams = new URLSearchParams(window.location.search);
-  console.log('[URL Debug] Parámetros encontrados:');
-  
-  for (const [key, value] of urlParams.entries()) {
-    console.log(`[URL Debug] ${key}: ${value}`);
-  }
-  
-  // Check if there are any unexpected parameters
-  const expectedParams = ['d'];
-  const unexpectedParams = [];
-  
-  for (const [key, value] of urlParams.entries()) {
-    if (!expectedParams.includes(key)) {
-      unexpectedParams.push({ key, value });
-    }
-  }
-  
-  if (unexpectedParams.length > 0) {
-    console.log('[URL Debug] ⚠️ Parámetros inesperados encontrados:', unexpectedParams);
-  } else {
-    console.log('[URL Debug] ✅ Solo parámetros esperados encontrados');
-  }
-  
-  console.log('[URL Debug] === FIN DE PARÁMETROS ===');
-};
 
-// Function to clean unexpected URL parameters
-window.cleanURLParameters = function() {
-  console.log('[URL Clean] Limpiando parámetros inesperados de la URL...');
-  
-  const url = new URL(window.location);
-  const urlParams = new URLSearchParams(url.search);
-  const expectedParams = ['d'];
-  let cleaned = false;
-  
-  // Remove unexpected parameters
-  for (const [key, value] of urlParams.entries()) {
-    if (!expectedParams.includes(key)) {
-      urlParams.delete(key);
-      console.log(`[URL Clean] Removido parámetro: ${key}=${value}`);
-      cleaned = true;
-    }
-  }
-  
-  if (cleaned) {
-    // Update URL without the unexpected parameters
-    url.search = urlParams.toString();
-    window.history.replaceState({}, '', url);
-    console.log('[URL Clean] URL limpiada:', window.location.href);
-  } else {
-    console.log('[URL Clean] No se encontraron parámetros inesperados');
-  }
-};
+
+
+
 
 // Create keyboard navigation instructions panel
 function createKeyboardInstructionsPanel() {
@@ -4296,7 +4003,7 @@ function createKeyboardInstructionsPanel() {
   const instructionsPanel = document.createElement('div');
   instructionsPanel.className = 'keyboard-instructions';
   instructionsPanel.innerHTML = `
-    <h3>⌨️ Navegación por teclado</h3>
+    <h3>Navegación por teclado</h3>
     <div class="instructions-grid">
       <span class="key">↑</span>
       <span class="description">Nodo padre (circular)</span>
@@ -4382,8 +4089,6 @@ window.tryDiagramFallbacks = function(originalFile, onComplete, retryCount = 0) 
 
 // Custom tooltip system
 function initializeCustomTooltips() {
-  console.log('[Tooltip System] Inicializando sistema de tooltips personalizados...');
-  
   // Remove existing tooltip if any
   const existingTooltip = document.getElementById('custom-tooltip');
   if (existingTooltip) {
@@ -4411,7 +4116,6 @@ function initializeCustomTooltips() {
     transition: opacity 0.2s ease;
   `;
   document.body.appendChild(tooltip);
-  console.log('[Tooltip System] Elemento tooltip creado y agregado al DOM');
   
   // Add event listeners for tooltip elements
   document.addEventListener('mouseover', function(e) {
@@ -4542,14 +4246,7 @@ window.showToast = function(message, type = 'success', duration = 4200) {
   }, duration);
 };
 
-// Reemplazar alert en carga múltiple de archivos
-// Busca y reemplaza en la función de feedback de carga múltiple:
-// alert(msg) => showToast(msg, tipo)
-// Determina tipo:
-// - Si todos exitosos: 'success'
-// - Si todos fallaron: 'error'
-// - Si mixto: 'mixed'
-// ... código posterior ...
+
 
 // Función para verificar si un diagrama ya está cargado
 window.isDiagramDuplicate = function(diagram) {
@@ -4613,11 +4310,8 @@ window.simpleHash = function(str) {
 
 // Detect data source type and load accordingly
 function detectAndLoadDataSource(source, onComplete, retryCount = 0, diagramConfig = null) {
-  console.log("🔍 Detectando tipo de fuente de datos:", source);
-  
   // Case 1: Object with data (already processed)
   if (source && typeof source === 'object' && source.data) {
-            console.log("Fuente detectada: Datos pre-procesados");
     return loadFromObject(source, onComplete, diagramConfig);
   }
   
@@ -4627,23 +4321,17 @@ function detectAndLoadDataSource(source, onComplete, retryCount = 0, diagramConf
     
     // Check if it's a REST API endpoint
     if (isRestApiEndpoint(url)) {
-      console.log("🌐 Fuente detectada: API REST");
       return loadFromRestApi(url, onComplete, retryCount, diagramConfig);
     }
     
     // Check if it's a CSV URL
     if (isCsvUrl(url)) {
-      console.log("📄 Fuente detectada: URL CSV");
       return loadFromCsvUrl(url, onComplete, retryCount, diagramConfig);
     }
     
     // Default: treat as CSV URL
-    console.log("📄 Fuente detectada: URL (tratada como CSV)");
     return loadFromCsvUrl(url, onComplete, retryCount, diagramConfig);
   }
-  
-  // Case 3: Invalid source
-  console.log("❌ Fuente de datos inválida");
   showDiagramNotFound();
   if (onComplete && typeof onComplete === 'function') {
     onComplete();
@@ -4664,16 +4352,7 @@ function isRestApiEndpoint(url) {
     /notion\.so/i
   ];
   
-  const isRest = restPatterns.some(pattern => pattern.test(url));
-  console.log('🔍 [Cache] Checking if URL is REST API:', url, '→', isRest);
-  
-  // Debug: show which pattern matched
-  if (isRest) {
-    const matchedPattern = restPatterns.find(pattern => pattern.test(url));
-    console.log('🔍 [Cache] Matched pattern:', matchedPattern);
-  }
-  
-  return isRest;
+  return restPatterns.some(pattern => pattern.test(url));
 }
 
 // Check if URL is a CSV file
@@ -4879,7 +4558,7 @@ function loadFromObject(diagramObject, onComplete, diagramConfig = null) {
 
 // Convert JSON response to CSV-like format
 function convertJsonToCsvFormat(jsonData) {
-  console.log("🔄 Convirtiendo JSON a formato CSV:", jsonData);
+  console.log("Convirtiendo JSON a formato CSV:", jsonData);
   
   // Handle different JSON response formats
   let dataArray = [];
@@ -4901,11 +4580,11 @@ function convertJsonToCsvFormat(jsonData) {
     dataArray = [jsonData];
   }
   else {
-    console.warn("⚠️ Formato JSON no reconocido:", jsonData);
+    console.warn("Formato JSON no reconocido:", jsonData);
     return [];
   }
   
-  console.log("✅ Datos convertidos:", dataArray.length, "registros");
+  console.log("Datos convertidos:", dataArray.length, "registros");
   return dataArray;
 }
 
@@ -4970,7 +4649,6 @@ const CacheManager = {
       hash = hash & hash; // Convert to 32-bit integer
     }
     const key = `xdiagrams_cache_${Math.abs(hash)}`;
-    console.log('🔑 [Cache] Generated key for URL:', url, '→', key);
     return key;
   },
 
@@ -4978,12 +4656,9 @@ const CacheManager = {
   get: function(url) {
     try {
       const key = this.getCacheKey(url);
-      console.log('🔍 [Cache] Looking for key:', key);
       const cached = localStorage.getItem(key);
-      console.log('🔍 [Cache] Raw cached data:', cached ? 'EXISTS' : 'NULL');
       
       if (!cached) {
-        console.log('📦 [Cache] No cached data found for:', url);
         return null;
       }
 
@@ -4991,7 +4666,6 @@ const CacheManager = {
       
       // Check if cache is expired
       if (data.expires && Date.now() > data.expires) {
-        console.log('📦 [Cache] Cache expired for:', url);
         localStorage.removeItem(key);
         return null;
       }
@@ -4999,12 +4673,10 @@ const CacheManager = {
       // Check cache version
       const config = getCacheConfig();
       if (data.version !== config.version) {
-        console.log('📦 [Cache] Cache version mismatch, clearing:', url);
         localStorage.removeItem(key);
         return null;
       }
 
-      console.log('📦 [Cache] Using cached data for:', url);
       return data.data;
     } catch (error) {
       console.error('📦 [Cache] Error reading cache:', error);
@@ -5027,12 +4699,10 @@ const CacheManager = {
 
       // Check cache size before storing
       if (this.getCacheSize() > config.maxSize) {
-        console.log('📦 [Cache] Cache size limit reached, cleaning old entries');
         this.cleanup();
       }
 
       localStorage.setItem(key, JSON.stringify(cacheData));
-      console.log('📦 [Cache] Data cached for:', url);
       
       // Update cache statistics
       this.updateStats();
@@ -5105,32 +4775,31 @@ const CacheManager = {
       const config = getCacheConfig();
       const maxEntries = Math.floor(config.maxSize * 2); // Rough estimate
       if (cacheEntries.length > maxEntries) {
-        const toRemove = cacheEntries.slice(0, cacheEntries.length - maxEntries);
-        toRemove.forEach(entry => {
-          localStorage.removeItem(entry.key);
-        });
-        console.log('📦 [Cache] Cleaned up', toRemove.length, 'old entries');
-      }
-    } catch (error) {
-      console.error('📦 [Cache] Error during cleanup:', error);
+              const toRemove = cacheEntries.slice(0, cacheEntries.length - maxEntries);
+      toRemove.forEach(entry => {
+        localStorage.removeItem(entry.key);
+      });
     }
-  },
+  } catch (error) {
+    console.error('📦 [Cache] Error during cleanup:', error);
+  }
+},
 
-  // Update cache statistics
-  updateStats: function() {
-    try {
-      const keys = Object.keys(localStorage);
-      const cacheKeys = keys.filter(key => key.startsWith('xdiagrams_cache_'));
-      
-      const stats = {
-        entries: cacheKeys.length,
-        size: this.getCacheSize(),
-        timestamp: Date.now()
-      };
+// Update cache statistics
+updateStats: function() {
+  try {
+    const keys = Object.keys(localStorage);
+    const cacheKeys = keys.filter(key => key.startsWith('xdiagrams_cache_'));
+    
+    const stats = {
+      entries: cacheKeys.length,
+      size: this.getCacheSize(),
+      timestamp: Date.now()
+    };
 
-      localStorage.setItem('xdiagrams_cache_stats', JSON.stringify(stats));
-    } catch (error) {
-      console.error('📦 [Cache] Error updating stats:', error);
+    localStorage.setItem('xdiagrams_cache_stats', JSON.stringify(stats));
+  } catch (error) {
+    console.error('Error updating cache stats:', error);
     }
   },
 
@@ -5151,94 +4820,19 @@ const CacheManager = {
     try {
       const parsed = new URL(url, window.location.href);
       if (parsed.origin === window.location.origin) {
-        console.log('🔍 [Cache] Local URL detectado, no se aplicará caché:', url);
         return false;
       }
     } catch (e) {
       // Si falla el parseo asumimos que es una ruta relativa → local
-      console.log('🔍 [Cache] Ruta relativa detectada, no se aplicará caché:', url);
       return false;
     }
 
     // 2) Para URLs remotas, aplicar la caché solo si son endpoints REST
-    const shouldCache = isRestApiEndpoint(url);
-    console.log('🔍 [Cache] shouldCache check for URL remota:', url, '→', shouldCache);
-    return shouldCache;
+    return isRestApiEndpoint(url);
   }
 };
 
-// Debug commands for console
-window.cacheDebug = {
-  // Show cache status
-  status: function() {
-    const keys = Object.keys(localStorage);
-    const cacheKeys = keys.filter(key => key.startsWith('xdiagrams_cache_'));
-            console.log('Cache Status:');
-    console.log('- Total entries:', cacheKeys.length);
-    console.log('- Cache keys:', cacheKeys);
-    
-    if (cacheKeys.length > 0) {
-      console.log('\n📋 Cache Details:');
-      cacheKeys.forEach(key => {
-        try {
-          const data = JSON.parse(localStorage.getItem(key));
-          const age = Math.floor((Date.now() - data.timestamp) / 1000);
-          const expires = Math.floor((data.expires - Date.now()) / 1000);
-          console.log(`- ${key}: age=${age}s, expires=${expires}s, version=${data.version}`);
-        } catch (e) {
-          console.log(`- ${key}: ERROR parsing`);
-        }
-      });
-    }
-  },
-  
-  // Test cache for specific URL
-  test: function(url) {
-    console.log('🧪 Testing cache for URL:', url);
-    const key = CacheManager.getCacheKey(url);
-    console.log('🔑 Generated key:', key);
-    const cached = localStorage.getItem(key);
-    console.log('📦 Raw cached data:', cached ? 'EXISTS' : 'NULL');
-    
-    if (cached) {
-      try {
-        const data = JSON.parse(cached);
-        console.log('📦 Parsed data:', data);
-        return data;
-      } catch (e) {
-        console.log('❌ Error parsing cache data:', e);
-        return null;
-      }
-    }
-    return null;
-  },
-  
-  // Clear all cache
-  clear: function() {
-    const keys = Object.keys(localStorage);
-    const cacheKeys = keys.filter(key => key.startsWith('xdiagrams_cache_'));
-    cacheKeys.forEach(key => localStorage.removeItem(key));
-    console.log('🗑️ All cache cleared');
-  },
-  
-  // Show cache content
-  content: function() {
-    const keys = Object.keys(localStorage);
-    const cacheKeys = keys.filter(key => key.startsWith('xdiagrams_cache_'));
-    
-    console.log('📦 Cache Content:');
-    cacheKeys.forEach(key => {
-      try {
-        const data = JSON.parse(localStorage.getItem(key));
-        console.log(`\n🔑 Key: ${key}`);
-        console.log('📄 Data:', data);
-      } catch (e) {
-        console.log(`\n🔑 Key: ${key}`);
-        console.log('❌ Error:', e.message);
-      }
-    });
-  }
-};
+
 
 // Enhanced loadFromRestApi with intelligent caching
 function loadFromRestApiWithCache(apiUrl, onComplete, retryCount = 0, diagramConfig = null) {
@@ -5464,7 +5058,7 @@ function preloadCommonImages() {
   
   commonImages.forEach(imageName => {
     const img = new Image();
-    img.src = `img/${imageName}.svg?v=${Date.now()}`;
+    img.src = `img/${imageName}.svg`;
   });
   
   console.log('🖼️ [Preload] Common images preloaded');

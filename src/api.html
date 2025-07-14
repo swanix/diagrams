@@ -13,22 +13,27 @@
 <div class="xcanvas"></div>
 <script>
 window.$xDiagrams = {
-  title: "API Test - Cache Debug",
+  title: "API Diagrams",
   diagrams: [
     {
-      name: "Local JSON Example",
-      url: "data/site.json",
-      cols: {
-        name: "mi nombre custom",
-        img: "Imagenes"
-      }
+      name: "Local JSON",
+      url: "data/site.json"
     },
     {
-      name: "SheetBest Example", 
+      name: "Local CSV",
+      url: "data/site.csv"
+    },
+    {
+      name: "Google Sheets (Public)", 
+      url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vT1F3LXPwnGlnF_uOlhoR-5kK1DrWLwlCAKH8Ag6hPrNLzwqWYWU8ofE19xSv4cH1-Cq7ZYm7lPys7V/pub?output=csv",
+      edit: "https://docs.google.com/spreadsheets/d/12XSWGm6CAkv7SVSeBU0dtS3dhqc1dLasoxWqsW2AX40/edit?gid=0#gid=0"
+    },
+    {
+      name: "SheetBest API", 
       url: "https://api.sheetbest.com/sheets/e5d98c88-3e44-4793-9e66-f0a26981e281"
-    },
+    },    
     {
-      name: "SheetDB Example", 
+      name: "SheetDB API", 
       url: "https://sheetdb.io/api/v1/4mbxxv45hcsip"
     }
   ]

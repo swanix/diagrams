@@ -54,12 +54,10 @@ function saveDiagramToStorage(diagram) {
     const saved = localStorage.getItem('xdiagrams-saved-files');
     let savedDiagrams = saved ? JSON.parse(saved) : [];
     
-    // Check if diagram already exists
     const exists = savedDiagrams.find(d => d.name === diagram.name);
     if (!exists) {
       savedDiagrams.push(diagram);
       localStorage.setItem('xdiagrams-saved-files', JSON.stringify(savedDiagrams));
-      console.log('Diagram saved to localStorage:', diagram.name);
     }
   } catch (error) {
     console.error('Error saving diagram to localStorage:', error);
@@ -78,17 +76,15 @@ function processCSVFile(file) {
           header: true,
           skipEmptyLines: true,
           complete: function(results) {
-            // Ignorar errores de tipo 'TooFewFields'
             const fatalErrors = results.errors.filter(err => err.code !== 'TooFewFields');
             if (fatalErrors.length > 0) {
               reject(new Error('Error parsing CSV: ' + fatalErrors[0].message));
               return;
             }
             
-            // Create diagram object
             const diagram = {
               name: file.name.replace('.csv', ''),
-              url: null, // Local file, no URL
+              url: null,
               data: results.data,
               isLocal: true,
               timestamp: new Date().toISOString()
@@ -220,20 +216,20 @@ function handleFileDrop(e) {
     if (supportedFiles.length === 1) {
       // Single file
       const file = supportedFiles[0];
-      console.log('📁 Procesando archivo:', file.name);
+      console.log('Procesando archivo:', file.name);
 
       processFile(file)
         .then(diagram => {
-          console.log('✅ Archivo procesado exitosamente:', diagram.name);
+          console.log('Archivo procesado exitosamente:', diagram.name);
           window.addAndLoadDiagram(diagram);
         })
         .catch(error => {
-          console.error('❌ Error procesando archivo:', error);
+          console.error('Error procesando archivo:', error);
           showToast('Error al procesar el archivo: ' + error.message, 'error');
         });
     } else {
       // Multiple files
-      console.log(`📁 Procesando ${supportedFiles.length} archivos...`);
+      console.log(`Procesando ${supportedFiles.length} archivos...`);
 
       Promise.allSettled(supportedFiles.map(file => processFile(file)))
         .then(results => {
@@ -249,7 +245,7 @@ function handleFileDrop(e) {
 
           // Feedback
           if (failed.length > 0) {
-            let msg = `${successful.length} diagramas agregados exitosamente\n❌ ${failed.length} fallaron:\n`;
+            let msg = `${successful.length} diagramas agregados exitosamente\n${failed.length} fallaron:\n`;
             msg += failed.map(f => `- ${f.name}: ${f.reason}`).join('\n');
             showToast(msg, 'mixed');
           } else {
@@ -288,33 +284,22 @@ function handleDragLeave(e) {
 
 // Initialize drag & drop
 function initDragAndDrop() {
-  // Utilizar el helper isOptionEnabled para que el valor por defecto sea TRUE
   if (!isOptionEnabled('dragAndDrop')) {
-    console.log('[Drag & Drop] Opción dragAndDrop deshabilitada');
     return;
   }
   
-  console.log('[Drag & Drop] Inicializando funcionalidad...');
-  
-  // Load saved diagrams
   loadSavedDiagrams();
   
-  // Use the sw-diagram container instead of .xcanvas
   const canvas = document.getElementById('sw-diagram');
   if (!canvas) {
-    console.log('[Drag & Drop] Contenedor sw-diagram no encontrado');
     return;
   }
   
-  console.log('[Drag & Drop] Agregando event listeners al contenedor:', canvas);
-  
-  // Add event listeners
   canvas.addEventListener('dragenter', handleDragEnter);
   canvas.addEventListener('dragover', handleDragOver);
   canvas.addEventListener('dragleave', handleDragLeave);
   canvas.addEventListener('drop', handleFileDrop);
   
-  // Prevent default drag behaviors on the document
   document.addEventListener('dragenter', function(e) {
     e.preventDefault();
   });
@@ -326,8 +311,6 @@ function initDragAndDrop() {
   document.addEventListener('drop', function(e) {
     e.preventDefault();
   });
-  
-  console.log('[Drag & Drop] Event listeners agregados correctamente');
 }
 
 // Initialize drag & drop when DOM is ready
@@ -379,11 +362,8 @@ window.showDiagramNotFound = function() {
 }
 
 // Main function to initialize diagram (now uses data source abstraction)
-function initDiagram(source, onComplete, retryCount = 0) {
-          console.log("Iniciando carga del diagrama...", retryCount > 0 ? `(intento ${retryCount + 1})` : '');
-  
-  // Use the new data source abstraction layer
-  detectAndLoadDataSource(source, onComplete, retryCount);
+function initDiagram(source, onComplete, retryCount = 0, diagramConfig = null) {
+        detectAndLoadDataSource(source, onComplete, retryCount, diagramConfig);
 }
 
 // Helper function to get column value case-insensitively
@@ -466,17 +446,17 @@ function getDiagrams() {
 }
 
 // Get column configuration with modern style fallback
-function getColumnConfiguration() {
+function getColumnConfiguration(diagramConfig = null) {
   const config = getXDiagramsConfiguration();
   
-  // Try modern configuration first
-  if (config.columns) {
-    const columns = config.columns;
+  // Try diagram-specific configuration first
+  if (diagramConfig && diagramConfig.cols) {
+    const columns = diagramConfig.cols;
     const columnConfig = {
       id: [columns.id || 'Node'],
       name: [columns.name || 'Name'],
       subtitle: [columns.subtitle || 'Description'],
-      img: [columns.img || 'Type'],
+      img: [columns.img || 'thumbnail'],
       parent: [columns.parent || 'Parent'],
       url: [columns.url || 'url'],
       type: [columns.type || 'Type']
@@ -484,9 +464,34 @@ function getColumnConfiguration() {
 
     // Add fallback names for each field
     columnConfig.id.push('node', 'Node', 'NODE', 'id', 'Id', 'ID');
-    columnConfig.name.push('name', 'Name', 'NAME', 'title', 'Title', 'TITLE');
+    columnConfig.name.push('name', 'Name', 'NAME', 'title', 'Title', 'TITLE', 'section', 'Section', 'SECTION', 'project', 'Project', 'PROJECT', 'product', 'Product', 'PRODUCT');
     columnConfig.subtitle.push('subtitle', 'Subtitle', 'SUBTITLE', 'description', 'Description', 'DESCRIPTION', 'desc', 'Desc', 'DESC');
-    columnConfig.img.push('thumbnail', 'Thumbnail', 'THUMBNAIL', 'img', 'Img', 'IMG', 'type', 'Type', 'TYPE', 'icon', 'Icon', 'ICON');
+    columnConfig.img.push('thumbnail', 'Thumbnail', 'THUMBNAIL', 'img', 'Img', 'IMG', 'icon', 'Icon', 'ICON', 'image', 'Image', 'IMAGE', 'picture', 'Picture', 'PICTURE');
+    columnConfig.parent.push('parent', 'Parent', 'PARENT');
+    columnConfig.url.push('url', 'Url', 'URL', 'link', 'Link', 'LINK');
+    columnConfig.type.push('type', 'Type', 'TYPE');
+
+    return columnConfig;
+  }
+  
+  // Try global configuration second
+  if (config.columns) {
+    const columns = config.columns;
+    const columnConfig = {
+      id: [columns.id || 'Node'],
+      name: [columns.name || 'Name'],
+      subtitle: [columns.subtitle || 'Description'],
+      img: [columns.img || 'thumbnail'],
+      parent: [columns.parent || 'Parent'],
+      url: [columns.url || 'url'],
+      type: [columns.type || 'Type']
+    };
+
+    // Add fallback names for each field
+    columnConfig.id.push('node', 'Node', 'NODE', 'id', 'Id', 'ID');
+    columnConfig.name.push('name', 'Name', 'NAME', 'title', 'Title', 'TITLE', 'section', 'Section', 'SECTION', 'project', 'Project', 'PROJECT', 'product', 'Product', 'PRODUCT');
+    columnConfig.subtitle.push('subtitle', 'Subtitle', 'SUBTITLE', 'description', 'Description', 'DESCRIPTION', 'desc', 'Desc', 'DESC');
+    columnConfig.img.push('thumbnail', 'Thumbnail', 'THUMBNAIL', 'img', 'Img', 'IMG', 'icon', 'Icon', 'ICON', 'image', 'Image', 'IMAGE', 'picture', 'Picture', 'PICTURE');
     columnConfig.parent.push('parent', 'Parent', 'PARENT');
     columnConfig.url.push('url', 'Url', 'URL', 'link', 'Link', 'LINK');
     columnConfig.type.push('type', 'Type', 'TYPE');
@@ -531,9 +536,9 @@ function getColumnConfigurationLegacy() {
 
       // Add fallback names for each field
       config.id.push('node', 'Node', 'NODE', 'id', 'Id', 'ID');
-      config.name.push('name', 'Name', 'NAME', 'title', 'Title', 'TITLE');
+      config.name.push('name', 'Name', 'NAME', 'title', 'Title', 'TITLE', 'section', 'Section', 'SECTION', 'project', 'Project', 'PROJECT', 'product', 'Product', 'PRODUCT');
       config.subtitle.push('subtitle', 'Subtitle', 'SUBTITLE', 'description', 'Description', 'DESCRIPTION', 'desc', 'Desc', 'DESC');
-      config.img.push('thumbnail', 'Thumbnail', 'THUMBNAIL', 'img', 'Img', 'IMG', 'type', 'Type', 'TYPE', 'icon', 'Icon', 'ICON');
+      config.img.push('thumbnail', 'Thumbnail', 'THUMBNAIL', 'img', 'Img', 'IMG', 'type', 'Type', 'TYPE', 'icon', 'Icon', 'ICON', 'image', 'Image', 'IMAGE', 'picture', 'Picture', 'PICTURE');
       config.parent.push('parent', 'Parent', 'PARENT');
       config.url.push('url', 'Url', 'URL', 'link', 'Link', 'LINK');
       config.type.push('type', 'Type', 'TYPE');
@@ -557,9 +562,9 @@ function getColumnConfigurationLegacy() {
 
   // Add fallback names for each field
   config.id.push('node', 'Node', 'NODE', 'id', 'Id', 'ID');
-  config.name.push('name', 'Name', 'NAME', 'title', 'Title', 'TITLE');
+  config.name.push('name', 'Name', 'NAME', 'title', 'Title', 'TITLE', 'section', 'Section', 'SECTION', 'project', 'Project', 'PROJECT', 'product', 'Product', 'PRODUCT');
   config.subtitle.push('subtitle', 'Subtitle', 'SUBTITLE', 'description', 'Description', 'DESCRIPTION', 'desc', 'Desc', 'DESC');
-  config.img.push('thumbnail', 'Thumbnail', 'THUMBNAIL', 'img', 'Img', 'IMG', 'type', 'Type', 'TYPE', 'icon', 'Icon', 'ICON');
+  config.img.push('thumbnail', 'Thumbnail', 'THUMBNAIL', 'img', 'Img', 'IMG', 'type', 'Type', 'TYPE', 'icon', 'Icon', 'ICON', 'image', 'Image', 'IMAGE', 'picture', 'Picture', 'PICTURE');
   config.parent.push('parent', 'Parent', 'PARENT');
   config.url.push('url', 'Url', 'URL', 'link', 'Link', 'LINK');
   config.type.push('type', 'Type', 'TYPE');
@@ -568,13 +573,13 @@ function getColumnConfigurationLegacy() {
 }
 
 // Build simplified hierarchies
-function buildHierarchies(data) {
+function buildHierarchies(data, diagramConfig = null) {
   let roots = [];
   let nodeMap = new Map();
   let autoIdCounter = 1;
   
-  // Get column configuration
-  const columnConfig = getColumnConfiguration();
+  // Get column configuration (with diagram-specific config if available)
+  const columnConfig = getColumnConfiguration(diagramConfig);
 
   data.forEach(d => {
     // Skip completely empty rows
@@ -583,7 +588,6 @@ function buildHierarchies(data) {
     );
     
     if (isEmptyRow) {
-      console.log('[CSV Processing] Skipping empty row:', d);
       return; // Skip this row
     }
     
@@ -600,13 +604,12 @@ function buildHierarchies(data) {
 
     // Generate auto ID if not provided or empty
     if (!id || id.trim() === "") {
-      id = `auto_${autoIdCounter++}`;
-      console.log('[CSV Processing] Generated auto ID:', id, 'for node:', name);
+      id = `id-${autoIdCounter.toString().padStart(2, '0')}`;
+      autoIdCounter++;
     }
 
     // Skip nodes without essential data (name is the only truly required field)
     if (!name || name.trim() === "") {
-      console.log('[CSV Processing] Skipping node without name:', { id, name });
       return; // Skip this row
     }
 
@@ -731,21 +734,46 @@ function drawGridLayout(nodes, svg) {
     .attr("width", nodeWidth)
     .attr("height", nodeHeight);
 
-  // Node image
+  // Node image with enhanced loading
   nodeGroups.append("image")
-    .attr("href", d => {
-      const baseUrl = d.img ? `img/${d.img}.svg` : "img/detail.svg";
+    .attr("href", "img/transparent.svg")
+    .attr("data-src", d => {
+      const url = resolveNodeImage(d);
       const cacheBuster = `?t=${Date.now()}`;
-      return baseUrl.includes('?') ? `${baseUrl}&_cb=${Date.now()}` : `${baseUrl}${cacheBuster}`;
+      return url.includes('?') ? `${url}&_cb=${Date.now()}` : `${url}${cacheBuster}`;
     })
     .attr("x", -15)
     .attr("y", -25)
-    .attr("class", "image-base image-filter")
+    .attr("class", "image-base")
     .attr("width", 30)
     .attr("height", 30)
+    .on("load", function() {
+      const element = d3.select(this);
+      const dataSrc = element.attr("data-src");
+      
+      if (dataSrc && element.attr("href") === "img/transparent.svg") {
+        // Cambiar a la imagen real
+        element.attr("href", dataSrc);
+      } else {
+        // Image loaded successfully
+        element.classed("loaded", true);
+      }
+      // Solo aplicar el filtro si es necesario
+      if (shouldApplyFilter(dataSrc)) {
+        element.classed("image-filter", true);
+      }
+    })
     .on("error", function() {
-      const fallbackUrl = `img/detail.svg?t=${Date.now()}`;
-      d3.select(this).attr("href", fallbackUrl);
+      const element = d3.select(this);
+      const currentSrc = element.attr("href");
+      
+      if (currentSrc !== "img/detail.svg") {
+        const fallbackUrl = `img/detail.svg?t=${Date.now()}`;
+        element.attr("href", fallbackUrl);
+      } else {
+        // Si el fallback también falla, ocultar la imagen
+        element.style("display", "none");
+      }
     });
 
   // Node text
@@ -763,14 +791,32 @@ function drawGridLayout(nodes, svg) {
   // Apply text wrapping for grid layout
   wrap(nameText, nodeWidth - 10);
   
-  console.log('[Grid Layout] Rendered', positionedNodes.length, 'nodes in grid layout');
-}
+    }
 
-// Draw clusters in grid layout (solución avanzada)
-function drawClusterGrid(trees, svg) {
+  // Draw clusters in masonry-like grid layout
+  function drawClusterGrid(trees, svg) {
   const g = d3.select(svg).append("g");
-  // Paso 1: Renderizar cada cluster en posición temporal (apilados verticalmente)
   const clusterGroups = [];
+  
+  // Calcular la profundidad máxima de cada árbol ANTES de renderizar
+  const isFlat = isFlatList(trees);
+  let treeDepths = null;
+  let maxDepth = 0;
+  
+  if (!isFlat) {
+    treeDepths = trees.map(tree => getMaxTreeDepth(tree));
+    maxDepth = Math.max(...treeDepths);
+    
+
+    
+    // Encontrar el árbol con más niveles para usar como referencia
+    const treeWithMaxDepth = trees.find((tree, index) => {
+      return treeDepths[index] === maxDepth;
+    });
+    
+  }
+  
+  // Paso 1: Renderizar cada cluster en posición temporal para medir su tamaño real
   trees.forEach((tree, index) => {
     try {
       const themeVars = getComputedStyle(document.documentElement);
@@ -778,20 +824,34 @@ function drawClusterGrid(trees, svg) {
       const treeHorizontal = parseFloat(themeVars.getPropertyValue('--tree-horizontal-spacing')) || 180;
       const clusterPaddingX = parseFloat(themeVars.getPropertyValue('--cluster-padding-x')) || 220;
       const clusterPaddingY = parseFloat(themeVars.getPropertyValue('--cluster-padding-y')) || 220;
+      
       const root = d3.hierarchy(tree);
       const treeLayout = d3.tree().nodeSize([treeVertical, treeHorizontal]);
       treeLayout(root);
+      
       // Render en posición temporal (x=0, y=index*1000)
       const treeGroup = g.append("g")
         .attr("class", "diagram-group")
         .attr("data-root-id", root.data.id)
         .attr("transform", `translate(0, ${index * 1000})`);
+      
       // Render links
       treeGroup.selectAll(".link")
         .data(root.links())
         .enter().append("path")
         .attr("class", "link")
-        .attr("d", d => `M ${d.source.x} ${d.source.y} V ${(d.source.y + d.target.y) / 2} H ${d.target.x} V ${d.target.y}`);
+        .attr("d", d => {
+          // Ajustar coordenadas para que los links se conecten al centro del rectángulo del nodo
+          const nodeOffsetX = parseFloat(themeVars.getPropertyValue('--node-bg-x')) || -42;
+          const nodeWidth = parseFloat(themeVars.getPropertyValue('--node-bg-width')) || 60;
+          const nodeCenterX = nodeOffsetX + (nodeWidth / 2);
+          
+          const sourceX = d.source.x + nodeCenterX;
+          const targetX = d.target.x + nodeCenterX;
+          
+          return `M ${sourceX} ${d.source.y} V ${(d.source.y + d.target.y) / 2} H ${targetX} V ${d.target.y}`;
+        });
+      
       // Render nodes
       const node = treeGroup.selectAll(".node")
         .data(root.descendants())
@@ -813,46 +873,89 @@ function drawClusterGrid(trees, svg) {
             window.openSidePanel(d.data);
           }
         });
+      
       node.append("rect")
         .style("stroke-width", "var(--node-bg-stroke, 2)")
         .attr("x", parseFloat(themeVars.getPropertyValue('--node-bg-x')) || -30)
         .attr("y", parseFloat(themeVars.getPropertyValue('--node-bg-y')) || -20)
         .attr("width", parseFloat(themeVars.getPropertyValue('--node-bg-width')) || 60)
         .attr("height", parseFloat(themeVars.getPropertyValue('--node-bg-height')) || 40);
+      
       node.append("image")
-        .attr("href", d => {
-          const baseUrl = d.data.img ? `img/${d.data.img}.svg` : "img/detail.svg";
+        .attr("href", "img/transparent.svg")
+        .attr("data-src", d => {
+          const url = resolveNodeImage(d);
           const cacheBuster = `?t=${Date.now()}`;
-          return baseUrl.includes('?') ? `${baseUrl}&_cb=${Date.now()}` : `${baseUrl}${cacheBuster}`;
+          return url.includes('?') ? `${url}&_cb=${Date.now()}` : `${url}${cacheBuster}`;
         })
         .attr("x", parseFloat(themeVars.getPropertyValue('--image-x')))
         .attr("y", parseFloat(themeVars.getPropertyValue('--image-y')))
-        .attr("class", "image-base image-filter")
+        .attr("class", "image-base")
         .attr("width", parseFloat(themeVars.getPropertyValue('--image-width')))
         .attr("height", parseFloat(themeVars.getPropertyValue('--image-height')))
+        .on("load", function() {
+          const element = d3.select(this);
+          const dataSrc = element.attr("data-src");
+          
+          if (dataSrc && element.attr("href") === "img/transparent.svg") {
+            // Cambiar a la imagen real
+            element.attr("href", dataSrc);
+          }
+          // Marcar cargada
+          element.classed("loaded", true);
+          // Solo aplicar el filtro si es necesario
+          if (shouldApplyFilter(dataSrc)) {
+            element.classed("image-filter", true);
+          }
+        })
         .on("error", function() {
-          const fallbackUrl = `img/detail.svg?t=${Date.now()}`;
-          d3.select(this).attr("href", fallbackUrl);
+          const element = d3.select(this);
+          const currentSrc = element.attr("href");
+          
+          if (currentSrc !== "img/detail.svg") {
+            const fallbackUrl = `img/detail.svg?t=${Date.now()}`;
+            element.attr("href", fallbackUrl);
+          } else {
+            // Si el fallback también falla, ocultar la imagen
+            element.style("display", "none");
+          }
         });
+      
       const textGroup = node.append("g").attr("class", "text-group");
       textGroup.append("text")
         .attr("class", "label-id")
-        .attr("x", parseFloat(themeVars.getPropertyValue('--label-id-x')))
+        .attr("x", d => {
+          const baseX = parseFloat(themeVars.getPropertyValue('--label-id-x'));
+          // Si el nodo no tiene padre, centrarlo horizontalmente con el nodo
+          if (!d.parent) {
+            const nodeOffsetX = parseFloat(themeVars.getPropertyValue('--node-bg-x')) || -42;
+            const nodeWidth = parseFloat(themeVars.getPropertyValue('--node-bg-width')) || 60;
+            return nodeOffsetX + (nodeWidth / 2);
+          }
+          return baseX;
+        })
         .attr("y", parseFloat(themeVars.getPropertyValue('--label-id-y')))
         .attr("dy", themeVars.getPropertyValue('--label-id-dy'))
-        .attr("text-anchor", themeVars.getPropertyValue('--label-id-anchor'))
+        .attr("text-anchor", d => {
+          const baseAnchor = themeVars.getPropertyValue('--label-id-anchor');
+          // Si el nodo no tiene padre, usar centrado automático
+          return d.parent ? baseAnchor : "middle";
+        })
         .style("font-size", themeVars.getPropertyValue('--label-id-font-size'))
         .style("fill", themeVars.getPropertyValue('--label-id-text-color'))
         .text(d => d.data.id);
+      
       const nameText = textGroup.append("text")
         .attr("class", "label-text")
         .attr("x", parseFloat(themeVars.getPropertyValue('--label-x')))
         .attr("y", parseFloat(themeVars.getPropertyValue('--label-y')))
-        .attr("dy", themeVars.getPropertyValue('--label-dy'))
+        .attr("dy", parseFloat(themeVars.getPropertyValue('--label-dy')))
         .style("font-size", themeVars.getPropertyValue('--label-font-size'))
         .text(d => d.data.name);
+      
       const maxWidth = parseFloat(themeVars.getPropertyValue('--label-max-width')) || 68;
       wrap(nameText, maxWidth);
+      
       textGroup.append("text")
         .attr("class", "subtitle-text")
         .attr("transform", "rotate(270)")
@@ -869,118 +972,317 @@ function drawClusterGrid(trees, svg) {
           }
           return subtitleText;
         });
+      
+      // Medir el tamaño real del cluster después de renderizarlo
       setTimeout(() => {
         const bounds = treeGroup.node().getBBox();
+        const clusterHeight = bounds.height + 2 * clusterPaddingY;
+        
         clusterGroups.push({
           group: treeGroup,
           width: bounds.width + 2 * clusterPaddingX,
-          height: bounds.height + 2 * clusterPaddingY,
+          height: clusterHeight,
           innerWidth: bounds.width,
           innerHeight: bounds.height,
           paddingX: clusterPaddingX,
           paddingY: clusterPaddingY,
-          id: root.data.id
+          id: root.data.id,
+          name: root.data.name,
+          index: index,
+          treeDepth: treeDepths ? treeDepths[index] : null
         });
+        
         if (clusterGroups.length === trees.length) {
-          // Paso 2: Calcular cuadrícula óptima
-          const marginX = 50, marginY = 50, spacingX = 60, spacingY = 60;
-          // ===== Configuración global =====
-          // 1. Valor por defecto
-          let desiredGridCols = 4;
-
-          // 2. Variable CSS (menor prioridad)
-          const themeVarsGlobal = getComputedStyle(document.documentElement);
-          const cssCols = parseInt(themeVarsGlobal.getPropertyValue('--cluster-grid-cols'));
-          if (!Number.isNaN(cssCols) && cssCols > 0) {
-            desiredGridCols = cssCols;
-          }
-
-          // 3. Atributo HTML en el contenedor (data-cluster-cols)
-          const containerElem = document.querySelector('.xcanvas');
-          if (containerElem) {
-            const attrCols = parseInt(containerElem.getAttribute('data-cluster-cols'));
-            if (!Number.isNaN(attrCols) && attrCols > 0) {
-              desiredGridCols = attrCols;
-            }
-          }
-
-          // 4. Configuración JS (window.$xDiagrams.options.clusterGridCols) – máxima prioridad
-          const diagramOptions = getDiagramOptions();
-          if (diagramOptions.clusterGridCols) {
-            const optCols = parseInt(diagramOptions.clusterGridCols);
-            if (!Number.isNaN(optCols) && optCols > 0) {
-              desiredGridCols = optCols;
-            }
-          }
-
-          // 5. Configuración específica del diagrama (propiedad "grid" en el objeto diagrama)
-          const diagramsList = getDiagrams();
-          if (Array.isArray(diagramsList) && window.$xDiagrams && typeof window.$xDiagrams.currentDiagramIdx === 'number') {
-            const currentDiagramObj = diagramsList[window.$xDiagrams.currentDiagramIdx];
-            if (currentDiagramObj && currentDiagramObj.grid) {
-              const diagCols = parseInt(currentDiagramObj.grid);
-              if (!Number.isNaN(diagCols) && diagCols > 0) {
-                desiredGridCols = diagCols;
+          // Paso 2: Calcular altura uniforme basada en el cluster con más niveles
+          let uniformHeight = null;
+          
+          if (!isFlat && treeDepths) {
+            // Comprobar si hay variación en la profundidad (niveles)
+            const minDepth = Math.min(...treeDepths);
+            const depthVariation = maxDepth !== minDepth;
+            
+            if (depthVariation) {
+              // Tomar como referencia cualquier cluster cuyo árbol tenga la profundidad máxima
+              const clusterWithMaxDepth = clusterGroups.find((cluster, idx) => treeDepths[idx] === maxDepth);
+              if (clusterWithMaxDepth) {
+                uniformHeight = clusterWithMaxDepth.height;
               }
             }
           }
-
-          // ... existing code ...
-          const maxCols = Math.floor((window.innerWidth - 2 * marginX) / (Math.max(...clusterGroups.map(c => c.width)) + spacingX));
-          // Ya no limitamos por ancho de pantalla
-          const cols = Math.max(1, Math.min(desiredGridCols, clusterGroups.length));
-          const rows = Math.ceil(clusterGroups.length / cols);
-          // Paso 3: Reposicionar clusters y dibujar fondo/título
-          clusterGroups.forEach((c, i) => {
-            const col = i % cols;
-            const row = Math.floor(i / cols);
-            let x = marginX + col * (c.width + spacingX) + c.width / 2;
-            let y = marginY + row * (c.height + spacingY) + c.height / 2;
-            // Si solo hay un cluster, centrarlo en la pantalla
-            if (clusterGroups.length === 1) {
-              x = window.innerWidth / 2;
-              y = window.innerHeight / 2;
-            }
-            c.group.attr("transform", `translate(${x},${y})`);
-            // Medir bounds en la nueva posición
-            const bounds = c.group.node().getBBox();
-            const paddingX = c.paddingX || 80;
-            const paddingY = c.paddingY || 80;
-            const minX = bounds.x - paddingX;
-            const minY = bounds.y - paddingY - 30;
-            const width = bounds.width + 2 * paddingX;
-            const height = bounds.height + 2 * paddingY;
-            // Fondo del cluster
-            c.group.insert("rect", ":first-child")
-              .attr("class", "cluster-rect")
-              .attr("x", minX)
-              .attr("y", minY)
-              .attr("width", width)
-              .attr("height", height)
-              .attr("rx", 18)
-              .attr("ry", 18)
-              .style("fill", "var(--cluster-bg, rgba(0,0,0,0.02))")
-              .style("stroke", "var(--cluster-stroke, #222)")
-              .style("stroke-width", 2)
-              .style("stroke-dasharray", "6,4");
-            // Título del cluster
-            c.group.append("text")
-              .attr("class", "cluster-title")
-              .attr("x", minX + 32)
-              .attr("y", minY + 40)
-              .attr("text-anchor", "start")
-              .style("font-size", "1.5em")
-              .style("font-weight", "bold")
-              .style("fill", "var(--cluster-title-color, #222)")
-              .text(c.id);
-          });
-          console.log('[Cluster Grid Layout] Rendered', clusterGroups.length, 'clusters in dynamic grid layout');
+          
+          // Paso 3: Implementar layout tipo Masonry
+          applyMasonryLayout(clusterGroups, g, trees, uniformHeight);
         }
       }, 0);
+      
     } catch (err) {
       console.error(`Error al renderizar cluster ${index + 1}:`, err);
     }
   });
+}
+
+// Función para calcular la profundidad máxima de un árbol
+function getMaxTreeDepth(node) {
+  if (!node.children || node.children.length === 0) {
+    return 1; // Nodo hoja
+  }
+  
+  let maxDepth = 1;
+  for (const child of node.children) {
+    const childDepth = getMaxTreeDepth(child);
+    maxDepth = Math.max(maxDepth, childDepth + 1);
+  }
+  
+  return maxDepth;
+}
+
+
+
+// Función para aplicar layout con soporte para grid
+function applyMasonryLayout(clusterGroups, container, originalTrees, preCalculatedUniformHeight = null) {
+  const marginX = 50;
+  const marginY = 50;
+  const spacingX = 60;
+  const spacingY = 60;
+  
+  // Si solo hay un cluster, centrarlo
+  if (clusterGroups.length === 1) {
+    const cluster = clusterGroups[0];
+    const x = window.innerWidth / 2;
+    const y = window.innerHeight / 2;
+    cluster.group.attr("transform", `translate(${x},${y})`);
+    // Detectar si es un diagrama plano (flat list) usando los árboles originales
+    const isFlat = isFlatList(originalTrees);
+    addClusterBackground(cluster, isFlat);
+    return;
+  }
+  
+  // Detectar si es un diagrama plano (flat list) usando los árboles originales
+  const isFlat = isFlatList(originalTrees);
+  
+  // Obtener el diagrama actual para verificar si tiene parámetro grid
+  const diagramsList = getDiagrams();
+  let currentDiagramObj = null;
+  let useGridLayout = false;
+  let desiredGridCols = 4; // Valor por defecto
+  
+  if (Array.isArray(diagramsList) && window.$xDiagrams && typeof window.$xDiagrams.currentDiagramIdx === 'number') {
+    currentDiagramObj = diagramsList[window.$xDiagrams.currentDiagramIdx];
+    
+    // Verificar si es el diagrama de "20 Clusters - Diferentes Tamaños" que debe mantenerse como está
+    if (currentDiagramObj && currentDiagramObj.name === "20 Clusters - Diferentes Tamaños") {
+      useGridLayout = false;
+    } else if (currentDiagramObj && currentDiagramObj.grid) {
+      // Si tiene parámetro grid, usarlo
+      const diagCols = parseInt(currentDiagramObj.grid);
+      if (!Number.isNaN(diagCols) && diagCols > 0) {
+        desiredGridCols = diagCols;
+        useGridLayout = true;
+      }
+    }
+  }
+  
+  // Ajustar lógica de altura uniforme
+  let uniformHeight = null;
+  if (!isFlat && preCalculatedUniformHeight !== null) {
+    uniformHeight = preCalculatedUniformHeight;
+  }
+  
+  if (useGridLayout) {
+    // GRID LAYOUT: Organizar clusters en cuadrícula
+    const cols = Math.max(1, Math.min(desiredGridCols, clusterGroups.length));
+    const rows = Math.ceil(clusterGroups.length / cols);
+    
+    clusterGroups.forEach((cluster, index) => {
+      const col = index % cols;
+      const row = Math.floor(index / cols);
+      
+      let x = marginX + col * (cluster.width + spacingX) + cluster.width / 2;
+      let y = marginY + row * (cluster.height + spacingY) + cluster.height / 2;
+      
+      cluster.group.attr("transform", `translate(${x},${y})`);
+      
+      // Para diagramas planos, siempre usar altura original
+      if (isFlat) {
+        addClusterBackground(cluster, isFlat);
+      } else {
+        if (uniformHeight !== null) {
+          addClusterBackgroundWithUniformHeight(cluster, uniformHeight, isFlat);
+        } else {
+          addClusterBackground(cluster, isFlat);
+        }
+      }
+    });
+    
+    let layoutType;
+    if (isFlat) {
+      layoutType = 'flat list - original heights';
+    } else {
+      layoutType = uniformHeight !== null ? 'hierarchical - uniform height' : 'hierarchical - original heights';
+    }
+    
+  } else {
+    // HORIZONTAL LAYOUT: Todos los clusters en una fila (comportamiento original)
+    let currentX = marginX;
+    const centerY = window.innerHeight / 2;
+    
+    clusterGroups.forEach((cluster, index) => {
+      // Posicionar cluster en la fila horizontal
+      const x = currentX + cluster.width / 2;
+      const y = centerY;
+      
+      cluster.group.attr("transform", `translate(${x},${y})`);
+      
+      // Para diagramas planos, siempre usar altura original
+      if (isFlat) {
+        addClusterBackground(cluster, isFlat);
+      } else {
+        if (uniformHeight !== null) {
+          addClusterBackgroundWithUniformHeight(cluster, uniformHeight, isFlat);
+        } else {
+          addClusterBackground(cluster, isFlat);
+        }
+      }
+      
+      // Siguiente cluster empieza después del actual + gap
+      currentX += cluster.width + spacingX;
+    });
+    
+    let layoutType;
+    if (isFlat) {
+      layoutType = 'flat list - original heights';
+    } else {
+      layoutType = uniformHeight !== null ? 'hierarchical - uniform height' : 'hierarchical - original heights';
+    }
+
+    // Helper para reajustar posiciones basadas en rectángulos (solo para horizontal layout)
+    function adjustPositions() {
+      let currX = marginX;
+      clusterGroups.forEach(cluster => {
+        const rectNode = cluster.group.select('.cluster-rect').node();
+        if (rectNode) {
+          const bbox = rectNode.getBBox();
+          const rectWidth = Math.max(bbox.width, cluster.width);
+          const leftOffset = bbox.x;
+          const newX = currX - leftOffset;
+          cluster.group.attr('transform', `translate(${newX},${centerY})`);
+          currX += rectWidth + spacingX;
+        } else {
+          // Fallback
+          const rectWidth = cluster.width;
+          const newX = currX;
+          cluster.group.attr('transform', `translate(${newX},${centerY})`);
+          currX += rectWidth + spacingX;
+        }
+      });
+    }
+
+    // --- Estabilización de posiciones (solo para horizontal layout) ---
+    let prevWidths = [];
+    let adjustAttempts = 0;
+    const maxAttempts = 10;
+    const intervalId = setInterval(() => {
+      adjustAttempts += 1;
+      const currWidths = clusterGroups.map(c => {
+        const r = c.group.select('.cluster-rect').node();
+        const rw = r ? r.getBBox().width : 0;
+        return Math.max(rw, c.width);
+      });
+      // Comprobar si las anchuras han cambiado desde la última medición
+      const changed = prevWidths.length === 0 || currWidths.some((w, i) => Math.abs(w - prevWidths[i]) > 1);
+      if (changed) {
+        prevWidths = currWidths;
+        adjustPositions();
+      }
+      if (!changed || adjustAttempts >= maxAttempts) {
+        clearInterval(intervalId);
+      }
+    }, 200);
+
+    // Primera llamada inmediata (después de 0 ms) y dos llamadas extra para asegurar carga completa
+    setTimeout(() => {
+      adjustPositions();
+      setTimeout(() => {
+        adjustPositions();
+      }, 300);
+    }, 0);
+  }
+}
+
+// Función auxiliar para agregar fondo y título al cluster
+function addClusterBackground(cluster, isFlat = false) {
+  const bounds = cluster.group.node().getBBox();
+  const paddingX = cluster.paddingX || 80;
+  const paddingY = cluster.paddingY || 80;
+  const minX = bounds.x - paddingX;
+  const minY = bounds.y - paddingY - 30;
+  const width = bounds.width + 2 * paddingX;
+  const height = bounds.height + 2 * paddingY;
+  
+  // Fondo del cluster
+  cluster.group.insert("rect", ":first-child")
+    .attr("class", "cluster-rect")
+    .attr("x", minX)
+    .attr("y", minY)
+    .attr("width", width)
+    .attr("height", height)
+    .attr("rx", 18)
+    .attr("ry", 18)
+    .style("fill", "var(--cluster-bg, rgba(0,0,0,0.02))")
+    .style("stroke", "var(--cluster-stroke, #222)")
+    .style("stroke-width", 2)
+    .style("stroke-dasharray", "6,4");
+  
+  // Título del cluster - usar name para diagramas planos, id para jerárquicos
+  const clusterTitle = isFlat ? (cluster.name || cluster.id) : cluster.id;
+  cluster.group.append("text")
+    .attr("class", "cluster-title")
+    .attr("x", minX + 32)
+    .attr("y", minY + 40)
+    .attr("text-anchor", "start")
+    .style("font-size", "1.5em")
+    .style("font-weight", "bold")
+    .style("fill", "var(--cluster-title-color, #222)")
+    .text(clusterTitle);
+}
+
+// Función auxiliar para agregar fondo con altura uniforme
+function addClusterBackgroundWithUniformHeight(cluster, uniformHeight, isFlat = false) {
+  const bounds = cluster.group.node().getBBox();
+  const paddingX = cluster.paddingX || 80;
+  const paddingY = cluster.paddingY || 80;
+  const minX = bounds.x - paddingX;
+  const minY = bounds.y - paddingY - 30;
+  const width = bounds.width + 2 * paddingX;
+  
+  // Usar la altura uniforme tal cual (sin reducción adicional)
+  const height = uniformHeight;
+  
+  // Fondo del cluster con altura uniforme reducida
+  cluster.group.insert("rect", ":first-child")
+    .attr("class", "cluster-rect")
+    .attr("x", minX)
+    .attr("y", minY)
+    .attr("width", width)
+    .attr("height", height)
+    .attr("rx", 18)
+    .attr("ry", 18)
+    .style("fill", "var(--cluster-bg, rgba(0,0,0,0.02))")
+    .style("stroke", "var(--cluster-stroke, #222)")
+    .style("stroke-width", 2)
+    .style("stroke-dasharray", "6,4");
+  
+  // Título del cluster - usar name para diagramas planos, id para jerárquicos
+  const clusterTitle = isFlat ? (cluster.name || cluster.id) : cluster.id;
+  cluster.group.append("text")
+    .attr("class", "cluster-title")
+    .attr("x", minX + 32)
+    .attr("y", minY + 40)
+    .attr("text-anchor", "start")
+    .style("font-size", "1.5em")
+    .style("font-weight", "bold")
+    .style("fill", "var(--cluster-title-color, #222)")
+    .text(clusterTitle);
 }
 
 // Draw simplified trees
@@ -1013,17 +1315,13 @@ function drawTrees(trees) {
     };
     collectNodes(tree);
   });
-  console.log('[Keyboard Navigation] Stored', window.$xDiagrams.currentData.length, 'nodes for navigation');
-  
+    
   // Check layout type and choose appropriate rendering method
   if (isFlatList(trees)) {
-    console.log('[Layout] Detected flat list, using cluster grid layout');
     drawClusterGrid(trees, svg);
   } else if (shouldUseClusterGrid(trees)) {
-    console.log('[Layout] Detected multiple clusters, using cluster grid layout');
     drawClusterGrid(trees, svg);
   } else {
-    console.log('[Layout] Detected single hierarchical tree, using traditional tree layout');
   
   try {
     const g = d3.select(svg).append("g");
@@ -1102,12 +1400,22 @@ function drawTrees(trees) {
           .data(root.links())
           .enter().append("path")
           .attr("class", "link")
-          .attr("d", d => `
-            M ${d.source.x} ${d.source.y}
-            V ${(d.source.y + d.target.y) / 2}
-            H ${d.target.x}
-            V ${d.target.y}
-          `);
+          .attr("d", d => {
+            // Ajustar coordenadas para que los links se conecten al centro del rectángulo del nodo
+            const nodeOffsetX = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--node-bg-x')) || -42;
+            const nodeWidth = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--node-bg-width')) || 60;
+            const nodeCenterX = nodeOffsetX + (nodeWidth / 2);
+            
+            const sourceX = d.source.x + nodeCenterX;
+            const targetX = d.target.x + nodeCenterX;
+            
+            return `
+              M ${sourceX} ${d.source.y}
+              V ${(d.source.y + d.target.y) / 2}
+              H ${targetX}
+              V ${d.target.y}
+            `;
+          });
 
         // Render nodes
         const node = treeGroup.selectAll(".node")
@@ -1145,22 +1453,49 @@ function drawTrees(trees) {
           .attr("width", parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--node-bg-width')) || 60)
           .attr("height", parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--node-bg-height')) || 40);
 
-        // Node image
+        // Node image with enhanced loading
         node.append("image")
-          .attr("href", d => {
-            const baseUrl = d.data.img ? `img/${d.data.img}.svg` : "img/detail.svg";
-            // Add cache buster to image URLs
+          .attr("href", "img/transparent.svg") // No cache buster here
+          .attr("data-src", d => {
+            const url = resolveNodeImage(d);
             const cacheBuster = `?t=${Date.now()}`;
-            return baseUrl.includes('?') ? `${baseUrl}&_cb=${Date.now()}` : `${baseUrl}${cacheBuster}`;
+            return url.includes('?') ? `${url}&_cb=${Date.now()}` : `${url}${cacheBuster}`;
           })
           .attr("x", parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--image-x')))
           .attr("y", parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--image-y')))
-          .attr("class", "image-base image-filter")
+          .attr("class", "image-base")
           .attr("width", parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--image-width')))
           .attr("height", parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--image-height')))
+          .on("load", function() {
+            const element = d3.select(this);
+            const dataSrc = element.attr("data-src");
+            
+            if (dataSrc && element.attr("href") === "img/transparent.svg") {
+              // Cambiar a la imagen real
+              element.attr("href", dataSrc)
+                    .classed("loaded", true);
+              // Solo aplicar el filtro si es necesario
+              if (shouldApplyFilter(dataSrc)) {
+                element.classed("image-filter", true);
+              }
+            }
+          })
           .on("error", function() {
-            const fallbackUrl = `img/detail.svg?t=${Date.now()}`;
-            d3.select(this).attr("href", fallbackUrl);
+            const element = d3.select(this);
+            const currentSrc = element.attr("href");
+            const fileName = currentSrc.split('/').pop().split('?')[0];
+            
+            // Si la imagen actual no es el fallback, intentar con detail.svg
+            if (currentSrc !== "img/detail.svg") {
+              console.log(`[Image Load] Error loading ${fileName}, falling back to detail.svg`);
+              const fallbackUrl = `img/detail.svg?t=${Date.now()}`;
+              element.attr("href", fallbackUrl)
+                    .classed("loaded", true);
+            } else {
+              // Si el fallback también falla, ocultar la imagen
+              console.log(`[Image Load] Error loading fallback image, hiding element`);
+              element.style("display", "none");
+            }
           });
 
         // Node text
@@ -1169,10 +1504,23 @@ function drawTrees(trees) {
         // Node ID
         textGroup.append("text")
           .attr("class", "label-id")
-          .attr("x", parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--label-id-x')))
+          .attr("x", d => {
+            const baseX = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--label-id-x'));
+            // Si el nodo no tiene padre, centrarlo horizontalmente con el nodo
+            if (!d.parent) {
+              const nodeOffsetX = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--node-bg-x')) || -42;
+              const nodeWidth = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--node-bg-width')) || 60;
+              return nodeOffsetX + (nodeWidth / 2);
+            }
+            return baseX;
+          })
           .attr("y", parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--label-id-y')))
           .attr("dy", getComputedStyle(document.documentElement).getPropertyValue('--label-id-dy'))
-          .attr("text-anchor", getComputedStyle(document.documentElement).getPropertyValue('--label-id-anchor'))
+          .attr("text-anchor", d => {
+            const baseAnchor = getComputedStyle(document.documentElement).getPropertyValue('--label-id-anchor');
+            // Si el nodo no tiene padre, usar centrado automático
+            return d.parent ? baseAnchor : "middle";
+          })
           .style("font-size", getComputedStyle(document.documentElement).getPropertyValue('--label-id-font-size'))
           .style("fill", getComputedStyle(document.documentElement).getPropertyValue('--label-id-text-color'))
           .text(d => d.data.id);
@@ -1339,13 +1687,10 @@ function recalculateClusterSpacing(clusters, clusterSpacing) {
 
 // Apply simplified auto zoom
 function applyAutoZoom() {
-  console.log('[Zoom] Aplicando zoom automático');
-  
   const svg = d3.select("#main-diagram-svg");
   const g = svg.select("g");
   
   if (g.empty() || g.node().getBBox().width === 0) {
-    console.warn("Contenido no listo para zoom automático");
     return;
   }
 
@@ -1355,7 +1700,6 @@ function applyAutoZoom() {
   const svgHeight = svgElement ? svgElement.clientHeight || svgElement.offsetHeight : window.innerHeight;
 
   if (!bounds.width || !bounds.height) {
-    console.warn("Bounds inválidos para zoom automático");
     return;
   }
 
@@ -1403,10 +1747,6 @@ function applyAutoZoom() {
   const isSmallDiagram = nodeCount <= 4;
   const isSingleGroup = diagramGroupCount === 1;
   const isFlatListDiagram = !isSingleGroup && nodeCount === diagramGroupCount; // todos los clusters son nodos raíz sin hijos
-  console.log('[Zoom] ¿Lista plana?', isFlatListDiagram);
-  
-  console.log('[Zoom] Diagramas:', diagramGroupCount, 'Nodos:', nodeCount, '¿Grupo único?', isSingleGroup);
-  
   let scaleX = (svgWidth - 100) / totalBounds.width;
   let scaleY = (svgHeight - 100) / totalBounds.height;
   let scale = Math.min(scaleX, scaleY, 1);
@@ -1414,12 +1754,10 @@ function applyAutoZoom() {
   // Apply specific zoom based on diagram type
   if (isSingleGroup) {
     // For single cluster: zoom out to show entire cluster with aura
-          scale = Math.min(scale * 0.6, 0.6); // More aggressive zoom out to show aura
-    console.log('[Zoom] Aplicando zoom out para cluster único con aura. Scale:', scale);
-      } else {
-      // For multiple clusters: zoom out with factor 0.6
-          scale = Math.min(scale * 0.6, 0.6); // Zoom out for multiple clusters
-    console.log('[Zoom] Aplicando zoom out para múltiples clusters. Scale:', scale);
+    scale = Math.min(scale * 0.6, 0.6); // More aggressive zoom out to show aura
+  } else {
+    // For multiple clusters: zoom out with factor 0.6
+    scale = Math.min(scale * 0.6, 0.6); // Zoom out for multiple clusters
   }
   
   let translateX = svgCenterX - contentCenterX * scale;
@@ -1428,8 +1766,7 @@ function applyAutoZoom() {
   if (isSingleGroup) {
     // Perfect centering for single groups, without margin adjustments
     translateX = svgCenterX - contentCenterX * scale;
-    console.log('[Zoom] Centrado perfecto para grupo único. translateX:', translateX);
-      } else {
+        } else {
       // For multiple clusters: start from the left
     const firstCluster = diagramGroups.nodes()[0];
     if (firstCluster) {
@@ -1450,11 +1787,9 @@ function applyAutoZoom() {
       if (isFlatListDiagram) {
         const flatLeftMargin = parseFloat(zoomVarsLeft.getPropertyValue('--flatlist-left-margin')) || 20; // px
         translateX = flatLeftMargin - firstClusterLeftEdge * scale;
-        console.log('[Zoom] Margen izquierdo para lista plana:', flatLeftMargin, 'translateX:', translateX);
       } else {
         translateX = -150 - firstClusterLeftEdge * scale; // margen fijo para clusters jerárquicos
       }
-      console.log('[Zoom] Primer cluster desde la izquierda con margen aplicado. translateX:', translateX);
           } else {
         // Fallback to original logic
       const leftEdge = totalBounds.x * scale + translateX;
@@ -1487,8 +1822,6 @@ function applyAutoZoom() {
     .scale(scale);
 
   svg.call(zoom.transform, transform);
-  console.log('[Zoom] Zoom automático aplicado exitosamente');
-  
   // Preserve current theme after zoom
   setTimeout(async () => {
     if (window.preserveCurrentTheme) {
@@ -1504,10 +1837,8 @@ function ensureZoomBehavior() {
     svg.call(zoom);
     svg.style('pointer-events', 'auto');
     
-      // Store reference to current zoom for external access
-  window.$xDiagrams.currentZoom = zoom;
-  
-  console.log('[Zoom] Zoom behavior aplicado');
+    // Store reference to current zoom for external access
+    window.$xDiagrams.currentZoom = zoom;
   }
 }
 
@@ -1668,8 +1999,8 @@ function openSidePanel(nodeData) {
     const nodeName = dataToShow.name || dataToShow.Name || dataToShow.NAME || nodeData.name || 'Nodo sin nombre';
     // Get the type for thumbnail
     const nodeType = dataToShow.type || dataToShow.Type || dataToShow.TYPE || nodeData.type || 'detail';
-    // Create thumbnail HTML
-    const thumbnailHtml = `<img src="img/${nodeType}.svg" alt="${nodeType}" class="side-panel-title-thumbnail" onerror="this.src='img/detail.svg'">`;
+    // Create thumbnail HTML with enhanced loading
+    const thumbnailHtml = `<img src="img/${nodeType}.svg" alt="${nodeType}" class="side-panel-title-thumbnail" style="opacity: 0; transition: opacity 0.2s ease-in-out;" onload="this.style.opacity='1'" onerror="this.src='img/detail.svg'; this.style.opacity='1'">`;
 
     // Truncar el texto del título por ancho disponible antes del botón de cerrar
     function truncateSidePanelTitle(text, maxWidth, fontSize, fontWeight, fontFamily) {
@@ -1729,11 +2060,10 @@ function openSidePanel(nodeData) {
   
   // Re-initialize tooltips after content is generated
   setTimeout(() => {
-    console.log('[Side Panel] Reinicializando tooltips después de generar contenido...');
-    initializeCustomTooltips();
-  }, 100);
-  
-  sidePanel.classList.add('open');
+      initializeCustomTooltips();
+}, 100);
+
+sidePanel.classList.add('open');
   
   // Trigger onNodeClick hook
   triggerHook('onNodeClick', { 
@@ -1819,38 +2149,65 @@ function generateSidePanelContent(nodeData) {
   // Use original CSV data if available, otherwise fall back to processed data
   const dataToShow = nodeData.originalData || nodeData;
   
+  // Always show ID first (either from original data or generated automatically)
+  const nodeId = nodeData.id || dataToShow.id || '';
+  if (nodeId) {
+    html += `
+      <div class="side-panel-field">
+        <div class="side-panel-label">ID</div>
+        <div class="side-panel-value">${nodeId}</div>
+      </div>
+    `;
+  }
+  
   // Show all available fields from the original CSV data
   Object.keys(dataToShow).forEach(key => {
-    // Skip internal properties and name field (already shown in header)
+    // Skip internal properties, name field (already shown in header), and id field (already shown above)
     if (key === 'children' || key === 'parent' || key === 'originalData' || 
-        key.toLowerCase() === 'name') return;
+        key.toLowerCase() === 'name' || key.toLowerCase() === 'id') return;
     
     const value = dataToShow[key] || '';
-    const label = key; // Use the original column name from CSV
+    // Convert label to title case for professional appearance, with special handling for ID and URL
+    let label;
+    if (key.toLowerCase() === 'url') {
+      label = 'URL';
+    } else {
+      label = key
+        .replace(/([a-z])([A-Z])/g, '$1 $2') // Add space between lowercase and uppercase (camelCase)
+        .replace(/([A-Z])([A-Z][a-z])/g, '$1 $2') // Add space between acronym and word (e.g., "URLPath" -> "URL Path")
+        .replace(/[_-]/g, ' ') // Replace underscores and hyphens with spaces
+        .trim() // Remove leading/trailing spaces
+        .toLowerCase() // Convert to lowercase first
+        .replace(/\b\w/g, l => l.toUpperCase()); // Capitalize first letter of each word
+    }
+    const originalLabel = key; // Keep original for tooltip
     
     // Check if the value is a URL
     const isUrlValue = isUrl(value);
-    const displayValue = isUrlValue ? formatUrlForDisplay(value) : value;
     
-    // Add title attribute for tooltip if text is long
-    const labelTitle = label.length > 15 ? label : '';
-    const valueTitle = (value && value.length > 20) ? value : '';
+    // Add title attribute for tooltip if text is long (use original label for tooltip)
+    const labelTitle = originalLabel.length > 15 ? originalLabel : '';
     
-    // Debug: Log tooltip information
-    if (labelTitle || valueTitle) {
-      console.log(`[Tooltip Debug] Field: ${label}, Label title: ${labelTitle}, Value title: ${valueTitle}`);
+    // For URLs, show the full URL as clickable text, with tooltip if long
+    // For other values, use existing logic
+    let displayValue, valueTitle;
+    if (isUrlValue) {
+      displayValue = value; // Show full URL as text
+      valueTitle = value.length > 40 ? value : ''; // Tooltip if URL is long
+    } else {
+      displayValue = value;
+      valueTitle = (value && value.length > 20) ? value : '';
     }
     
-    // Always log for debugging
-    console.log(`[Side Panel] Field: "${label}" (${label.length} chars), Value: "${value}" (${value ? value.length : 0} chars)`);
+
     
     html += `
       <div class="side-panel-field">
         <div class="side-panel-label" ${labelTitle ? `data-tooltip="${labelTitle}"` : ''}>${label}</div>
         <div class="side-panel-value ${!value ? 'empty' : ''}" ${valueTitle ? `data-tooltip="${valueTitle}"` : ''}>
           ${isUrlValue ? 
-            `<a href="${displayValue}" target="_blank" rel="noreferrer" class="side-panel-url-link">Visit</a>` : 
-            value || '-'
+            `<a href="${value}" target="_blank" rel="noreferrer" class="side-panel-url-link">${displayValue}</a>` : 
+            displayValue || '-'
           }
         </div>
       </div>
@@ -2095,15 +2452,10 @@ window.$xDiagrams.themeState = {
 
 // Simple theme toggle function
 async function toggleTheme() {
-  console.log('[XTheme] Toggle de tema iniciado');
-  
   const state = window.$xDiagrams.themeState;
   const currentTheme = state.current;
   const isCurrentLight = isLightTheme(currentTheme);
   const newTheme = isCurrentLight ? state.darkTheme : state.lightTheme;
-  
-  console.log('[XTheme] Tema actual:', currentTheme, '(es claro:', isCurrentLight, ')');
-  console.log('[XTheme] Cambiando a:', newTheme);
   
   // Update state
   state.current = newTheme;
@@ -2114,28 +2466,18 @@ async function toggleTheme() {
   localStorage.setItem('selectedTheme', newTheme);
   localStorage.setItem('themeMode', isLightTheme(newTheme) ? 'light' : 'dark');
   
-  console.log('[XTheme] Tema guardado en localStorage:', storageKey, 'y global');
-  
   // Apply theme
   await setTheme(newTheme);
-  
-  // Verify the theme was saved correctly
-  const savedTheme = localStorage.getItem(storageKey);
-  console.log('[XTheme] Verificación - Tema guardado:', savedTheme);
   
   // Trigger hook
   triggerHook('onThemeChange', { 
     theme: newTheme, 
     timestamp: new Date().toISOString() 
   });
-  
-  console.log('[XTheme] Tema cambiado exitosamente a:', newTheme);
 }
 
 // Initialize theme system (SIMPLIFIED - NO INTERFERENCE WITH LOADER)
 async function initializeThemeSystem() {
-  console.log('[XTheme] Iniciando sistema de temas (solo toggle)...');
-  
   const config = getThemeConfiguration();
   const storageKey = getStorageKey();
   
@@ -2147,33 +2489,22 @@ async function initializeThemeSystem() {
   const savedTheme = localStorage.getItem(storageKey);
   const currentTheme = savedTheme || config.lightTheme;
   
-  console.log('[XTheme] Configuración:', config);
-  console.log('[XTheme] Tema actual:', currentTheme);
-  
   // Update state
   window.$xDiagrams.themeState.current = currentTheme;
-  
-  // Don't reapply theme - loader already did it
-  console.log('[XTheme] Tema ya aplicado por loader, solo configurando toggle');
   
   // Setup theme toggle
   setupThemeToggle();
   
   window.$xDiagrams.themeState.isInitialized = true;
-  console.log('[XTheme] Sistema de temas inicializado correctamente');
 }
 
 // Setup theme toggle button
 function setupThemeToggle() {
-  console.log('[XTheme] Configurando botón de tema...');
-  
   const themeToggle = document.getElementById('theme-toggle');
   if (!themeToggle) {
     console.warn('[XTheme] Botón de tema no encontrado');
     return;
   }
-  
-  console.log('[XTheme] Botón de tema encontrado, configurando...');
   
   // Remove existing listeners by cloning
   const newToggle = themeToggle.cloneNode(true);
@@ -2183,11 +2514,8 @@ function setupThemeToggle() {
   newToggle.addEventListener('click', async function(e) {
     e.preventDefault();
     e.stopPropagation();
-    console.log('[XTheme] Click en botón de tema detectado');
     await toggleTheme();
   });
-  
-  console.log('[XTheme] Botón de tema configurado correctamente');
 }
 
 // Function to force default light theme
@@ -2240,8 +2568,7 @@ window.$xDiagrams.keyboardNavigation = {
   // Initialize keyboard navigation
   init: function() {
     this.setupKeyboardListeners();
-    console.log('[Keyboard Navigation] System initialized');
-  },
+    },
   
   // Setup keyboard event listeners
   setupKeyboardListeners: function() {
@@ -2297,21 +2624,18 @@ window.$xDiagrams.keyboardNavigation = {
   // Update the list of all nodes
   updateNodesList: function() {
     this.allNodes = Array.from(document.querySelectorAll('.node'));
-    console.log('[Keyboard Navigation] Updated nodes list:', this.allNodes.length, 'nodes');
   },
   
   // Enable keyboard navigation
   enable: function() {
     this.isEnabled = true;
     this.updateNodesList();
-    console.log('[Keyboard Navigation] Enabled');
   },
   
   // Disable keyboard navigation
   disable: function() {
     this.isEnabled = false;
     this.currentNodeIndex = -1;
-    console.log('[Keyboard Navigation] Disabled');
   },
   
   // Navigate to parent node
@@ -2706,7 +3030,6 @@ window.$xDiagrams.keyboardNavigation = {
       // Scroll node into view
       this.scrollNodeIntoView(node);
       
-      console.log('[Keyboard Navigation] Selected node:', index, nodeData?.name || 'Unknown');
     }
   },
   
@@ -2717,7 +3040,6 @@ window.$xDiagrams.keyboardNavigation = {
     });
     this.currentNodeIndex = -1;
     closeSidePanel();
-    console.log('[Keyboard Navigation] Selection cleared');
   },
   
   // Get node data from DOM element
@@ -2781,7 +3103,6 @@ window.$xDiagrams.keyboardNavigation = {
   // Open the link of the currently selected node in a new tab
   openCurrentNodeLink: function() {
     if (this.currentNodeIndex === -1 || this.allNodes.length === 0) {
-      console.log('[Keyboard Navigation] No node selected to open link');
       return;
     }
     
@@ -2789,7 +3110,6 @@ window.$xDiagrams.keyboardNavigation = {
     const nodeData = this.getNodeData(currentNode);
     
     if (!nodeData) {
-      console.log('[Keyboard Navigation] No data found for selected node');
       return;
     }
     
@@ -2797,20 +3117,16 @@ window.$xDiagrams.keyboardNavigation = {
     const url = nodeData.url;
     
     if (!url) {
-      console.log('[Keyboard Navigation] No URL found for node:', nodeData.name);
       return;
     }
     
     // Validate URL format
     if (!isUrl(url)) {
-      console.log('[Keyboard Navigation] Invalid URL format:', url);
       return;
     }
     
     // Open URL in new tab with security attributes
-    if (openUrlSecurely(url)) {
-      console.log('[Keyboard Navigation] Opened link for node:', nodeData.name, 'URL:', url);
-    } else {
+    if (!openUrlSecurely(url)) {
       console.error('[Keyboard Navigation] Failed to open link for node:', nodeData.name);
     }
   },
@@ -3017,7 +3333,8 @@ window.$xDiagrams.renderDiagramButtons = function() {
     // Add Google Sheets button if current diagram is from Google Sheets AND has edit URL
     let sheetsButton = null;
     const currentDiagram = diagrams[window.$xDiagrams.currentDiagramIdx];
-    if (currentDiagram && currentDiagram.file && currentDiagram.file.includes('docs.google.com/spreadsheets') && currentDiagram.edit) {
+    const diagramUrl = currentDiagram?.url || currentDiagram?.file;
+    if (currentDiagram && diagramUrl && diagramUrl.includes('docs.google.com/spreadsheets') && currentDiagram.edit) {
         // Create Google Sheets button
         sheetsButton = document.createElement('button');
         sheetsButton.className = 'sheets-btn';
@@ -3045,59 +3362,73 @@ window.$xDiagrams.renderDiagramButtons = function() {
         dropdown.appendChild(sheetsButton);
     }
     
-    // Add cache refresh button SOLO para diagramas que se cargan desde una API REST
-    if (currentDiagram && (currentDiagram.url || currentDiagram.file) && typeof isRestApiEndpoint === 'function' && isRestApiEndpoint(currentDiagram.url || currentDiagram.file)) {
-        const cacheButton = document.createElement('button');
-        cacheButton.className = 'cache-refresh-btn';
-        cacheButton.innerHTML = `
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M17.65,6.35C16.2,4.9 14.21,4 12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20C15.73,20 18.84,17.45 19.73,14H17.65C16.83,16.33 14.61,18 12,18A6,6 0 0,1 6,12A6,6 0 0,1 12,6C13.66,6 15.14,6.69 16.22,7.78L13,11H20V4L17.65,6.35Z"/>
-            </svg>
-        `;
-        cacheButton.title = 'Refrescar caché y recargar';
-        
-        // Si NO hay botón de Sheets, agrego clase 'solo' para ajustar posición
-        if (!sheetsButton) {
-            cacheButton.classList.add('solo');
+    // Add cache refresh button SOLO para diagramas que se cargan desde una API REST REMOTA (no local)
+    if (currentDiagram && (currentDiagram.url || currentDiagram.file) && typeof isRestApiEndpoint === 'function') {
+        const diagramUrl = currentDiagram.url || currentDiagram.file;
+        // Detectar si la URL pertenece al mismo origen (local) o es relativa → tratar como local
+        let isLocalResource = false;
+        try {
+            const parsed = new URL(diagramUrl, window.location.href);
+            isLocalResource = parsed.origin === window.location.origin;
+        } catch (e) {
+            // URL relativa → local
+            isLocalResource = true;
         }
-        
-        cacheButton.addEventListener('click', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
+
+        // Sólo mostrar el botón si ES endpoint REST y NO es recurso local
+        if (isRestApiEndpoint(diagramUrl) && !isLocalResource) {
+            const cacheButton = document.createElement('button');
+            cacheButton.className = 'cache-refresh-btn';
+            cacheButton.innerHTML = `
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M17.65,6.35C16.2,4.9 14.21,4 12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20C15.73,20 18.84,17.45 19.73,14H17.65C16.83,16.33 14.61,18 12,18A6,6 0 0,1 6,12A6,6 0 0,1 12,6C13.66,6 15.14,6.69 16.22,7.78L13,11H20V4L17.65,6.35Z"/>
+                </svg>
+            `;
+            cacheButton.title = 'Refrescar caché y recargar';
             
-            // Add loading animation
-            cacheButton.classList.add('loading');
-            
-            // Get the URL to clear cache for
-            const diagramUrl = currentDiagram.url || currentDiagram.file;
-            
-            // Clear cache for this specific URL
-            if (window.xDiagramsCache && window.xDiagramsCache.clear) {
-                window.xDiagramsCache.clear(diagramUrl);
-                console.log('🗑️ Cache cleared for:', diagramUrl);
+            // Si NO hay botón de Sheets, agrego clase 'solo' para ajustar posición
+            if (!sheetsButton) {
+                cacheButton.classList.add('solo');
             }
             
-            // Also clear legacy cache
-            if (window.$xDiagrams.clearCache) {
-                window.$xDiagrams.clearCache();
-            }
-            
-            // Reload the current diagram after a short delay
-            setTimeout(() => {
-                window.$xDiagrams.loadDiagram(currentDiagram);
+            cacheButton.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
                 
-                // Remove loading animation after a bit more delay
+                // Add loading animation
+                cacheButton.classList.add('loading');
+                
+                // Get the URL to clear cache for
+                const diagramUrl = currentDiagram.url || currentDiagram.file;
+                
+                // Clear cache for this specific URL
+                if (window.xDiagramsCache && window.xDiagramsCache.clear) {
+                    window.xDiagramsCache.clear(diagramUrl);
+                    console.log('Cache cleared for:', diagramUrl);
+                }
+                
+                // Also clear legacy cache
+                if (window.$xDiagrams.clearCache) {
+                    window.$xDiagrams.clearCache();
+                }
+                
+                // Reload the current diagram after a short delay
                 setTimeout(() => {
-                    cacheButton.classList.remove('loading');
-                }, 1000);
-            }, 100);
+                    window.$xDiagrams.loadDiagram(currentDiagram);
+                    
+                    // Remove loading animation after a bit more delay
+                    setTimeout(() => {
+                        cacheButton.classList.remove('loading');
+                    }, 1000);
+                }, 100);
+                
+                // Close dropdown
+                dropdown.classList.remove('open');
+            });
             
-            // Close dropdown
-            dropdown.classList.remove('open');
-        });
-        
-        // Insert button after the dropdown content (before sheets button if it exists)
-        dropdown.appendChild(cacheButton);
+            // Insert button after the dropdown content (before sheets button if it exists)
+            dropdown.appendChild(cacheButton);
+        }
     }
     
     // Apply current theme colors to the switcher buttons
@@ -3158,15 +3489,15 @@ window.$xDiagrams.loadDiagram = function(input) {
     let toInit = diagramToLoad;
     if (diagramToLoad.data) {
         toInit = diagramToLoad;
-        console.log('🔍 Pasando objeto con data a initDiagram');
+        console.log('Pasando objeto con data a initDiagram');
     } else if (diagramToLoad.url) {
         toInit = diagramToLoad.url;
-        console.log('🔍 Pasando URL a initDiagram:', diagramToLoad.url);
+        console.log('Pasando URL a initDiagram:', diagramToLoad.url);
     } else if (diagramToLoad.file) {
         toInit = diagramToLoad.file;
-        console.log('🔍 Pasando file a initDiagram:', diagramToLoad.file);
+        console.log('Pasando file a initDiagram:', diagramToLoad.file);
     } else {
-        console.log('⚠️ No se encontró data, url o file en el diagrama:', diagramToLoad);
+        console.log('No se encontró data, url o file en el diagrama:', diagramToLoad);
     }
 
     // Limpieza visual
@@ -3202,7 +3533,7 @@ window.$xDiagrams.loadDiagram = function(input) {
                 }
                 window.$xDiagrams.isLoading = false;
             }, 100);
-        });
+        }, 0, diagramToLoad);
         setTimeout(() => {
             if (window.$xDiagrams.isLoading) {
                 if (loading) loading.style.display = 'none';
@@ -3362,6 +3693,11 @@ function renderSwDiagramBase() {
                 <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" fill="currentColor"></path>
               </svg>
             </button>
+            <button id="data-refresh" class="theme-toggle data-refresh-btn" title="Refrescar datos">
+              <svg class="theme-icon refresh-icon" width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M17.65,6.35C16.2,4.9 14.21,4 12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20C15.73,20 18.84,17.45 19.73,14H17.65C16.83,16.33 14.61,18 12,18A6,6 0 0,1 6,12A6,6 0 0,1 12,6C13.66,6 15.14,6.69 16.22,7.78L13,11H20V4L17.65,6.35Z"></path>
+              </svg>
+            </button>
           </div>
         </div>
       </div>
@@ -3390,12 +3726,13 @@ function renderSwDiagramBase() {
       ${dragDropElements}
     `;
     document.body.appendChild(container);
+    // Configuro el botón de refresco global
+    if (typeof setupDataRefreshButton === 'function') {
+      setupDataRefreshButton();
+    }
   }
   // Initialize theme system after base structure is rendered
-  console.log('[Base Render] Inicializando sistema de temas...');
   initializeThemeSystem().then(() => {
-    console.log('[Base Render] Sistema de temas inicializado correctamente');
-    
     // Check theme state after initialization
     setTimeout(() => {
       checkThemeOnLoad();
@@ -3417,6 +3754,9 @@ function renderSwDiagramBase() {
 
 // Call base rendering function when library loads
 function initializeWhenReady() {
+  // Preload common images to prevent Chrome's default image flash
+  preloadCommonImages();
+  
   // Wait for diagrams to be defined
   const diagrams = getDiagrams();
   if (diagrams && Array.isArray(diagrams)) {
@@ -3429,10 +3769,9 @@ function initializeWhenReady() {
     
     // Initialize drag & drop if enabled
     if (isOptionEnabled('dragAndDrop')) {
-      console.log('[Initialize] Inicializando drag & drop...');
-      setTimeout(() => {
-        initDragAndDropDelayed();
-      }, 200);
+        setTimeout(() => {
+    initDragAndDropDelayed();
+  }, 200);
     }
   } else {
     // Check again in 100ms
@@ -3475,7 +3814,7 @@ window.xDiagramsCache = {
   // Clear specific cache entry
   clear: function(url) {
     CacheManager.clear(url);
-    console.log('🗑️ Cache cleared for:', url);
+    console.log('Cache cleared for:', url);
   },
   
   // Clear all cache
@@ -3511,7 +3850,7 @@ window.xDiagramsCache = {
   // Force refresh (clear cache and reload)
   refresh: function(url) {
     CacheManager.clear(url);
-    console.log('🔄 Cache cleared, next load will fetch fresh data for:', url);
+    console.log('Cache cleared, next load will fetch fresh data for:', url);
   }
 };
 
@@ -3552,96 +3891,13 @@ window.reloadDiagramSystem = function() {
     }
 };
 
-// Debug function to check theme state
-window.debugThemeState = function() {
-  console.log('[XTheme Debug] === ESTADO ACTUAL DEL TEMA ===');
-  const state = window.$xDiagrams.themeState;
-  const storageKey = getStorageKey();
-  const storedTheme = localStorage.getItem(storageKey);
-  const globalTheme = localStorage.getItem('selectedTheme');
-  const themeMode = localStorage.getItem('themeMode');
-  const bodyClasses = document.body.className;
-  const config = getThemeConfiguration();
-  
-  console.log('[XTheme Debug] Estado global:', state);
-  console.log('[XTheme Debug] Clave de almacenamiento:', storageKey);
-  console.log('[XTheme Debug] Tema en localStorage (específico):', storedTheme);
-  console.log('[XTheme Debug] Tema en localStorage (global):', globalTheme);
-  console.log('[XTheme Debug] Modo de tema:', themeMode);
-  console.log('[XTheme Debug] Clases del body:', bodyClasses);
-  console.log('[XTheme Debug] Configuración:', config);
-  
-  // Check if theme is properly applied
-  const expectedClass = storedTheme ? `theme-${storedTheme}` : 'theme-snow';
-  const isThemeApplied = bodyClasses.includes(expectedClass);
-  console.log('[XTheme Debug] Tema aplicado correctamente:', isThemeApplied, '(esperado:', expectedClass, ')');
-  
-  // Check for inconsistencies
-  if (storedTheme && globalTheme && storedTheme !== globalTheme) {
-    console.log('[XTheme Debug] ⚠️ INCONSISTENCIA: Tema específico y global son diferentes');
-  }
-  
-  // Check all localStorage items for debugging
-  console.log('[XTheme Debug] Todos los items en localStorage:');
-  for (let i = 0; i < localStorage.length; i++) {
-    const key = localStorage.key(i);
-    const value = localStorage.getItem(key);
-    console.log(`[XTheme Debug] ${key}: ${value}`);
-  }
-  
-  console.log('[XTheme Debug] === FIN DEL ESTADO ===');
-};
 
-// Test function to manually trigger theme toggle
-window.testXThemeToggle = async function() {
-  console.log('[XTheme Test] Probando toggle de tema manualmente...');
-  if (window.$xDiagrams.themeState && window.$xDiagrams.themeState.isInitialized) {
-    await toggleTheme();
-    console.log('[XTheme Test] Toggle completado');
-  } else {
-    console.warn('[XTheme Test] Sistema de temas no inicializado');
-  }
-};
 
-// Function to clear theme localStorage and reset
-window.clearThemeStorage = function() {
-  console.log('[XTheme Clear] Limpiando localStorage de temas...');
-  
-  // Clear all theme-related keys
-  const keysToRemove = [];
-  for (let i = 0; i < localStorage.length; i++) {
-    const key = localStorage.key(i);
-    if (key && (key.startsWith('selectedTheme_') || 
-                key.startsWith('themeSystemInitialized_') ||
-                key === 'selectedTheme' ||
-                key === 'theme' ||
-                key === 'themeMode')) {
-      keysToRemove.push(key);
-    }
-  }
-  
-  keysToRemove.forEach(key => {
-    localStorage.removeItem(key);
-    console.log('[XTheme Clear] Removido:', key);
-  });
-  
-  console.log('[XTheme Clear] localStorage limpiado. Recarga la página para probar.');
-};
 
-// Function to clear only global theme preferences
-window.clearGlobalThemePreferences = function() {
-  console.log('[XTheme Clear] Limpiando solo preferencias globales...');
-  
-  const globalKeys = ['selectedTheme', 'theme', 'themeMode'];
-  globalKeys.forEach(key => {
-    if (localStorage.getItem(key)) {
-      localStorage.removeItem(key);
-      console.log('[XTheme Clear] Removida preferencia global:', key);
-    }
-  });
-  
-  console.log('[XTheme Clear] Preferencias globales limpiadas. Cada archivo mantendrá su tema específico.');
-};
+
+
+
+
 
 // Function to set current file theme preference
 window.setCurrentFileTheme = function(theme) {
@@ -3731,99 +3987,23 @@ window.checkThemeOnLoad = function() {
   console.log('[XTheme Load Check] Es oscuro aplicado:', isDarkApplied);
   
   if (shouldBeDark && !isDarkApplied) {
-    console.log('[XTheme Load Check] ⚠️ PROBLEMA: Debería ser oscuro pero no está aplicado');
+    console.log('[XTheme Load Check] PROBLEMA: Debería ser oscuro pero no está aplicado');
     forceDarkTheme();
   } else if (!shouldBeDark && isDarkApplied) {
-    console.log('[XTheme Load Check] ⚠️ PROBLEMA: No debería ser oscuro pero está aplicado');
+    console.log('[XTheme Load Check] PROBLEMA: No debería ser oscuro pero está aplicado');
   } else {
-    console.log('[XTheme Load Check] ✅ Estado correcto');
+    console.log('[XTheme Load Check] Estado correcto');
   }
   
   console.log('[XTheme Load Check] === FIN DE VERIFICACIÓN ===');
 };
 
 // Function to check if theme toggle button exists
-window.checkThemeToggleButton = function() {
-  console.log('[XTheme Check] Verificando botón de tema...');
-  
-  const themeToggle = document.getElementById('theme-toggle');
-  if (themeToggle) {
-    console.log('[XTheme Check] ✅ Botón de tema encontrado:', themeToggle);
-    console.log('[XTheme Check] Clases del botón:', themeToggle.className);
-    console.log('[XTheme Check] HTML del botón:', themeToggle.outerHTML);
-    
-    // Check if it has event listeners
-    const clone = themeToggle.cloneNode(true);
-    console.log('[XTheme Check] Botón clonado para verificar listeners');
-    
-    return true;
-  } else {
-    console.log('[XTheme Check] ❌ Botón de tema NO encontrado');
-    console.log('[XTheme Check] Elementos con ID theme-toggle:', document.querySelectorAll('#theme-toggle'));
-    console.log('[XTheme Check] Elementos con clase theme-toggle:', document.querySelectorAll('.theme-toggle'));
-    return false;
-  }
-};
 
-// Function to check URL parameters
-window.checkURLParameters = function() {
-  console.log('[URL Debug] === PARÁMETROS DE URL ===');
-  console.log('[URL Debug] URL actual:', window.location.href);
-  console.log('[URL Debug] Search params:', window.location.search);
-  
-  const urlParams = new URLSearchParams(window.location.search);
-  console.log('[URL Debug] Parámetros encontrados:');
-  
-  for (const [key, value] of urlParams.entries()) {
-    console.log(`[URL Debug] ${key}: ${value}`);
-  }
-  
-  // Check if there are any unexpected parameters
-  const expectedParams = ['d'];
-  const unexpectedParams = [];
-  
-  for (const [key, value] of urlParams.entries()) {
-    if (!expectedParams.includes(key)) {
-      unexpectedParams.push({ key, value });
-    }
-  }
-  
-  if (unexpectedParams.length > 0) {
-    console.log('[URL Debug] ⚠️ Parámetros inesperados encontrados:', unexpectedParams);
-  } else {
-    console.log('[URL Debug] ✅ Solo parámetros esperados encontrados');
-  }
-  
-  console.log('[URL Debug] === FIN DE PARÁMETROS ===');
-};
 
-// Function to clean unexpected URL parameters
-window.cleanURLParameters = function() {
-  console.log('[URL Clean] Limpiando parámetros inesperados de la URL...');
-  
-  const url = new URL(window.location);
-  const urlParams = new URLSearchParams(url.search);
-  const expectedParams = ['d'];
-  let cleaned = false;
-  
-  // Remove unexpected parameters
-  for (const [key, value] of urlParams.entries()) {
-    if (!expectedParams.includes(key)) {
-      urlParams.delete(key);
-      console.log(`[URL Clean] Removido parámetro: ${key}=${value}`);
-      cleaned = true;
-    }
-  }
-  
-  if (cleaned) {
-    // Update URL without the unexpected parameters
-    url.search = urlParams.toString();
-    window.history.replaceState({}, '', url);
-    console.log('[URL Clean] URL limpiada:', window.location.href);
-  } else {
-    console.log('[URL Clean] No se encontraron parámetros inesperados');
-  }
-};
+
+
+
 
 // Create keyboard navigation instructions panel
 function createKeyboardInstructionsPanel() {
@@ -3836,7 +4016,7 @@ function createKeyboardInstructionsPanel() {
   const instructionsPanel = document.createElement('div');
   instructionsPanel.className = 'keyboard-instructions';
   instructionsPanel.innerHTML = `
-    <h3>⌨️ Navegación por teclado</h3>
+    <h3>Navegación por teclado</h3>
     <div class="instructions-grid">
       <span class="key">↑</span>
       <span class="description">Nodo padre (circular)</span>
@@ -3915,15 +4095,13 @@ window.tryDiagramFallbacks = function(originalFile, onComplete, retryCount = 0) 
   console.log(`[Fallback] Trying fallback file ${retryCount + 1}:`, fallbackFile);
   
   // Try the fallback file with error handling
-  window.initDiagram(fallbackFile, onComplete, 0); // Reset retry count for fallback
+  window.initDiagram(fallbackFile, onComplete, 0, diagram); // Reset retry count for fallback
   
   return true;
 };
 
 // Custom tooltip system
 function initializeCustomTooltips() {
-  console.log('[Tooltip System] Inicializando sistema de tooltips personalizados...');
-  
   // Remove existing tooltip if any
   const existingTooltip = document.getElementById('custom-tooltip');
   if (existingTooltip) {
@@ -3951,7 +4129,6 @@ function initializeCustomTooltips() {
     transition: opacity 0.2s ease;
   `;
   document.body.appendChild(tooltip);
-  console.log('[Tooltip System] Elemento tooltip creado y agregado al DOM');
   
   // Add event listeners for tooltip elements
   document.addEventListener('mouseover', function(e) {
@@ -4082,14 +4259,7 @@ window.showToast = function(message, type = 'success', duration = 4200) {
   }, duration);
 };
 
-// Reemplazar alert en carga múltiple de archivos
-// Busca y reemplaza en la función de feedback de carga múltiple:
-// alert(msg) => showToast(msg, tipo)
-// Determina tipo:
-// - Si todos exitosos: 'success'
-// - Si todos fallaron: 'error'
-// - Si mixto: 'mixed'
-// ... código posterior ...
+
 
 // Función para verificar si un diagrama ya está cargado
 window.isDiagramDuplicate = function(diagram) {
@@ -4152,13 +4322,10 @@ window.simpleHash = function(str) {
 // ============================================================================
 
 // Detect data source type and load accordingly
-function detectAndLoadDataSource(source, onComplete, retryCount = 0) {
-  console.log("🔍 Detectando tipo de fuente de datos:", source);
-  
+function detectAndLoadDataSource(source, onComplete, retryCount = 0, diagramConfig = null) {
   // Case 1: Object with data (already processed)
   if (source && typeof source === 'object' && source.data) {
-            console.log("Fuente detectada: Datos pre-procesados");
-    return loadFromObject(source, onComplete);
+    return loadFromObject(source, onComplete, diagramConfig);
   }
   
   // Case 2: String URL - detect type
@@ -4167,23 +4334,17 @@ function detectAndLoadDataSource(source, onComplete, retryCount = 0) {
     
     // Check if it's a REST API endpoint
     if (isRestApiEndpoint(url)) {
-      console.log("🌐 Fuente detectada: API REST");
-      return loadFromRestApi(url, onComplete, retryCount);
+      return loadFromRestApi(url, onComplete, retryCount, diagramConfig);
     }
     
     // Check if it's a CSV URL
     if (isCsvUrl(url)) {
-      console.log("📄 Fuente detectada: URL CSV");
-      return loadFromCsvUrl(url, onComplete, retryCount);
+      return loadFromCsvUrl(url, onComplete, retryCount, diagramConfig);
     }
     
     // Default: treat as CSV URL
-    console.log("📄 Fuente detectada: URL (tratada como CSV)");
-    return loadFromCsvUrl(url, onComplete, retryCount);
+    return loadFromCsvUrl(url, onComplete, retryCount, diagramConfig);
   }
-  
-  // Case 3: Invalid source
-  console.log("❌ Fuente de datos inválida");
   showDiagramNotFound();
   if (onComplete && typeof onComplete === 'function') {
     onComplete();
@@ -4204,16 +4365,7 @@ function isRestApiEndpoint(url) {
     /notion\.so/i
   ];
   
-  const isRest = restPatterns.some(pattern => pattern.test(url));
-  console.log('🔍 [Cache] Checking if URL is REST API:', url, '→', isRest);
-  
-  // Debug: show which pattern matched
-  if (isRest) {
-    const matchedPattern = restPatterns.find(pattern => pattern.test(url));
-    console.log('🔍 [Cache] Matched pattern:', matchedPattern);
-  }
-  
-  return isRest;
+  return restPatterns.some(pattern => pattern.test(url));
 }
 
 // Check if URL is a CSV file
@@ -4224,13 +4376,13 @@ function isCsvUrl(url) {
 }
 
 // Load data from REST API (now uses intelligent caching)
-function loadFromRestApi(apiUrl, onComplete, retryCount = 0) {
+function loadFromRestApi(apiUrl, onComplete, retryCount = 0, diagramConfig = null) {
   // Use the enhanced version with caching
-  loadFromRestApiWithCache(apiUrl, onComplete, retryCount);
+  loadFromRestApiWithCache(apiUrl, onComplete, retryCount, diagramConfig);
 }
 
 // Load data from CSV URL (existing functionality)
-function loadFromCsvUrl(csvUrl, onComplete, retryCount = 0) {
+function loadFromCsvUrl(csvUrl, onComplete, retryCount = 0, diagramConfig = null) {
   console.log("📄 Cargando desde URL CSV:", csvUrl);
   
   const loadingElement = document.querySelector("#loading");
@@ -4252,7 +4404,7 @@ function loadFromCsvUrl(csvUrl, onComplete, retryCount = 0) {
       console.log("CSV cargado exitosamente:", results.data.length, "filas");
       
       try {
-        const trees = buildHierarchies(results.data);
+        const trees = buildHierarchies(results.data, diagramConfig);
         drawTrees(trees);
         
         // Create side panel only if enabled
@@ -4305,7 +4457,7 @@ function loadFromCsvUrl(csvUrl, onComplete, retryCount = 0) {
       if (isCorsError && retryCount < 2) {
         console.log(`[Retry] CORS error detected, retrying in 2 seconds... (attempt ${retryCount + 1})`);
         setTimeout(() => {
-          loadFromCsvUrl(csvUrl, onComplete, retryCount + 1);
+          loadFromCsvUrl(csvUrl, onComplete, retryCount + 1, diagramConfig);
         }, 2000);
         return;
       }
@@ -4354,7 +4506,7 @@ function loadFromCsvUrl(csvUrl, onComplete, retryCount = 0) {
 }
 
 // Load data from object (existing functionality)
-function loadFromObject(diagramObject, onComplete) {
+function loadFromObject(diagramObject, onComplete, diagramConfig = null) {
           console.log("Cargando desde objeto:", diagramObject.name);
   
   const loadingElement = document.querySelector("#loading");
@@ -4375,7 +4527,7 @@ function loadFromObject(diagramObject, onComplete) {
       return;
     }
     
-    const trees = buildHierarchies(diagramObject.data);
+    const trees = buildHierarchies(diagramObject.data, diagramConfig);
     drawTrees(trees);
     
     // Create side panel only if enabled
@@ -4419,7 +4571,7 @@ function loadFromObject(diagramObject, onComplete) {
 
 // Convert JSON response to CSV-like format
 function convertJsonToCsvFormat(jsonData) {
-  console.log("🔄 Convirtiendo JSON a formato CSV:", jsonData);
+  console.log("Convirtiendo JSON a formato CSV:", jsonData);
   
   // Handle different JSON response formats
   let dataArray = [];
@@ -4441,11 +4593,11 @@ function convertJsonToCsvFormat(jsonData) {
     dataArray = [jsonData];
   }
   else {
-    console.warn("⚠️ Formato JSON no reconocido:", jsonData);
+    console.warn("Formato JSON no reconocido:", jsonData);
     return [];
   }
   
-  console.log("✅ Datos convertidos:", dataArray.length, "registros");
+  console.log("Datos convertidos:", dataArray.length, "registros");
   return dataArray;
 }
 
@@ -4510,7 +4662,6 @@ const CacheManager = {
       hash = hash & hash; // Convert to 32-bit integer
     }
     const key = `xdiagrams_cache_${Math.abs(hash)}`;
-    console.log('🔑 [Cache] Generated key for URL:', url, '→', key);
     return key;
   },
 
@@ -4518,12 +4669,9 @@ const CacheManager = {
   get: function(url) {
     try {
       const key = this.getCacheKey(url);
-      console.log('🔍 [Cache] Looking for key:', key);
       const cached = localStorage.getItem(key);
-      console.log('🔍 [Cache] Raw cached data:', cached ? 'EXISTS' : 'NULL');
       
       if (!cached) {
-        console.log('📦 [Cache] No cached data found for:', url);
         return null;
       }
 
@@ -4531,7 +4679,6 @@ const CacheManager = {
       
       // Check if cache is expired
       if (data.expires && Date.now() > data.expires) {
-        console.log('📦 [Cache] Cache expired for:', url);
         localStorage.removeItem(key);
         return null;
       }
@@ -4539,12 +4686,10 @@ const CacheManager = {
       // Check cache version
       const config = getCacheConfig();
       if (data.version !== config.version) {
-        console.log('📦 [Cache] Cache version mismatch, clearing:', url);
         localStorage.removeItem(key);
         return null;
       }
 
-      console.log('📦 [Cache] Using cached data for:', url);
       return data.data;
     } catch (error) {
       console.error('📦 [Cache] Error reading cache:', error);
@@ -4567,12 +4712,10 @@ const CacheManager = {
 
       // Check cache size before storing
       if (this.getCacheSize() > config.maxSize) {
-        console.log('📦 [Cache] Cache size limit reached, cleaning old entries');
         this.cleanup();
       }
 
       localStorage.setItem(key, JSON.stringify(cacheData));
-      console.log('📦 [Cache] Data cached for:', url);
       
       // Update cache statistics
       this.updateStats();
@@ -4645,32 +4788,31 @@ const CacheManager = {
       const config = getCacheConfig();
       const maxEntries = Math.floor(config.maxSize * 2); // Rough estimate
       if (cacheEntries.length > maxEntries) {
-        const toRemove = cacheEntries.slice(0, cacheEntries.length - maxEntries);
-        toRemove.forEach(entry => {
-          localStorage.removeItem(entry.key);
-        });
-        console.log('📦 [Cache] Cleaned up', toRemove.length, 'old entries');
-      }
-    } catch (error) {
-      console.error('📦 [Cache] Error during cleanup:', error);
+              const toRemove = cacheEntries.slice(0, cacheEntries.length - maxEntries);
+      toRemove.forEach(entry => {
+        localStorage.removeItem(entry.key);
+      });
     }
-  },
+  } catch (error) {
+    console.error('📦 [Cache] Error during cleanup:', error);
+  }
+},
 
-  // Update cache statistics
-  updateStats: function() {
-    try {
-      const keys = Object.keys(localStorage);
-      const cacheKeys = keys.filter(key => key.startsWith('xdiagrams_cache_'));
-      
-      const stats = {
-        entries: cacheKeys.length,
-        size: this.getCacheSize(),
-        timestamp: Date.now()
-      };
+// Update cache statistics
+updateStats: function() {
+  try {
+    const keys = Object.keys(localStorage);
+    const cacheKeys = keys.filter(key => key.startsWith('xdiagrams_cache_'));
+    
+    const stats = {
+      entries: cacheKeys.length,
+      size: this.getCacheSize(),
+      timestamp: Date.now()
+    };
 
-      localStorage.setItem('xdiagrams_cache_stats', JSON.stringify(stats));
-    } catch (error) {
-      console.error('📦 [Cache] Error updating stats:', error);
+    localStorage.setItem('xdiagrams_cache_stats', JSON.stringify(stats));
+  } catch (error) {
+    console.error('Error updating cache stats:', error);
     }
   },
 
@@ -4687,88 +4829,26 @@ const CacheManager = {
 
   // Check if URL should be cached
   shouldCache: function(url) {
-    // Only cache REST API URLs
-    const shouldCache = isRestApiEndpoint(url);
-    console.log('🔍 [Cache] shouldCache check for:', url, '→', shouldCache);
-    return shouldCache;
+    // 1) Evitar caché para archivos locales (mismo origen o rutas relativas)
+    try {
+      const parsed = new URL(url, window.location.href);
+      if (parsed.origin === window.location.origin) {
+        return false;
+      }
+    } catch (e) {
+      // Si falla el parseo asumimos que es una ruta relativa → local
+      return false;
+    }
+
+    // 2) Para URLs remotas, aplicar la caché solo si son endpoints REST
+    return isRestApiEndpoint(url);
   }
 };
 
-// Debug commands for console
-window.cacheDebug = {
-  // Show cache status
-  status: function() {
-    const keys = Object.keys(localStorage);
-    const cacheKeys = keys.filter(key => key.startsWith('xdiagrams_cache_'));
-            console.log('Cache Status:');
-    console.log('- Total entries:', cacheKeys.length);
-    console.log('- Cache keys:', cacheKeys);
-    
-    if (cacheKeys.length > 0) {
-      console.log('\n📋 Cache Details:');
-      cacheKeys.forEach(key => {
-        try {
-          const data = JSON.parse(localStorage.getItem(key));
-          const age = Math.floor((Date.now() - data.timestamp) / 1000);
-          const expires = Math.floor((data.expires - Date.now()) / 1000);
-          console.log(`- ${key}: age=${age}s, expires=${expires}s, version=${data.version}`);
-        } catch (e) {
-          console.log(`- ${key}: ERROR parsing`);
-        }
-      });
-    }
-  },
-  
-  // Test cache for specific URL
-  test: function(url) {
-    console.log('🧪 Testing cache for URL:', url);
-    const key = CacheManager.getCacheKey(url);
-    console.log('🔑 Generated key:', key);
-    const cached = localStorage.getItem(key);
-    console.log('📦 Raw cached data:', cached ? 'EXISTS' : 'NULL');
-    
-    if (cached) {
-      try {
-        const data = JSON.parse(cached);
-        console.log('📦 Parsed data:', data);
-        return data;
-      } catch (e) {
-        console.log('❌ Error parsing cache data:', e);
-        return null;
-      }
-    }
-    return null;
-  },
-  
-  // Clear all cache
-  clear: function() {
-    const keys = Object.keys(localStorage);
-    const cacheKeys = keys.filter(key => key.startsWith('xdiagrams_cache_'));
-    cacheKeys.forEach(key => localStorage.removeItem(key));
-    console.log('🗑️ All cache cleared');
-  },
-  
-  // Show cache content
-  content: function() {
-    const keys = Object.keys(localStorage);
-    const cacheKeys = keys.filter(key => key.startsWith('xdiagrams_cache_'));
-    
-    console.log('📦 Cache Content:');
-    cacheKeys.forEach(key => {
-      try {
-        const data = JSON.parse(localStorage.getItem(key));
-        console.log(`\n🔑 Key: ${key}`);
-        console.log('📄 Data:', data);
-      } catch (e) {
-        console.log(`\n🔑 Key: ${key}`);
-        console.log('❌ Error:', e.message);
-      }
-    });
-  }
-};
+
 
 // Enhanced loadFromRestApi with intelligent caching
-function loadFromRestApiWithCache(apiUrl, onComplete, retryCount = 0) {
+function loadFromRestApiWithCache(apiUrl, onComplete, retryCount = 0, diagramConfig = null) {
   console.log("🌐 Cargando desde API REST:", apiUrl);
   console.log("🔍 [Cache] Function called with URL:", apiUrl);
   
@@ -4806,7 +4886,7 @@ function loadFromRestApiWithCache(apiUrl, onComplete, retryCount = 0) {
       console.log("📦 [Cache] Using cached data, skipping API call");
       
       try {
-        const trees = buildHierarchies(cachedData);
+        const trees = buildHierarchies(cachedData, diagramConfig);
         drawTrees(trees);
         
         // Create side panel only if enabled
@@ -4875,7 +4955,7 @@ function loadFromRestApiWithCache(apiUrl, onComplete, retryCount = 0) {
       }
       
       // Process the data
-      const trees = buildHierarchies(csvData);
+      const trees = buildHierarchies(csvData, diagramConfig);
       drawTrees(trees);
       
       // Create side panel only if enabled
@@ -4928,4 +5008,161 @@ function loadFromRestApiWithCache(apiUrl, onComplete, retryCount = 0) {
         onComplete();
       }
     });
+}
+
+// Nueva función: configurar botón de refresco global
+function setupDataRefreshButton() {
+  const refreshBtn = document.getElementById('data-refresh');
+  if (!refreshBtn) {
+    console.warn('[Refresh] Botón de refresh no encontrado');
+    return;
+  }
+
+  // Eliminar posibles listeners previos clonando el nodo
+  const newBtn = refreshBtn.cloneNode(true);
+  refreshBtn.parentNode.replaceChild(newBtn, refreshBtn);
+
+  newBtn.addEventListener('click', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    console.log('[Refresh] Click en botón de refresh');
+
+    // Animación de carga
+    newBtn.classList.add('loading');
+
+    // Limpiar caché inteligente
+    if (window.xDiagramsCache && window.xDiagramsCache.clearAll) {
+      window.xDiagramsCache.clearAll();
+    }
+    // Limpiar caché heredada
+    if (window.$xDiagrams && window.$xDiagrams.clearCache) {
+      window.$xDiagrams.clearCache();
+    }
+
+    // Vaciar diagramas cargados en memoria
+    if (window.$xDiagrams && window.$xDiagrams.loadedDiagrams) {
+      window.$xDiagrams.loadedDiagrams.clear();
+    }
+
+    // Recargar diagrama actual
+    const diagrams = typeof getDiagrams === 'function' ? getDiagrams() : [];
+    const idx = window.$xDiagrams && typeof window.$xDiagrams.currentDiagramIdx === 'number' ? window.$xDiagrams.currentDiagramIdx : 0;
+    const currentDiagram = diagrams && diagrams[idx] ? diagrams[idx] : null;
+
+    if (currentDiagram && window.$xDiagrams && typeof window.$xDiagrams.loadDiagram === 'function') {
+      setTimeout(() => {
+        window.$xDiagrams.loadDiagram(currentDiagram);
+        // Quitar animación tras recarga
+        setTimeout(() => newBtn.classList.remove('loading'), 1000);
+      }, 120);
+    } else {
+      // Fallback: recargar página
+      setTimeout(() => window.location.reload(), 300);
+    }
+  });
+}
+
+// Preload common thumbnail images to prevent Chrome's default image flash
+function preloadCommonImages() {
+  const commonImages = [
+    'detail', 'document', 'settings', 'form', 'list', 'modal', 
+    'mosaic', 'report', 'file-csv', 'file-pdf', 'file-xls', 'file-xml',
+    'home', 'transparent'
+  ].map(name => name.toLowerCase().replace(/\s+/g, '-'));
+  
+  let loadedCount = 0;
+  const totalImages = commonImages.length;
+  
+  commonImages.forEach(imageName => {
+    const img = new Image();
+    img.onload = function() {
+      loadedCount++;
+      if (loadedCount === totalImages) {
+        console.log('🖼️ [Preload] All common images preloaded successfully');
+      }
+    };
+    img.onerror = function() {
+      console.warn(`[Preload] Failed to load image: ${imageName}.svg`);
+      loadedCount++;
+      if (loadedCount === totalImages) {
+        console.log('🖼️ [Preload] Common images preload completed with some errors');
+      }
+    };
+    img.src = `img/${imageName}.svg?t=${Date.now()}`;
+  });
+}
+
+// Enhanced image loading with better error handling
+function createImageElement(baseUrl, fallbackUrl, className = "image-base") {
+  const img = new Image();
+  const cacheBuster = `?t=${Date.now()}`;
+  const finalUrl = baseUrl.includes('?') ? `${baseUrl}&_cb=${Date.now()}` : `${baseUrl}${cacheBuster}`;
+  
+  img.onload = function() {
+    // Image loaded successfully
+    this.classList.add('loaded');
+    // Solo aplicar el filtro si es necesario
+    if (shouldApplyFilter(baseUrl)) {
+      this.classList.add('image-filter');
+    }
+  };
+  
+  img.onerror = function() {
+    // Try fallback
+    if (fallbackUrl && this.src !== fallbackUrl) {
+      this.src = fallbackUrl;
+      // Verificar si el fallback necesita filtro
+      if (shouldApplyFilter(fallbackUrl)) {
+        this.classList.add('image-filter');
+      } else {
+        this.classList.remove('image-filter');
+      }
+    } else {
+      // If fallback also fails, hide the image
+      this.style.display = 'none';
+    }
+  };
+  
+  img.src = finalUrl;
+  img.className = className;
+  
+  return img;
+}
+
+// Helper function to resolve node image URL prioritizing the `img` column over the thumbnail `type`
+function resolveNodeImage(node) {
+  const imgVal = node.img || (node.data && node.data.img) || "";
+  const typeVal = node.type || (node.data && node.data.type) || "";
+
+  if (imgVal) {
+    // Si es una URL absoluta, data URI o ruta con barra, úsala directamente
+    if (/^(https?:\/\/|data:|\/)/i.test(imgVal) || imgVal.includes('/')) {
+      return imgVal;
+    }
+    // Normalizar nombres simples (sin barra) y asegurarse de extensión .svg
+    let fileName = imgVal.toLowerCase().replace(/\s+/g, '-');
+    if (!fileName.match(/\.[a-z0-9]+$/i)) {
+      fileName += '.svg';
+    }
+    return `img/${fileName}`;
+  }
+
+  // Fallback al thumbnail por tipo
+  const typeName = (typeVal || 'detail').toLowerCase().replace(/\s+/g, '-');
+  return `img/${typeName}.svg`;
+}
+
+// Helper: determine if CSS filter should be applied (para archivos SVG)
+function shouldApplyFilter(url) {
+  // Si es una URL de datos (data URI), no aplicar filtro
+  if (url.startsWith('data:')) return false;
+  
+  // Si es una URL externa (http/https), no aplicar filtro
+  if (url.match(/^https?:\/\//i)) return false;
+  
+  // Extraer el nombre del archivo sin parámetros
+  const baseUrl = url.split('?')[0].toLowerCase();
+  
+  // Para todos los demás archivos SVG, aplicar filtro
+  return baseUrl.endsWith('.svg');
 }

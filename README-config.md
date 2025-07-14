@@ -36,7 +36,7 @@ Configuration of correspondence between CSV columns and properties:
 - `columns.name`: Node name (maps to: "Name")
 - `columns.subtitle`: Description or subtitle (maps to: "Description")
 - `columns.parent`: Parent node for hierarchical relationships (maps to: "Parent")
-- `columns.img`: Image/icon type (maps to: "Type")
+- `columns.img`: Image/icon identifier (maps to: "thumbnail")
 - `columns.url`: Associated links (maps to: "URL")
 - `columns.type`: Node type (maps to: "Type")
 
@@ -47,7 +47,7 @@ window.$xDiagrams = {
     name: "Name",
     subtitle: "Description",
     parent: "Parent",
-    img: "Type",
+    img: "thumbnail",
     url: "URL",
     type: "Type"
   }

@@ -21,11 +21,23 @@ D3 diagram with a tree structure. Data is dynamically loaded from a [Google Shee
 [View Fullscreen](https://swanix.org/diagrams/demo/d3/simple)
 
 
-## Thumbnail types
+## Node Images
 
-You can change the thumbnail of a node in the `type` column of your CSV file. If you leave the cell empty, the default thumbnail applied is the `detail` one.
+There are two ways to set images for nodes:
 
-### Generic
+1. **Custom Images (Highest Priority)**
+   - Use the `img` column to specify a direct URL to any image
+   - Example: `https://example.com/images/my-image.jpg`
+   - This takes precedence over any thumbnail setting
+
+2. **Predefined Thumbnails**
+   - Use the `type` column to specify a predefined thumbnail
+   - If no custom image is set in `img`, the system will use the thumbnail based on the type
+   - If no type is specified, the default 'detail' thumbnail will be used
+
+### Available Thumbnails
+
+#### Generic
 
 - home
 - list
@@ -41,7 +53,7 @@ You can change the thumbnail of a node in the `type` column of your CSV file. If
 - xls
 - mosaic
 
-### Covers
+#### Covers
 
 - cover-home
 - cover-home-circle
@@ -49,6 +61,3 @@ You can change the thumbnail of a node in the `type` column of your CSV file. If
 - cover-message
 - cover-search
 - cover-settings
-
-
-*Note:* if you use an image URL in the `img` column, this has priority over the thumbnail.

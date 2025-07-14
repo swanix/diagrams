@@ -456,7 +456,7 @@ function getColumnConfiguration(diagramConfig = null) {
       id: [columns.id || 'Node'],
       name: [columns.name || 'Name'],
       subtitle: [columns.subtitle || 'Description'],
-      img: [columns.img || 'Type'],
+      img: [columns.img || 'thumbnail'],
       parent: [columns.parent || 'Parent'],
       url: [columns.url || 'url'],
       type: [columns.type || 'Type']
@@ -464,9 +464,9 @@ function getColumnConfiguration(diagramConfig = null) {
 
     // Add fallback names for each field
     columnConfig.id.push('node', 'Node', 'NODE', 'id', 'Id', 'ID');
-    columnConfig.name.push('name', 'Name', 'NAME', 'title', 'Title', 'TITLE');
+    columnConfig.name.push('name', 'Name', 'NAME', 'title', 'Title', 'TITLE', 'section', 'Section', 'SECTION', 'project', 'Project', 'PROJECT', 'product', 'Product', 'PRODUCT');
     columnConfig.subtitle.push('subtitle', 'Subtitle', 'SUBTITLE', 'description', 'Description', 'DESCRIPTION', 'desc', 'Desc', 'DESC');
-    columnConfig.img.push('thumbnail', 'Thumbnail', 'THUMBNAIL', 'img', 'Img', 'IMG', 'type', 'Type', 'TYPE', 'icon', 'Icon', 'ICON');
+    columnConfig.img.push('thumbnail', 'Thumbnail', 'THUMBNAIL', 'img', 'Img', 'IMG', 'icon', 'Icon', 'ICON', 'image', 'Image', 'IMAGE', 'picture', 'Picture', 'PICTURE');
     columnConfig.parent.push('parent', 'Parent', 'PARENT');
     columnConfig.url.push('url', 'Url', 'URL', 'link', 'Link', 'LINK');
     columnConfig.type.push('type', 'Type', 'TYPE');
@@ -481,7 +481,7 @@ function getColumnConfiguration(diagramConfig = null) {
       id: [columns.id || 'Node'],
       name: [columns.name || 'Name'],
       subtitle: [columns.subtitle || 'Description'],
-      img: [columns.img || 'Type'],
+      img: [columns.img || 'thumbnail'],
       parent: [columns.parent || 'Parent'],
       url: [columns.url || 'url'],
       type: [columns.type || 'Type']
@@ -489,9 +489,9 @@ function getColumnConfiguration(diagramConfig = null) {
 
     // Add fallback names for each field
     columnConfig.id.push('node', 'Node', 'NODE', 'id', 'Id', 'ID');
-    columnConfig.name.push('name', 'Name', 'NAME', 'title', 'Title', 'TITLE');
+    columnConfig.name.push('name', 'Name', 'NAME', 'title', 'Title', 'TITLE', 'section', 'Section', 'SECTION', 'project', 'Project', 'PROJECT', 'product', 'Product', 'PRODUCT');
     columnConfig.subtitle.push('subtitle', 'Subtitle', 'SUBTITLE', 'description', 'Description', 'DESCRIPTION', 'desc', 'Desc', 'DESC');
-    columnConfig.img.push('thumbnail', 'Thumbnail', 'THUMBNAIL', 'img', 'Img', 'IMG', 'type', 'Type', 'TYPE', 'icon', 'Icon', 'ICON');
+    columnConfig.img.push('thumbnail', 'Thumbnail', 'THUMBNAIL', 'img', 'Img', 'IMG', 'icon', 'Icon', 'ICON', 'image', 'Image', 'IMAGE', 'picture', 'Picture', 'PICTURE');
     columnConfig.parent.push('parent', 'Parent', 'PARENT');
     columnConfig.url.push('url', 'Url', 'URL', 'link', 'Link', 'LINK');
     columnConfig.type.push('type', 'Type', 'TYPE');
@@ -536,9 +536,9 @@ function getColumnConfigurationLegacy() {
 
       // Add fallback names for each field
       config.id.push('node', 'Node', 'NODE', 'id', 'Id', 'ID');
-      config.name.push('name', 'Name', 'NAME', 'title', 'Title', 'TITLE');
+      config.name.push('name', 'Name', 'NAME', 'title', 'Title', 'TITLE', 'section', 'Section', 'SECTION', 'project', 'Project', 'PROJECT', 'product', 'Product', 'PRODUCT');
       config.subtitle.push('subtitle', 'Subtitle', 'SUBTITLE', 'description', 'Description', 'DESCRIPTION', 'desc', 'Desc', 'DESC');
-      config.img.push('thumbnail', 'Thumbnail', 'THUMBNAIL', 'img', 'Img', 'IMG', 'type', 'Type', 'TYPE', 'icon', 'Icon', 'ICON');
+      config.img.push('thumbnail', 'Thumbnail', 'THUMBNAIL', 'img', 'Img', 'IMG', 'type', 'Type', 'TYPE', 'icon', 'Icon', 'ICON', 'image', 'Image', 'IMAGE', 'picture', 'Picture', 'PICTURE');
       config.parent.push('parent', 'Parent', 'PARENT');
       config.url.push('url', 'Url', 'URL', 'link', 'Link', 'LINK');
       config.type.push('type', 'Type', 'TYPE');
@@ -562,9 +562,9 @@ function getColumnConfigurationLegacy() {
 
   // Add fallback names for each field
   config.id.push('node', 'Node', 'NODE', 'id', 'Id', 'ID');
-  config.name.push('name', 'Name', 'NAME', 'title', 'Title', 'TITLE');
+  config.name.push('name', 'Name', 'NAME', 'title', 'Title', 'TITLE', 'section', 'Section', 'SECTION', 'project', 'Project', 'PROJECT', 'product', 'Product', 'PRODUCT');
   config.subtitle.push('subtitle', 'Subtitle', 'SUBTITLE', 'description', 'Description', 'DESCRIPTION', 'desc', 'Desc', 'DESC');
-  config.img.push('thumbnail', 'Thumbnail', 'THUMBNAIL', 'img', 'Img', 'IMG', 'type', 'Type', 'TYPE', 'icon', 'Icon', 'ICON');
+  config.img.push('thumbnail', 'Thumbnail', 'THUMBNAIL', 'img', 'Img', 'IMG', 'type', 'Type', 'TYPE', 'icon', 'Icon', 'ICON', 'image', 'Image', 'IMAGE', 'picture', 'Picture', 'PICTURE');
   config.parent.push('parent', 'Parent', 'PARENT');
   config.url.push('url', 'Url', 'URL', 'link', 'Link', 'LINK');
   config.type.push('type', 'Type', 'TYPE');
@@ -738,13 +738,13 @@ function drawGridLayout(nodes, svg) {
   nodeGroups.append("image")
     .attr("href", "img/transparent.svg")
     .attr("data-src", d => {
-      const baseUrl = d.img ? `img/${d.img}.svg` : "img/detail.svg";
+      const url = resolveNodeImage(d);
       const cacheBuster = `?t=${Date.now()}`;
-      return baseUrl.includes('?') ? `${baseUrl}&_cb=${Date.now()}` : `${baseUrl}${cacheBuster}`;
+      return url.includes('?') ? `${url}&_cb=${Date.now()}` : `${url}${cacheBuster}`;
     })
     .attr("x", -15)
     .attr("y", -25)
-    .attr("class", "image-base image-filter")
+    .attr("class", "image-base")
     .attr("width", 30)
     .attr("height", 30)
     .on("load", function() {
@@ -757,6 +757,10 @@ function drawGridLayout(nodes, svg) {
       } else {
         // Image loaded successfully
         element.classed("loaded", true);
+      }
+      // Solo aplicar el filtro si es necesario
+      if (shouldApplyFilter(dataSrc)) {
+        element.classed("image-filter", true);
       }
     })
     .on("error", function() {
@@ -880,13 +884,13 @@ function drawGridLayout(nodes, svg) {
       node.append("image")
         .attr("href", "img/transparent.svg")
         .attr("data-src", d => {
-          const baseUrl = d.data.img ? `img/${d.data.img}.svg` : "img/detail.svg";
+          const url = resolveNodeImage(d);
           const cacheBuster = `?t=${Date.now()}`;
-          return baseUrl.includes('?') ? `${baseUrl}&_cb=${Date.now()}` : `${baseUrl}${cacheBuster}`;
+          return url.includes('?') ? `${url}&_cb=${Date.now()}` : `${url}${cacheBuster}`;
         })
         .attr("x", parseFloat(themeVars.getPropertyValue('--image-x')))
         .attr("y", parseFloat(themeVars.getPropertyValue('--image-y')))
-        .attr("class", "image-base image-filter")
+        .attr("class", "image-base")
         .attr("width", parseFloat(themeVars.getPropertyValue('--image-width')))
         .attr("height", parseFloat(themeVars.getPropertyValue('--image-height')))
         .on("load", function() {
@@ -896,9 +900,12 @@ function drawGridLayout(nodes, svg) {
           if (dataSrc && element.attr("href") === "img/transparent.svg") {
             // Cambiar a la imagen real
             element.attr("href", dataSrc);
-          } else {
-            // Image loaded successfully
-            element.classed("loaded", true);
+          }
+          // Marcar cargada
+          element.classed("loaded", true);
+          // Solo aplicar el filtro si es necesario
+          if (shouldApplyFilter(dataSrc)) {
+            element.classed("image-filter", true);
           }
         })
         .on("error", function() {
@@ -1450,14 +1457,13 @@ function drawTrees(trees) {
         node.append("image")
           .attr("href", "img/transparent.svg") // No cache buster here
           .attr("data-src", d => {
-            const baseUrl = d.data.img ? `img/${d.data.img}.svg` : "img/detail.svg";
-            // Add cache buster to image URLs
+            const url = resolveNodeImage(d);
             const cacheBuster = `?t=${Date.now()}`;
-            return baseUrl.includes('?') ? `${baseUrl}&_cb=${Date.now()}` : `${baseUrl}${cacheBuster}`;
+            return url.includes('?') ? `${url}&_cb=${Date.now()}` : `${url}${cacheBuster}`;
           })
           .attr("x", parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--image-x')))
           .attr("y", parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--image-y')))
-          .attr("class", "image-base image-filter")
+          .attr("class", "image-base")
           .attr("width", parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--image-width')))
           .attr("height", parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--image-height')))
           .on("load", function() {
@@ -1466,21 +1472,28 @@ function drawTrees(trees) {
             
             if (dataSrc && element.attr("href") === "img/transparent.svg") {
               // Cambiar a la imagen real
-              element.attr("href", dataSrc);
-            } else {
-              // Image loaded successfully
-              element.classed("loaded", true);
+              element.attr("href", dataSrc)
+                    .classed("loaded", true);
+              // Solo aplicar el filtro si es necesario
+              if (shouldApplyFilter(dataSrc)) {
+                element.classed("image-filter", true);
+              }
             }
           })
           .on("error", function() {
             const element = d3.select(this);
             const currentSrc = element.attr("href");
+            const fileName = currentSrc.split('/').pop().split('?')[0];
             
+            // Si la imagen actual no es el fallback, intentar con detail.svg
             if (currentSrc !== "img/detail.svg") {
+              console.log(`[Image Load] Error loading ${fileName}, falling back to detail.svg`);
               const fallbackUrl = `img/detail.svg?t=${Date.now()}`;
-              element.attr("href", fallbackUrl);
+              element.attr("href", fallbackUrl)
+                    .classed("loaded", true);
             } else {
               // Si el fallback también falla, ocultar la imagen
+              console.log(`[Image Load] Error loading fallback image, hiding element`);
               element.style("display", "none");
             }
           });
@@ -5053,19 +5066,34 @@ function setupDataRefreshButton() {
 function preloadCommonImages() {
   const commonImages = [
     'detail', 'document', 'settings', 'form', 'list', 'modal', 
-    'mosaic', 'report', 'file-csv', 'file-pdf', 'file-xls', 'file-xml'
-  ];
+    'mosaic', 'report', 'file-csv', 'file-pdf', 'file-xls', 'file-xml',
+    'home', 'transparent'
+  ].map(name => name.toLowerCase().replace(/\s+/g, '-'));
+  
+  let loadedCount = 0;
+  const totalImages = commonImages.length;
   
   commonImages.forEach(imageName => {
     const img = new Image();
-    img.src = `img/${imageName}.svg`;
+    img.onload = function() {
+      loadedCount++;
+      if (loadedCount === totalImages) {
+        console.log('🖼️ [Preload] All common images preloaded successfully');
+      }
+    };
+    img.onerror = function() {
+      console.warn(`[Preload] Failed to load image: ${imageName}.svg`);
+      loadedCount++;
+      if (loadedCount === totalImages) {
+        console.log('🖼️ [Preload] Common images preload completed with some errors');
+      }
+    };
+    img.src = `img/${imageName}.svg?t=${Date.now()}`;
   });
-  
-  console.log('🖼️ [Preload] Common images preloaded');
 }
 
 // Enhanced image loading with better error handling
-function createImageElement(baseUrl, fallbackUrl, className = "image-base image-filter") {
+function createImageElement(baseUrl, fallbackUrl, className = "image-base") {
   const img = new Image();
   const cacheBuster = `?t=${Date.now()}`;
   const finalUrl = baseUrl.includes('?') ? `${baseUrl}&_cb=${Date.now()}` : `${baseUrl}${cacheBuster}`;
@@ -5073,12 +5101,22 @@ function createImageElement(baseUrl, fallbackUrl, className = "image-base image-
   img.onload = function() {
     // Image loaded successfully
     this.classList.add('loaded');
+    // Solo aplicar el filtro si es necesario
+    if (shouldApplyFilter(baseUrl)) {
+      this.classList.add('image-filter');
+    }
   };
   
   img.onerror = function() {
     // Try fallback
     if (fallbackUrl && this.src !== fallbackUrl) {
       this.src = fallbackUrl;
+      // Verificar si el fallback necesita filtro
+      if (shouldApplyFilter(fallbackUrl)) {
+        this.classList.add('image-filter');
+      } else {
+        this.classList.remove('image-filter');
+      }
     } else {
       // If fallback also fails, hide the image
       this.style.display = 'none';
@@ -5089,4 +5127,42 @@ function createImageElement(baseUrl, fallbackUrl, className = "image-base image-
   img.className = className;
   
   return img;
+}
+
+// Helper function to resolve node image URL prioritizing the `img` column over the thumbnail `type`
+function resolveNodeImage(node) {
+  const imgVal = node.img || (node.data && node.data.img) || "";
+  const typeVal = node.type || (node.data && node.data.type) || "";
+
+  if (imgVal) {
+    // Si es una URL absoluta, data URI o ruta con barra, úsala directamente
+    if (/^(https?:\/\/|data:|\/)/i.test(imgVal) || imgVal.includes('/')) {
+      return imgVal;
+    }
+    // Normalizar nombres simples (sin barra) y asegurarse de extensión .svg
+    let fileName = imgVal.toLowerCase().replace(/\s+/g, '-');
+    if (!fileName.match(/\.[a-z0-9]+$/i)) {
+      fileName += '.svg';
+    }
+    return `img/${fileName}`;
+  }
+
+  // Fallback al thumbnail por tipo
+  const typeName = (typeVal || 'detail').toLowerCase().replace(/\s+/g, '-');
+  return `img/${typeName}.svg`;
+}
+
+// Helper: determine if CSS filter should be applied (para archivos SVG)
+function shouldApplyFilter(url) {
+  // Si es una URL de datos (data URI), no aplicar filtro
+  if (url.startsWith('data:')) return false;
+  
+  // Si es una URL externa (http/https), no aplicar filtro
+  if (url.match(/^https?:\/\//i)) return false;
+  
+  // Extraer el nombre del archivo sin parámetros
+  const baseUrl = url.split('?')[0].toLowerCase();
+  
+  // Para todos los demás archivos SVG, aplicar filtro
+  return baseUrl.endsWith('.svg');
 }

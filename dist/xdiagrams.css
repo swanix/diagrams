@@ -1,6 +1,6 @@
 /*
   Swanix Diagrams - CSS
-  v0.3.1
+  v0.4.0
 */
 
 :root {
@@ -19,6 +19,9 @@
     --node-selection-focus: #1976d2;
     --node-selection-hover: #bdbdbd;
     --node-selection-selected: #1976d2;
+    --cluster-top-margin: -120px;
+    --flatlist-top-margin: 50px; /* Margen superior para listas planas */
+    --flatlist-left-margin: 20px; /* Margen izquierdo para listas planas */
 
     /* ===== Links and Labels ===== */
     --link-color: #999;
@@ -86,7 +89,7 @@
     --switcher-btn-shadow-hover: none;
     --switcher-btn-border-radius: 8px;
     --switcher-btn-padding: 10px 20px;
-    --switcher-btn-min-width: 200px;
+    --switcher-btn-min-width: 240px;
 
     /* Theme Toggle Button */
     --theme-toggle-bg: #ffffff;
@@ -295,6 +298,42 @@
     height: var(--image-height); 
     position: relative; 
     object-fit: cover; 
+    /* Prevenir imagen por defecto de Chrome */
+    background: transparent;
+    opacity: 0;
+    transition: opacity 0.2s ease-in-out;
+  }
+
+  /* Mostrar imagen cuando esté cargada */
+  .image-base.loaded {
+    opacity: 1;
+  }
+
+  /* Placeholder mientras carga */
+  .image-base::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: transparent;
+    z-index: -1;
+  }
+
+  /* Prevenir imagen por defecto de Chrome en elementos image de SVG */
+  svg image {
+    background: transparent !important;
+  }
+
+  /* Estilo para imágenes que fallan */
+  .image-base[href*="error"] {
+    display: none;
+  }
+
+  /* Mejorar transición de carga */
+  .image-base:not(.loaded) {
+    opacity: 0;
   }
 
   .image-filter {
@@ -1219,11 +1258,11 @@ svg {
 .theme-toggle:hover {
   border-color: var(--control-border-hover);
   box-shadow: 0 0 0 2px var(--control-shadow);
-  transform: translateY(-1px);
+  transform: scale(1.05);
 }
 
 .theme-toggle:active {
-  transform: translateY(0);
+  transform: scale(0.95);
 }
 
 .theme-toggle:focus {
@@ -1316,8 +1355,9 @@ body.theme-forest .topbar {
 .diagram-dropdown {
     position: relative;
     display: inline-block;
-    width: 180px;
-    max-width: 250px;
+    width: 220px; /* ancho aumentado */
+    max-width: 300px;
+    margin-right: 40px; /* Espacio para el botón */
 }
 
 .diagram-dropdown-btn {
@@ -1326,15 +1366,15 @@ body.theme-forest .topbar {
     border: 1px solid var(--switcher-btn-border, var(--control-border, #d1d5db));
     border-radius: var(--switcher-btn-border-radius, 8px);
     padding: 8px 12px 8px 16px;
-    font-size: 0.9rem;
+    font-size: 0.85rem; /* texto ligeramente más pequeño */
     font-weight: 500;
     cursor: pointer;
     display: flex;
     align-items: center;
     gap: 12px;
     transition: all 0.2s ease;
-    min-width: 180px;
-    max-width: 250px;
+    min-width: 220px;
+    max-width: 300px;
     justify-content: space-between;
     box-sizing: border-box;
     white-space: nowrap;
@@ -1469,13 +1509,13 @@ body.theme-forest .topbar {
     border: 2px solid var(--switcher-btn-border, var(--control-border, #d1d5db));
     border-radius: var(--switcher-btn-border-radius, 8px);
     padding: var(--switcher-btn-padding, 10px 20px);
-    font-size: 0.9rem;
+    font-size: 0.85rem; /* texto ligeramente más pequeño */
     font-weight: 500;
     cursor: pointer;
     box-shadow: var(--switcher-btn-shadow, none);
     transition: all 0.2s ease;
     text-align: left;
-    min-width: var(--switcher-btn-min-width, 200px);
+    min-width: var(--switcher-btn-min-width, 240px);
     pointer-events: auto;
     position: relative;
     z-index: 10001;
@@ -1511,6 +1551,97 @@ body.theme-forest .topbar {
     justify-content: space-between;
     align-items: center;
     margin-bottom: var(--switcher-header-margin, 10px);
+}
+
+/* Google Sheets button */
+.sheets-btn {
+    background: var(--switcher-btn-bg, var(--control-bg, #fff));
+    color: var(--switcher-btn-text, var(--control-text, #333));
+    border: 1px solid var(--switcher-btn-border, var(--control-border, #d1d5db));
+    border-radius: 50%;
+    padding: 6px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    margin-left: 6px;
+    box-sizing: border-box;
+    width: 28px;
+    height: 28px;
+    min-width: 28px;
+    min-height: 28px;
+    position: absolute;
+    right: -34px;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+.sheets-btn:hover {
+    border-color: var(--switcher-btn-border-hover, var(--control-border-hover, #9ca3af));
+    background: var(--switcher-btn-bg-hover, rgba(0, 0, 0, 0.02));
+    box-shadow: var(--switcher-btn-shadow-hover, none);
+}
+
+.sheets-btn svg {
+    flex-shrink: 0;
+    opacity: 0.7;
+    width: 14px;
+    height: 14px;
+}
+
+.sheets-btn:hover svg {
+    opacity: 1;
+}
+
+/* Cache refresh button */
+.cache-refresh-btn {
+    background: var(--switcher-btn-bg, var(--control-bg, #fff));
+    color: var(--switcher-btn-text, var(--control-text, #333));
+    border: 1px solid var(--switcher-btn-border, var(--control-border, #d1d5db));
+    border-radius: 50%;
+    padding: 6px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    margin-left: 6px;
+    box-sizing: border-box;
+    width: 28px;
+    height: 28px;
+    min-width: 28px;
+    min-height: 28px;
+    position: absolute;
+    right: -68px;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+.cache-refresh-btn:hover {
+    border-color: var(--switcher-btn-border-hover, var(--control-border-hover, #9ca3af));
+    background: var(--switcher-btn-bg-hover, rgba(0, 0, 0, 0.02));
+    box-shadow: var(--switcher-btn-shadow-hover, none);
+}
+
+.cache-refresh-btn svg {
+    flex-shrink: 0;
+    opacity: 0.7;
+    width: 14px;
+    height: 14px;
+}
+
+.cache-refresh-btn:hover svg {
+    opacity: 1;
+}
+
+.cache-refresh-btn.loading svg {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
 }
 .theme-controls {
     display: flex;
@@ -1833,6 +1964,38 @@ body.theme-neon .theme-toggle .moon-icon {
     font-size: 0.8rem;
   }
   
+  /* Google Sheets button responsive */
+  .sheets-btn {
+    padding: 5px;
+    margin-left: 5px;
+    width: 26px;
+    height: 26px;
+    min-width: 26px;
+    min-height: 26px;
+    right: -32px;
+  }
+  
+  .sheets-btn svg {
+    width: 12px;
+    height: 12px;
+  }
+  
+  /* Cache refresh button responsive */
+  .cache-refresh-btn {
+    padding: 5px;
+    margin-left: 5px;
+    width: 26px;
+    height: 26px;
+    min-width: 26px;
+    min-height: 26px;
+    right: -64px;
+  }
+  
+  .cache-refresh-btn svg {
+    width: 12px;
+    height: 12px;
+  }
+  
   /* Dropdown compacto en tablets */
   .diagram-dropdown-content {
     max-height: 60vh;
@@ -1841,6 +2004,7 @@ body.theme-neon .theme-toggle .moon-icon {
   
   .diagram-dropdown {
     max-width: 250px;
+    margin-right: 36px;
   }
   
   /* Theme toggle más pequeño */
@@ -1901,6 +2065,22 @@ body.theme-neon .theme-toggle .moon-icon {
     font-size: 0.75rem;
   }
   
+  /* Google Sheets button más compacto en móviles */
+  .sheets-btn {
+    padding: 4px;
+    margin-left: 4px;
+    width: 24px;
+    height: 24px;
+    min-width: 24px;
+    min-height: 24px;
+    right: -30px;
+  }
+  
+  .sheets-btn svg {
+    width: 11px;
+    height: 11px;
+  }
+  
   /* Dropdown más compacto en móviles */
   .diagram-dropdown-content {
     max-height: 50vh;
@@ -1909,6 +2089,7 @@ body.theme-neon .theme-toggle .moon-icon {
   
   .diagram-dropdown {
     max-width: 200px;
+    margin-right: 32px;
   }
   
   /* Theme toggle aún más pequeño */
@@ -1993,6 +2174,38 @@ body.theme-neon .theme-toggle .moon-icon {
     font-size: 0.7rem;
   }
   
+  /* Google Sheets button muy compacto en pantallas pequeñas */
+  .sheets-btn {
+    padding: 3px;
+    margin-left: 3px;
+    width: 22px;
+    height: 22px;
+    min-width: 22px;
+    min-height: 22px;
+    right: -28px;
+  }
+  
+  .sheets-btn svg {
+    width: 10px;
+    height: 10px;
+  }
+  
+  /* Cache refresh button muy compacto en pantallas pequeñas */
+  .cache-refresh-btn {
+    padding: 3px;
+    margin-left: 3px;
+    width: 22px;
+    height: 22px;
+    min-width: 22px;
+    min-height: 22px;
+    right: -56px;
+  }
+  
+  .cache-refresh-btn svg {
+    width: 10px;
+    height: 10px;
+  }
+  
   /* Dropdown aún más compacto */
   .diagram-dropdown-content {
     max-height: 40vh;
@@ -2001,6 +2214,7 @@ body.theme-neon .theme-toggle .moon-icon {
   
   .diagram-dropdown {
     max-width: 160px;
+    margin-right: 28px;
   }
   
   .theme-toggle {
@@ -2037,4 +2251,85 @@ body.theme-neon .theme-toggle .moon-icon {
     padding: 12px 14px 12px 10px;
     font-size: 0.8rem;
   }
+}
+
+.cache-refresh-btn.solo {
+    right: -34px;
+}
+
+.diagram-dropdown-btn {
+    min-width: 180px;
+    max-width: 180px;
+    width: 180px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.diagram-dropdown-btn .dropdown-text {
+    flex: 1 1 auto;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.diagram-dropdown {
+    min-width: 180px;
+    max-width: 220px;
+    width: 180px;
+}
+
+.diagram-dropdown-content .switcher-btn {
+    min-width: 160px;
+    max-width: 200px;
+    width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+}
+
+/* Animación de carga para el botón de refresco global */
+.data-refresh-btn.loading svg {
+    animation: spin 1s linear infinite;
+}
+
+/* Data refresh button */
+.data-refresh-btn {
+    background: var(--theme-toggle-bg, var(--control-bg, #fff));
+    color: var(--theme-toggle-text, var(--control-text, #333));
+    border: 1px solid var(--theme-toggle-border, var(--control-border, #ddd));
+    border-radius: 50%;
+    padding: 6px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    width: var(--theme-toggle-size, 40px);
+    height: var(--theme-toggle-size, 40px);
+    position: relative;
+}
+
+.data-refresh-btn svg {
+    width: var(--theme-icon-size, 18px);
+    height: var(--theme-icon-size, 18px);
+    flex-shrink: 0;
+    opacity: 0.8;
+    position: static;
+    transform: none;
+}
+
+.data-refresh-btn:hover {
+    border-color: var(--theme-toggle-border-hover, var(--control-border-hover, #9ca3af));
+    transform: scale(1.05);
+    box-shadow: 0 0 0 2px var(--theme-toggle-shadow, var(--control-shadow, rgba(0, 0, 0, 0.1)));    
+}
+
+.data-refresh-btn:hover svg {
+    opacity: 1;
 }

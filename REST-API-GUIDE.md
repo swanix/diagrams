@@ -136,7 +136,7 @@ columns: {
   id: "Node",        // ID único del nodo
   name: "Name",      // Nombre del nodo
   parent: "Parent",  // ID del nodo padre
-  img: "Type",       // Tipo de nodo (para iconos)
+  img: "thumbnail",  // Identificador de imagen/icono
   url: "URL",        // Enlace del nodo
   type: "Type",      // Tipo de nodo
   subtitle: "Description" // Descripción

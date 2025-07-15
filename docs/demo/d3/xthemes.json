@@ -108,7 +108,9 @@
     "--btn-text": "#000000",
     "--btn-text-hover": "#ffffff",
     "--error-message-color": "#999999",
-    "--label-max-width": "68px"
+    "--label-max-width": "68px",
+
+    "--logo-filter": "none"
 
   },
   "onyx": {
@@ -217,7 +219,9 @@
     "--btn-text": "#ffffff",
     "--btn-text-hover": "#000000",
     "--error-message-color": "#999999",
-    "--label-max-width": "60px"
+    "--label-max-width": "60px",
+
+    "--logo-filter": "invert(1) brightness(1.2)"
 
   },
   "vintage": {
@@ -326,7 +330,9 @@
     "--btn-bg-hover": "#8b4513",
     "--btn-text": "#8b4513",
     "--btn-text-hover": "#faf6f0",
-    "--error-message-color": "#a0522d"
+    "--error-message-color": "#a0522d",
+
+    "--logo-filter": "sepia(30%) brightness(0.9)"
 
   },
   "pastel": {
@@ -435,7 +441,9 @@
     "--btn-bg-hover": "#a8b4f5",
     "--btn-text": "#a8b4f5",
     "--btn-text-hover": "#ffffff",
-    "--error-message-color": "#b8c5d6"
+    "--error-message-color": "#b8c5d6",
+
+    "--logo-filter": "hue-rotate(220deg) brightness(1.1)"
 
   },
   "neon": {
@@ -543,7 +551,9 @@
     "--btn-bg-hover": "#00ff88",
     "--btn-text": "#00ff88",
     "--btn-text-hover": "#1a1a1a",
-    "--error-message-color": "#00cc6a"
+    "--error-message-color": "#00cc6a",
+
+    "--logo-filter": "brightness(0) invert(1) hue-rotate(120deg) brightness(1.5)"
 
   },
   "forest": {
@@ -651,7 +661,9 @@
     "--btn-bg-hover": "#4caf50",
     "--btn-text": "#4caf50",
     "--btn-text-hover": "#2a3f2a",
-    "--error-message-color": "#6b8e6b"
+    "--error-message-color": "#6b8e6b",
+
+    "--logo-filter": "hue-rotate(120deg) brightness(1.2)"
 
   }
 } 

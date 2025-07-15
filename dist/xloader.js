@@ -1,5 +1,5 @@
 // Swanix Diagrams - THEME LOADER JS
-// v0.4.0
+// v0.4.1
 
 // Theme Loader - Applies the saved theme before the main CSS loads
 // This file must be loaded BEFORE xdiagrams.css to avoid FOUC (flash of unstyled content)

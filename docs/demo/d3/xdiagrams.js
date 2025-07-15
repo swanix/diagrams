@@ -1,5 +1,5 @@
 // Swanix Diagrams - JS
-// v0.4.0
+// v0.4.1
 
 // Global zoom behavior - defined at the beginning to avoid scope issues
 const zoom = d3.zoom()
@@ -2234,7 +2234,7 @@ function setupClosePanelOnSvgClick() {
 }
 
 // Simplified theme system
-async function setTheme(themeId) {
+async function setTheme(themeId, forceReload = false) {
   // Clear previous classes
   document.body.classList.remove('theme-snow', 'theme-onyx', 'theme-vintage', 'theme-pastel', 'theme-neon', 'theme-forest');
   
@@ -2256,8 +2256,8 @@ async function setTheme(themeId) {
     window.$xDiagrams.clearCache();
   }
   
-  // Apply theme CSS variables
-  const themeVariables = await getThemeVariables(themeId);
+  // Apply theme CSS variables (with force reload if requested)
+  const themeVariables = await getThemeVariables(themeId, forceReload);
   const targetElement = document.querySelector('.xcanvas') || document.documentElement;
   
   Object.keys(themeVariables).forEach(varName => {
@@ -2281,52 +2281,70 @@ async function setTheme(themeId) {
 
 // Cache for themes to avoid repeated fetches
 let themesCache = null;
+let lastThemeFileTimestamp = null;
+
+// Function to clear theme cache
+function clearThemeCache() {
+  themesCache = null;
+  lastThemeFileTimestamp = null;
+  console.log('[Theme System] Cache de temas limpiado');
+}
 
 // Get theme variables from external JSON file
-async function getThemeVariables(themeId) {
-  // Return cached themes if available
-  if (themesCache) {
-    return themesCache[themeId] || themesCache.snow;
-  }
-
-  try {
-    // Load themes from external JSON file (try xthemes.json first, then themes.json as fallback)
-    let response = await fetch('xthemes.json');
-    if (!response.ok) {
-      console.log('[Theme System] xthemes.json no encontrado, intentando themes.json...');
-      response = await fetch('themes.json');
+async function getThemeVariables(themeId, forceReload = false) {
+  // Check if we need to reload themes (force reload or no cache)
+  if (forceReload || !themesCache) {
+    try {
+      // Load themes from external JSON file (try xthemes.json first, then themes.json as fallback)
+      let response = await fetch('xthemes.json');
       if (!response.ok) {
-        throw new Error(`Failed to load themes: ${response.status}`);
+        console.log('[Theme System] xthemes.json no encontrado, intentando themes.json...');
+        response = await fetch('themes.json');
+        if (!response.ok) {
+          throw new Error(`Failed to load themes: ${response.status}`);
+        }
       }
+      
+      // Check if file has changed (using Last-Modified header)
+      const lastModified = response.headers.get('Last-Modified');
+      if (lastModified && lastThemeFileTimestamp && lastModified !== lastThemeFileTimestamp) {
+        console.log('[Theme System] Archivo de temas modificado, recargando...');
+        forceReload = true;
+      }
+      
+      if (forceReload || !themesCache) {
+        themesCache = await response.json();
+        lastThemeFileTimestamp = lastModified;
+        console.log('[Theme System] Temas cargados desde archivo:', forceReload ? 'recarga forzada' : 'carga inicial');
+      }
+    } catch (error) {
+      console.warn('Error loading themes from JSON, using fallback:', error);
+      
+      // Fallback to basic theme if JSON loading fails
+      const fallbackThemes = {
+        snow: {
+          '--bg-color': '#f6f7f9',
+          '--text-color': '#222',
+          '--node-fill': '#fff',
+          '--control-bg': '#ffffff',
+          '--control-text': '#333333',
+          '--control-focus': '#1976d2'
+        },
+        onyx: {
+          '--bg-color': '#181c24',
+          '--text-color': '#f6f7f9',
+          '--node-fill': '#23272f',
+          '--control-bg': '#23272f',
+          '--control-text': '#f6f7f9',
+          '--control-focus': '#00eaff'
+        }
+      };
+      
+      return fallbackThemes[themeId] || fallbackThemes.snow;
     }
-    
-    themesCache = await response.json();
-    return themesCache[themeId] || themesCache.snow;
-  } catch (error) {
-    console.warn('Error loading themes from JSON, using fallback:', error);
-    
-    // Fallback to basic theme if JSON loading fails
-    const fallbackThemes = {
-      snow: {
-        '--bg-color': '#f6f7f9',
-        '--text-color': '#222',
-        '--node-fill': '#fff',
-        '--control-bg': '#ffffff',
-        '--control-text': '#333333',
-        '--control-focus': '#1976d2'
-      },
-      onyx: {
-        '--bg-color': '#181c24',
-        '--text-color': '#f6f7f9',
-        '--node-fill': '#23272f',
-        '--control-bg': '#23272f',
-        '--control-text': '#f6f7f9',
-        '--control-focus': '#00eaff'
-      }
-    };
-    
-    return fallbackThemes[themeId] || fallbackThemes.snow;
   }
+  
+  return themesCache[themeId] || themesCache.snow;
 }
 
 // Update SVG colors
@@ -2495,6 +2513,9 @@ async function initializeThemeSystem() {
   // Setup theme toggle
   setupThemeToggle();
   
+  // Setup theme file watcher for automatic reloading
+  setupThemeFileWatcher();
+  
   window.$xDiagrams.themeState.isInitialized = true;
 }
 
@@ -2550,6 +2571,40 @@ async function preserveCurrentTheme() {
     // Update switcher colors
     updateSwitcherColors();
   }
+}
+
+// Global function to reload themes (for external use)
+window.reloadThemes = async function() {
+  console.log('[Theme System] Recargando temas...');
+  clearThemeCache();
+  
+  const storageKey = getStorageKey();
+  const currentTheme = localStorage.getItem(storageKey) || 'snow';
+  
+  // Reapply current theme with fresh data
+  await setTheme(currentTheme, true);
+  
+  console.log('[Theme System] Temas recargados exitosamente');
+  return true;
+};
+
+// Function to check for theme file changes periodically
+function setupThemeFileWatcher() {
+  // Check for changes every 5 seconds
+  setInterval(async () => {
+    try {
+      const response = await fetch('xthemes.json', { method: 'HEAD' });
+      if (response.ok) {
+        const lastModified = response.headers.get('Last-Modified');
+        if (lastModified && lastThemeFileTimestamp && lastModified !== lastThemeFileTimestamp) {
+          console.log('[Theme System] Cambios detectados en xthemes.json, recargando...');
+          await window.reloadThemes();
+        }
+      }
+    } catch (error) {
+      // Silently ignore errors in file watching
+    }
+  }, 5000);
 }
 
 // --- Diagram management and switcher (no default diagrams) ---
@@ -3219,33 +3274,54 @@ window.$xDiagrams.getDiagramIndexFromURL = function() {
     return 0;
 };
 window.$xDiagrams.updateTopbarTitle = function(diagramIndex) {
-    // Title is now fixed and doesn't change based on diagram selection
-    // The title is set once during initialization and remains constant
-    const titleElement = document.querySelector('.diagram-title');
-    if (!titleElement) {
-        // Get title from $xDiagrams object first, then fallback to HTML
-        let fixedTitle = window.$xDiagrams && window.$xDiagrams.title ? window.$xDiagrams.title : null;
+    // Check if logo is defined (has priority over title)
+    let logoUrl = window.$xDiagrams && window.$xDiagrams.logo ? window.$xDiagrams.logo : null;
+    
+    // If no logo in $xDiagrams, try data-logo attribute
+    if (!logoUrl) {
+        const originalContainer = document.querySelector('.xcanvas');
+        logoUrl = originalContainer ? originalContainer.getAttribute('data-logo') : null;
+    }
+    
+    // Find the topbar center
+    const topbarCenter = document.querySelector('.topbar-center');
+    if (topbarCenter) {
+        topbarCenter.innerHTML = '';
         
-        // If no title in $xDiagrams, try data-title attribute
-        if (!fixedTitle) {
-            const originalContainer = document.querySelector('.xcanvas');
-            fixedTitle = originalContainer ? originalContainer.getAttribute('data-title') : null;
-        }
-        
-        // If no data-title is defined, use the HTML <title> element
-        if (!fixedTitle) {
-            const pageTitle = document.querySelector('title');
-            fixedTitle = pageTitle ? pageTitle.textContent : 'Swanix Diagrams';
-        }
-        
-        // Find the topbar and update its title
-        const topbarCenter = document.querySelector('.topbar-center');
-        if (topbarCenter) {
+        if (logoUrl) {
+            // Create logo element
+            const newLogoElement = document.createElement('img');
+            newLogoElement.className = 'diagram-logo';
+            newLogoElement.src = logoUrl;
+            newLogoElement.alt = 'Logo';
+                            newLogoElement.style.maxHeight = '32px';
+                newLogoElement.style.maxWidth = '160px';
+                newLogoElement.style.objectFit = 'contain';
+                newLogoElement.style.padding = '12px 0';
+            topbarCenter.appendChild(newLogoElement);
+            console.log('[Logo] Logo aplicado:', logoUrl);
+        } else {
+            // Get title from $xDiagrams object first, then fallback to HTML
+            let fixedTitle = window.$xDiagrams && window.$xDiagrams.title ? window.$xDiagrams.title : null;
+            
+            // If no title in $xDiagrams, try data-title attribute
+            if (!fixedTitle) {
+                const originalContainer = document.querySelector('.xcanvas');
+                fixedTitle = originalContainer ? originalContainer.getAttribute('data-title') : null;
+            }
+            
+            // If no data-title is defined, use the HTML <title> element
+            if (!fixedTitle) {
+                const pageTitle = document.querySelector('title');
+                fixedTitle = pageTitle ? pageTitle.textContent : 'Swanix Diagrams';
+            }
+            
+            // Create title element
             const newTitleElement = document.createElement('h1');
             newTitleElement.className = 'diagram-title';
             newTitleElement.textContent = fixedTitle;
-            topbarCenter.innerHTML = '';
             topbarCenter.appendChild(newTitleElement);
+            console.log('[Title] Título aplicado:', fixedTitle);
         }
     }
 };
@@ -3641,19 +3717,31 @@ function renderSwDiagramBase() {
       container.setAttribute('data-dark-theme', 'onyx');
     }
     
-    // Get fixed title from $xDiagrams object first, then fallback to HTML
-    let fixedTitle = window.$xDiagrams && window.$xDiagrams.title ? window.$xDiagrams.title : null;
+    // Check if logo is defined (has priority over title)
+    let logoUrl = window.$xDiagrams && window.$xDiagrams.logo ? window.$xDiagrams.logo : null;
     
-    // If no title in $xDiagrams, try data-title attribute
-    if (!fixedTitle) {
-        const titleContainer = document.querySelector('.xcanvas');
-        fixedTitle = titleContainer ? titleContainer.getAttribute('data-title') : null;
+    // If no logo in $xDiagrams, try data-logo attribute
+    if (!logoUrl) {
+        const logoContainer = document.querySelector('.xcanvas');
+        logoUrl = logoContainer ? logoContainer.getAttribute('data-logo') : null;
     }
     
-    // If no data-title is defined, use the HTML <title> element
-    if (!fixedTitle) {
-        const pageTitle = document.querySelector('title');
-        fixedTitle = pageTitle ? pageTitle.textContent : 'SW Diagrams';
+    // Get fixed title from $xDiagrams object first, then fallback to HTML (only if no logo)
+    let fixedTitle = null;
+    if (!logoUrl) {
+        fixedTitle = window.$xDiagrams && window.$xDiagrams.title ? window.$xDiagrams.title : null;
+        
+        // If no title in $xDiagrams, try data-title attribute
+        if (!fixedTitle) {
+            const titleContainer = document.querySelector('.xcanvas');
+            fixedTitle = titleContainer ? titleContainer.getAttribute('data-title') : null;
+        }
+        
+        // If no data-title is defined, use the HTML <title> element
+        if (!fixedTitle) {
+            const pageTitle = document.querySelector('title');
+            fixedTitle = pageTitle ? pageTitle.textContent : 'SW Diagrams';
+        }
     }
     
     container.innerHTML = `
@@ -3671,7 +3759,7 @@ function renderSwDiagramBase() {
           </div>
         </div>
         <div class="topbar-center">
-          <h1 class="diagram-title">${fixedTitle}</h1>
+          ${logoUrl ? `<img class="diagram-logo" src="${logoUrl}" alt="Logo" style="max-height: 32px; max-width: 160px; object-fit: contain; padding: 12px 0;">` : `<h1 class="diagram-title">${fixedTitle}</h1>`}
         </div>
         <div class="topbar-right">
           <div class="theme-controls">

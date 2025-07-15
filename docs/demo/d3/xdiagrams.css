@@ -1,6 +1,6 @@
 /*
   Swanix Diagrams - CSS
-  v0.4.0
+  v0.4.1
 */
 
 :root {
@@ -1189,6 +1189,16 @@ svg .node.node-selected {
   display: flex;
   align-items: center;
   height: 100%;
+}
+
+.diagram-logo {
+  max-height: 32px;
+  max-width: 160px;
+  object-fit: contain;
+  display: block;
+  margin: 0 auto;
+  padding: 12px 0;
+  filter: var(--logo-filter, none);
 }
 
 /* Controles removidos temporalmente */

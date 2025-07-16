@@ -1756,8 +1756,9 @@ function applyAutoZoom() {
     // For single cluster: zoom out to show entire cluster with aura
     scale = Math.min(scale * 0.6, 0.6); // More aggressive zoom out to show aura
   } else {
-    // For multiple clusters: zoom out with factor 0.6
-    scale = Math.min(scale * 0.6, 0.6); // Zoom out for multiple clusters
+    // For multiple clusters: use maximum zoom out (0.15) for large diagrams
+    // This ensures users can see the entire diagram at once
+    scale = Math.min(scale * 0.6, 0.15); // Maximum zoom out for multiple clusters
   }
   
   let translateX = svgCenterX - contentCenterX * scale;
@@ -1806,16 +1807,21 @@ function applyAutoZoom() {
     // Comportamiento original para un solo cluster
     translateY = svgCenterY - contentCenterY * scale - 50;
   } else {
-    // Ajuste dinámico para múltiples clusters (evitar hueco arriba, configurable)
-    translateY = svgCenterY - contentCenterY * scale;
-    const zoomVars = getComputedStyle(document.documentElement);
-    const desiredTopMargin = isFlatListDiagram ?
-      (parseFloat(zoomVars.getPropertyValue('--flatlist-top-margin')) || 50) :
-      (parseFloat(zoomVars.getPropertyValue('--cluster-top-margin')) || 10); // px
-    const topEdge = totalBounds.y * scale + translateY; // posición Y del borde superior tras transform
-    if (topEdge > desiredTopMargin) {
-      translateY -= (topEdge - desiredTopMargin);
-    }
+    // Cálculo dinámico del translate para múltiples clusters basado en el tamaño total
+    const diagramWidth = totalBounds.width;
+    const diagramHeight = totalBounds.height;
+    
+    // Calcular translateX dinámicamente basado en el ancho del diagrama
+    // Para diagramas pequeños: más margen izquierdo, para grandes: menos margen
+    const baseLeftMargin = 0; // Reducido de 20 a 0 para posicionar al borde izquierdo
+    const dynamicLeftMargin = Math.max(0, baseLeftMargin - (diagramWidth * scale * 0.1));
+    translateX = dynamicLeftMargin - totalBounds.x * scale;
+    
+    // Calcular translateY dinámicamente basado en la altura del diagrama
+    // Para diagramas pequeños: más margen superior, para grandes: menos margen
+    const baseTopMargin = 45;
+    const dynamicTopMargin = Math.max(20, baseTopMargin - (diagramHeight * scale * 0.05));
+    translateY = dynamicTopMargin - totalBounds.y * scale;
   }
 
   // Apply transformation

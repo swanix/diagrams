@@ -873,8 +873,10 @@ function drawGridLayout(nodes, svg) {
         .attr("data-root-id", root.data.id)
         .attr("transform", `translate(0, ${index * 1000})`);
       
+      const contentGroup = treeGroup.append("g").attr("class", "cluster-content");
+
       // Render links
-      treeGroup.selectAll(".link")
+      contentGroup.selectAll(".link")
         .data(root.links())
         .enter().append("path")
         .attr("class", "link")
@@ -891,7 +893,7 @@ function drawGridLayout(nodes, svg) {
         });
       
       // Render nodes
-      const node = treeGroup.selectAll(".node")
+      const node = contentGroup.selectAll(".node")
         .data(root.descendants())
         .enter().append("g")
         .attr("class", "node node-clickable")
@@ -1195,20 +1197,46 @@ function applyMasonryLayout(clusterGroups, container, originalTrees, preCalculat
     }
     
     // PASO 5: Calcular y aplicar posiciones finales
+    const rowWidths = [];
+    for (let row = 0; row < totalRows; row++) {
+      const startIndex = row * clustersPerRow;
+      const endIndex = Math.min(startIndex + clustersPerRow, clusterGroups.length);
+      const clustersInRow = clusterRealSizes.slice(startIndex, endIndex);
+      const totalWidth = clustersInRow.reduce((sum, c) => sum + c.realWidth, 0) + (clustersInRow.length > 1 ? (clustersInRow.length - 1) * spacingX : 0);
+      rowWidths[row] = totalWidth;
+    }
+    const maxWidth = Math.max(...rowWidths);
+
     for (let row = 0; row < totalRows; row++) {
       const startIndex = row * clustersPerRow;
       const endIndex = Math.min(startIndex + clustersPerRow, clusterGroups.length);
       const clustersInRow = clusterRealSizes.slice(startIndex, endIndex);
       
-      let currentX = marginX; // El primer cluster de la fila empieza desde marginX
+      const currentWidth = rowWidths[row];
+      const widthDifference = maxWidth - currentWidth;
+      
+      let extraWidthPerCluster = 0;
+      if (widthDifference > 0 && clustersInRow.length > 0) {
+        extraWidthPerCluster = widthDifference / clustersInRow.length;
+      }
+
+      let currentX = marginX;
       
       clustersInRow.forEach((clusterData, colIndex) => {
-        const { realWidth, realHeight, rectBounds } = clusterData;
+        const { realWidth, realHeight, rectBounds, clusterRect } = clusterData;
 
-        // Calcular la traslación X para alinear el borde izquierdo del rect en currentX
+        const newWidth = realWidth + extraWidthPerCluster;
+        if (clusterRect) {
+          clusterRect.setAttribute('width', newWidth);
+        }
+
+        const contentGroup = clusterData.cluster.group.select('.cluster-content');
+        if (contentGroup && extraWidthPerCluster > 0) {
+          contentGroup.attr('transform', `translate(${extraWidthPerCluster / 2}, 0)`);
+        }
+
         const tx = currentX - rectBounds.x;
         
-        // Calcular la traslación Y para centrar el rect verticalmente en la fila
         let rowTopY = marginY;
         for (let r = 0; r < row; r++) {
           rowTopY += rowHeights[r] + spacingY;
@@ -1224,8 +1252,7 @@ function applyMasonryLayout(clusterGroups, container, originalTrees, preCalculat
         clusterData.realX = tx + rectBounds.x; // Debería ser igual a currentX
         clusterData.realY = ty + rectBounds.y;
         
-        // Mover la posición X para el siguiente cluster en la fila
-        currentX += realWidth + spacingX;
+        currentX += newWidth + spacingX;
       });
     }
     
@@ -1841,8 +1868,9 @@ function applyAutoZoom() {
     // For single cluster: zoom out to show entire cluster with aura
     scale = Math.min(scale * 0.6, 0.6); // More aggressive zoom out to show aura
   } else {
-    // For multiple clusters: zoom out with factor 0.6
-    scale = Math.min(scale * 0.6, 0.6); // Zoom out for multiple clusters
+    // For multiple clusters: use maximum zoom out (0.15) for large diagrams
+    // This ensures users can see the entire diagram at once
+    scale = Math.min(scale * 0.6, 0.15); // Maximum zoom out for multiple clusters
   }
   
   let translateX = svgCenterX - contentCenterX * scale;
@@ -1891,16 +1919,21 @@ function applyAutoZoom() {
     // Comportamiento original para un solo cluster
     translateY = svgCenterY - contentCenterY * scale - 50;
   } else {
-    // Ajuste dinámico para múltiples clusters (evitar hueco arriba, configurable)
-    translateY = svgCenterY - contentCenterY * scale;
-    const zoomVars = getComputedStyle(document.documentElement);
-    const desiredTopMargin = isFlatListDiagram ?
-      (parseFloat(zoomVars.getPropertyValue('--flatlist-top-margin')) || 50) :
-      (parseFloat(zoomVars.getPropertyValue('--cluster-top-margin')) || 10); // px
-    const topEdge = totalBounds.y * scale + translateY; // posición Y del borde superior tras transform
-    if (topEdge > desiredTopMargin) {
-      translateY -= (topEdge - desiredTopMargin);
-    }
+    // Cálculo dinámico del translate para múltiples clusters basado en el tamaño total
+    const diagramWidth = totalBounds.width;
+    const diagramHeight = totalBounds.height;
+    
+    // Calcular translateX dinámicamente basado en el ancho del diagrama
+    // Para diagramas pequeños: más margen izquierdo, para grandes: menos margen
+    const baseLeftMargin = 0; // Reducido de 20 a 0 para posicionar al borde izquierdo
+    const dynamicLeftMargin = Math.max(0, baseLeftMargin - (diagramWidth * scale * 0.1));
+    translateX = dynamicLeftMargin - totalBounds.x * scale;
+    
+    // Calcular translateY dinámicamente basado en la altura del diagrama
+    // Para diagramas pequeños: más margen superior, para grandes: menos margen
+    const baseTopMargin = 45;
+    const dynamicTopMargin = Math.max(20, baseTopMargin - (diagramHeight * scale * 0.05));
+    translateY = dynamicTopMargin - totalBounds.y * scale;
   }
 
   // Apply transformation
@@ -3447,20 +3480,19 @@ window.$xDiagrams.updateTopbarTitle = function(diagramIndex) {
         fixedTitle = pageTitle ? pageTitle.textContent : 'Swanix Diagrams';
     }
     
-    // Find the topbar left (now contains logo and title)
-    const topbarLeft = document.querySelector('.topbar-left');
-    if (topbarLeft) {
-        topbarLeft.innerHTML = '';
+    console.log('[Debug] fixedTitle value:', fixedTitle);
+    console.log('[Debug] logoUrl value:', logoUrl);
+    
+    // Find the title-dropdown-container
+    const titleDropdownContainer = document.querySelector('.title-dropdown-container');
+    console.log('[Debug] titleDropdownContainer found:', !!titleDropdownContainer);
+    if (titleDropdownContainer) {
+        // Clear existing content except the dropdown
+        const dropdown = titleDropdownContainer.querySelector('.diagram-dropdown');
+        titleDropdownContainer.innerHTML = '';
         
-        // Create container for logo and title
-        const logoTitleContainer = document.createElement('div');
-        logoTitleContainer.className = 'logo-title-container';
-        logoTitleContainer.style.display = 'flex';
-        logoTitleContainer.style.alignItems = 'center';
-        logoTitleContainer.style.gap = '12px';
-        
+        // Add logo first if available
         if (logoUrl) {
-            // Create logo element
             const newLogoElement = document.createElement('img');
             newLogoElement.className = 'diagram-logo';
             newLogoElement.src = logoUrl;
@@ -3469,11 +3501,11 @@ window.$xDiagrams.updateTopbarTitle = function(diagramIndex) {
             newLogoElement.style.maxWidth = '120px';
             newLogoElement.style.objectFit = 'contain';
             newLogoElement.style.padding = '8px 0';
-            logoTitleContainer.appendChild(newLogoElement);
+            titleDropdownContainer.appendChild(newLogoElement);
             console.log('[Logo] Logo aplicado:', logoUrl);
         }
         
-        // Create title element (always show if we have a title)
+        // Always show title after logo
         if (fixedTitle) {
             const newTitleElement = document.createElement('h1');
             newTitleElement.className = 'diagram-title';
@@ -3482,11 +3514,14 @@ window.$xDiagrams.updateTopbarTitle = function(diagramIndex) {
             newTitleElement.style.fontSize = '1.1em';
             newTitleElement.style.fontWeight = '400';
             newTitleElement.style.color = 'var(--topbar-text, #333)';
-            logoTitleContainer.appendChild(newTitleElement);
+            titleDropdownContainer.appendChild(newTitleElement);
             console.log('[Title] Título aplicado:', fixedTitle);
         }
         
-        topbarLeft.appendChild(logoTitleContainer);
+        // Re-add the dropdown if it existed
+        if (dropdown) {
+            titleDropdownContainer.appendChild(dropdown);
+        }
     }
 };
 window.$xDiagrams.renderDiagramButtons = function() {
@@ -3918,19 +3953,23 @@ function renderSwDiagramBase() {
     container.innerHTML = `
       <div class="topbar">
         <div class="topbar-left">
-          ${logoUrl ? `<img class="diagram-logo" src="${logoUrl}" alt="Logo" style="max-height: 32px; max-width: 160px; object-fit: contain; padding: 12px 0;">` : `<h1 class="diagram-title">${fixedTitle}</h1>`}
-        </div>
-        <div class="topbar-center">
-          <div class="diagram-dropdown" id="diagram-dropdown">
-            <button class="diagram-dropdown-btn" id="diagram-dropdown-btn">
-              <span class="dropdown-text">Seleccionar diagrama</span>
-              <svg class="dropdown-arrow" width="20" height="20" viewBox="0 0 24 24" fill="none">
-                <path d="M7 10l5 5 5-5" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
-            </button>
-            <div class="diagram-dropdown-content" id="diagram-dropdown-content">
+          <div class="title-dropdown-container">
+            ${logoUrl ? `<img class="diagram-logo" src="${logoUrl}" alt="Logo" style="max-height: 32px; max-width: 120px; object-fit: contain; padding: 8px 0;">` : ''}
+            <h1 class="diagram-title">${fixedTitle}</h1>
+            <div class="diagram-dropdown" id="diagram-dropdown">
+              <button class="diagram-dropdown-btn" id="diagram-dropdown-btn">
+                <span class="dropdown-text">Seleccionar diagrama</span>
+                <svg class="dropdown-arrow" width="20" height="20" viewBox="0 0 24 24" fill="none">
+                  <path d="M7 10l5 5 5-5" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </button>
+              <div class="diagram-dropdown-content" id="diagram-dropdown-content">
+              </div>
             </div>
           </div>
+        </div>
+        <div class="topbar-center">
+          <!-- Área central vacía -->
         </div>
         <div class="topbar-right">
           <div class="theme-controls">

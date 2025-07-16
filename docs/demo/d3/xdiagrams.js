@@ -1756,8 +1756,9 @@ function applyAutoZoom() {
     // For single cluster: zoom out to show entire cluster with aura
     scale = Math.min(scale * 0.6, 0.6); // More aggressive zoom out to show aura
   } else {
-    // For multiple clusters: zoom out with factor 0.6
-    scale = Math.min(scale * 0.6, 0.6); // Zoom out for multiple clusters
+    // For multiple clusters: use maximum zoom out (0.15) for large diagrams
+    // This ensures users can see the entire diagram at once
+    scale = Math.min(scale * 0.6, 0.15); // Maximum zoom out for multiple clusters
   }
   
   let translateX = svgCenterX - contentCenterX * scale;
@@ -1804,16 +1805,21 @@ function applyAutoZoom() {
     // Comportamiento original para un solo cluster
     translateY = svgCenterY - contentCenterY * scale - 50;
   } else {
-    // Ajuste dinámico para múltiples clusters (evitar hueco arriba, configurable)
-    translateY = svgCenterY - contentCenterY * scale;
-    const zoomVars = getComputedStyle(document.documentElement);
-    const desiredTopMargin = isFlatListDiagram ?
-      (parseFloat(zoomVars.getPropertyValue('--flatlist-top-margin')) || 50) :
-      (parseFloat(zoomVars.getPropertyValue('--cluster-top-margin')) || 10); // px
-    const topEdge = totalBounds.y * scale + translateY; // posición Y del borde superior tras transform
-    if (topEdge > desiredTopMargin) {
-      translateY -= (topEdge - desiredTopMargin);
-    }
+    // Cálculo dinámico del translate para múltiples clusters basado en el tamaño total
+    const diagramWidth = totalBounds.width;
+    const diagramHeight = totalBounds.height;
+    
+    // Calcular translateX dinámicamente basado en el ancho del diagrama
+    // Para diagramas pequeños: más margen izquierdo, para grandes: menos margen
+    const baseLeftMargin = 0; // Reducido de 20 a 0 para posicionar al borde izquierdo
+    const dynamicLeftMargin = Math.max(0, baseLeftMargin - (diagramWidth * scale * 0.1));
+    translateX = dynamicLeftMargin - totalBounds.x * scale;
+    
+    // Calcular translateY dinámicamente basado en la altura del diagrama
+    // Para diagramas pequeños: más margen superior, para grandes: menos margen
+    const baseTopMargin = 45;
+    const dynamicTopMargin = Math.max(20, baseTopMargin - (diagramHeight * scale * 0.05));
+    translateY = dynamicTopMargin - totalBounds.y * scale;
   }
 
   // Apply transformation
@@ -3283,45 +3289,58 @@ window.$xDiagrams.updateTopbarTitle = function(diagramIndex) {
         logoUrl = originalContainer ? originalContainer.getAttribute('data-logo') : null;
     }
     
-    // Find the topbar center
-    const topbarCenter = document.querySelector('.topbar-center');
-    if (topbarCenter) {
-        topbarCenter.innerHTML = '';
+    // Get title from $xDiagrams object first, then fallback to HTML
+    let fixedTitle = window.$xDiagrams && window.$xDiagrams.title ? window.$xDiagrams.title : null;
+    
+    // If no title in $xDiagrams, try data-title attribute
+    if (!fixedTitle) {
+        const originalContainer = document.querySelector('.xcanvas');
+        fixedTitle = originalContainer ? originalContainer.getAttribute('data-title') : null;
+    }
+    
+    // If no data-title is defined, use the HTML <title> element
+    if (!fixedTitle) {
+        const pageTitle = document.querySelector('title');
+        fixedTitle = pageTitle ? pageTitle.textContent : 'Swanix Diagrams';
+    }
+    
+    // Find the title-dropdown-container
+    const titleDropdownContainer = document.querySelector('.title-dropdown-container');
+    if (titleDropdownContainer) {
+        // Clear existing content except the dropdown
+        const dropdown = titleDropdownContainer.querySelector('.diagram-dropdown');
+        titleDropdownContainer.innerHTML = '';
         
+        // Add logo first if available
         if (logoUrl) {
-            // Create logo element
             const newLogoElement = document.createElement('img');
             newLogoElement.className = 'diagram-logo';
             newLogoElement.src = logoUrl;
             newLogoElement.alt = 'Logo';
-                            newLogoElement.style.maxHeight = '32px';
-                newLogoElement.style.maxWidth = '160px';
-                newLogoElement.style.objectFit = 'contain';
-                newLogoElement.style.padding = '12px 0';
-            topbarCenter.appendChild(newLogoElement);
+            newLogoElement.style.maxHeight = '32px';
+            newLogoElement.style.maxWidth = '120px';
+            newLogoElement.style.objectFit = 'contain';
+            newLogoElement.style.padding = '8px 0';
+            titleDropdownContainer.appendChild(newLogoElement);
             console.log('[Logo] Logo aplicado:', logoUrl);
-        } else {
-            // Get title from $xDiagrams object first, then fallback to HTML
-            let fixedTitle = window.$xDiagrams && window.$xDiagrams.title ? window.$xDiagrams.title : null;
-            
-            // If no title in $xDiagrams, try data-title attribute
-            if (!fixedTitle) {
-                const originalContainer = document.querySelector('.xcanvas');
-                fixedTitle = originalContainer ? originalContainer.getAttribute('data-title') : null;
-            }
-            
-            // If no data-title is defined, use the HTML <title> element
-            if (!fixedTitle) {
-                const pageTitle = document.querySelector('title');
-                fixedTitle = pageTitle ? pageTitle.textContent : 'Swanix Diagrams';
-            }
-            
-            // Create title element
+        }
+        
+        // Always show title after logo
+        if (fixedTitle) {
             const newTitleElement = document.createElement('h1');
             newTitleElement.className = 'diagram-title';
             newTitleElement.textContent = fixedTitle;
-            topbarCenter.appendChild(newTitleElement);
+            newTitleElement.style.margin = '0';
+            newTitleElement.style.fontSize = '1.1em';
+            newTitleElement.style.fontWeight = '400';
+            newTitleElement.style.color = 'var(--topbar-text, #333)';
+            titleDropdownContainer.appendChild(newTitleElement);
             console.log('[Title] Título aplicado:', fixedTitle);
+        }
+        
+        // Re-add the dropdown if it existed
+        if (dropdown) {
+            titleDropdownContainer.appendChild(dropdown);
         }
     }
 };
@@ -3747,19 +3766,23 @@ function renderSwDiagramBase() {
     container.innerHTML = `
       <div class="topbar">
         <div class="topbar-left">
-          <div class="diagram-dropdown" id="diagram-dropdown">
-            <button class="diagram-dropdown-btn" id="diagram-dropdown-btn">
-              <span class="dropdown-text">Seleccionar diagrama</span>
-              <svg class="dropdown-arrow" width="20" height="20" viewBox="0 0 24 24" fill="none">
-                <path d="M7 10l5 5 5-5" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
-            </button>
-            <div class="diagram-dropdown-content" id="diagram-dropdown-content">
+          <div class="title-dropdown-container">
+            ${logoUrl ? `<img class="diagram-logo" src="${logoUrl}" alt="Logo" style="max-height: 32px; max-width: 120px; object-fit: contain; padding: 8px 0;">` : ''}
+            <h1 class="diagram-title">${fixedTitle}</h1>
+            <div class="diagram-dropdown" id="diagram-dropdown">
+              <button class="diagram-dropdown-btn" id="diagram-dropdown-btn">
+                <span class="dropdown-text">Seleccionar diagrama</span>
+                <svg class="dropdown-arrow" width="20" height="20" viewBox="0 0 24 24" fill="none">
+                  <path d="M7 10l5 5 5-5" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </button>
+              <div class="diagram-dropdown-content" id="diagram-dropdown-content">
+              </div>
             </div>
           </div>
         </div>
         <div class="topbar-center">
-          ${logoUrl ? `<img class="diagram-logo" src="${logoUrl}" alt="Logo" style="max-height: 32px; max-width: 160px; object-fit: contain; padding: 12px 0;">` : `<h1 class="diagram-title">${fixedTitle}</h1>`}
+          <!-- Área central vacía -->
         </div>
         <div class="topbar-right">
           <div class="theme-controls">

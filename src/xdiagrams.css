@@ -1222,6 +1222,40 @@ svg .node.node-selected {
   text-overflow: ellipsis;
 }
 
+/* Nuevo contenedor para título y dropdown */
+.title-dropdown-container {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  height: 100%;
+}
+
+.title-dropdown-container .diagram-title {
+  margin: 0;
+  font-size: 1.1em;
+  font-weight: 400;
+  color: var(--topbar-text, #333);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: flex !important;
+  align-items: center !important;
+  height: 100% !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  line-height: 1 !important;
+}
+
+.title-dropdown-container .diagram-logo {
+  max-height: 32px;
+  max-width: 120px;
+  object-fit: contain;
+  padding: 8px 0;
+  filter: var(--logo-filter, none);
+  display: flex;
+  align-items: center;
+}
+
 /* Controles removidos temporalmente */
 
 /* Ajustar SVG para el topbar */
@@ -1386,9 +1420,9 @@ body.theme-forest .topbar {
 .diagram-dropdown {
     position: relative;
     display: inline-block;
-    width: 437px; /* ancho aumentado 25% más */
-    max-width: 562px;
-    margin-right: 40px; /* Espacio para el botón */
+    width: 300px; /* ancho ajustado para estar al lado del título */
+    max-width: 400px;
+    margin-right: 0; /* Sin margen derecho ya que está al lado del título */
 }
 
 .diagram-dropdown-btn {
@@ -1404,8 +1438,8 @@ body.theme-forest .topbar {
     align-items: center;
     gap: 12px;
     transition: all 0.2s ease;
-    min-width: 437px;
-    max-width: 562px;
+    min-width: 300px;
+    max-width: 400px;
     justify-content: space-between;
     box-sizing: border-box;
     white-space: nowrap;

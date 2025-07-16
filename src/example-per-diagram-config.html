@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>XDiagrams - Configuración por Diagrama</title>
+    <link rel="stylesheet" href="xdiagrams.css">
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            margin: 0;
+            font-size: 2.5em;
+            font-weight: 300;
+        }
+        
+        .header p {
+            margin: 10px 0 0 0;
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+        
+        .content {
+            padding: 30px;
+        }
+        
+        .diagram-selector {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+        
+        .diagram-btn {
+            padding: 12px 24px;
+            border: 2px solid #667eea;
+            background: white;
+            color: #667eea;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            flex: 1;
+            min-width: 150px;
+            text-align: center;
+        }
+        
+        .diagram-btn:hover {
+            background: #667eea;
+            color: white;
+            transform: translateY(-2px);
+        }
+        
+        .diagram-btn.active {
+            background: #667eea;
+            color: white;
+        }
+        
+        .config-info {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-left: 4px solid #667eea;
+        }
+        
+        .config-info h3 {
+            margin: 0 0 15px 0;
+            color: #333;
+        }
+        
+        .config-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+        
+        .config-item {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #e9ecef;
+        }
+        
+        .config-item strong {
+            color: #667eea;
+            display: block;
+            margin-bottom: 5px;
+        }
+        
+        .xcanvas {
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            margin-top: 20px;
+        }
+        
+        .description {
+            background: #e3f2fd;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-left: 4px solid #2196f3;
+        }
+        
+        .description h3 {
+            margin: 0 0 10px 0;
+            color: #1976d2;
+        }
+        
+        .description p {
+            margin: 0;
+            line-height: 1.6;
+            color: #424242;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>XDiagrams</h1>
+            <p>Configuración de Layout por Diagrama</p>
+        </div>
+        
+        <div class="content">
+            <div class="description">
+                <h3>🎯 Configuración Específica por Diagrama</h3>
+                <p>
+                    Cada diagrama puede tener su propia configuración de layout independiente. 
+                    Esto permite optimizar la visualización según el tipo y cantidad de datos de cada diagrama.
+                    Selecciona un diagrama para ver su configuración específica en acción.
+                </p>
+            </div>
+            
+            <div class="diagram-selector">
+                <button class="diagram-btn active" onclick="loadDiagram(0)">Diagrama 1 (Compacto)</button>
+                <button class="diagram-btn" onclick="loadDiagram(1)">Diagrama 2 (Espaciado)</button>
+                <button class="diagram-btn" onclick="loadDiagram(2)">Diagrama 3 (Responsive)</button>
+                <button class="diagram-btn" onclick="loadDiagram(3)">Diagrama 4 (Máximo)</button>
+            </div>
+            
+            <div class="config-info">
+                <h3>📋 Configuración Actual</h3>
+                <div class="config-details" id="config-details">
+                    <!-- Se llenará dinámicamente -->
+                </div>
+            </div>
+            
+            <div id="xcanvas" class="xcanvas"></div>
+        </div>
+    </div>
+
+    <script src="xdiagrams.js"></script>
+    <script>
+        // Configuración global por defecto
+        window.$xDiagrams = {
+            options: {
+                autoZoom: true,
+                sidePanel: true,
+                keyboardNavigation: true,
+                tooltips: true,
+                responsive: true,
+                dragAndDrop: true
+            },
+            diagrams: [
+                {
+                    name: "Diagrama Compacto",
+                    source: "data/flat-list-simple.csv",
+                    layout: {
+                        clustersPerRow: 5,    // Menos clusters por fila
+                        marginX: 30,          // Márgenes más pequeños
+                        marginY: 30,
+                        spacingX: 40,         // Espaciado más compacto
+                        spacingY: 40
+                    }
+                },
+                {
+                    name: "Diagrama Espaciado",
+                    source: "data/flat-list-example.csv",
+                    layout: {
+                        clustersPerRow: 3,    // Pocos clusters por fila
+                        marginX: 80,          // Márgenes grandes
+                        marginY: 80,
+                        spacingX: 100,        // Espaciado amplio
+                        spacingY: 100
+                    }
+                },
+                {
+                    name: "Diagrama Responsive",
+                    source: "data/multi-clusters.csv",
+                    layout: {
+                        clustersPerRow: 4,    // Balanceado
+                        marginX: 50,          // Márgenes estándar
+                        marginY: 50,
+                        spacingX: 70,         // Espaciado moderado
+                        spacingY: 70
+                    }
+                },
+                {
+                    name: "Diagrama Máximo",
+                    source: "data/flat-1000-nodes.json",
+                    layout: {
+                        clustersPerRow: 10,   // Muchos clusters por fila
+                        marginX: 20,          // Márgenes mínimos
+                        marginY: 20,
+                        spacingX: 30,         // Espaciado mínimo
+                        spacingY: 30
+                    }
+                }
+            ]
+        };
+
+        let currentDiagramIndex = 0;
+
+        function loadDiagram(index) {
+            currentDiagramIndex = index;
+            
+            // Actualizar botones activos
+            document.querySelectorAll('.diagram-btn').forEach((btn, i) => {
+                btn.classList.toggle('active', i === index);
+            });
+            
+            // Obtener configuración del diagrama
+            const diagram = window.$xDiagrams.diagrams[index];
+            const layoutConfig = diagram.layout || {};
+            
+            // Mostrar configuración actual
+            updateConfigDisplay(layoutConfig);
+            
+            // Cargar el diagrama con su configuración específica
+            console.log(`[Config] Cargando diagrama ${index + 1}: ${diagram.name}`);
+            console.log(`[Config] Layout específico:`, layoutConfig);
+            
+            // Inicializar diagrama con configuración específica
+            initDiagram(diagram.source, () => {
+                console.log(`[Config] Diagrama ${index + 1} cargado exitosamente`);
+            }, 0, diagram);
+        }
+
+        function updateConfigDisplay(layoutConfig) {
+            const configDetails = document.getElementById('config-details');
+            
+            const defaultConfig = {
+                clustersPerRow: 7,
+                marginX: 50,
+                marginY: 50,
+                spacingX: 60,
+                spacingY: 60
+            };
+            
+            const finalConfig = {
+                clustersPerRow: layoutConfig.clustersPerRow || defaultConfig.clustersPerRow,
+                marginX: layoutConfig.marginX || defaultConfig.marginX,
+                marginY: layoutConfig.marginY || defaultConfig.marginY,
+                spacingX: layoutConfig.spacingX || defaultConfig.spacingX,
+                spacingY: layoutConfig.spacingY || defaultConfig.spacingY
+            };
+            
+            configDetails.innerHTML = `
+                <div class="config-item">
+                    <strong>Clusters por Fila</strong>
+                    ${finalConfig.clustersPerRow}
+                </div>
+                <div class="config-item">
+                    <strong>Margen X</strong>
+                    ${finalConfig.marginX}px
+                </div>
+                <div class="config-item">
+                    <strong>Margen Y</strong>
+                    ${finalConfig.marginY}px
+                </div>
+                <div class="config-item">
+                    <strong>Espaciado X</strong>
+                    ${finalConfig.spacingX}px
+                </div>
+                <div class="config-item">
+                    <strong>Espaciado Y</strong>
+                    ${finalConfig.spacingY}px
+                </div>
+            `;
+        }
+
+        // Cargar el primer diagrama al iniciar
+        document.addEventListener('DOMContentLoaded', () => {
+            loadDiagram(0);
+        });
+    </script>
+</body>
+</html> 

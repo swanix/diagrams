@@ -432,6 +432,44 @@ function isOptionEnabled(optionName) {
   return defaultOptions[optionName] === true;
 }
 
+// Get layout configuration with sensible defaults
+function getLayoutConfiguration(diagramConfig = null) {
+  const options = getDiagramOptions();
+  
+  // Define default values for layout options
+  const defaultLayout = {
+    clustersPerRow: 7,        // Default: 7 clusters per row
+    marginX: 50,              // Default: 50px left margin
+    marginY: 50,              // Default: 50px top margin
+    spacingX: 60,             // Default: 60px horizontal gap
+    spacingY: 60              // Default: 60px vertical gap
+  };
+  
+  // Try diagram-specific configuration first
+  if (diagramConfig && diagramConfig.layout) {
+    return {
+      clustersPerRow: diagramConfig.layout.clustersPerRow || defaultLayout.clustersPerRow,
+      marginX: diagramConfig.layout.marginX || defaultLayout.marginX,
+      marginY: diagramConfig.layout.marginY || defaultLayout.marginY,
+      spacingX: diagramConfig.layout.spacingX || defaultLayout.spacingX,
+      spacingY: diagramConfig.layout.spacingY || defaultLayout.spacingY
+    };
+  }
+  
+  // Try global configuration second
+  if (options.layout) {
+    return {
+      clustersPerRow: options.layout.clustersPerRow || defaultLayout.clustersPerRow,
+      marginX: options.layout.marginX || defaultLayout.marginX,
+      marginY: options.layout.marginY || defaultLayout.marginY,
+      spacingX: options.layout.spacingX || defaultLayout.spacingX,
+      spacingY: options.layout.spacingY || defaultLayout.spacingY
+    };
+  }
+  
+  return defaultLayout;
+}
+
 // Get diagrams from modern configuration
 function getDiagrams() {
   const config = getXDiagramsConfiguration();
@@ -794,7 +832,7 @@ function drawGridLayout(nodes, svg) {
     }
 
   // Draw clusters in masonry-like grid layout
-  function drawClusterGrid(trees, svg) {
+  function drawClusterGrid(trees, svg, diagramConfig = null) {
   const g = d3.select(svg).append("g");
   const clusterGroups = [];
   
@@ -1011,7 +1049,7 @@ function drawGridLayout(nodes, svg) {
           }
           
           // Paso 3: Implementar layout tipo Masonry
-          applyMasonryLayout(clusterGroups, g, trees, uniformHeight);
+          applyMasonryLayout(clusterGroups, g, trees, uniformHeight, diagramConfig);
         }
       }, 0);
       
@@ -1039,12 +1077,16 @@ function getMaxTreeDepth(node) {
 
 
 // Función simplificada para aplicar layout de clusters
-function applyMasonryLayout(clusterGroups, container, originalTrees, preCalculatedUniformHeight = null) {
-  const marginX = 50;
-  const marginY = 50;
-  const spacingX = 60;
-  const spacingY = 60;
-  const clustersPerRow = 7; // Máximo 7 clusters por fila
+function applyMasonryLayout(clusterGroups, container, originalTrees, preCalculatedUniformHeight = null, diagramConfig = null) {
+  // Obtener configuración de layout desde las opciones
+  const layoutConfig = getLayoutConfiguration(diagramConfig);
+  const marginX = layoutConfig.marginX;
+  const marginY = layoutConfig.marginY;
+  const spacingX = layoutConfig.spacingX;
+  const spacingY = layoutConfig.spacingY;
+  const clustersPerRow = layoutConfig.clustersPerRow;
+  
+  console.log(`[Layout] Configuración de layout:`, layoutConfig);
   
   // Si solo hay un cluster, centrarlo
   if (clusterGroups.length === 1) {
@@ -1329,7 +1371,7 @@ function addClusterBackgroundWithUniformHeight(cluster, uniformHeight, isFlat = 
 }
 
 // Draw simplified trees
-function drawTrees(trees) {
+function drawTrees(trees, diagramConfig = null) {
   const svg = document.getElementById("main-diagram-svg");
   if (!svg) {
     console.error("No se encontró el SVG principal");
@@ -1361,9 +1403,9 @@ function drawTrees(trees) {
     
   // Check layout type and choose appropriate rendering method
   if (isFlatList(trees)) {
-    drawClusterGrid(trees, svg);
+    drawClusterGrid(trees, svg, diagramConfig);
   } else if (shouldUseClusterGrid(trees)) {
-    drawClusterGrid(trees, svg);
+    drawClusterGrid(trees, svg, diagramConfig);
   } else {
   
   try {
@@ -4627,7 +4669,7 @@ function loadFromCsvUrl(csvUrl, onComplete, retryCount = 0, diagramConfig = null
       
       try {
         const trees = buildHierarchies(results.data, diagramConfig);
-        drawTrees(trees);
+        drawTrees(trees, diagramConfig);
         
         // Create side panel only if enabled
         if (isOptionEnabled('sidePanel') !== false) {
@@ -4750,7 +4792,7 @@ function loadFromObject(diagramObject, onComplete, diagramConfig = null) {
     }
     
     const trees = buildHierarchies(diagramObject.data, diagramConfig);
-    drawTrees(trees);
+    drawTrees(trees, diagramConfig);
     
     // Create side panel only if enabled
     if (isOptionEnabled('sidePanel') !== false) {
@@ -5109,7 +5151,7 @@ function loadFromRestApiWithCache(apiUrl, onComplete, retryCount = 0, diagramCon
       
       try {
         const trees = buildHierarchies(cachedData, diagramConfig);
-        drawTrees(trees);
+        drawTrees(trees, diagramConfig);
         
         // Create side panel only if enabled
         if (isOptionEnabled('sidePanel') !== false) {
@@ -5178,7 +5220,7 @@ function loadFromRestApiWithCache(apiUrl, onComplete, retryCount = 0, diagramCon
       
       // Process the data
       const trees = buildHierarchies(csvData, diagramConfig);
-      drawTrees(trees);
+      drawTrees(trees, diagramConfig);
       
       // Create side panel only if enabled
       if (isOptionEnabled('sidePanel') !== false) {

@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test: Cálculo de Ancho de Clusters en Diagram-Group</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background: #f5f5f5;
+        }
+        .test-container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .test-title {
+            color: #333;
+            border-bottom: 2px solid #007acc;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+        .test-description {
+            background: #e8f4fd;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            border-left: 4px solid #007acc;
+        }
+        .test-results {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            font-family: monospace;
+            white-space: pre-wrap;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .success { color: #28a745; }
+        .error { color: #dc3545; }
+        .info { color: #007acc; }
+        .warning { color: #ffc107; }
+        
+        #diagram-container {
+            width: 100%;
+            height: 600px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            background: white;
+            margin-top: 20px;
+        }
+        
+        .control-panel {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        
+        .control-panel button {
+            background: #007acc;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+        
+        .control-panel button:hover {
+            background: #005a9e;
+        }
+        
+        .control-panel input {
+            padding: 6px 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+        
+        .control-panel label {
+            font-weight: bold;
+            margin-right: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1 class="test-title">Test: Cálculo de Ancho de Clusters en Diagram-Group</h1>
+        
+        <div class="test-description">
+            <strong>Objetivo:</strong> Verificar que el cálculo del ancho de cada cluster se basa correctamente en el <code>diagram-group</code> 
+            y que los clusters se posicionan uno al lado del otro con gaps uniformes de 60px.
+            <br><br>
+            <strong>Proceso:</strong>
+            <ul>
+                <li>Medir el ancho real de cada <code>diagram-group</code> usando <code>getBBox()</code></li>
+                <li>Calcular posiciones horizontales basándose en el ancho real del <code>diagram-group</code></li>
+                <li>Verificar que los gaps entre clusters sean exactamente 60px</li>
+                <li>Confirmar que el primer cluster empieza a 50px del borde izquierdo</li>
+            </ul>
+        </div>
+        
+        <div class="control-panel">
+            <label>Número de clusters:</label>
+            <input type="number" id="clusterCount" value="3" min="1" max="10">
+            <button onclick="runTest()">Ejecutar Test</button>
+            <button onclick="clearResults()">Limpiar Resultados</button>
+            <button onclick="showDebugInfo()">Mostrar Info Debug</button>
+        </div>
+        
+        <div class="test-results" id="testResults">
+            Haz clic en "Ejecutar Test" para comenzar la verificación...
+        </div>
+    </div>
+    
+    <div id="diagram-container">
+        <!-- El diagrama se cargará aquí -->
+    </div>
+
+    <!-- Scripts necesarios -->
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+    <script src="xdiagrams.js"></script>
+    
+    <script>
+        let testResults = [];
+        let currentDiagram = null;
+        
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = `[${timestamp}] ${message}`;
+            testResults.push({ message: logEntry, type: type });
+            updateResultsDisplay();
+        }
+        
+        function updateResultsDisplay() {
+            const resultsDiv = document.getElementById('testResults');
+            resultsDiv.innerHTML = testResults.map(result => {
+                const className = result.type;
+                return `<span class="${className}">${result.message}</span>`;
+            }).join('\n');
+            resultsDiv.scrollTop = resultsDiv.scrollHeight;
+        }
+        
+        function clearResults() {
+            testResults = [];
+            updateResultsDisplay();
+        }
+        
+        function generateTestData(clusterCount) {
+            const data = [];
+            for (let i = 0; i < clusterCount; i++) {
+                data.push({
+                    id: `cluster-${i + 1}`,
+                    name: `Cluster ${i + 1}`,
+                    parent: '',
+                    description: `Descripción del cluster ${i + 1}`,
+                    image: '',
+                    url: '',
+                    type: 'cluster'
+                });
+                
+                // Agregar algunos nodos hijos para cada cluster
+                for (let j = 1; j <= 3; j++) {
+                    data.push({
+                        id: `node-${i + 1}-${j}`,
+                        name: `Nodo ${j} del Cluster ${i + 1}`,
+                        parent: `cluster-${i + 1}`,
+                        description: `Descripción del nodo ${j} del cluster ${i + 1}`,
+                        image: '',
+                        url: '',
+                        type: 'node'
+                    });
+                }
+            }
+            return data;
+        }
+        
+        function runTest() {
+            clearResults();
+            const clusterCount = parseInt(document.getElementById('clusterCount').value);
+            
+            log(`=== INICIANDO TEST DE CÁLCULO DE ANCHO DE CLUSTERS ===`, 'info');
+            log(`Configuración: ${clusterCount} clusters`, 'info');
+            log(`Gap esperado entre clusters: 60px`, 'info');
+            log(`Margen izquierdo esperado: 50px`, 'info');
+            log(``, 'info');
+            
+            // Generar datos de prueba
+            const testData = generateTestData(clusterCount);
+            
+            // Crear configuración del diagrama
+            const diagramConfig = {
+                name: `Test-${clusterCount}-Clusters`,
+                data: testData,
+                isLocal: true
+            };
+            
+            // Configurar hooks para capturar información del layout
+            if (!window.$xDiagrams) {
+                window.$xDiagrams = {};
+            }
+            if (!window.$xDiagrams.hooks) {
+                window.$xDiagrams.hooks = {};
+            }
+            
+            // Hook para capturar información del layout
+            window.$xDiagrams.hooks.onLayoutComplete = function() {
+                setTimeout(() => {
+                    analyzeClusterLayout();
+                }, 500);
+            };
+            
+            // Cargar el diagrama
+            log(`Cargando diagrama de prueba con ${clusterCount} clusters...`, 'info');
+            
+            if (window.loadFromObject) {
+                window.loadFromObject(diagramConfig, function(success) {
+                    if (success) {
+                        log(`✅ Diagrama cargado exitosamente`, 'success');
+                        currentDiagram = diagramConfig;
+                    } else {
+                        log(`❌ Error al cargar el diagrama`, 'error');
+                    }
+                });
+            } else {
+                log(`❌ Función loadFromObject no disponible`, 'error');
+            }
+        }
+        
+        function analyzeClusterLayout() {
+            log(`=== ANÁLISIS DEL LAYOUT DE CLUSTERS ===`, 'info');
+            
+            const svg = d3.select("#main-diagram-svg");
+            const diagramGroups = svg.selectAll(".diagram-group");
+            
+            if (diagramGroups.empty()) {
+                log(`❌ No se encontraron diagram-groups`, 'error');
+                return;
+            }
+            
+            log(`Encontrados ${diagramGroups.size()} diagram-groups`, 'info');
+            log(``, 'info');
+            
+            const clusterAnalysis = [];
+            
+            // Analizar cada diagram-group
+            diagramGroups.each(function(d, i) {
+                const diagramGroup = this;
+                const transform = diagramGroup.getAttribute("transform");
+                const bounds = diagramGroup.getBBox();
+                
+                // Extraer posición X del transform
+                let positionX = 0;
+                if (transform) {
+                    const match = /translate\(([-\d.]+), ?([-\d.]+)\)/.exec(transform);
+                    if (match) {
+                        positionX = parseFloat(match[1]) || 0;
+                    }
+                }
+                
+                // Calcular borde izquierdo real
+                const bordeIzquierdo = positionX + bounds.x;
+                const bordeDerecho = positionX + bounds.x + bounds.width;
+                
+                const analysis = {
+                    index: i,
+                    clusterId: diagramGroup.getAttribute('data-cluster-id') || `cluster-${i + 1}`,
+                    bounds: bounds,
+                    transform: transform,
+                    positionX: positionX,
+                    bordeIzquierdo: bordeIzquierdo,
+                    bordeDerecho: bordeDerecho,
+                    anchoReal: bounds.width,
+                    altoReal: bounds.height
+                };
+                
+                clusterAnalysis.push(analysis);
+                
+                log(`📊 Diagram-group ${i + 1}:`, 'info');
+                log(`   ID: ${analysis.clusterId}`, 'info');
+                log(`   Ancho real (getBBox): ${analysis.anchoReal.toFixed(1)}px`, 'info');
+                log(`   Alto real (getBBox): ${analysis.altoReal.toFixed(1)}px`, 'info');
+                log(`   Transform: ${transform}`, 'info');
+                log(`   Posición X: ${positionX.toFixed(1)}px`, 'info');
+                log(`   Borde izquierdo: ${bordeIzquierdo.toFixed(1)}px`, 'info');
+                log(`   Borde derecho: ${bordeDerecho.toFixed(1)}px`, 'info');
+                log(``, 'info');
+            });
+            
+            // Verificar posicionamiento y gaps
+            log(`=== VERIFICACIÓN DE POSICIONAMIENTO Y GAPS ===`, 'info');
+            
+            const expectedMargin = 50; // marginX
+            const expectedGap = 60; // spacingX
+            
+            // Verificar primer cluster
+            if (clusterAnalysis.length > 0) {
+                const firstCluster = clusterAnalysis[0];
+                const actualMargin = firstCluster.bordeIzquierdo;
+                const marginDiff = Math.abs(actualMargin - expectedMargin);
+                
+                if (marginDiff < 5) {
+                    log(`✅ Primer cluster: margen izquierdo = ${actualMargin.toFixed(1)}px (esperado: ${expectedMargin}px)`, 'success');
+                } else {
+                    log(`❌ Primer cluster: margen izquierdo = ${actualMargin.toFixed(1)}px (esperado: ${expectedMargin}px, diff: ${marginDiff.toFixed(1)}px)`, 'error');
+                }
+            }
+            
+            // Verificar gaps entre clusters
+            for (let i = 0; i < clusterAnalysis.length - 1; i++) {
+                const current = clusterAnalysis[i];
+                const next = clusterAnalysis[i + 1];
+                
+                const actualGap = next.bordeIzquierdo - current.bordeDerecho;
+                const gapDiff = Math.abs(actualGap - expectedGap);
+                
+                if (gapDiff < 5) {
+                    log(`✅ Gap ${i + 1}→${i + 2}: ${actualGap.toFixed(1)}px (esperado: ${expectedGap}px)`, 'success');
+                } else {
+                    log(`❌ Gap ${i + 1}→${i + 2}: ${actualGap.toFixed(1)}px (esperado: ${expectedGap}px, diff: ${gapDiff.toFixed(1)}px)`, 'error');
+                }
+                
+                log(`   Cluster ${i + 1}: ancho=${current.anchoReal.toFixed(1)}px, fin=${current.bordeDerecho.toFixed(1)}px`, 'info');
+                log(`   Cluster ${i + 2}: ancho=${next.anchoReal.toFixed(1)}px, inicio=${next.bordeIzquierdo.toFixed(1)}px`, 'info');
+                log(``, 'info');
+            }
+            
+            // Verificar que no hay superposición
+            let hasOverlap = false;
+            for (let i = 0; i < clusterAnalysis.length - 1; i++) {
+                const current = clusterAnalysis[i];
+                const next = clusterAnalysis[i + 1];
+                
+                if (current.bordeDerecho > next.bordeIzquierdo) {
+                    log(`❌ SUPERPOSICIÓN detectada entre clusters ${i + 1} y ${i + 2}`, 'error');
+                    hasOverlap = true;
+                }
+            }
+            
+            if (!hasOverlap) {
+                log(`✅ No se detectaron superposiciones entre clusters`, 'success');
+            }
+            
+            // Resumen final
+            log(`=== RESUMEN FINAL ===`, 'info');
+            log(`Total de clusters analizados: ${clusterAnalysis.length}`, 'info');
+            log(`Ancho total ocupado: ${(clusterAnalysis[clusterAnalysis.length - 1].bordeDerecho - clusterAnalysis[0].bordeIzquierdo).toFixed(1)}px`, 'info');
+            log(`Ancho esperado: ${(clusterAnalysis.length - 1) * expectedGap + clusterAnalysis.reduce((sum, c) => sum + c.anchoReal, 0)}px`, 'info');
+            
+            // Verificar si el cálculo basado en diagram-group es correcto
+            const totalExpectedWidth = expectedMargin + clusterAnalysis.reduce((sum, c) => sum + c.anchoReal, 0) + (clusterAnalysis.length - 1) * expectedGap;
+            const actualTotalWidth = clusterAnalysis[clusterAnalysis.length - 1].bordeDerecho;
+            const totalWidthDiff = Math.abs(actualTotalWidth - totalExpectedWidth);
+            
+            if (totalWidthDiff < 10) {
+                log(`✅ Cálculo de ancho total correcto (diff: ${totalWidthDiff.toFixed(1)}px)`, 'success');
+            } else {
+                log(`❌ Error en cálculo de ancho total (diff: ${totalWidthDiff.toFixed(1)}px)`, 'error');
+            }
+        }
+        
+        function showDebugInfo() {
+            log(`=== INFORMACIÓN DE DEBUG ===`, 'info');
+            
+            const svg = d3.select("#main-diagram-svg");
+            if (svg.empty()) {
+                log(`❌ SVG no encontrado`, 'error');
+                return;
+            }
+            
+            const g = svg.select("g");
+            if (g.empty()) {
+                log(`❌ Elemento g no encontrado`, 'error');
+                return;
+            }
+            
+            const bounds = g.node().getBBox();
+            log(`Bounds del contenedor principal:`, 'info');
+            log(`  x: ${bounds.x.toFixed(1)}, y: ${bounds.y.toFixed(1)}`, 'info');
+            log(`  width: ${bounds.width.toFixed(1)}, height: ${bounds.height.toFixed(1)}`, 'info');
+            
+            const diagramGroups = g.selectAll(".diagram-group");
+            log(`Diagram-groups encontrados: ${diagramGroups.size()}`, 'info');
+            
+            diagramGroups.each(function(d, i) {
+                const bounds = this.getBBox();
+                const transform = this.getAttribute("transform");
+                log(`Diagram-group ${i + 1}:`, 'info');
+                log(`  bounds: x=${bounds.x.toFixed(1)}, y=${bounds.y.toFixed(1)}, w=${bounds.width.toFixed(1)}, h=${bounds.height.toFixed(1)}`, 'info');
+                log(`  transform: ${transform}`, 'info');
+            });
+        }
+        
+        // Inicializar cuando la página esté lista
+        document.addEventListener('DOMContentLoaded', function() {
+            log(`Página cargada. Listo para ejecutar tests.`, 'info');
+        });
+    </script>
+</body>
+</html> 

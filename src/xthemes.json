@@ -118,7 +118,7 @@
     "--bg-color": "#181c24",
     "--bg-image": "url(img/backgrounds/grid-dots.svg)",
     "--bg-opacity": "1",
-    "--image-filter": "invert(100%) brightness(0.8) contrast(1.2)",
+    "--image-filter": "invert(100%) brightness(5) contrast(200%)",
 
     "--text-color": "#f6f7f9",
     "--node-fill": "#23272f",

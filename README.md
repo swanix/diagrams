@@ -11,6 +11,12 @@ A powerful JavaScript library for creating interactive, hierarchical SVG diagram
 - **FOUC Prevention**: Smooth theme transitions without white flashes
 - **Theme Loader**: Early theme application to prevent visual glitches
 
+### 🏷️ **Auto Logo Detection**
+- **Automatic Detection**: Automatically detects logo files in `img/` folder
+- **Multiple Formats**: Supports SVG, PNG, JPG, JPEG formats
+- **Priority System**: Manual configuration > data-logo attribute > auto-detection
+- **Zero Configuration**: Works without any setup if `img/logo.svg` exists
+
 ### 🔄 **Dynamic Diagram Switching**
 - **Dropdown Interface**: Clean dropdown in topbar for diagram selection
 - **URL-based Navigation**: Direct access to specific diagrams via URL parameters
@@ -152,6 +158,46 @@ diagrams/
 ├── docs/                       # Documentation and demos
 ├── readme/                     # Technical documentation
 └── package.json
+```
+
+## 🏷️ Auto Logo Detection
+
+### How It Works
+
+Swanix Diagrams now includes automatic logo detection that works without any configuration:
+
+1. **Place your logo file** in the `img/` folder with one of these names:
+   - `logo.svg` (recommended)
+   - `logo.png`
+   - `logo.jpg`
+   - `logo.jpeg`
+
+2. **The system will automatically detect it** and display it in the topbar
+
+### Priority System
+
+The logo detection follows this priority order:
+
+1. **Manual Configuration**: If `logo` is specified in `window.$xDiagrams`
+2. **HTML Attribute**: If `data-logo` is set on the container
+3. **Auto Detection**: Automatically finds files in `img/` folder
+
+### Example
+
+```javascript
+// Before (manual configuration required)
+window.$xDiagrams = {
+  title: "My Diagram",
+  logo: "img/logo.svg",  // ← Manual configuration
+  // ... rest of config
+};
+
+// After (automatic detection)
+window.$xDiagrams = {
+  title: "My Diagram",
+  // ← No logo configuration needed if img/logo.svg exists
+  // ... rest of config
+};
 ```
 
 ## 🎨 Theme System

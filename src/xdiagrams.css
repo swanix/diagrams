@@ -89,7 +89,7 @@
     --switcher-btn-shadow-hover: none;
     --switcher-btn-border-radius: 8px;
     --switcher-btn-padding: 10px 20px;
-    --switcher-btn-min-width: 240px;
+    --switcher-btn-min-width: 437px;
 
     /* Theme Toggle Button */
     --theme-toggle-bg: #ffffff;
@@ -352,6 +352,11 @@
   
   /* Regla para elementos image con clase image-base y image-filter */
   svg image.image-base.image-filter {
+    filter: var(--image-filter) !important;
+  }
+  
+  /* Regla con máxima especificidad para asegurar que se aplique */
+  svg image.image-base.image-filter[class*="image-filter"] {
     filter: var(--image-filter) !important;
   }
  
@@ -1193,12 +1198,28 @@ svg .node.node-selected {
 
 .diagram-logo {
   max-height: 32px;
-  max-width: 160px;
+  max-width: 120px;
   object-fit: contain;
   display: block;
-  margin: 0 auto;
-  padding: 12px 0;
+  padding: 8px 0;
   filter: var(--logo-filter, none);
+}
+
+.logo-title-container {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  height: 100%;
+}
+
+.logo-title-container .diagram-title {
+  margin: 0;
+  font-size: 1.1em;
+  font-weight: 400;
+  color: var(--topbar-text, #333);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* Controles removidos temporalmente */
@@ -1365,8 +1386,8 @@ body.theme-forest .topbar {
 .diagram-dropdown {
     position: relative;
     display: inline-block;
-    width: 220px; /* ancho aumentado */
-    max-width: 300px;
+    width: 437px; /* ancho aumentado 25% más */
+    max-width: 562px;
     margin-right: 40px; /* Espacio para el botón */
 }
 
@@ -1383,8 +1404,8 @@ body.theme-forest .topbar {
     align-items: center;
     gap: 12px;
     transition: all 0.2s ease;
-    min-width: 220px;
-    max-width: 300px;
+    min-width: 437px;
+    max-width: 562px;
     justify-content: space-between;
     box-sizing: border-box;
     white-space: nowrap;

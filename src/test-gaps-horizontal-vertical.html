@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test: Gaps Horizontal y Vertical entre Diagram-Groups</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background: #f5f5f5;
+        }
+        .test-container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .test-title {
+            color: #333;
+            border-bottom: 2px solid #007acc;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+        .test-description {
+            background: #e8f4fd;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            border-left: 4px solid #007acc;
+        }
+        .test-results {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            font-family: monospace;
+            white-space: pre-wrap;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .success { color: #28a745; }
+        .error { color: #dc3545; }
+        .info { color: #007acc; }
+        .warning { color: #ffc107; }
+        
+        #diagram-container {
+            width: 100%;
+            height: 800px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            background: white;
+            margin-top: 20px;
+            position: relative;
+        }
+        
+        .control-panel {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        
+        .control-panel button {
+            background: #007acc;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+        
+        .control-panel button:hover {
+            background: #005a9e;
+        }
+        
+        .control-panel input {
+            padding: 6px 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+        
+        .control-panel label {
+            font-weight: bold;
+            margin-right: 5px;
+        }
+        
+        .gap-indicator-horizontal {
+            position: absolute;
+            background: rgba(0, 255, 0, 0.2);
+            border: 2px dashed green;
+            pointer-events: none;
+            z-index: 1000;
+            height: 20px;
+        }
+        
+        .gap-indicator-vertical {
+            position: absolute;
+            background: rgba(255, 0, 255, 0.2);
+            border: 2px dashed purple;
+            pointer-events: none;
+            z-index: 1000;
+            width: 20px;
+        }
+        
+        .cluster-indicator {
+            position: absolute;
+            background: rgba(255, 0, 0, 0.1);
+            border: 2px solid red;
+            pointer-events: none;
+            z-index: 999;
+        }
+        
+        .gap-label {
+            position: absolute;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 10px;
+            pointer-events: none;
+            z-index: 1001;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1 class="test-title">Test: Gaps Horizontal y Vertical entre Diagram-Groups</h1>
+        
+        <div class="test-description">
+            <strong>Objetivo:</strong> Verificar que los espacios entre diagram-groups sean correctos tanto horizontal como verticalmente.
+            <br><br>
+            <strong>Configuración esperada:</strong>
+            <ul>
+                <li><strong>Gap horizontal:</strong> 60px entre clusters en la misma fila</li>
+                <li><strong>Gap vertical:</strong> 60px entre filas de clusters</li>
+                <li><strong>Margen izquierdo:</strong> 50px para el primer cluster de cada fila</li>
+                <li><strong>Margen superior:</strong> 50px para la primera fila</li>
+            </ul>
+        </div>
+        
+        <div class="control-panel">
+            <label>Número de clusters:</label>
+            <input type="number" id="clusterCount" value="8" min="1" max="20">
+            <button onclick="runTest()">Ejecutar Test de Gaps</button>
+            <button onclick="clearResults()">Limpiar Resultados</button>
+            <button onclick="showVisualIndicators()">Mostrar Indicadores Visuales</button>
+            <button onclick="hideVisualIndicators()">Ocultar Indicadores</button>
+        </div>
+        
+        <div class="test-results" id="testResults">
+            Haz clic en "Ejecutar Test de Gaps" para verificar los espacios horizontal y vertical...
+        </div>
+    </div>
+    
+    <div id="diagram-container">
+        <!-- El diagrama se cargará aquí -->
+    </div>
+
+    <!-- Scripts necesarios -->
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+    <script src="xdiagrams.js"></script>
+    
+    <script>
+        let testResults = [];
+        let currentDiagram = null;
+        let visualIndicators = [];
+        
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = `[${timestamp}] ${message}`;
+            testResults.push({ message: logEntry, type: type });
+            updateResultsDisplay();
+        }
+        
+        function updateResultsDisplay() {
+            const resultsDiv = document.getElementById('testResults');
+            resultsDiv.innerHTML = testResults.map(result => {
+                const className = result.type;
+                return `<span class="${className}">${result.message}</span>`;
+            }).join('\n');
+            resultsDiv.scrollTop = resultsDiv.scrollHeight;
+        }
+        
+        function clearResults() {
+            testResults = [];
+            updateResultsDisplay();
+        }
+        
+        function generateTestData(clusterCount) {
+            const data = [];
+            const clustersPerRow = 7;
+            const totalRows = Math.ceil(clusterCount / clustersPerRow);
+            
+            for (let row = 0; row < totalRows; row++) {
+                for (let col = 0; col < clustersPerRow && (row * clustersPerRow + col) < clusterCount; col++) {
+                    const clusterIndex = row * clustersPerRow + col;
+                    const clusterId = String.fromCharCode(65 + row) + (col + 1); // A1, A2, B1, B2, etc.
+                    
+                    // Cluster principal
+                    data.push({
+                        id: clusterId,
+                        name: `Cluster ${clusterId}`,
+                        parent: '',
+                        description: `Cluster ${clusterId} en fila ${row + 1}, columna ${col + 1}`,
+                        image: '',
+                        url: '',
+                        type: 'cluster'
+                    });
+                    
+                    // Agregar algunos nodos hijos para cada cluster
+                    const nodeCount = Math.floor(Math.random() * 3) + 2; // 2-4 nodos por cluster
+                    for (let j = 1; j <= nodeCount; j++) {
+                        data.push({
+                            id: `${clusterId}-${j}`,
+                            name: `Nodo ${j}`,
+                            parent: clusterId,
+                            description: `Nodo ${j} del cluster ${clusterId}`,
+                            image: '',
+                            url: '',
+                            type: 'node'
+                        });
+                    }
+                }
+            }
+            return data;
+        }
+        
+        function runTest() {
+            clearResults();
+            hideVisualIndicators();
+            
+            const clusterCount = parseInt(document.getElementById('clusterCount').value);
+            const clustersPerRow = 7;
+            const totalRows = Math.ceil(clusterCount / clustersPerRow);
+            
+            log(`=== TEST DE GAPS HORIZONTAL Y VERTICAL ===`, 'info');
+            log(`Configuración: ${clusterCount} clusters, ${totalRows} filas, ${clustersPerRow} clusters por fila`, 'info');
+            log(`Gap horizontal esperado: 60px`, 'info');
+            log(`Gap vertical esperado: 60px`, 'info');
+            log(`Margen izquierdo esperado: 50px`, 'info');
+            log(`Margen superior esperado: 50px`, 'info');
+            log(``, 'info');
+            
+            // Generar datos de prueba
+            const testData = generateTestData(clusterCount);
+            
+            // Crear configuración del diagrama
+            const diagramConfig = {
+                name: `Test-Gaps-${clusterCount}-Clusters`,
+                data: testData,
+                isLocal: true
+            };
+            
+            // Configurar hooks para capturar información del layout
+            if (!window.$xDiagrams) {
+                window.$xDiagrams = {};
+            }
+            if (!window.$xDiagrams.hooks) {
+                window.$xDiagrams.hooks = {};
+            }
+            
+            // Hook para capturar información del layout
+            window.$xDiagrams.hooks.onLayoutComplete = function() {
+                setTimeout(() => {
+                    analyzeGapsHorizontalVertical();
+                }, 500);
+            };
+            
+            // Cargar el diagrama
+            log(`Cargando diagrama de prueba con ${clusterCount} clusters...`, 'info');
+            
+            if (window.loadFromObject) {
+                window.loadFromObject(diagramConfig, function(success) {
+                    if (success) {
+                        log(`✅ Diagrama cargado exitosamente`, 'success');
+                        currentDiagram = diagramConfig;
+                    } else {
+                        log(`❌ Error al cargar el diagrama`, 'error');
+                    }
+                });
+            } else {
+                log(`❌ Función loadFromObject no disponible`, 'error');
+            }
+        }
+        
+        function analyzeGapsHorizontalVertical() {
+            log(`=== ANÁLISIS DE GAPS HORIZONTAL Y VERTICAL ===`, 'info');
+            
+            const svg = d3.select("#main-diagram-svg");
+            const diagramGroups = svg.selectAll(".diagram-group");
+            
+            if (diagramGroups.empty()) {
+                log(`❌ No se encontraron diagram-groups`, 'error');
+                return;
+            }
+            
+            log(`Encontrados ${diagramGroups.size()} diagram-groups`, 'info');
+            log(``, 'info');
+            
+            const clusterAnalysis = [];
+            const clustersPerRow = 7;
+            const totalRows = Math.ceil(diagramGroups.size() / clustersPerRow);
+            
+            // Analizar cada diagram-group
+            diagramGroups.each(function(d, i) {
+                const diagramGroup = this;
+                const transform = diagramGroup.getAttribute("transform");
+                const clusterRect = diagramGroup.querySelector('.cluster-rect');
+                
+                // Extraer posición X e Y del transform
+                let positionX = 0, positionY = 0;
+                if (transform) {
+                    const match = /translate\(([-\d.]+), ?([-\d.]+)\)/.exec(transform);
+                    if (match) {
+                        positionX = parseFloat(match[1]) || 0;
+                        positionY = parseFloat(match[2]) || 0;
+                    }
+                }
+                
+                let anchoReal, altoReal;
+                if (clusterRect) {
+                    const rectBounds = clusterRect.getBBox();
+                    anchoReal = rectBounds.width;
+                    altoReal = rectBounds.height;
+                } else {
+                    const bounds = diagramGroup.getBBox();
+                    anchoReal = bounds.width;
+                    altoReal = bounds.height;
+                }
+                
+                // Calcular bordes reales
+                const bordeIzquierdo = positionX - anchoReal / 2;
+                const bordeDerecho = positionX + anchoReal / 2;
+                const bordeSuperior = positionY - altoReal / 2;
+                const bordeInferior = positionY + altoReal / 2;
+                
+                // Determinar fila y columna
+                const row = Math.floor(i / clustersPerRow);
+                const col = i % clustersPerRow;
+                
+                const analysis = {
+                    index: i,
+                    row: row,
+                    col: col,
+                    clusterId: diagramGroup.getAttribute('data-cluster-id') || `cluster-${i + 1}`,
+                    transform: transform,
+                    positionX: positionX,
+                    positionY: positionY,
+                    bordeIzquierdo: bordeIzquierdo,
+                    bordeDerecho: bordeDerecho,
+                    bordeSuperior: bordeSuperior,
+                    bordeInferior: bordeInferior,
+                    anchoReal: anchoReal,
+                    altoReal: altoReal,
+                    clusterRect: clusterRect
+                };
+                
+                clusterAnalysis.push(analysis);
+                
+                log(`📊 Cluster ${i + 1} (${analysis.clusterId}): Fila ${row + 1}, Col ${col + 1}`, 'info');
+                log(`   Posición: (${positionX.toFixed(1)}, ${positionY.toFixed(1)})`, 'info');
+                log(`   Dimensiones: ${anchoReal.toFixed(1)}px × ${altoReal.toFixed(1)}px`, 'info');
+                log(`   Bordes: L=${bordeIzquierdo.toFixed(1)}, R=${bordeDerecho.toFixed(1)}, T=${bordeSuperior.toFixed(1)}, B=${bordeInferior.toFixed(1)}`, 'info');
+                log(``, 'info');
+            });
+            
+            // Verificar gaps horizontales
+            log(`=== VERIFICACIÓN DE GAPS HORIZONTALES ===`, 'info');
+            const expectedGapHorizontal = 60;
+            let allHorizontalGapsCorrect = true;
+            
+            for (let row = 0; row < totalRows; row++) {
+                const clustersInRow = clusterAnalysis.filter(c => c.row === row);
+                log(`--- Fila ${row + 1} (${clustersInRow.length} clusters) ---`, 'info');
+                
+                for (let i = 0; i < clustersInRow.length - 1; i++) {
+                    const current = clustersInRow[i];
+                    const next = clustersInRow[i + 1];
+                    
+                    const actualGap = next.bordeIzquierdo - current.bordeDerecho;
+                    const gapDiff = Math.abs(actualGap - expectedGapHorizontal);
+                    
+                    if (gapDiff < 5) {
+                        log(`✅ Gap horizontal ${i + 1}→${i + 2}: ${actualGap.toFixed(1)}px`, 'success');
+                    } else {
+                        log(`❌ Gap horizontal ${i + 1}→${i + 2}: ${actualGap.toFixed(1)}px (esperado: ${expectedGapHorizontal}px, diff: ${gapDiff.toFixed(1)}px)`, 'error');
+                        allHorizontalGapsCorrect = false;
+                    }
+                }
+            }
+            
+            // Verificar gaps verticales
+            log(`=== VERIFICACIÓN DE GAPS VERTICALES ===`, 'info');
+            const expectedGapVertical = 60;
+            let allVerticalGapsCorrect = true;
+            
+            for (let row = 0; row < totalRows - 1; row++) {
+                const currentRowClusters = clusterAnalysis.filter(c => c.row === row);
+                const nextRowClusters = clusterAnalysis.filter(c => c.row === row + 1);
+                
+                if (currentRowClusters.length > 0 && nextRowClusters.length > 0) {
+                    // Usar el primer cluster de cada fila para medir el gap
+                    const currentCluster = currentRowClusters[0];
+                    const nextCluster = nextRowClusters[0];
+                    
+                    const actualGap = nextCluster.bordeSuperior - currentCluster.bordeInferior;
+                    const gapDiff = Math.abs(actualGap - expectedGapVertical);
+                    
+                    if (gapDiff < 5) {
+                        log(`✅ Gap vertical fila ${row + 1}→${row + 2}: ${actualGap.toFixed(1)}px`, 'success');
+                    } else {
+                        log(`❌ Gap vertical fila ${row + 1}→${row + 2}: ${actualGap.toFixed(1)}px (esperado: ${expectedGapVertical}px, diff: ${gapDiff.toFixed(1)}px)`, 'error');
+                        allVerticalGapsCorrect = false;
+                    }
+                }
+            }
+            
+            // Verificar márgenes
+            log(`=== VERIFICACIÓN DE MÁRGENES ===`, 'info');
+            const expectedMarginLeft = 50;
+            const expectedMarginTop = 50;
+            
+            // Verificar margen izquierdo del primer cluster de cada fila
+            for (let row = 0; row < totalRows; row++) {
+                const firstClusterInRow = clusterAnalysis.find(c => c.row === row);
+                if (firstClusterInRow) {
+                    const actualMarginLeft = firstClusterInRow.bordeIzquierdo;
+                    const marginDiff = Math.abs(actualMarginLeft - expectedMarginLeft);
+                    
+                    if (marginDiff < 5) {
+                        log(`✅ Margen izquierdo fila ${row + 1}: ${actualMarginLeft.toFixed(1)}px`, 'success');
+                    } else {
+                        log(`❌ Margen izquierdo fila ${row + 1}: ${actualMarginLeft.toFixed(1)}px (esperado: ${expectedMarginLeft}px, diff: ${marginDiff.toFixed(1)}px)`, 'error');
+                    }
+                }
+            }
+            
+            // Verificar margen superior de la primera fila
+            const firstCluster = clusterAnalysis[0];
+            if (firstCluster) {
+                const actualMarginTop = firstCluster.bordeSuperior;
+                const marginDiff = Math.abs(actualMarginTop - expectedMarginTop);
+                
+                if (marginDiff < 5) {
+                    log(`✅ Margen superior: ${actualMarginTop.toFixed(1)}px`, 'success');
+                } else {
+                    log(`❌ Margen superior: ${actualMarginTop.toFixed(1)}px (esperado: ${expectedMarginTop}px, diff: ${marginDiff.toFixed(1)}px)`, 'error');
+                }
+            }
+            
+            // Resumen final
+            log(`=== RESUMEN FINAL ===`, 'info');
+            if (allHorizontalGapsCorrect && allVerticalGapsCorrect) {
+                log(`✅ TODOS LOS GAPS SON CORRECTOS`, 'success');
+            } else {
+                log(`❌ ALGUNOS GAPS SON INCORRECTOS`, 'error');
+            }
+            
+            log(`Gaps horizontales: ${allHorizontalGapsCorrect ? '✅' : '❌'}`, allHorizontalGapsCorrect ? 'success' : 'error');
+            log(`Gaps verticales: ${allVerticalGapsCorrect ? '✅' : '❌'}`, allVerticalGapsCorrect ? 'success' : 'error');
+            log(`Total de clusters analizados: ${clusterAnalysis.length}`, 'info');
+        }
+        
+        function showVisualIndicators() {
+            hideVisualIndicators();
+            
+            const svg = d3.select("#main-diagram-svg");
+            const diagramGroups = svg.selectAll(".diagram-group");
+            
+            diagramGroups.each(function(d, i) {
+                const diagramGroup = this;
+                const transform = diagramGroup.getAttribute("transform");
+                const clusterRect = diagramGroup.querySelector('.cluster-rect');
+                
+                if (clusterRect && transform) {
+                    const match = /translate\(([-\d.]+), ?([-\d.]+)\)/.exec(transform);
+                    if (match) {
+                        const positionX = parseFloat(match[1]) || 0;
+                        const positionY = parseFloat(match[2]) || 0;
+                        const rectBounds = clusterRect.getBBox();
+                        
+                        // Crear indicador del cluster
+                        const clusterIndicator = document.createElement('div');
+                        clusterIndicator.className = 'cluster-indicator';
+                        clusterIndicator.style.left = (positionX - rectBounds.width/2) + 'px';
+                        clusterIndicator.style.top = (positionY - rectBounds.height/2) + 'px';
+                        clusterIndicator.style.width = rectBounds.width + 'px';
+                        clusterIndicator.style.height = rectBounds.height + 'px';
+                        clusterIndicator.title = `Cluster ${i + 1}: ${rectBounds.width.toFixed(1)}px × ${rectBounds.height.toFixed(1)}px`;
+                        
+                        document.getElementById('diagram-container').appendChild(clusterIndicator);
+                        visualIndicators.push(clusterIndicator);
+                        
+                        // Crear indicadores de gaps horizontales
+                        if (i < diagramGroups.size() - 1) {
+                            const nextGroup = diagramGroups.nodes()[i + 1];
+                            const nextTransform = nextGroup.getAttribute("transform");
+                            const nextMatch = /translate\(([-\d.]+), ?([-\d.]+)\)/.exec(nextTransform);
+                            
+                            if (nextMatch) {
+                                const nextPositionX = parseFloat(nextMatch[1]) || 0;
+                                const nextPositionY = parseFloat(nextMatch[2]) || 0;
+                                const nextRect = nextGroup.querySelector('.cluster-rect');
+                                
+                                if (nextRect) {
+                                    const nextRectBounds = nextRect.getBBox();
+                                    
+                                    // Solo crear gap horizontal si están en la misma fila (Y similar)
+                                    if (Math.abs(nextPositionY - positionY) < 10) {
+                                        const gapStart = positionX + rectBounds.width/2;
+                                        const gapEnd = nextPositionX - nextRectBounds.width/2;
+                                        const gapWidth = gapEnd - gapStart;
+                                        
+                                        if (gapWidth > 0) {
+                                            const gapIndicator = document.createElement('div');
+                                            gapIndicator.className = 'gap-indicator-horizontal';
+                                            gapIndicator.style.left = gapStart + 'px';
+                                            gapIndicator.style.top = (positionY - rectBounds.height/2) + 'px';
+                                            gapIndicator.style.width = gapWidth + 'px';
+                                            
+                                            document.getElementById('diagram-container').appendChild(gapIndicator);
+                                            visualIndicators.push(gapIndicator);
+                                            
+                                            // Agregar etiqueta del gap
+                                            const gapLabel = document.createElement('div');
+                                            gapLabel.className = 'gap-label';
+                                            gapLabel.textContent = `${gapWidth.toFixed(0)}px`;
+                                            gapLabel.style.left = (gapStart + gapWidth/2 - 15) + 'px';
+                                            gapLabel.style.top = (positionY - rectBounds.height/2 - 25) + 'px';
+                                            
+                                            document.getElementById('diagram-container').appendChild(gapLabel);
+                                            visualIndicators.push(gapLabel);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+            
+            log(`Indicadores visuales mostrados para ${visualIndicators.length} elementos`, 'info');
+        }
+        
+        function hideVisualIndicators() {
+            visualIndicators.forEach(indicator => {
+                if (indicator.parentNode) {
+                    indicator.parentNode.removeChild(indicator);
+                }
+            });
+            visualIndicators = [];
+        }
+        
+        // Inicializar cuando la página esté lista
+        document.addEventListener('DOMContentLoaded', function() {
+            log(`Página cargada. Listo para verificar gaps horizontal y vertical.`, 'info');
+        });
+    </script>
+</body>
+</html> 

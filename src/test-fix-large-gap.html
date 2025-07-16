@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test: Corrección del Gap Grande Después del Primer Cluster</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background: #f5f5f5;
+        }
+        .test-container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .test-title {
+            color: #333;
+            border-bottom: 2px solid #007acc;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+        .test-description {
+            background: #e8f4fd;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            border-left: 4px solid #007acc;
+        }
+        .test-results {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            font-family: monospace;
+            white-space: pre-wrap;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .success { color: #28a745; }
+        .error { color: #dc3545; }
+        .info { color: #007acc; }
+        .warning { color: #ffc107; }
+        
+        #diagram-container {
+            width: 100%;
+            height: 600px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            background: white;
+            margin-top: 20px;
+        }
+        
+        .control-panel {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        
+        .control-panel button {
+            background: #007acc;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+        
+        .control-panel button:hover {
+            background: #005a9e;
+        }
+        
+        .visual-indicator {
+            position: absolute;
+            background: rgba(255, 0, 0, 0.3);
+            border: 2px solid red;
+            pointer-events: none;
+            z-index: 1000;
+        }
+        
+        .gap-indicator {
+            position: absolute;
+            background: rgba(0, 255, 0, 0.2);
+            border: 2px dashed green;
+            pointer-events: none;
+            z-index: 1000;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1 class="test-title">Test: Corrección del Gap Grande Después del Primer Cluster</h1>
+        
+        <div class="test-description">
+            <strong>Problema:</strong> Se observaba un gap muy grande después del primer cluster, mucho más amplio que el gap esperado de 60px.
+            <br><br>
+            <strong>Solución:</strong> Cambiar la medición del ancho del cluster para usar el <code>cluster-rect</code> en lugar del <code>diagram-group</code> completo.
+            <br><br>
+            <strong>Verificación:</strong>
+            <ul>
+                <li>El primer cluster debe empezar a 50px del borde izquierdo</li>
+                <li>El gap entre clusters debe ser exactamente 60px</li>
+                <li>No debe haber espacios excesivos después del primer cluster</li>
+                <li>Los clusters deben estar posicionados uno al lado del otro correctamente</li>
+            </ul>
+        </div>
+        
+        <div class="control-panel">
+            <button onclick="runTest()">Ejecutar Test de Gap</button>
+            <button onclick="clearResults()">Limpiar Resultados</button>
+            <button onclick="showVisualIndicators()">Mostrar Indicadores Visuales</button>
+            <button onclick="hideVisualIndicators()">Ocultar Indicadores</button>
+        </div>
+        
+        <div class="test-results" id="testResults">
+            Haz clic en "Ejecutar Test de Gap" para verificar la corrección del gap grande...
+        </div>
+    </div>
+    
+    <div id="diagram-container">
+        <!-- El diagrama se cargará aquí -->
+    </div>
+
+    <!-- Scripts necesarios -->
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+    <script src="xdiagrams.js"></script>
+    
+    <script>
+        let testResults = [];
+        let currentDiagram = null;
+        let visualIndicators = [];
+        
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = `[${timestamp}] ${message}`;
+            testResults.push({ message: logEntry, type: type });
+            updateResultsDisplay();
+        }
+        
+        function updateResultsDisplay() {
+            const resultsDiv = document.getElementById('testResults');
+            resultsDiv.innerHTML = testResults.map(result => {
+                const className = result.type;
+                return `<span class="${className}">${result.message}</span>`;
+            }).join('\n');
+            resultsDiv.scrollTop = resultsDiv.scrollHeight;
+        }
+        
+        function clearResults() {
+            testResults = [];
+            updateResultsDisplay();
+        }
+        
+        function generateTestData() {
+            // Crear datos que simulen el problema del gap grande
+            const data = [
+                // Primer cluster (A1)
+                { id: 'A1', name: 'Cluster A1', parent: '', description: 'Primer cluster', image: '', url: '', type: 'cluster' },
+                { id: 'A1-1', name: 'Nodo A1-1', parent: 'A1', description: 'Hijo del A1', image: '', url: '', type: 'node' },
+                { id: 'A1-2', name: 'Nodo A1-2', parent: 'A1', description: 'Hijo del A1', image: '', url: '', type: 'node' },
+                { id: 'A1-3', name: 'Nodo A1-3', parent: 'A1', description: 'Hijo del A1', image: '', url: '', type: 'node' },
+                
+                // Segundo cluster (B1)
+                { id: 'B1', name: 'Cluster B1', parent: '', description: 'Segundo cluster', image: '', url: '', type: 'cluster' },
+                { id: 'B1-1', name: 'Nodo B1-1', parent: 'B1', description: 'Hijo del B1', image: '', url: '', type: 'node' },
+                { id: 'B1-2', name: 'Nodo B1-2', parent: 'B1', description: 'Hijo del B1', image: '', url: '', type: 'node' },
+                
+                // Tercer cluster (H1)
+                { id: 'H1', name: 'Cluster H1', parent: '', description: 'Tercer cluster', image: '', url: '', type: 'cluster' },
+                { id: 'H1-1', name: 'Nodo H1-1', parent: 'H1', description: 'Hijo del H1', image: '', url: '', type: 'node' },
+                { id: 'H1-2', name: 'Nodo H1-2', parent: 'H1', description: 'Hijo del H1', image: '', url: '', type: 'node' },
+                { id: 'H1-3', name: 'Nodo H1-3', parent: 'H1', description: 'Hijo del H1', image: '', url: '', type: 'node' },
+                
+                // Cuarto cluster (I1)
+                { id: 'I1', name: 'Cluster I1', parent: '', description: 'Cuarto cluster', image: '', url: '', type: 'cluster' },
+                { id: 'I1-1', name: 'Nodo I1-1', parent: 'I1', description: 'Hijo del I1', image: '', url: '', type: 'node' },
+                { id: 'I1-2', name: 'Nodo I1-2', parent: 'I1', description: 'Hijo del I1', image: '', url: '', type: 'node' }
+            ];
+            return data;
+        }
+        
+        function runTest() {
+            clearResults();
+            hideVisualIndicators();
+            
+            log(`=== TEST DE CORRECCIÓN DEL GAP GRANDE ===`, 'info');
+            log(`Objetivo: Verificar que el gap después del primer cluster sea exactamente 60px`, 'info');
+            log(``, 'info');
+            
+            // Generar datos de prueba
+            const testData = generateTestData();
+            
+            // Crear configuración del diagrama
+            const diagramConfig = {
+                name: 'Test-Gap-Correction',
+                data: testData,
+                isLocal: true
+            };
+            
+            // Configurar hooks para capturar información del layout
+            if (!window.$xDiagrams) {
+                window.$xDiagrams = {};
+            }
+            if (!window.$xDiagrams.hooks) {
+                window.$xDiagrams.hooks = {};
+            }
+            
+            // Hook para capturar información del layout
+            window.$xDiagrams.hooks.onLayoutComplete = function() {
+                setTimeout(() => {
+                    analyzeGapCorrection();
+                }, 500);
+            };
+            
+            // Cargar el diagrama
+            log(`Cargando diagrama de prueba con 4 clusters...`, 'info');
+            
+            if (window.loadFromObject) {
+                window.loadFromObject(diagramConfig, function(success) {
+                    if (success) {
+                        log(`✅ Diagrama cargado exitosamente`, 'success');
+                        currentDiagram = diagramConfig;
+                    } else {
+                        log(`❌ Error al cargar el diagrama`, 'error');
+                    }
+                });
+            } else {
+                log(`❌ Función loadFromObject no disponible`, 'error');
+            }
+        }
+        
+        function analyzeGapCorrection() {
+            log(`=== ANÁLISIS DE CORRECCIÓN DEL GAP ===`, 'info');
+            
+            const svg = d3.select("#main-diagram-svg");
+            const diagramGroups = svg.selectAll(".diagram-group");
+            
+            if (diagramGroups.empty()) {
+                log(`❌ No se encontraron diagram-groups`, 'error');
+                return;
+            }
+            
+            log(`Encontrados ${diagramGroups.size()} diagram-groups`, 'info');
+            log(``, 'info');
+            
+            const clusterAnalysis = [];
+            
+            // Analizar cada diagram-group
+            diagramGroups.each(function(d, i) {
+                const diagramGroup = this;
+                const transform = diagramGroup.getAttribute("transform");
+                const clusterRect = diagramGroup.querySelector('.cluster-rect');
+                
+                // Extraer posición X del transform
+                let positionX = 0;
+                if (transform) {
+                    const match = /translate\(([-\d.]+), ?([-\d.]+)\)/.exec(transform);
+                    if (match) {
+                        positionX = parseFloat(match[1]) || 0;
+                    }
+                }
+                
+                let anchoReal, altoReal;
+                if (clusterRect) {
+                    const rectBounds = clusterRect.getBBox();
+                    anchoReal = rectBounds.width;
+                    altoReal = rectBounds.height;
+                } else {
+                    const bounds = diagramGroup.getBBox();
+                    anchoReal = bounds.width;
+                    altoReal = bounds.height;
+                }
+                
+                // Calcular borde izquierdo real
+                const bordeIzquierdo = positionX - anchoReal / 2;
+                const bordeDerecho = positionX + anchoReal / 2;
+                
+                const analysis = {
+                    index: i,
+                    clusterId: diagramGroup.getAttribute('data-cluster-id') || `cluster-${i + 1}`,
+                    transform: transform,
+                    positionX: positionX,
+                    bordeIzquierdo: bordeIzquierdo,
+                    bordeDerecho: bordeDerecho,
+                    anchoReal: anchoReal,
+                    altoReal: altoReal,
+                    clusterRect: clusterRect
+                };
+                
+                clusterAnalysis.push(analysis);
+                
+                log(`📊 Cluster ${i + 1} (${analysis.clusterId}):`, 'info');
+                log(`   Ancho real: ${anchoReal.toFixed(1)}px`, 'info');
+                log(`   Posición X: ${positionX.toFixed(1)}px`, 'info');
+                log(`   Borde izquierdo: ${bordeIzquierdo.toFixed(1)}px`, 'info');
+                log(`   Borde derecho: ${bordeDerecho.toFixed(1)}px`, 'info');
+                log(`   Usando cluster-rect: ${clusterRect ? 'SÍ' : 'NO'}`, 'info');
+                log(``, 'info');
+            });
+            
+            // Verificar el gap específico después del primer cluster
+            log(`=== VERIFICACIÓN ESPECÍFICA DEL GAP DESPUÉS DEL PRIMER CLUSTER ===`, 'info');
+            
+            const expectedMargin = 50; // marginX
+            const expectedGap = 60; // spacingX
+            
+            if (clusterAnalysis.length >= 2) {
+                const firstCluster = clusterAnalysis[0];
+                const secondCluster = clusterAnalysis[1];
+                
+                // Verificar margen del primer cluster
+                const actualMargin = firstCluster.bordeIzquierdo;
+                const marginDiff = Math.abs(actualMargin - expectedMargin);
+                
+                if (marginDiff < 5) {
+                    log(`✅ Primer cluster: margen izquierdo = ${actualMargin.toFixed(1)}px (esperado: ${expectedMargin}px)`, 'success');
+                } else {
+                    log(`❌ Primer cluster: margen izquierdo = ${actualMargin.toFixed(1)}px (esperado: ${expectedMargin}px, diff: ${marginDiff.toFixed(1)}px)`, 'error');
+                }
+                
+                // Verificar gap entre primer y segundo cluster
+                const actualGap = secondCluster.bordeIzquierdo - firstCluster.bordeDerecho;
+                const gapDiff = Math.abs(actualGap - expectedGap);
+                
+                if (gapDiff < 5) {
+                    log(`✅ Gap después del primer cluster: ${actualGap.toFixed(1)}px (esperado: ${expectedGap}px)`, 'success');
+                } else {
+                    log(`❌ Gap después del primer cluster: ${actualGap.toFixed(1)}px (esperado: ${expectedGap}px, diff: ${gapDiff.toFixed(1)}px)`, 'error');
+                    
+                    if (actualGap > expectedGap + 10) {
+                        log(`⚠️  PROBLEMA DETECTADO: Gap demasiado grande (${actualGap.toFixed(1)}px > ${expectedGap + 10}px)`, 'warning');
+                    }
+                }
+                
+                log(`   Primer cluster: ancho=${firstCluster.anchoReal.toFixed(1)}px, fin=${firstCluster.bordeDerecho.toFixed(1)}px`, 'info');
+                log(`   Segundo cluster: ancho=${secondCluster.anchoReal.toFixed(1)}px, inicio=${secondCluster.bordeIzquierdo.toFixed(1)}px`, 'info');
+                log(``, 'info');
+            }
+            
+            // Verificar todos los gaps
+            log(`=== VERIFICACIÓN DE TODOS LOS GAPS ===`, 'info');
+            let allGapsCorrect = true;
+            
+            for (let i = 0; i < clusterAnalysis.length - 1; i++) {
+                const current = clusterAnalysis[i];
+                const next = clusterAnalysis[i + 1];
+                
+                const actualGap = next.bordeIzquierdo - current.bordeDerecho;
+                const gapDiff = Math.abs(actualGap - expectedGap);
+                
+                if (gapDiff < 5) {
+                    log(`✅ Gap ${i + 1}→${i + 2}: ${actualGap.toFixed(1)}px (esperado: ${expectedGap}px)`, 'success');
+                } else {
+                    log(`❌ Gap ${i + 1}→${i + 2}: ${actualGap.toFixed(1)}px (esperado: ${expectedGap}px, diff: ${gapDiff.toFixed(1)}px)`, 'error');
+                    allGapsCorrect = false;
+                }
+            }
+            
+            // Resumen final
+            log(`=== RESUMEN FINAL ===`, 'info');
+            if (allGapsCorrect) {
+                log(`✅ CORRECCIÓN EXITOSA: Todos los gaps son correctos (60px)`, 'success');
+            } else {
+                log(`❌ PROBLEMA PERSISTE: Algunos gaps siguen siendo incorrectos`, 'error');
+            }
+            
+            log(`Total de clusters analizados: ${clusterAnalysis.length}`, 'info');
+            log(`Ancho total ocupado: ${(clusterAnalysis[clusterAnalysis.length - 1].bordeDerecho - clusterAnalysis[0].bordeIzquierdo).toFixed(1)}px`, 'info');
+        }
+        
+        function showVisualIndicators() {
+            hideVisualIndicators(); // Limpiar indicadores anteriores
+            
+            const svg = d3.select("#main-diagram-svg");
+            const diagramGroups = svg.selectAll(".diagram-group");
+            
+            diagramGroups.each(function(d, i) {
+                const diagramGroup = this;
+                const transform = diagramGroup.getAttribute("transform");
+                const clusterRect = diagramGroup.querySelector('.cluster-rect');
+                
+                if (clusterRect && transform) {
+                    const match = /translate\(([-\d.]+), ?([-\d.]+)\)/.exec(transform);
+                    if (match) {
+                        const positionX = parseFloat(match[1]) || 0;
+                        const positionY = parseFloat(match[2]) || 0;
+                        const rectBounds = clusterRect.getBBox();
+                        
+                        // Crear indicador visual del cluster
+                        const indicator = document.createElement('div');
+                        indicator.className = 'visual-indicator';
+                        indicator.style.left = (positionX - rectBounds.width/2) + 'px';
+                        indicator.style.top = (positionY - rectBounds.height/2) + 'px';
+                        indicator.style.width = rectBounds.width + 'px';
+                        indicator.style.height = rectBounds.height + 'px';
+                        indicator.title = `Cluster ${i + 1}: ${rectBounds.width.toFixed(1)}px × ${rectBounds.height.toFixed(1)}px`;
+                        
+                        document.getElementById('diagram-container').appendChild(indicator);
+                        visualIndicators.push(indicator);
+                        
+                        // Crear indicador de gap si no es el último
+                        if (i < diagramGroups.size() - 1) {
+                            const nextGroup = diagramGroups.nodes()[i + 1];
+                            const nextTransform = nextGroup.getAttribute("transform");
+                            const nextMatch = /translate\(([-\d.]+), ?([-\d.]+)\)/.exec(nextTransform);
+                            
+                            if (nextMatch) {
+                                const nextPositionX = parseFloat(nextMatch[1]) || 0;
+                                const nextRect = nextGroup.querySelector('.cluster-rect');
+                                
+                                if (nextRect) {
+                                    const nextRectBounds = nextRect.getBBox();
+                                    const gapStart = positionX + rectBounds.width/2;
+                                    const gapEnd = nextPositionX - nextRectBounds.width/2;
+                                    const gapWidth = gapEnd - gapStart;
+                                    
+                                    if (gapWidth > 0) {
+                                        const gapIndicator = document.createElement('div');
+                                        gapIndicator.className = 'gap-indicator';
+                                        gapIndicator.style.left = gapStart + 'px';
+                                        gapIndicator.style.top = (positionY - rectBounds.height/2) + 'px';
+                                        gapIndicator.style.width = gapWidth + 'px';
+                                        gapIndicator.style.height = rectBounds.height + 'px';
+                                        gapIndicator.title = `Gap ${i + 1}→${i + 2}: ${gapWidth.toFixed(1)}px`;
+                                        
+                                        document.getElementById('diagram-container').appendChild(gapIndicator);
+                                        visualIndicators.push(gapIndicator);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+            
+            log(`Indicadores visuales mostrados para ${visualIndicators.length} elementos`, 'info');
+        }
+        
+        function hideVisualIndicators() {
+            visualIndicators.forEach(indicator => {
+                if (indicator.parentNode) {
+                    indicator.parentNode.removeChild(indicator);
+                }
+            });
+            visualIndicators = [];
+        }
+        
+        // Inicializar cuando la página esté lista
+        document.addEventListener('DOMContentLoaded', function() {
+            log(`Página cargada. Listo para verificar la corrección del gap grande.`, 'info');
+        });
+    </script>
+</body>
+</html> 

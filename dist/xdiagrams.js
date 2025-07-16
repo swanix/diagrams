@@ -1788,7 +1788,9 @@ function applyAutoZoom() {
         const flatLeftMargin = parseFloat(zoomVarsLeft.getPropertyValue('--flatlist-left-margin')) || 20; // px
         translateX = flatLeftMargin - firstClusterLeftEdge * scale;
       } else {
-        translateX = -150 - firstClusterLeftEdge * scale; // margen fijo para clusters jerárquicos
+        // Usar el mismo marginX que se usa en el layout para consistencia
+        const clusterLeftMargin = parseFloat(zoomVarsLeft.getPropertyValue('--cluster-left-margin')) || 50; // px
+        translateX = clusterLeftMargin - firstClusterLeftEdge * scale; // margen consistente con el layout
       }
           } else {
         // Fallback to original logic

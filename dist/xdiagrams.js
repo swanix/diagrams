@@ -1,5 +1,5 @@
 // Swanix Diagrams - JS
-// v0.4.1
+// v0.4.2
 
 // Global zoom behavior - defined at the beginning to avoid scope issues
 const zoom = d3.zoom()
@@ -432,6 +432,44 @@ function isOptionEnabled(optionName) {
   return defaultOptions[optionName] === true;
 }
 
+// Get layout configuration with sensible defaults
+function getLayoutConfiguration(diagramConfig = null) {
+  const options = getDiagramOptions();
+  
+  // Define default values for layout options
+  const defaultLayout = {
+    clustersPerRow: 7,        // Default: 7 clusters per row
+    marginX: 50,              // Default: 50px left margin
+    marginY: 50,              // Default: 50px top margin
+    spacingX: 60,             // Default: 60px horizontal gap
+    spacingY: 60              // Default: 60px vertical gap
+  };
+  
+  // Try diagram-specific configuration first
+  if (diagramConfig && diagramConfig.layout) {
+    return {
+      clustersPerRow: diagramConfig.layout.clustersPerRow || defaultLayout.clustersPerRow,
+      marginX: diagramConfig.layout.marginX || defaultLayout.marginX,
+      marginY: diagramConfig.layout.marginY || defaultLayout.marginY,
+      spacingX: diagramConfig.layout.spacingX || defaultLayout.spacingX,
+      spacingY: diagramConfig.layout.spacingY || defaultLayout.spacingY
+    };
+  }
+  
+  // Try global configuration second
+  if (options.layout) {
+    return {
+      clustersPerRow: options.layout.clustersPerRow || defaultLayout.clustersPerRow,
+      marginX: options.layout.marginX || defaultLayout.marginX,
+      marginY: options.layout.marginY || defaultLayout.marginY,
+      spacingX: options.layout.spacingX || defaultLayout.spacingX,
+      spacingY: options.layout.spacingY || defaultLayout.spacingY
+    };
+  }
+  
+  return defaultLayout;
+}
+
 // Get diagrams from modern configuration
 function getDiagrams() {
   const config = getXDiagramsConfiguration();
@@ -794,7 +832,7 @@ function drawGridLayout(nodes, svg) {
     }
 
   // Draw clusters in masonry-like grid layout
-  function drawClusterGrid(trees, svg) {
+  function drawClusterGrid(trees, svg, diagramConfig = null) {
   const g = d3.select(svg).append("g");
   const clusterGroups = [];
   
@@ -835,8 +873,10 @@ function drawGridLayout(nodes, svg) {
         .attr("data-root-id", root.data.id)
         .attr("transform", `translate(0, ${index * 1000})`);
       
+      const contentGroup = treeGroup.append("g").attr("class", "cluster-content");
+
       // Render links
-      treeGroup.selectAll(".link")
+      contentGroup.selectAll(".link")
         .data(root.links())
         .enter().append("path")
         .attr("class", "link")
@@ -853,7 +893,7 @@ function drawGridLayout(nodes, svg) {
         });
       
       // Render nodes
-      const node = treeGroup.selectAll(".node")
+      const node = contentGroup.selectAll(".node")
         .data(root.descendants())
         .enter().append("g")
         .attr("class", "node node-clickable")
@@ -1011,7 +1051,7 @@ function drawGridLayout(nodes, svg) {
           }
           
           // Paso 3: Implementar layout tipo Masonry
-          applyMasonryLayout(clusterGroups, g, trees, uniformHeight);
+          applyMasonryLayout(clusterGroups, g, trees, uniformHeight, diagramConfig);
         }
       }, 0);
       
@@ -1038,12 +1078,17 @@ function getMaxTreeDepth(node) {
 
 
 
-// Función para aplicar layout con soporte para grid
-function applyMasonryLayout(clusterGroups, container, originalTrees, preCalculatedUniformHeight = null) {
-  const marginX = 50;
-  const marginY = 50;
-  const spacingX = 60;
-  const spacingY = 60;
+// Función simplificada para aplicar layout de clusters
+function applyMasonryLayout(clusterGroups, container, originalTrees, preCalculatedUniformHeight = null, diagramConfig = null) {
+  // Obtener configuración de layout desde las opciones
+  const layoutConfig = getLayoutConfiguration(diagramConfig);
+  const marginX = layoutConfig.marginX;
+  const marginY = layoutConfig.marginY;
+  const spacingX = layoutConfig.spacingX;
+  const spacingY = layoutConfig.spacingY;
+  const clustersPerRow = layoutConfig.clustersPerRow;
+  
+  console.log(`[Layout] Configuración de layout:`, layoutConfig);
   
   // Si solo hay un cluster, centrarlo
   if (clusterGroups.length === 1) {
@@ -1051,36 +1096,13 @@ function applyMasonryLayout(clusterGroups, container, originalTrees, preCalculat
     const x = window.innerWidth / 2;
     const y = window.innerHeight / 2;
     cluster.group.attr("transform", `translate(${x},${y})`);
-    // Detectar si es un diagrama plano (flat list) usando los árboles originales
     const isFlat = isFlatList(originalTrees);
     addClusterBackground(cluster, isFlat);
     return;
   }
   
-  // Detectar si es un diagrama plano (flat list) usando los árboles originales
+  // Detectar si es un diagrama plano
   const isFlat = isFlatList(originalTrees);
-  
-  // Obtener el diagrama actual para verificar si tiene parámetro grid
-  const diagramsList = getDiagrams();
-  let currentDiagramObj = null;
-  let useGridLayout = false;
-  let desiredGridCols = 4; // Valor por defecto
-  
-  if (Array.isArray(diagramsList) && window.$xDiagrams && typeof window.$xDiagrams.currentDiagramIdx === 'number') {
-    currentDiagramObj = diagramsList[window.$xDiagrams.currentDiagramIdx];
-    
-    // Verificar si es el diagrama de "20 Clusters - Diferentes Tamaños" que debe mantenerse como está
-    if (currentDiagramObj && currentDiagramObj.name === "20 Clusters - Diferentes Tamaños") {
-      useGridLayout = false;
-    } else if (currentDiagramObj && currentDiagramObj.grid) {
-      // Si tiene parámetro grid, usarlo
-      const diagCols = parseInt(currentDiagramObj.grid);
-      if (!Number.isNaN(diagCols) && diagCols > 0) {
-        desiredGridCols = diagCols;
-        useGridLayout = true;
-      }
-    }
-  }
   
   // Ajustar lógica de altura uniforme
   let uniformHeight = null;
@@ -1088,125 +1110,215 @@ function applyMasonryLayout(clusterGroups, container, originalTrees, preCalculat
     uniformHeight = preCalculatedUniformHeight;
   }
   
-  if (useGridLayout) {
-    // GRID LAYOUT: Organizar clusters en cuadrícula
-    const cols = Math.max(1, Math.min(desiredGridCols, clusterGroups.length));
-    const rows = Math.ceil(clusterGroups.length / cols);
-    
-    clusterGroups.forEach((cluster, index) => {
-      const col = index % cols;
-      const row = Math.floor(index / cols);
-      
-      let x = marginX + col * (cluster.width + spacingX) + cluster.width / 2;
-      let y = marginY + row * (cluster.height + spacingY) + cluster.height / 2;
-      
-      cluster.group.attr("transform", `translate(${x},${y})`);
-      
-      // Para diagramas planos, siempre usar altura original
-      if (isFlat) {
-        addClusterBackground(cluster, isFlat);
+  // PASO 1: Aplicar fondos a todos los clusters primero para medir el área real
+  clusterGroups.forEach((cluster, index) => {
+    if (isFlat) {
+      addClusterBackground(cluster, isFlat);
+    } else {
+      if (uniformHeight !== null) {
+        addClusterBackgroundWithUniformHeight(cluster, uniformHeight, isFlat);
       } else {
-        if (uniformHeight !== null) {
-          addClusterBackgroundWithUniformHeight(cluster, uniformHeight, isFlat);
-        } else {
-          addClusterBackground(cluster, isFlat);
-        }
+        addClusterBackground(cluster, isFlat);
       }
+    }
+  });
+  
+  // PASO 2: Esperar a que todos los clusters se carguen completamente antes de calcular posiciones
+  const waitForAllClustersToLoad = () => {
+    // Verificar si todas las imágenes están cargadas
+    const allImages = document.querySelectorAll('.image-base');
+    const loadedImages = Array.from(allImages).filter(img => img.classList.contains('loaded'));
+    
+    console.log(`[Layout] Imágenes cargadas: ${loadedImages.length}/${allImages.length}`);
+    
+    if (loadedImages.length === allImages.length && allImages.length > 0) {
+      // Todas las imágenes están cargadas, proceder con el layout
+      applyFinalLayout();
+    } else if (allImages.length === 0) {
+      // No hay imágenes, proceder inmediatamente
+      applyFinalLayout();
+    } else {
+      // Esperar más tiempo para que se carguen las imágenes restantes
+      setTimeout(waitForAllClustersToLoad, 100);
+    }
+  };
+  
+  const applyFinalLayout = () => {
+    console.log(`[Layout] Aplicando layout final después de carga completa`);
+    
+    // PASO 3: Medir el área real de cada cluster después de la carga completa
+    const clusterRealSizes = clusterGroups.map(cluster => {
+      const diagramGroup = cluster.group.node();
+      const originalTransform = diagramGroup.getAttribute("transform");
+      diagramGroup.removeAttribute("transform");
+      
+      const clusterRect = diagramGroup.querySelector('.cluster-rect');
+      let realWidth, realHeight, rectBounds;
+      
+      if (clusterRect) {
+        rectBounds = clusterRect.getBBox();
+        realWidth = rectBounds.width;
+        realHeight = rectBounds.height;
+        console.log(`[Layout] Diagram-group ${cluster.id}: usando cluster-rect, w=${realWidth.toFixed(1)}, h=${realHeight.toFixed(1)}`);
+      } else {
+        rectBounds = diagramGroup.getBBox();
+        realWidth = rectBounds.width;
+        realHeight = rectBounds.height;
+        console.log(`[Layout] Diagram-group ${cluster.id}: usando diagram-group, w=${realWidth.toFixed(1)}, h=${realHeight.toFixed(1)}`);
+      }
+      
+      if (originalTransform) {
+        diagramGroup.setAttribute("transform", originalTransform);
+      }
+      
+      return {
+        cluster: cluster,
+        realWidth: realWidth,
+        realHeight: realHeight,
+        realX: 0,
+        realY: 0,
+        diagramGroup: diagramGroup,
+        clusterRect: clusterRect,
+        rectBounds: rectBounds 
+      };
     });
     
-    let layoutType;
-    if (isFlat) {
-      layoutType = 'flat list - original heights';
-    } else {
-      layoutType = uniformHeight !== null ? 'hierarchical - uniform height' : 'hierarchical - original heights';
+    // PASO 4: Calcular altura uniforme por fila basándose en el cluster más alto
+    const totalRows = Math.ceil(clusterGroups.length / clustersPerRow);
+    const rowHeights = [];
+    
+    for (let row = 0; row < totalRows; row++) {
+      const startIndex = row * clustersPerRow;
+      const endIndex = Math.min(startIndex + clustersPerRow, clusterGroups.length);
+      const clustersInRow = clusterRealSizes.slice(startIndex, endIndex);
+      const maxHeightInRow = Math.max(...clustersInRow.map(c => c.realHeight));
+      rowHeights[row] = maxHeightInRow;
+      console.log(`[Layout] Fila ${row}: ${clustersInRow.length} clusters, altura máxima: ${maxHeightInRow}`);
     }
     
-  } else {
-    // HORIZONTAL LAYOUT: Todos los clusters en una fila (comportamiento original)
-    let currentX = marginX;
-    const centerY = window.innerHeight / 2;
-    
-    clusterGroups.forEach((cluster, index) => {
-      // Posicionar cluster en la fila horizontal
-      const x = currentX + cluster.width / 2;
-      const y = centerY;
-      
-      cluster.group.attr("transform", `translate(${x},${y})`);
-      
-      // Para diagramas planos, siempre usar altura original
-      if (isFlat) {
-        addClusterBackground(cluster, isFlat);
-      } else {
-        if (uniformHeight !== null) {
-          addClusterBackgroundWithUniformHeight(cluster, uniformHeight, isFlat);
-        } else {
-          addClusterBackground(cluster, isFlat);
-        }
-      }
-      
-      // Siguiente cluster empieza después del actual + gap
-      currentX += cluster.width + spacingX;
-    });
-    
-    let layoutType;
-    if (isFlat) {
-      layoutType = 'flat list - original heights';
-    } else {
-      layoutType = uniformHeight !== null ? 'hierarchical - uniform height' : 'hierarchical - original heights';
+    // PASO 5: Calcular y aplicar posiciones finales
+    const rowWidths = [];
+    for (let row = 0; row < totalRows; row++) {
+      const startIndex = row * clustersPerRow;
+      const endIndex = Math.min(startIndex + clustersPerRow, clusterGroups.length);
+      const clustersInRow = clusterRealSizes.slice(startIndex, endIndex);
+      const totalWidth = clustersInRow.reduce((sum, c) => sum + c.realWidth, 0) + (clustersInRow.length > 1 ? (clustersInRow.length - 1) * spacingX : 0);
+      rowWidths[row] = totalWidth;
     }
+    const maxWidth = Math.max(...rowWidths);
 
-    // Helper para reajustar posiciones basadas en rectángulos (solo para horizontal layout)
-    function adjustPositions() {
-      let currX = marginX;
-      clusterGroups.forEach(cluster => {
-        const rectNode = cluster.group.select('.cluster-rect').node();
-        if (rectNode) {
-          const bbox = rectNode.getBBox();
-          const rectWidth = Math.max(bbox.width, cluster.width);
-          const leftOffset = bbox.x;
-          const newX = currX - leftOffset;
-          cluster.group.attr('transform', `translate(${newX},${centerY})`);
-          currX += rectWidth + spacingX;
-        } else {
-          // Fallback
-          const rectWidth = cluster.width;
-          const newX = currX;
-          cluster.group.attr('transform', `translate(${newX},${centerY})`);
-          currX += rectWidth + spacingX;
+    for (let row = 0; row < totalRows; row++) {
+      const startIndex = row * clustersPerRow;
+      const endIndex = Math.min(startIndex + clustersPerRow, clusterGroups.length);
+      const clustersInRow = clusterRealSizes.slice(startIndex, endIndex);
+      
+      const currentWidth = rowWidths[row];
+      const widthDifference = maxWidth - currentWidth;
+      
+      let extraWidthPerCluster = 0;
+      if (widthDifference > 0 && clustersInRow.length > 0) {
+        extraWidthPerCluster = widthDifference / clustersInRow.length;
+      }
+
+      let currentX = marginX;
+      
+      clustersInRow.forEach((clusterData, colIndex) => {
+        const { realWidth, realHeight, rectBounds, clusterRect } = clusterData;
+
+        const newWidth = realWidth + extraWidthPerCluster;
+        if (clusterRect) {
+          clusterRect.setAttribute('width', newWidth);
         }
+
+        const contentGroup = clusterData.cluster.group.select('.cluster-content');
+        if (contentGroup && extraWidthPerCluster > 0) {
+          contentGroup.attr('transform', `translate(${extraWidthPerCluster / 2}, 0)`);
+        }
+
+        const tx = currentX - rectBounds.x;
+        
+        let rowTopY = marginY;
+        for (let r = 0; r < row; r++) {
+          rowTopY += rowHeights[r] + spacingY;
+        }
+        const rowCenterY = rowTopY + rowHeights[row] / 2;
+        const rectCenterY_relative = rectBounds.y + realHeight / 2;
+        const ty = rowCenterY - rectCenterY_relative;
+
+        // Aplicar la transformación al grupo del cluster
+        clusterData.cluster.group.attr("transform", `translate(${tx},${ty})`);
+
+        // Almacenar las posiciones absolutas finales para verificación
+        clusterData.realX = tx + rectBounds.x; // Debería ser igual a currentX
+        clusterData.realY = ty + rectBounds.y;
+        
+        currentX += newWidth + spacingX;
       });
     }
-
-    // --- Estabilización de posiciones (solo para horizontal layout) ---
-    let prevWidths = [];
-    let adjustAttempts = 0;
-    const maxAttempts = 10;
-    const intervalId = setInterval(() => {
-      adjustAttempts += 1;
-      const currWidths = clusterGroups.map(c => {
-        const r = c.group.select('.cluster-rect').node();
-        const rw = r ? r.getBBox().width : 0;
-        return Math.max(rw, c.width);
-      });
-      // Comprobar si las anchuras han cambiado desde la última medición
-      const changed = prevWidths.length === 0 || currWidths.some((w, i) => Math.abs(w - prevWidths[i]) > 1);
-      if (changed) {
-        prevWidths = currWidths;
-        adjustPositions();
+    
+    console.log(`[Layout] Aplicado layout final con altura uniforme por fila: ${clusterGroups.length} clusters, ${totalRows} filas`);
+    
+    // Verificación final de gaps horizontal y vertical
+    console.log(`[Layout] === VERIFICACIÓN FINAL DE GAPS HORIZONTAL Y VERTICAL ===`);
+    
+    // Verificar gaps horizontales
+    for (let row = 0; row < totalRows; row++) {
+      const startIndex = row * clustersPerRow;
+      const endIndex = Math.min(startIndex + clustersPerRow, clusterGroups.length);
+      const clustersInRow = clusterRealSizes.slice(startIndex, endIndex);
+      
+      console.log(`[Layout] --- Fila ${row} (${clustersInRow.length} clusters) ---`);
+      
+      for (let i = 0; i < clustersInRow.length - 1; i++) {
+        const current = clustersInRow[i];
+        const next = clustersInRow[i + 1];
+        
+        // El borde derecho es la posición X de inicio + ancho
+        const currentRightEdge = current.realX + current.realWidth;
+        const nextLeftEdge = next.realX;
+        
+        const actualGap = nextLeftEdge - currentRightEdge;
+        const expectedGap = spacingX;
+        const gapDiff = Math.abs(actualGap - expectedGap);
+        const status = gapDiff < 5 ? '✅' : '❌';
+        
+        console.log(`${status} Gap horizontal ${i}→${i+1}: ${actualGap.toFixed(1)}px (esperado: ${expectedGap}px, diff: ${gapDiff.toFixed(1)}px)`);
+        console.log(`  Cluster ${i}: ancho=${current.realWidth.toFixed(1)}px, fin=${currentRightEdge.toFixed(1)}px`);
+        console.log(`  Cluster ${i+1}: ancho=${next.realWidth.toFixed(1)}px, inicio=${nextLeftEdge.toFixed(1)}px`);
       }
-      if (!changed || adjustAttempts >= maxAttempts) {
-        clearInterval(intervalId);
-      }
-    }, 200);
+    }
+    
+    // Verificar gaps verticales entre filas
+    console.log(`[Layout] --- GAPS VERTICALES ENTRE FILAS ---`);
+    for (let row = 0; row < totalRows - 1; row++) {
+      const clustersInCurrentRow = clusterRealSizes.filter(c => c.row === row);
+      const clustersInNextRow = clusterRealSizes.filter(c => c.row === row + 1);
 
-    // Primera llamada inmediata (después de 0 ms) y dos llamadas extra para asegurar carga completa
-    setTimeout(() => {
-      adjustPositions();
-      setTimeout(() => {
-        adjustPositions();
-      }, 300);
-    }, 0);
-  }
+      if (clustersInCurrentRow.length > 0 && clustersInNextRow.length > 0) {
+        // Encontrar el borde inferior más bajo de la fila actual
+        const maxBottomEdge = Math.max(...clustersInCurrentRow.map(c => c.realY + c.realHeight));
+        // Encontrar el borde superior más alto de la fila siguiente
+        const minTopEdge = Math.min(...clustersInNextRow.map(c => c.realY));
+        
+        const actualVerticalGap = minTopEdge - maxBottomEdge;
+        const expectedVerticalGap = spacingY;
+        const verticalGapDiff = Math.abs(actualVerticalGap - expectedVerticalGap);
+        const verticalStatus = verticalGapDiff < 5 ? '✅' : '❌';
+        
+        console.log(`${verticalStatus} Gap vertical fila ${row}→${row+1}: ${actualVerticalGap.toFixed(1)}px (esperado: ${expectedVerticalGap}px, diff: ${verticalGapDiff.toFixed(1)}px)`);
+        console.log(`  Fila ${row}: borde_inferior=${maxBottomEdge.toFixed(1)}px`);
+        console.log(`  Fila ${row+1}: borde_superior=${minTopEdge.toFixed(1)}px`);
+      }
+    }
+    
+    // Disparar hook de layout completado
+    if (window.$xDiagrams && window.$xDiagrams.hooks && window.$xDiagrams.hooks.onLayoutComplete) {
+      window.$xDiagrams.hooks.onLayoutComplete();
+    }
+  };
+  
+  // Iniciar el proceso de espera
+  waitForAllClustersToLoad();
 }
 
 // Función auxiliar para agregar fondo y título al cluster
@@ -1286,7 +1398,7 @@ function addClusterBackgroundWithUniformHeight(cluster, uniformHeight, isFlat = 
 }
 
 // Draw simplified trees
-function drawTrees(trees) {
+function drawTrees(trees, diagramConfig = null) {
   const svg = document.getElementById("main-diagram-svg");
   if (!svg) {
     console.error("No se encontró el SVG principal");
@@ -1318,9 +1430,9 @@ function drawTrees(trees) {
     
   // Check layout type and choose appropriate rendering method
   if (isFlatList(trees)) {
-    drawClusterGrid(trees, svg);
+    drawClusterGrid(trees, svg, diagramConfig);
   } else if (shouldUseClusterGrid(trees)) {
-    drawClusterGrid(trees, svg);
+    drawClusterGrid(trees, svg, diagramConfig);
   } else {
   
   try {
@@ -2367,7 +2479,8 @@ function updateSVGColors() {
     clusterBg: computedStyle.getPropertyValue('--cluster-bg'),
     clusterStroke: computedStyle.getPropertyValue('--cluster-stroke'),
     clusterTitleColor: computedStyle.getPropertyValue('--cluster-title-color'),
-    subtitleColor: computedStyle.getPropertyValue('--text-subtitle-color')
+    subtitleColor: computedStyle.getPropertyValue('--text-subtitle-color'),
+    imageFilter: computedStyle.getPropertyValue('--image-filter')
   };
 
   // Apply colors to SVG elements
@@ -2377,6 +2490,60 @@ function updateSVGColors() {
   d3.selectAll('.subtitle-text').style('fill', variables.subtitleColor);
   d3.selectAll('.cluster-rect').style('fill', variables.clusterBg).style('stroke', variables.clusterStroke);
   d3.selectAll('.cluster-title').style('fill', variables.clusterTitleColor);
+  
+  // Update image filters
+  updateImageFilters(variables.imageFilter);
+}
+
+// Update image filters for all images with image-filter class
+function updateImageFilters(filterValue) {
+  console.log('[Image Filter] Aplicando filtro:', filterValue);
+  
+  // Verificar que el filtro no esté vacío
+  if (!filterValue || filterValue.trim() === '') {
+    console.warn('[Image Filter] Filtro vacío, no se aplicará');
+    return;
+  }
+  
+  // En lugar de aplicar estilos inline, usar variables CSS
+  // Esto permite que el filtro se actualice automáticamente cuando cambie el tema
+  const imagesWithFilter = document.querySelectorAll('.image-filter');
+  console.log('[Image Filter] Encontradas', imagesWithFilter.length, 'imágenes con clase image-filter');
+  
+  // Remover cualquier estilo inline previo
+  imagesWithFilter.forEach((img, index) => {
+    img.style.removeProperty('filter');
+    console.log(`[Image Filter] Estilo inline removido de imagen ${index + 1} (${img.src.split('/').pop()})`);
+  });
+  
+  // También remover estilos inline del side panel
+  const sidePanelImages = document.querySelectorAll('.side-panel-title-thumbnail');
+  sidePanelImages.forEach((img, index) => {
+    img.style.removeProperty('filter');
+    console.log(`[Image Filter] Estilo inline removido de side panel imagen ${index + 1}`);
+  });
+  
+  // Agregar regla CSS que use la variable --image-filter
+  const styleId = 'image-filter-css-rule';
+  let existingStyle = document.getElementById(styleId);
+  if (existingStyle) {
+    existingStyle.remove();
+  }
+  
+  const style = document.createElement('style');
+  style.id = styleId;
+  style.textContent = `
+    .image-filter {
+      filter: var(--image-filter) !important;
+    }
+    .side-panel-title-thumbnail {
+      filter: var(--image-filter) !important;
+    }
+  `;
+  document.head.appendChild(style);
+  
+  console.log('[Image Filter] Regla CSS agregada usando variable --image-filter');
+  console.log('[Image Filter] Valor actual de --image-filter:', filterValue);
 }
 
 // Update switcher colors
@@ -3291,45 +3458,69 @@ window.$xDiagrams.updateTopbarTitle = function(diagramIndex) {
         logoUrl = originalContainer ? originalContainer.getAttribute('data-logo') : null;
     }
     
-    // Find the topbar center
-    const topbarCenter = document.querySelector('.topbar-center');
-    if (topbarCenter) {
-        topbarCenter.innerHTML = '';
+    // If still no logo, try auto-detection
+    if (!logoUrl) {
+        detectAutoLogo();
+        // Check again after auto-detection
+        logoUrl = window.$xDiagrams && window.$xDiagrams.logo ? window.$xDiagrams.logo : null;
+    }
+    
+    // Get title from $xDiagrams object first, then fallback to HTML
+    let fixedTitle = window.$xDiagrams && window.$xDiagrams.title ? window.$xDiagrams.title : null;
+    
+    // If no title in $xDiagrams, try data-title attribute
+    if (!fixedTitle) {
+        const originalContainer = document.querySelector('.xcanvas');
+        fixedTitle = originalContainer ? originalContainer.getAttribute('data-title') : null;
+    }
+    
+    // If no data-title is defined, use the HTML <title> element
+    if (!fixedTitle) {
+        const pageTitle = document.querySelector('title');
+        fixedTitle = pageTitle ? pageTitle.textContent : 'Swanix Diagrams';
+    }
+    
+    console.log('[Debug] fixedTitle value:', fixedTitle);
+    console.log('[Debug] logoUrl value:', logoUrl);
+    
+    // Find the title-dropdown-container
+    const titleDropdownContainer = document.querySelector('.title-dropdown-container');
+    console.log('[Debug] titleDropdownContainer found:', !!titleDropdownContainer);
+    if (titleDropdownContainer) {
+        // Clear existing content except the dropdown
+        const dropdown = titleDropdownContainer.querySelector('.diagram-dropdown');
+        titleDropdownContainer.innerHTML = '';
         
+        // Add logo first if available
         if (logoUrl) {
-            // Create logo element
             const newLogoElement = document.createElement('img');
             newLogoElement.className = 'diagram-logo';
             newLogoElement.src = logoUrl;
             newLogoElement.alt = 'Logo';
-                            newLogoElement.style.maxHeight = '32px';
-                newLogoElement.style.maxWidth = '160px';
-                newLogoElement.style.objectFit = 'contain';
-                newLogoElement.style.padding = '12px 0';
-            topbarCenter.appendChild(newLogoElement);
+            newLogoElement.style.maxHeight = '32px';
+            newLogoElement.style.maxWidth = '120px';
+            newLogoElement.style.objectFit = 'contain';
+            newLogoElement.style.padding = '8px 0';
+            titleDropdownContainer.appendChild(newLogoElement);
             console.log('[Logo] Logo aplicado:', logoUrl);
-        } else {
-            // Get title from $xDiagrams object first, then fallback to HTML
-            let fixedTitle = window.$xDiagrams && window.$xDiagrams.title ? window.$xDiagrams.title : null;
-            
-            // If no title in $xDiagrams, try data-title attribute
-            if (!fixedTitle) {
-                const originalContainer = document.querySelector('.xcanvas');
-                fixedTitle = originalContainer ? originalContainer.getAttribute('data-title') : null;
-            }
-            
-            // If no data-title is defined, use the HTML <title> element
-            if (!fixedTitle) {
-                const pageTitle = document.querySelector('title');
-                fixedTitle = pageTitle ? pageTitle.textContent : 'Swanix Diagrams';
-            }
-            
-            // Create title element
+        }
+        
+        // Always show title after logo
+        if (fixedTitle) {
             const newTitleElement = document.createElement('h1');
             newTitleElement.className = 'diagram-title';
             newTitleElement.textContent = fixedTitle;
-            topbarCenter.appendChild(newTitleElement);
+            newTitleElement.style.margin = '0';
+            newTitleElement.style.fontSize = '1.1em';
+            newTitleElement.style.fontWeight = '400';
+            newTitleElement.style.color = 'var(--topbar-text, #333)';
+            titleDropdownContainer.appendChild(newTitleElement);
             console.log('[Title] Título aplicado:', fixedTitle);
+        }
+        
+        // Re-add the dropdown if it existed
+        if (dropdown) {
+            titleDropdownContainer.appendChild(dropdown);
         }
     }
 };
@@ -3734,6 +3925,13 @@ function renderSwDiagramBase() {
         logoUrl = logoContainer ? logoContainer.getAttribute('data-logo') : null;
     }
     
+    // If still no logo, try auto-detection
+    if (!logoUrl) {
+        detectAutoLogo();
+        // Check again after auto-detection
+        logoUrl = window.$xDiagrams && window.$xDiagrams.logo ? window.$xDiagrams.logo : null;
+    }
+    
     // Get fixed title from $xDiagrams object first, then fallback to HTML (only if no logo)
     let fixedTitle = null;
     if (!logoUrl) {
@@ -3755,19 +3953,23 @@ function renderSwDiagramBase() {
     container.innerHTML = `
       <div class="topbar">
         <div class="topbar-left">
-          <div class="diagram-dropdown" id="diagram-dropdown">
-            <button class="diagram-dropdown-btn" id="diagram-dropdown-btn">
-              <span class="dropdown-text">Seleccionar diagrama</span>
-              <svg class="dropdown-arrow" width="20" height="20" viewBox="0 0 24 24" fill="none">
-                <path d="M7 10l5 5 5-5" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
-            </button>
-            <div class="diagram-dropdown-content" id="diagram-dropdown-content">
+          <div class="title-dropdown-container">
+            ${logoUrl ? `<img class="diagram-logo" src="${logoUrl}" alt="Logo" style="max-height: 32px; max-width: 120px; object-fit: contain; padding: 8px 0;">` : ''}
+            <h1 class="diagram-title">${fixedTitle}</h1>
+            <div class="diagram-dropdown" id="diagram-dropdown">
+              <button class="diagram-dropdown-btn" id="diagram-dropdown-btn">
+                <span class="dropdown-text">Seleccionar diagrama</span>
+                <svg class="dropdown-arrow" width="20" height="20" viewBox="0 0 24 24" fill="none">
+                  <path d="M7 10l5 5 5-5" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </button>
+              <div class="diagram-dropdown-content" id="diagram-dropdown-content">
+              </div>
             </div>
           </div>
         </div>
         <div class="topbar-center">
-          ${logoUrl ? `<img class="diagram-logo" src="${logoUrl}" alt="Logo" style="max-height: 32px; max-width: 160px; object-fit: contain; padding: 12px 0;">` : `<h1 class="diagram-title">${fixedTitle}</h1>`}
+          <!-- Área central vacía -->
         </div>
         <div class="topbar-right">
           <div class="theme-controls">
@@ -3789,11 +3991,13 @@ function renderSwDiagramBase() {
                 <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" fill="currentColor"></path>
               </svg>
             </button>
+            <!-- Botón data-refresh oculto temporalmente
             <button id="data-refresh" class="theme-toggle data-refresh-btn" title="Refrescar datos">
               <svg class="theme-icon refresh-icon" width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M17.65,6.35C16.2,4.9 14.21,4 12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20C15.73,20 18.84,17.45 19.73,14H17.65C16.83,16.33 14.61,18 12,18A6,6 0 0,1 6,12A6,6 0 0,1 12,6C13.66,6 15.14,6.69 16.22,7.78L13,11H20V4L17.65,6.35Z"></path>
               </svg>
             </button>
+            -->
           </div>
         </div>
       </div>
@@ -3852,6 +4056,9 @@ function renderSwDiagramBase() {
 function initializeWhenReady() {
   // Preload common images to prevent Chrome's default image flash
   preloadCommonImages();
+  
+  // Try auto-detection of logo early
+  detectAutoLogo();
   
   // Wait for diagrams to be defined
   const diagrams = getDiagrams();
@@ -4501,7 +4708,7 @@ function loadFromCsvUrl(csvUrl, onComplete, retryCount = 0, diagramConfig = null
       
       try {
         const trees = buildHierarchies(results.data, diagramConfig);
-        drawTrees(trees);
+        drawTrees(trees, diagramConfig);
         
         // Create side panel only if enabled
         if (isOptionEnabled('sidePanel') !== false) {
@@ -4624,7 +4831,7 @@ function loadFromObject(diagramObject, onComplete, diagramConfig = null) {
     }
     
     const trees = buildHierarchies(diagramObject.data, diagramConfig);
-    drawTrees(trees);
+    drawTrees(trees, diagramConfig);
     
     // Create side panel only if enabled
     if (isOptionEnabled('sidePanel') !== false) {
@@ -4983,7 +5190,7 @@ function loadFromRestApiWithCache(apiUrl, onComplete, retryCount = 0, diagramCon
       
       try {
         const trees = buildHierarchies(cachedData, diagramConfig);
-        drawTrees(trees);
+        drawTrees(trees, diagramConfig);
         
         // Create side panel only if enabled
         if (isOptionEnabled('sidePanel') !== false) {
@@ -5052,7 +5259,7 @@ function loadFromRestApiWithCache(apiUrl, onComplete, retryCount = 0, diagramCon
       
       // Process the data
       const trees = buildHierarchies(csvData, diagramConfig);
-      drawTrees(trees);
+      drawTrees(trees, diagramConfig);
       
       // Create side panel only if enabled
       if (isOptionEnabled('sidePanel') !== false) {
@@ -5261,4 +5468,38 @@ function shouldApplyFilter(url) {
   
   // Para todos los demás archivos SVG, aplicar filtro
   return baseUrl.endsWith('.svg');
+}
+
+// ============================================================================
+// AUTO LOGO DETECTION
+// ============================================================================
+
+// Function to detect logo files automatically in img folder
+function detectAutoLogo() {
+  const logoExtensions = ['svg', 'png', 'jpg', 'jpeg'];
+  const imgPath = 'img/';
+  
+  // Check if any logo file exists by trying to load them
+  for (const ext of logoExtensions) {
+    const logoUrl = `${imgPath}logo.${ext}`;
+    
+    // Create a test image to check if file exists
+    const testImg = new Image();
+    testImg.onload = function() {
+      // If image loads successfully, set it as auto logo
+      if (!window.$xDiagrams.logo) {
+        window.$xDiagrams.logo = logoUrl;
+        console.log('[Auto Logo] Logo detectado automáticamente:', logoUrl);
+        
+        // Update the topbar if it already exists
+        if (window.$xDiagrams.updateTopbarTitle) {
+          window.$xDiagrams.updateTopbarTitle(window.$xDiagrams.currentDiagramIdx || 0);
+        }
+      }
+    };
+    testImg.onerror = function() {
+      // File doesn't exist, continue to next extension
+    };
+    testImg.src = logoUrl;
+  }
 }

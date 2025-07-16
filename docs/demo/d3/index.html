@@ -13,7 +13,7 @@
 <div class="xcanvas"></div>
 <script>
   window.$xDiagrams = {
-    title: "Swanix Diagrams",
+    title: "Diagrams",
     diagrams: [
       {
         name: "Google Sheets", 
@@ -30,8 +30,15 @@
         grid: 3
       },
       {
-        name: "Clusters Different Sizes",
-        url: "data/multi-clusters-20.csv"
+        name: "Clusters Custom Sizes",
+        url: "data/multi-clusters-20.csv",
+        layout: {
+          clustersPerRow: 5,
+          marginX: 30,
+          marginY: 30,
+          spacingX: 100,
+          spacingY: 100
+        }
       },
       {
         name: "Flat Diagram",

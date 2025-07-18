@@ -1185,34 +1185,134 @@ function applyMasonryLayout(clusterGroups, container, originalTrees, preCalculat
       };
     });
     
-    // PASO 4: Calcular altura uniforme por fila basándose en el cluster más alto
-    const totalRows = Math.ceil(clusterGroups.length / clustersPerRow);
-    const rowHeights = [];
+    // PASO 4: Aplicar lógica de ajuste automático de columnas basado en el ancho de clusters
+    const initialTotalRows = Math.ceil(clusterGroups.length / clustersPerRow);
+    const adjustedClustersPerRow = [];
     
-    for (let row = 0; row < totalRows; row++) {
+    console.log(`[Layout] Iniciando análisis de ${initialTotalRows} filas iniciales con ${clusterGroups.length} clusters totales`);
+    
+    // Calcular el número de columnas por fila con la nueva lógica
+    for (let row = 0; row < initialTotalRows; row++) {
       const startIndex = row * clustersPerRow;
       const endIndex = Math.min(startIndex + clustersPerRow, clusterGroups.length);
       const clustersInRow = clusterRealSizes.slice(startIndex, endIndex);
-      const maxHeightInRow = Math.max(...clustersInRow.map(c => c.realHeight));
-      rowHeights[row] = maxHeightInRow;
-      console.log(`[Layout] Fila ${row}: ${clustersInRow.length} clusters, altura máxima: ${maxHeightInRow}`);
+      
+      console.log(`[Layout] Analizando fila ${row}: ${clustersInRow.length} clusters (índices ${startIndex}-${endIndex-1})`);
+      
+      // Si es la primera fila, usar el número de columnas configurado
+      if (row === 0) {
+        adjustedClustersPerRow[row] = clustersInRow.length;
+        console.log(`[Layout] Fila ${row}: Primera fila, usando ${clustersInRow.length} columnas`);
+        continue;
+      }
+      
+      // Para filas 2, 3 y 4, verificar si algún cluster supera el 50% del ancho de la fila anterior
+      const previousRowStartIndex = Math.max(0, (row - 1) * clustersPerRow);
+      const previousRowEndIndex = Math.min(previousRowStartIndex + clustersPerRow, clusterGroups.length);
+      const previousRowClusters = clusterRealSizes.slice(previousRowStartIndex, previousRowEndIndex);
+      
+      // Calcular el ancho total de la fila anterior
+      const previousRowWidth = previousRowClusters.reduce((sum, c) => sum + c.realWidth, 0) + 
+                              (previousRowClusters.length > 1 ? (previousRowClusters.length - 1) * spacingX : 0);
+      
+      console.log(`[Layout] Fila ${row}: Ancho de fila anterior = ${previousRowWidth.toFixed(1)}px`);
+      
+      // Verificar si algún cluster de la fila actual supera el 50% del ancho de la fila anterior
+      const wideClusters = clustersInRow.filter(cluster => {
+        const clusterWidthPercentage = (cluster.realWidth / previousRowWidth) * 100;
+        const isWide = clusterWidthPercentage > 50;
+        if (isWide) {
+          console.log(`[Layout] Fila ${row}: Cluster ${cluster.cluster.id} es ancho (${clusterWidthPercentage.toFixed(1)}% > 50%)`);
+        }
+        return isWide;
+      });
+      
+      const hasWideCluster = wideClusters.length > 0;
+      
+      if (hasWideCluster && clustersInRow.length > 2) {
+        // Si hay un cluster ancho y hay más de 2 clusters, limitar a 2 columnas
+        adjustedClustersPerRow[row] = 2;
+        console.log(`[Layout] Fila ${row}: Cluster ancho detectado (>50% de fila anterior), ajustando a 2 columnas`);
+      } else {
+        // Usar el número normal de columnas
+        adjustedClustersPerRow[row] = clustersInRow.length;
+        console.log(`[Layout] Fila ${row}: Sin clusters anchos, usando ${clustersInRow.length} columnas`);
+      }
     }
     
-    // PASO 5: Calcular y aplicar posiciones finales
+    // PASO 5: Recalcular las filas con el nuevo número de columnas ajustado
+    const recalculatedRows = [];
+    let currentIndex = 0;
+    
+    // Primero, crear una lista plana de todos los clusters que necesitamos distribuir
+    const allClusters = [...clusterRealSizes];
+    
+    console.log(`[Layout] Iniciando redistribución de ${allClusters.length} clusters`);
+    console.log(`[Layout] Configuración de columnas por fila:`, adjustedClustersPerRow);
+    
+    for (let row = 0; row < initialTotalRows; row++) {
+      const maxClustersInThisRow = adjustedClustersPerRow[row];
+      const clustersInThisRow = [];
+      
+      console.log(`[Layout] Procesando fila ${row}: asignando ${maxClustersInThisRow} clusters (índice actual: ${currentIndex})`);
+      
+      // Tomar los clusters necesarios para esta fila
+      for (let i = 0; i < maxClustersInThisRow && currentIndex < allClusters.length; i++) {
+        clustersInThisRow.push(allClusters[currentIndex]);
+        console.log(`[Layout] Fila ${row}: agregando cluster ${allClusters[currentIndex].cluster.id} (índice ${currentIndex})`);
+        currentIndex++;
+      }
+      
+      recalculatedRows.push(clustersInThisRow);
+      console.log(`[Layout] Fila ${row} completada: ${clustersInThisRow.length} clusters`);
+    }
+    
+    // Si quedan clusters sin asignar, crear filas adicionales
+    let additionalRowCount = 0;
+    while (currentIndex < allClusters.length) {
+      const remainingClusters = allClusters.slice(currentIndex);
+      const clustersForNewRow = remainingClusters.slice(0, clustersPerRow); // Usar configuración original para filas adicionales
+      
+      console.log(`[Layout] Creando fila adicional ${additionalRowCount}: ${clustersForNewRow.length} clusters restantes (índice ${currentIndex})`);
+      
+      recalculatedRows.push(clustersForNewRow);
+      currentIndex += clustersForNewRow.length;
+      additionalRowCount++;
+    }
+    
+    console.log(`[Layout] Distribución final: ${recalculatedRows.length} filas, ${allClusters.length} clusters totales`);
+    recalculatedRows.forEach((row, index) => {
+      const clusterIds = row.map(c => c.cluster.id).join(', ');
+      console.log(`[Layout] Fila ${index}: ${row.length} clusters [${clusterIds}]`);
+    });
+    
+    // PASO 6: Calcular altura uniforme por fila basándose en el cluster más alto
+    const rowHeights = [];
+    
+    for (let row = 0; row < recalculatedRows.length; row++) {
+      const clustersInRow = recalculatedRows[row];
+      if (clustersInRow.length > 0) {
+        const maxHeightInRow = Math.max(...clustersInRow.map(c => c.realHeight));
+        rowHeights[row] = maxHeightInRow;
+        console.log(`[Layout] Fila ${row}: ${clustersInRow.length} clusters, altura máxima: ${maxHeightInRow}`);
+      }
+    }
+    
+    // PASO 7: Calcular y aplicar posiciones finales con el nuevo layout
     const rowWidths = [];
-    for (let row = 0; row < totalRows; row++) {
-      const startIndex = row * clustersPerRow;
-      const endIndex = Math.min(startIndex + clustersPerRow, clusterGroups.length);
-      const clustersInRow = clusterRealSizes.slice(startIndex, endIndex);
-      const totalWidth = clustersInRow.reduce((sum, c) => sum + c.realWidth, 0) + (clustersInRow.length > 1 ? (clustersInRow.length - 1) * spacingX : 0);
-      rowWidths[row] = totalWidth;
+    for (let row = 0; row < recalculatedRows.length; row++) {
+      const clustersInRow = recalculatedRows[row];
+      if (clustersInRow.length > 0) {
+        const totalWidth = clustersInRow.reduce((sum, c) => sum + c.realWidth, 0) + 
+                          (clustersInRow.length > 1 ? (clustersInRow.length - 1) * spacingX : 0);
+        rowWidths[row] = totalWidth;
+      }
     }
     const maxWidth = Math.max(...rowWidths);
 
-    for (let row = 0; row < totalRows; row++) {
-      const startIndex = row * clustersPerRow;
-      const endIndex = Math.min(startIndex + clustersPerRow, clusterGroups.length);
-      const clustersInRow = clusterRealSizes.slice(startIndex, endIndex);
+    for (let row = 0; row < recalculatedRows.length; row++) {
+      const clustersInRow = recalculatedRows[row];
+      if (clustersInRow.length === 0) continue;
       
       const currentWidth = rowWidths[row];
       const widthDifference = maxWidth - currentWidth;
@@ -1258,16 +1358,14 @@ function applyMasonryLayout(clusterGroups, container, originalTrees, preCalculat
       });
     }
     
-    console.log(`[Layout] Aplicado layout final con altura uniforme por fila: ${clusterGroups.length} clusters, ${totalRows} filas`);
+    console.log(`[Layout] Aplicado layout final con altura uniforme por fila: ${clusterGroups.length} clusters, ${recalculatedRows.length} filas (ajuste automático de columnas aplicado)`);
     
     // Verificación final de gaps horizontal y vertical
     console.log(`[Layout] === VERIFICACIÓN FINAL DE GAPS HORIZONTAL Y VERTICAL ===`);
     
     // Verificar gaps horizontales
-    for (let row = 0; row < totalRows; row++) {
-      const startIndex = row * clustersPerRow;
-      const endIndex = Math.min(startIndex + clustersPerRow, clusterGroups.length);
-      const clustersInRow = clusterRealSizes.slice(startIndex, endIndex);
+    for (let row = 0; row < recalculatedRows.length; row++) {
+      const clustersInRow = recalculatedRows[row];
       
       console.log(`[Layout] --- Fila ${row} (${clustersInRow.length} clusters) ---`);
       
@@ -1292,9 +1390,9 @@ function applyMasonryLayout(clusterGroups, container, originalTrees, preCalculat
     
     // Verificar gaps verticales entre filas
     console.log(`[Layout] --- GAPS VERTICALES ENTRE FILAS ---`);
-    for (let row = 0; row < totalRows - 1; row++) {
-      const clustersInCurrentRow = clusterRealSizes.filter(c => c.row === row);
-      const clustersInNextRow = clusterRealSizes.filter(c => c.row === row + 1);
+    for (let row = 0; row < recalculatedRows.length - 1; row++) {
+      const clustersInCurrentRow = recalculatedRows[row];
+      const clustersInNextRow = recalculatedRows[row + 1];
 
       if (clustersInCurrentRow.length > 0 && clustersInNextRow.length > 0) {
         // Encontrar el borde inferior más bajo de la fila actual

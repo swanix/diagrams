@@ -1,5 +1,5 @@
 // Swanix Diagrams - JS
-// v0.4.2
+// v0.4.3
 
 // Global zoom behavior - defined at the beginning to avoid scope issues
 const zoom = d3.zoom()
@@ -442,7 +442,11 @@ function getLayoutConfiguration(diagramConfig = null) {
     marginX: 50,              // Default: 50px left margin
     marginY: 50,              // Default: 50px top margin
     spacingX: 60,             // Default: 60px horizontal gap
-    spacingY: 60              // Default: 60px vertical gap
+    spacingY: 60,             // Default: 60px vertical gap
+    wideClusterThreshold: 50, // Default: 50% threshold for wide cluster detection
+    fullRowThreshold: 70,     // Default: 70% threshold for full row cluster detection
+    lastRowThreshold: 50,     // Default: 50% threshold for last row width check
+    lastRowAlignment: 'left'  // Default: 'left' alignment for last row when using original width
   };
   
   // Try diagram-specific configuration first
@@ -452,7 +456,11 @@ function getLayoutConfiguration(diagramConfig = null) {
       marginX: diagramConfig.layout.marginX || defaultLayout.marginX,
       marginY: diagramConfig.layout.marginY || defaultLayout.marginY,
       spacingX: diagramConfig.layout.spacingX || defaultLayout.spacingX,
-      spacingY: diagramConfig.layout.spacingY || defaultLayout.spacingY
+      spacingY: diagramConfig.layout.spacingY || defaultLayout.spacingY,
+      wideClusterThreshold: diagramConfig.layout.wideClusterThreshold || defaultLayout.wideClusterThreshold,
+      fullRowThreshold: diagramConfig.layout.fullRowThreshold || defaultLayout.fullRowThreshold,
+      lastRowThreshold: diagramConfig.layout.lastRowThreshold || defaultLayout.lastRowThreshold,
+      lastRowAlignment: diagramConfig.layout.lastRowAlignment || defaultLayout.lastRowAlignment
     };
   }
   
@@ -463,7 +471,11 @@ function getLayoutConfiguration(diagramConfig = null) {
       marginX: options.layout.marginX || defaultLayout.marginX,
       marginY: options.layout.marginY || defaultLayout.marginY,
       spacingX: options.layout.spacingX || defaultLayout.spacingX,
-      spacingY: options.layout.spacingY || defaultLayout.spacingY
+      spacingY: options.layout.spacingY || defaultLayout.spacingY,
+      wideClusterThreshold: options.layout.wideClusterThreshold || defaultLayout.wideClusterThreshold,
+      fullRowThreshold: options.layout.fullRowThreshold || defaultLayout.fullRowThreshold,
+      lastRowThreshold: options.layout.lastRowThreshold || defaultLayout.lastRowThreshold,
+      lastRowAlignment: options.layout.lastRowAlignment || defaultLayout.lastRowAlignment
     };
   }
   
@@ -494,7 +506,7 @@ function getColumnConfiguration(diagramConfig = null) {
       id: [columns.id || 'Node'],
       name: [columns.name || 'Name'],
       subtitle: [columns.subtitle || 'Description'],
-      img: [columns.img || 'thumbnail'],
+      img: [columns.img || 'img'],
       parent: [columns.parent || 'Parent'],
       url: [columns.url || 'url'],
       type: [columns.type || 'Type']
@@ -504,7 +516,7 @@ function getColumnConfiguration(diagramConfig = null) {
     columnConfig.id.push('node', 'Node', 'NODE', 'id', 'Id', 'ID');
     columnConfig.name.push('name', 'Name', 'NAME', 'title', 'Title', 'TITLE', 'section', 'Section', 'SECTION', 'project', 'Project', 'PROJECT', 'product', 'Product', 'PRODUCT');
     columnConfig.subtitle.push('subtitle', 'Subtitle', 'SUBTITLE', 'description', 'Description', 'DESCRIPTION', 'desc', 'Desc', 'DESC');
-    columnConfig.img.push('thumbnail', 'Thumbnail', 'THUMBNAIL', 'img', 'Img', 'IMG', 'icon', 'Icon', 'ICON', 'image', 'Image', 'IMAGE', 'picture', 'Picture', 'PICTURE');
+    columnConfig.img.push('img', 'Img', 'IMG', 'thumbnail', 'Thumbnail', 'THUMBNAIL', 'icon', 'Icon', 'ICON', 'image', 'Image', 'IMAGE', 'picture', 'Picture', 'PICTURE');
     columnConfig.parent.push('parent', 'Parent', 'PARENT');
     columnConfig.url.push('url', 'Url', 'URL', 'link', 'Link', 'LINK');
     columnConfig.type.push('type', 'Type', 'TYPE');
@@ -519,7 +531,7 @@ function getColumnConfiguration(diagramConfig = null) {
       id: [columns.id || 'Node'],
       name: [columns.name || 'Name'],
       subtitle: [columns.subtitle || 'Description'],
-      img: [columns.img || 'thumbnail'],
+      img: [columns.img || 'img'],
       parent: [columns.parent || 'Parent'],
       url: [columns.url || 'url'],
       type: [columns.type || 'Type']
@@ -529,7 +541,7 @@ function getColumnConfiguration(diagramConfig = null) {
     columnConfig.id.push('node', 'Node', 'NODE', 'id', 'Id', 'ID');
     columnConfig.name.push('name', 'Name', 'NAME', 'title', 'Title', 'TITLE', 'section', 'Section', 'SECTION', 'project', 'Project', 'PROJECT', 'product', 'Product', 'PRODUCT');
     columnConfig.subtitle.push('subtitle', 'Subtitle', 'SUBTITLE', 'description', 'Description', 'DESCRIPTION', 'desc', 'Desc', 'DESC');
-    columnConfig.img.push('thumbnail', 'Thumbnail', 'THUMBNAIL', 'img', 'Img', 'IMG', 'icon', 'Icon', 'ICON', 'image', 'Image', 'IMAGE', 'picture', 'Picture', 'PICTURE');
+    columnConfig.img.push('img', 'Img', 'IMG', 'thumbnail', 'Thumbnail', 'THUMBNAIL', 'icon', 'Icon', 'ICON', 'image', 'Image', 'IMAGE', 'picture', 'Picture', 'PICTURE');
     columnConfig.parent.push('parent', 'Parent', 'PARENT');
     columnConfig.url.push('url', 'Url', 'URL', 'link', 'Link', 'LINK');
     columnConfig.type.push('type', 'Type', 'TYPE');
@@ -550,7 +562,7 @@ function getColumnConfigurationLegacy() {
       id: ['node', 'Node', 'NODE', 'id', 'Id', 'ID'],
       name: ['name', 'Name', 'NAME', 'title', 'Title', 'TITLE'],
       subtitle: ['subtitle', 'Subtitle', 'SUBTITLE', 'description', 'Description', 'DESCRIPTION', 'desc', 'Desc', 'DESC'],
-      img: ['thumbnail', 'Thumbnail', 'THUMBNAIL', 'img', 'Img', 'IMG', 'type', 'Type', 'TYPE', 'icon', 'Icon', 'ICON'],
+      img: ['img', 'Img', 'IMG', 'thumbnail', 'Thumbnail', 'THUMBNAIL', 'icon', 'Icon', 'ICON'],
       parent: ['parent', 'Parent', 'PARENT'],
       url: ['url', 'Url', 'URL', 'link', 'Link', 'LINK'],
       type: ['type', 'Type', 'TYPE']
@@ -566,7 +578,7 @@ function getColumnConfigurationLegacy() {
         id: [customConfig.id || 'Node'],
         name: [customConfig.name || 'Name'],
         subtitle: [customConfig.subtitle || 'Description'],
-        img: [customConfig.img || 'Thumbnail'],
+        img: [customConfig.img || 'img'],
         parent: [customConfig.parent || 'Parent'],
         url: [customConfig.url || 'url'],
         type: [customConfig.type || 'Type']
@@ -576,7 +588,7 @@ function getColumnConfigurationLegacy() {
       config.id.push('node', 'Node', 'NODE', 'id', 'Id', 'ID');
       config.name.push('name', 'Name', 'NAME', 'title', 'Title', 'TITLE', 'section', 'Section', 'SECTION', 'project', 'Project', 'PROJECT', 'product', 'Product', 'PRODUCT');
       config.subtitle.push('subtitle', 'Subtitle', 'SUBTITLE', 'description', 'Description', 'DESCRIPTION', 'desc', 'Desc', 'DESC');
-      config.img.push('thumbnail', 'Thumbnail', 'THUMBNAIL', 'img', 'Img', 'IMG', 'type', 'Type', 'TYPE', 'icon', 'Icon', 'ICON', 'image', 'Image', 'IMAGE', 'picture', 'Picture', 'PICTURE');
+      config.img.push('img', 'Img', 'IMG', 'thumbnail', 'Thumbnail', 'THUMBNAIL', 'icon', 'Icon', 'ICON', 'image', 'Image', 'IMAGE', 'picture', 'Picture', 'PICTURE');
       config.parent.push('parent', 'Parent', 'PARENT');
       config.url.push('url', 'Url', 'URL', 'link', 'Link', 'LINK');
       config.type.push('type', 'Type', 'TYPE');
@@ -592,7 +604,7 @@ function getColumnConfigurationLegacy() {
     id: [container.getAttribute('data-column-id') || 'Node'],
     name: [container.getAttribute('data-column-name') || 'Name'],
     subtitle: [container.getAttribute('data-column-subtitle') || 'Description'],
-    img: [container.getAttribute('data-column-img') || 'Thumbnail'],
+    img: [container.getAttribute('data-column-img') || 'img'],
     parent: [container.getAttribute('data-column-parent') || 'Parent'],
     url: [container.getAttribute('data-column-url') || 'url'],
     type: [container.getAttribute('data-column-type') || 'Type']
@@ -602,7 +614,7 @@ function getColumnConfigurationLegacy() {
   config.id.push('node', 'Node', 'NODE', 'id', 'Id', 'ID');
   config.name.push('name', 'Name', 'NAME', 'title', 'Title', 'TITLE', 'section', 'Section', 'SECTION', 'project', 'Project', 'PROJECT', 'product', 'Product', 'PRODUCT');
   config.subtitle.push('subtitle', 'Subtitle', 'SUBTITLE', 'description', 'Description', 'DESCRIPTION', 'desc', 'Desc', 'DESC');
-  config.img.push('thumbnail', 'Thumbnail', 'THUMBNAIL', 'img', 'Img', 'IMG', 'type', 'Type', 'TYPE', 'icon', 'Icon', 'ICON', 'image', 'Image', 'IMAGE', 'picture', 'Picture', 'PICTURE');
+  config.img.push('img', 'Img', 'IMG', 'thumbnail', 'Thumbnail', 'THUMBNAIL', 'icon', 'Icon', 'ICON', 'image', 'Image', 'IMAGE', 'picture', 'Picture', 'PICTURE');
   config.parent.push('parent', 'Parent', 'PARENT');
   config.url.push('url', 'Url', 'URL', 'link', 'Link', 'LINK');
   config.type.push('type', 'Type', 'TYPE');
@@ -639,6 +651,8 @@ function buildHierarchies(data, diagramConfig = null) {
     let parent = getColumnValue(d, columnConfig.parent, "");
     let url = getColumnValue(d, columnConfig.url, "");
     let type = getColumnValue(d, columnConfig.type, "");
+
+
 
     // Generate auto ID if not provided or empty
     if (!id || id.trim() === "") {
@@ -1183,44 +1197,195 @@ function applyMasonryLayout(clusterGroups, container, originalTrees, preCalculat
       };
     });
     
-    // PASO 4: Calcular altura uniforme por fila basándose en el cluster más alto
-    const totalRows = Math.ceil(clusterGroups.length / clustersPerRow);
-    const rowHeights = [];
+    // PASO 4: Aplicar lógica de ajuste automático de columnas basado en el ancho de clusters
+    const initialTotalRows = Math.ceil(clusterGroups.length / clustersPerRow);
+    const adjustedClustersPerRow = [];
     
-    for (let row = 0; row < totalRows; row++) {
+    console.log(`[Layout] Iniciando análisis de ${initialTotalRows} filas iniciales con ${clusterGroups.length} clusters totales`);
+    
+    // Calcular el número de columnas por fila con la nueva lógica
+    for (let row = 0; row < initialTotalRows; row++) {
       const startIndex = row * clustersPerRow;
       const endIndex = Math.min(startIndex + clustersPerRow, clusterGroups.length);
       const clustersInRow = clusterRealSizes.slice(startIndex, endIndex);
-      const maxHeightInRow = Math.max(...clustersInRow.map(c => c.realHeight));
-      rowHeights[row] = maxHeightInRow;
-      console.log(`[Layout] Fila ${row}: ${clustersInRow.length} clusters, altura máxima: ${maxHeightInRow}`);
+      
+      console.log(`[Layout] Analizando fila ${row}: ${clustersInRow.length} clusters (índices ${startIndex}-${endIndex-1})`);
+      
+      // Si es la primera fila, usar el número de columnas configurado
+      if (row === 0) {
+        adjustedClustersPerRow[row] = clustersInRow.length;
+        console.log(`[Layout] Fila ${row}: Primera fila, usando ${clustersInRow.length} columnas`);
+        continue;
+      }
+      
+      // Para filas 2, 3 y 4, verificar si algún cluster supera el 50% del ancho de la fila anterior
+      const previousRowStartIndex = Math.max(0, (row - 1) * clustersPerRow);
+      const previousRowEndIndex = Math.min(previousRowStartIndex + clustersPerRow, clusterGroups.length);
+      const previousRowClusters = clusterRealSizes.slice(previousRowStartIndex, previousRowEndIndex);
+      
+      // Calcular el ancho total de la fila anterior
+      const previousRowWidth = previousRowClusters.reduce((sum, c) => sum + c.realWidth, 0) + 
+                              (previousRowClusters.length > 1 ? (previousRowClusters.length - 1) * spacingX : 0);
+      
+      console.log(`[Layout] Fila ${row}: Ancho de fila anterior = ${previousRowWidth.toFixed(1)}px`);
+      
+      // Verificar si algún cluster de la fila actual supera el umbral del 70% del ancho de la fila anterior
+      const fullRowClusters = clustersInRow.filter(cluster => {
+        const clusterWidthPercentage = (cluster.realWidth / previousRowWidth) * 100;
+        const isFullRow = clusterWidthPercentage > layoutConfig.fullRowThreshold;
+        if (isFullRow) {
+          console.log(`[Layout] Fila ${row}: Cluster ${cluster.cluster.id} requiere fila completa (${clusterWidthPercentage.toFixed(1)}% > ${layoutConfig.fullRowThreshold}%)`);
+        }
+        return isFullRow;
+      });
+      
+      const hasFullRowCluster = fullRowClusters.length > 0;
+      
+      if (hasFullRowCluster) {
+        // Si hay un cluster que supera el 70%, este ocupa toda la fila (1 columna)
+        adjustedClustersPerRow[row] = 1;
+        console.log(`[Layout] Fila ${row}: Cluster de fila completa detectado (>${layoutConfig.fullRowThreshold}% de fila anterior), ajustando a 1 columna`);
+      } else {
+        // Verificar si algún cluster supera el umbral de cluster ancho (50% por defecto)
+        const wideClusters = clustersInRow.filter(cluster => {
+          const clusterWidthPercentage = (cluster.realWidth / previousRowWidth) * 100;
+          const isWide = clusterWidthPercentage > layoutConfig.wideClusterThreshold;
+          if (isWide) {
+            console.log(`[Layout] Fila ${row}: Cluster ${cluster.cluster.id} es ancho (${clusterWidthPercentage.toFixed(1)}% > ${layoutConfig.wideClusterThreshold}%)`);
+          }
+          return isWide;
+        });
+        
+        const hasWideCluster = wideClusters.length > 0;
+        
+        if (hasWideCluster && clustersInRow.length > 2) {
+          // Si hay un cluster ancho y hay más de 2 clusters, limitar a 2 columnas
+          adjustedClustersPerRow[row] = 2;
+          console.log(`[Layout] Fila ${row}: Cluster ancho detectado (>${layoutConfig.wideClusterThreshold}% de fila anterior), ajustando a 2 columnas`);
+        } else {
+          // Usar el número normal de columnas
+          adjustedClustersPerRow[row] = clustersInRow.length;
+          console.log(`[Layout] Fila ${row}: Sin clusters anchos, usando ${clustersInRow.length} columnas`);
+        }
+      }
     }
     
-    // PASO 5: Calcular y aplicar posiciones finales
+    // PASO 5: Recalcular las filas con el nuevo número de columnas ajustado
+    const recalculatedRows = [];
+    let currentIndex = 0;
+    
+    // Primero, crear una lista plana de todos los clusters que necesitamos distribuir
+    const allClusters = [...clusterRealSizes];
+    
+    console.log(`[Layout] Iniciando redistribución de ${allClusters.length} clusters`);
+    console.log(`[Layout] Configuración de columnas por fila:`, adjustedClustersPerRow);
+    
+    for (let row = 0; row < initialTotalRows; row++) {
+      const maxClustersInThisRow = adjustedClustersPerRow[row];
+      const clustersInThisRow = [];
+      
+      console.log(`[Layout] Procesando fila ${row}: asignando ${maxClustersInThisRow} clusters (índice actual: ${currentIndex})`);
+      
+      // Tomar los clusters necesarios para esta fila
+      for (let i = 0; i < maxClustersInThisRow && currentIndex < allClusters.length; i++) {
+        clustersInThisRow.push(allClusters[currentIndex]);
+        console.log(`[Layout] Fila ${row}: agregando cluster ${allClusters[currentIndex].cluster.id} (índice ${currentIndex})`);
+        currentIndex++;
+      }
+      
+      recalculatedRows.push(clustersInThisRow);
+      console.log(`[Layout] Fila ${row} completada: ${clustersInThisRow.length} clusters`);
+    }
+    
+    // Si quedan clusters sin asignar, crear filas adicionales
+    let additionalRowCount = 0;
+    while (currentIndex < allClusters.length) {
+      const remainingClusters = allClusters.slice(currentIndex);
+      const clustersForNewRow = remainingClusters.slice(0, clustersPerRow); // Usar configuración original para filas adicionales
+      
+      console.log(`[Layout] Creando fila adicional ${additionalRowCount}: ${clustersForNewRow.length} clusters restantes (índice ${currentIndex})`);
+      
+      recalculatedRows.push(clustersForNewRow);
+      currentIndex += clustersForNewRow.length;
+      additionalRowCount++;
+    }
+    
+    console.log(`[Layout] Distribución final: ${recalculatedRows.length} filas, ${allClusters.length} clusters totales`);
+    recalculatedRows.forEach((row, index) => {
+      const clusterIds = row.map(c => c.cluster.id).join(', ');
+      console.log(`[Layout] Fila ${index}: ${row.length} clusters [${clusterIds}]`);
+    });
+    
+    // PASO 6: Calcular altura uniforme por fila basándose en el cluster más alto
+    const rowHeights = [];
+    
+    for (let row = 0; row < recalculatedRows.length; row++) {
+      const clustersInRow = recalculatedRows[row];
+      if (clustersInRow.length > 0) {
+        const maxHeightInRow = Math.max(...clustersInRow.map(c => c.realHeight));
+        rowHeights[row] = maxHeightInRow;
+        console.log(`[Layout] Fila ${row}: ${clustersInRow.length} clusters, altura máxima: ${maxHeightInRow}`);
+      }
+    }
+    
+    // PASO 7: Calcular y aplicar posiciones finales con el nuevo layout
     const rowWidths = [];
-    for (let row = 0; row < totalRows; row++) {
-      const startIndex = row * clustersPerRow;
-      const endIndex = Math.min(startIndex + clustersPerRow, clusterGroups.length);
-      const clustersInRow = clusterRealSizes.slice(startIndex, endIndex);
-      const totalWidth = clustersInRow.reduce((sum, c) => sum + c.realWidth, 0) + (clustersInRow.length > 1 ? (clustersInRow.length - 1) * spacingX : 0);
-      rowWidths[row] = totalWidth;
+    for (let row = 0; row < recalculatedRows.length; row++) {
+      const clustersInRow = recalculatedRows[row];
+      if (clustersInRow.length > 0) {
+        const totalWidth = clustersInRow.reduce((sum, c) => sum + c.realWidth, 0) + 
+                          (clustersInRow.length > 1 ? (clustersInRow.length - 1) * spacingX : 0);
+        rowWidths[row] = totalWidth;
+      }
     }
     const maxWidth = Math.max(...rowWidths);
 
-    for (let row = 0; row < totalRows; row++) {
-      const startIndex = row * clustersPerRow;
-      const endIndex = Math.min(startIndex + clustersPerRow, clusterGroups.length);
-      const clustersInRow = clusterRealSizes.slice(startIndex, endIndex);
+    for (let row = 0; row < recalculatedRows.length; row++) {
+      const clustersInRow = recalculatedRows[row];
+      if (clustersInRow.length === 0) continue;
       
       const currentWidth = rowWidths[row];
       const widthDifference = maxWidth - currentWidth;
       
+      // Verificar si es la última fila y si sus clusters suman menos del umbral configurado de la fila anterior
+      let shouldUseOriginalWidth = false;
+      if (row > 0 && row === recalculatedRows.length - 1) {
+        const previousRow = recalculatedRows[row - 1];
+        if (previousRow.length > 0) {
+          const previousRowWidth = previousRow.reduce((sum, c) => sum + c.realWidth, 0) + 
+                                  (previousRow.length > 1 ? (previousRow.length - 1) * spacingX : 0);
+          const currentRowPercentage = (currentWidth / previousRowWidth) * 100;
+          
+          if (currentRowPercentage < layoutConfig.lastRowThreshold) {
+            shouldUseOriginalWidth = true;
+            console.log(`[Layout] Última fila ${row}: ancho total ${currentWidth.toFixed(1)}px (${currentRowPercentage.toFixed(1)}% de fila anterior), usando ancho original sin expandir`);
+          } else {
+            console.log(`[Layout] Última fila ${row}: ancho total ${currentWidth.toFixed(1)}px (${currentRowPercentage.toFixed(1)}% de fila anterior), expandiendo para llenar ancho disponible`);
+          }
+        }
+      }
+      
       let extraWidthPerCluster = 0;
-      if (widthDifference > 0 && clustersInRow.length > 0) {
+      if (widthDifference > 0 && clustersInRow.length > 0 && !shouldUseOriginalWidth) {
         extraWidthPerCluster = widthDifference / clustersInRow.length;
       }
 
       let currentX = marginX;
+      
+      // Si es la última fila y debe usar ancho original, aplicar alineación configurada
+      if (shouldUseOriginalWidth) {
+        const totalRowWidth = clustersInRow.reduce((sum, c) => sum + c.realWidth, 0) + 
+                             (clustersInRow.length > 1 ? (clustersInRow.length - 1) * spacingX : 0);
+        
+        if (layoutConfig.lastRowAlignment === 'center') {
+          // Centrar la fila
+          currentX = marginX + (maxWidth - totalRowWidth) / 2;
+          console.log(`[Layout] Última fila centrada: ancho total ${totalRowWidth.toFixed(1)}px, posición X inicial ${currentX.toFixed(1)}px`);
+        } else {
+          // Alinear a la izquierda (currentX ya está en marginX)
+          console.log(`[Layout] Última fila alineada a la izquierda: ancho total ${totalRowWidth.toFixed(1)}px, posición X inicial ${currentX.toFixed(1)}px`);
+        }
+      }
       
       clustersInRow.forEach((clusterData, colIndex) => {
         const { realWidth, realHeight, rectBounds, clusterRect } = clusterData;
@@ -1256,16 +1421,14 @@ function applyMasonryLayout(clusterGroups, container, originalTrees, preCalculat
       });
     }
     
-    console.log(`[Layout] Aplicado layout final con altura uniforme por fila: ${clusterGroups.length} clusters, ${totalRows} filas`);
+    console.log(`[Layout] Aplicado layout final con altura uniforme por fila: ${clusterGroups.length} clusters, ${recalculatedRows.length} filas (ajuste automático de columnas aplicado)`);
     
     // Verificación final de gaps horizontal y vertical
     console.log(`[Layout] === VERIFICACIÓN FINAL DE GAPS HORIZONTAL Y VERTICAL ===`);
     
     // Verificar gaps horizontales
-    for (let row = 0; row < totalRows; row++) {
-      const startIndex = row * clustersPerRow;
-      const endIndex = Math.min(startIndex + clustersPerRow, clusterGroups.length);
-      const clustersInRow = clusterRealSizes.slice(startIndex, endIndex);
+    for (let row = 0; row < recalculatedRows.length; row++) {
+      const clustersInRow = recalculatedRows[row];
       
       console.log(`[Layout] --- Fila ${row} (${clustersInRow.length} clusters) ---`);
       
@@ -1290,9 +1453,9 @@ function applyMasonryLayout(clusterGroups, container, originalTrees, preCalculat
     
     // Verificar gaps verticales entre filas
     console.log(`[Layout] --- GAPS VERTICALES ENTRE FILAS ---`);
-    for (let row = 0; row < totalRows - 1; row++) {
-      const clustersInCurrentRow = clusterRealSizes.filter(c => c.row === row);
-      const clustersInNextRow = clusterRealSizes.filter(c => c.row === row + 1);
+    for (let row = 0; row < recalculatedRows.length - 1; row++) {
+      const clustersInCurrentRow = recalculatedRows[row];
+      const clustersInNextRow = recalculatedRows[row + 1];
 
       if (clustersInCurrentRow.length > 0 && clustersInNextRow.length > 0) {
         // Encontrar el borde inferior más bajo de la fila actual
@@ -2003,6 +2166,9 @@ function wrap(text, width) {
       }
     }
 
+    // Asignamos el texto final que sí cabe a la primera línea.
+    tspan1.text(currentLine);
+
     // --- Segunda línea: puede venir de salto de línea o del wrap automático ---
     let secondLineText = '';
     if (secondLine) {
@@ -2024,8 +2190,6 @@ function wrap(text, width) {
         .text('');
       const words2 = secondLineText.split(/\s+/);
       let currentLine2 = '';
-      
-
       
       for (let i = 0; i < words2.length; i++) {
         let testLine2 = currentLine2 ? currentLine2 + ' ' + words2[i] : words2[i];
@@ -2474,8 +2638,8 @@ function updateSVGColors() {
   const variables = {
     textColor: computedStyle.getPropertyValue('--text-color'),
     nodeFill: computedStyle.getPropertyValue('--node-fill'),
-    labelBorder: computedStyle.getPropertyValue('--label-border'),
-    linkColor: computedStyle.getPropertyValue('--link-color'),
+                    labelBorder: computedStyle.getPropertyValue('--node-stroke'),
+        linkColor: computedStyle.getPropertyValue('--conector-stroke'),
     clusterBg: computedStyle.getPropertyValue('--cluster-bg'),
     clusterStroke: computedStyle.getPropertyValue('--cluster-stroke'),
     clusterTitleColor: computedStyle.getPropertyValue('--cluster-title-color'),
@@ -5432,12 +5596,14 @@ function createImageElement(baseUrl, fallbackUrl, className = "image-base") {
   return img;
 }
 
-// Helper function to resolve node image URL prioritizing the `img` column over the thumbnail `type`
+// Helper function to resolve node image URL - FORZAR uso de columna img, solo usar type si img está vacío
 function resolveNodeImage(node) {
+  // Obtener valor de la columna img directamente del nodo
   const imgVal = node.img || (node.data && node.data.img) || "";
   const typeVal = node.type || (node.data && node.data.type) || "";
 
-  if (imgVal) {
+  // SIEMPRE usar img si tiene valor (prioridad absoluta)
+  if (imgVal && imgVal.trim() !== "") {
     // Si es una URL absoluta, data URI o ruta con barra, úsala directamente
     if (/^(https?:\/\/|data:|\/)/i.test(imgVal) || imgVal.includes('/')) {
       return imgVal;
@@ -5450,7 +5616,7 @@ function resolveNodeImage(node) {
     return `img/${fileName}`;
   }
 
-  // Fallback al thumbnail por tipo
+  // SOLO si img está completamente vacío, usar type como fallback
   const typeName = (typeVal || 'detail').toLowerCase().replace(/\s+/g, '-');
   return `img/${typeName}.svg`;
 }
@@ -5469,18 +5635,8 @@ function shouldApplyFilter(url) {
   // Si no es un archivo SVG, no aplicar filtro
   if (!baseUrl.endsWith('.svg')) return false;
   
-  // Lista de imágenes del sistema que SÍ deben tener filtros aplicados
-  const systemImages = [
-    'detail.svg', 'document.svg', 'settings.svg', 'form.svg', 'list.svg', 
-    'modal.svg', 'mosaic.svg', 'report.svg', 'file-csv.svg', 'file-pdf.svg', 
-    'file-xls.svg', 'file-xml.svg', 'home.svg', 'transparent.svg'
-  ];
-  
-  // Extraer solo el nombre del archivo de la ruta
-  const fileName = baseUrl.split('/').pop();
-  
-  // Solo aplicar filtro a las imágenes del sistema
-  return systemImages.includes(fileName);
+  // Aplicar filtro a todas las imágenes locales SVG
+  return true;
 }
 
 // ============================================================================

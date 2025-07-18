@@ -8,14 +8,14 @@
 
     "--text-color": "#222",
     "--node-fill": "#fff",
+    "--node-stroke": "#bdbdbd",
     "--node-stroke-focus": "#424242",
     "--node-selection-border": "#bdbdbd",
     "--node-selection-focus": "#424242",
     "--node-selection-hover": "#616161",
     "--node-selection-selected": "#424242",
 
-    "--link-color": "#999",
-    "--label-border": "#bdbdbd",
+    "--conector-stroke": "#999",
 
     "--cluster-bg": "rgba(0,0,0,0.02)",
     "--cluster-stroke": "rgba(0,0,0,0.1)",
@@ -122,14 +122,14 @@
 
     "--text-color": "#f6f7f9",
     "--node-fill": "#23272f",
+    "--node-stroke": "#444",
     "--node-stroke-focus": "#cccccc",
     "--node-selection-border": "#444",
     "--node-selection-focus": "#00eaff",
     "--node-selection-hover": "#00b8cc",
     "--node-selection-selected": "#00eaff",
 
-    "--link-color": "#666",
-    "--label-border": "#444",
+    "--conector-stroke": "#666",
 
     "--cluster-bg": "rgba(255,255,255,0.02)",
     "--cluster-stroke": "rgba(255,255,255,0.1)",
@@ -233,14 +233,14 @@
 
     "--text-color": "#2c1810",
     "--node-fill": "#faf6f0",
+    "--node-stroke": "#d4c4a8",
     "--node-stroke-focus": "#8b4513",
     "--node-selection-border": "#d4c4a8",
     "--node-selection-focus": "#8b4513",
     "--node-selection-hover": "#a0522d",
     "--node-selection-selected": "#8b4513",
 
-    "--link-color": "#8b7355",
-    "--label-border": "#d4c4a8",
+    "--conector-stroke": "#8b7355",
 
     "--cluster-bg": "rgba(139, 69, 19, 0.05)",
     "--cluster-stroke": "rgba(139, 69, 19, 0.1)",
@@ -344,14 +344,14 @@
 
     "--text-color": "#4a4a6a",
     "--node-fill": "#ffffff",
+    "--node-stroke": "#e1e8f0",
     "--node-stroke-focus": "#a8b4f5",
     "--node-selection-border": "#e1e8f0",
     "--node-selection-focus": "#a8b4f5",
     "--node-selection-hover": "#8b9af0",
     "--node-selection-selected": "#a8b4f5",
 
-    "--link-color": "#b8c5d6",
-    "--label-border": "#e1e8f0",
+    "--conector-stroke": "#b8c5d6",
 
     "--cluster-bg": "rgba(168, 180, 245, 0.05)",
     "--cluster-stroke": "rgba(168, 180, 245, 0.1)",
@@ -455,14 +455,14 @@
 
     "--text-color": "#00ff41",
     "--node-fill": "#1a1a1a",
+    "--node-stroke": "#00ff41",
     "--node-stroke-focus": "#00ff88",
     "--node-selection-border": "#00ff41",
     "--node-selection-focus": "#00ff88",
     "--node-selection-hover": "#00cc6a",
     "--node-selection-selected": "#00ff88",
 
-    "--link-color": "#00ff88",
-    "--label-border": "#00ff41",
+    "--conector-stroke": "#00ff88",
 
     "--cluster-bg": "rgba(0, 255, 65, 0.05)",
     "--cluster-stroke": "rgba(0, 255, 65, 0.2)",
@@ -565,14 +565,14 @@
 
     "--text-color": "#e8f5e8",
     "--node-fill": "#2a3f2a",
+    "--node-stroke": "#4a5f4a",
     "--node-stroke-focus": "#4caf50",
     "--node-selection-border": "#4a5f4a",
     "--node-selection-focus": "#4caf50",
     "--node-selection-hover": "#45a049",
     "--node-selection-selected": "#4caf50",
 
-    "--link-color": "#6b8e6b",
-    "--label-border": "#4a5f4a",
+    "--conector-stroke": "#6b8e6b",
 
     "--cluster-bg": "rgba(76, 175, 80, 0.05)",
     "--cluster-stroke": "rgba(76, 175, 80, 0.1)",

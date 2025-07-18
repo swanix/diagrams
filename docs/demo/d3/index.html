@@ -14,7 +14,7 @@
 <script>
   window.$xDiagrams = {
     title: "Diagrams",
-    diagrams: [
+    diagrams: [ 
       {
         name: "Google Sheets", 
         url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vT1F3LXPwnGlnF_uOlhoR-5kK1DrWLwlCAKH8Ag6hPrNLzwqWYWU8ofE19xSv4cH1-Cq7ZYm7lPys7V/pub?output=csv",
@@ -37,7 +37,32 @@
           marginX: 30,
           marginY: 30,
           spacingX: 100,
-          spacingY: 100
+          spacingY: 100,
+          fullRowThreshold: 70
+        }
+      },
+      {
+        name: "Test Full Row Clusters",
+        url: "data/test-full-row-clusters.csv",
+        layout: {
+          clustersPerRow: 3,
+          marginX: 30,
+          marginY: 30,
+          spacingX: 60,
+          spacingY: 60,
+          fullRowThreshold: 70
+        }
+      },
+      {
+        name: "Complex Clusters Demo",
+        url: "data/complex-clusters.csv",
+        layout: {
+          clustersPerRow: 3,
+          marginX: 30,
+          marginY: 30,
+          spacingX: 60,
+          spacingY: 60,
+          fullRowThreshold: 70
         }
       },
       {

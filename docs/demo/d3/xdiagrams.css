@@ -1,6 +1,6 @@
 /*
   Swanix Diagrams - CSS
-  v0.4.2
+  v0.4.3
 */
 
 :root {
@@ -24,8 +24,8 @@
     --flatlist-left-margin: 20px; /* Margen izquierdo para listas planas */
 
     /* ===== Links and Labels ===== */
-    --link-color: #999;
-    --label-border: #bdbdbd;
+    --conector-stroke: #999;
+    --node-stroke: #bdbdbd;
 
     /* ===== Clusters ===== */
     --cluster-bg: rgba(0,0,0,0.05);
@@ -172,8 +172,8 @@
       --node-stroke-focus: #fff;
 
       /* ===== Links and Labels ===== */
-      --link-color: #666;
-      --label-border: #787878;
+      --conector-stroke: #666;
+      --node-stroke: #787878;
 
       /* ===== Clusters ===== */
       --cluster-bg: rgba(255,255,255,0.02);
@@ -277,12 +277,12 @@
 
   .link {
     fill: none;
-    stroke: var(--link-color);
+    stroke: var(--conector-stroke);
     stroke-width: 2px;
   }
 
   .node rect {
-    stroke: var(--label-border);
+    stroke: var(--node-stroke);
     fill: var(--node-fill);
     rx: 6px;
     ry: 6px;
@@ -942,8 +942,8 @@ svg .node.node-selected {
   --text-color: #222;
   --node-fill: #fff;
   --node-stroke-focus: #1976d2;
-  --label-border: #bdbdbd;
-  --link-color: #999;
+  --node-stroke: #bdbdbd;
+  --conector-stroke: #999;
   --side-panel-bg: #fff;
   --side-panel-text: #222;
   --side-panel-header-bg: #f8f9fa;
@@ -979,8 +979,8 @@ svg .node.node-selected {
   --text-color: #f6f7f9;
   --node-fill: #23272f;
   --node-stroke-focus: #00eaff;
-  --label-border: #444;
-  --link-color: #666;
+  --node-stroke: #444;
+  --conector-stroke: #666;
   --side-panel-bg: #23272f;
   --side-panel-text: #f6f7f9;
   --side-panel-header-bg: #23272f;
@@ -1016,8 +1016,8 @@ svg .node.node-selected {
   --text-color: #7c4f20;
   --node-fill: #fffbe6;
   --node-stroke-focus: #b97a56;
-  --label-border: #b97a56;
-  --link-color: #b97a56;
+  --node-stroke: #b97a56;
+  --conector-stroke: #b97a56;
   --side-panel-bg: #fffbe6;
   --side-panel-text: #7c4f20;
   --side-panel-header-bg: #f5e9da;
@@ -1053,8 +1053,8 @@ svg .node.node-selected {
   --text-color: #7a7a7a;
   --node-fill: #fff;
   --node-stroke-focus: #b6b6f7;
-  --label-border: #e0b1cb;
-  --link-color: #b6b6f7;
+  --node-stroke: #e0b1cb;
+  --conector-stroke: #b6b6f7;
   --side-panel-bg: #fff;
   --side-panel-text: #7a7a7a;
   --side-panel-header-bg: #fdf6fb;
@@ -1090,8 +1090,8 @@ svg .node.node-selected {
   --text-color: #00ffe7;
   --node-fill: #1a0033;
   --node-stroke-focus: #ff00c8;
-  --label-border: #00ffe7;
-  --link-color: #ff00c8;
+  --node-stroke: #00ffe7;
+  --conector-stroke: #ff00c8;
   --side-panel-bg: #1a0033;
   --side-panel-text: #00ffe7;
   --side-panel-header-bg: #0f0026;

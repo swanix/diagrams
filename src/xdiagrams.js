@@ -1,5 +1,5 @@
 // Swanix Diagrams - JS
-// v0.4.2
+// v0.4.3
 
 // Global zoom behavior - defined at the beginning to avoid scope issues
 const zoom = d3.zoom()
@@ -442,7 +442,11 @@ function getLayoutConfiguration(diagramConfig = null) {
     marginX: 50,              // Default: 50px left margin
     marginY: 50,              // Default: 50px top margin
     spacingX: 60,             // Default: 60px horizontal gap
-    spacingY: 60              // Default: 60px vertical gap
+    spacingY: 60,             // Default: 60px vertical gap
+    wideClusterThreshold: 50, // Default: 50% threshold for wide cluster detection
+    fullRowThreshold: 70,     // Default: 70% threshold for full row cluster detection
+    lastRowThreshold: 50,     // Default: 50% threshold for last row width check
+    lastRowAlignment: 'left'  // Default: 'left' alignment for last row when using original width
   };
   
   // Try diagram-specific configuration first
@@ -452,7 +456,11 @@ function getLayoutConfiguration(diagramConfig = null) {
       marginX: diagramConfig.layout.marginX || defaultLayout.marginX,
       marginY: diagramConfig.layout.marginY || defaultLayout.marginY,
       spacingX: diagramConfig.layout.spacingX || defaultLayout.spacingX,
-      spacingY: diagramConfig.layout.spacingY || defaultLayout.spacingY
+      spacingY: diagramConfig.layout.spacingY || defaultLayout.spacingY,
+      wideClusterThreshold: diagramConfig.layout.wideClusterThreshold || defaultLayout.wideClusterThreshold,
+      fullRowThreshold: diagramConfig.layout.fullRowThreshold || defaultLayout.fullRowThreshold,
+      lastRowThreshold: diagramConfig.layout.lastRowThreshold || defaultLayout.lastRowThreshold,
+      lastRowAlignment: diagramConfig.layout.lastRowAlignment || defaultLayout.lastRowAlignment
     };
   }
   
@@ -463,7 +471,11 @@ function getLayoutConfiguration(diagramConfig = null) {
       marginX: options.layout.marginX || defaultLayout.marginX,
       marginY: options.layout.marginY || defaultLayout.marginY,
       spacingX: options.layout.spacingX || defaultLayout.spacingX,
-      spacingY: options.layout.spacingY || defaultLayout.spacingY
+      spacingY: options.layout.spacingY || defaultLayout.spacingY,
+      wideClusterThreshold: options.layout.wideClusterThreshold || defaultLayout.wideClusterThreshold,
+      fullRowThreshold: options.layout.fullRowThreshold || defaultLayout.fullRowThreshold,
+      lastRowThreshold: options.layout.lastRowThreshold || defaultLayout.lastRowThreshold,
+      lastRowAlignment: options.layout.lastRowAlignment || defaultLayout.lastRowAlignment
     };
   }
   
@@ -1217,26 +1229,44 @@ function applyMasonryLayout(clusterGroups, container, originalTrees, preCalculat
       
       console.log(`[Layout] Fila ${row}: Ancho de fila anterior = ${previousRowWidth.toFixed(1)}px`);
       
-      // Verificar si algún cluster de la fila actual supera el 50% del ancho de la fila anterior
-      const wideClusters = clustersInRow.filter(cluster => {
+      // Verificar si algún cluster de la fila actual supera el umbral del 70% del ancho de la fila anterior
+      const fullRowClusters = clustersInRow.filter(cluster => {
         const clusterWidthPercentage = (cluster.realWidth / previousRowWidth) * 100;
-        const isWide = clusterWidthPercentage > 50;
-        if (isWide) {
-          console.log(`[Layout] Fila ${row}: Cluster ${cluster.cluster.id} es ancho (${clusterWidthPercentage.toFixed(1)}% > 50%)`);
+        const isFullRow = clusterWidthPercentage > layoutConfig.fullRowThreshold;
+        if (isFullRow) {
+          console.log(`[Layout] Fila ${row}: Cluster ${cluster.cluster.id} requiere fila completa (${clusterWidthPercentage.toFixed(1)}% > ${layoutConfig.fullRowThreshold}%)`);
         }
-        return isWide;
+        return isFullRow;
       });
       
-      const hasWideCluster = wideClusters.length > 0;
+      const hasFullRowCluster = fullRowClusters.length > 0;
       
-      if (hasWideCluster && clustersInRow.length > 2) {
-        // Si hay un cluster ancho y hay más de 2 clusters, limitar a 2 columnas
-        adjustedClustersPerRow[row] = 2;
-        console.log(`[Layout] Fila ${row}: Cluster ancho detectado (>50% de fila anterior), ajustando a 2 columnas`);
+      if (hasFullRowCluster) {
+        // Si hay un cluster que supera el 70%, este ocupa toda la fila (1 columna)
+        adjustedClustersPerRow[row] = 1;
+        console.log(`[Layout] Fila ${row}: Cluster de fila completa detectado (>${layoutConfig.fullRowThreshold}% de fila anterior), ajustando a 1 columna`);
       } else {
-        // Usar el número normal de columnas
-        adjustedClustersPerRow[row] = clustersInRow.length;
-        console.log(`[Layout] Fila ${row}: Sin clusters anchos, usando ${clustersInRow.length} columnas`);
+        // Verificar si algún cluster supera el umbral de cluster ancho (50% por defecto)
+        const wideClusters = clustersInRow.filter(cluster => {
+          const clusterWidthPercentage = (cluster.realWidth / previousRowWidth) * 100;
+          const isWide = clusterWidthPercentage > layoutConfig.wideClusterThreshold;
+          if (isWide) {
+            console.log(`[Layout] Fila ${row}: Cluster ${cluster.cluster.id} es ancho (${clusterWidthPercentage.toFixed(1)}% > ${layoutConfig.wideClusterThreshold}%)`);
+          }
+          return isWide;
+        });
+        
+        const hasWideCluster = wideClusters.length > 0;
+        
+        if (hasWideCluster && clustersInRow.length > 2) {
+          // Si hay un cluster ancho y hay más de 2 clusters, limitar a 2 columnas
+          adjustedClustersPerRow[row] = 2;
+          console.log(`[Layout] Fila ${row}: Cluster ancho detectado (>${layoutConfig.wideClusterThreshold}% de fila anterior), ajustando a 2 columnas`);
+        } else {
+          // Usar el número normal de columnas
+          adjustedClustersPerRow[row] = clustersInRow.length;
+          console.log(`[Layout] Fila ${row}: Sin clusters anchos, usando ${clustersInRow.length} columnas`);
+        }
       }
     }
     
@@ -1317,12 +1347,45 @@ function applyMasonryLayout(clusterGroups, container, originalTrees, preCalculat
       const currentWidth = rowWidths[row];
       const widthDifference = maxWidth - currentWidth;
       
+      // Verificar si es la última fila y si sus clusters suman menos del umbral configurado de la fila anterior
+      let shouldUseOriginalWidth = false;
+      if (row > 0 && row === recalculatedRows.length - 1) {
+        const previousRow = recalculatedRows[row - 1];
+        if (previousRow.length > 0) {
+          const previousRowWidth = previousRow.reduce((sum, c) => sum + c.realWidth, 0) + 
+                                  (previousRow.length > 1 ? (previousRow.length - 1) * spacingX : 0);
+          const currentRowPercentage = (currentWidth / previousRowWidth) * 100;
+          
+          if (currentRowPercentage < layoutConfig.lastRowThreshold) {
+            shouldUseOriginalWidth = true;
+            console.log(`[Layout] Última fila ${row}: ancho total ${currentWidth.toFixed(1)}px (${currentRowPercentage.toFixed(1)}% de fila anterior), usando ancho original sin expandir`);
+          } else {
+            console.log(`[Layout] Última fila ${row}: ancho total ${currentWidth.toFixed(1)}px (${currentRowPercentage.toFixed(1)}% de fila anterior), expandiendo para llenar ancho disponible`);
+          }
+        }
+      }
+      
       let extraWidthPerCluster = 0;
-      if (widthDifference > 0 && clustersInRow.length > 0) {
+      if (widthDifference > 0 && clustersInRow.length > 0 && !shouldUseOriginalWidth) {
         extraWidthPerCluster = widthDifference / clustersInRow.length;
       }
 
       let currentX = marginX;
+      
+      // Si es la última fila y debe usar ancho original, aplicar alineación configurada
+      if (shouldUseOriginalWidth) {
+        const totalRowWidth = clustersInRow.reduce((sum, c) => sum + c.realWidth, 0) + 
+                             (clustersInRow.length > 1 ? (clustersInRow.length - 1) * spacingX : 0);
+        
+        if (layoutConfig.lastRowAlignment === 'center') {
+          // Centrar la fila
+          currentX = marginX + (maxWidth - totalRowWidth) / 2;
+          console.log(`[Layout] Última fila centrada: ancho total ${totalRowWidth.toFixed(1)}px, posición X inicial ${currentX.toFixed(1)}px`);
+        } else {
+          // Alinear a la izquierda (currentX ya está en marginX)
+          console.log(`[Layout] Última fila alineada a la izquierda: ancho total ${totalRowWidth.toFixed(1)}px, posición X inicial ${currentX.toFixed(1)}px`);
+        }
+      }
       
       clustersInRow.forEach((clusterData, colIndex) => {
         const { realWidth, realHeight, rectBounds, clusterRect } = clusterData;
@@ -2575,8 +2638,8 @@ function updateSVGColors() {
   const variables = {
     textColor: computedStyle.getPropertyValue('--text-color'),
     nodeFill: computedStyle.getPropertyValue('--node-fill'),
-    labelBorder: computedStyle.getPropertyValue('--label-border'),
-    linkColor: computedStyle.getPropertyValue('--link-color'),
+                    labelBorder: computedStyle.getPropertyValue('--node-stroke'),
+        linkColor: computedStyle.getPropertyValue('--conector-stroke'),
     clusterBg: computedStyle.getPropertyValue('--cluster-bg'),
     clusterStroke: computedStyle.getPropertyValue('--cluster-stroke'),
     clusterTitleColor: computedStyle.getPropertyValue('--cluster-title-color'),

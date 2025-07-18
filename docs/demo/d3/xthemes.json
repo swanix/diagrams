@@ -17,7 +17,7 @@
 
     "--conector-stroke": "#999",
 
-    "--cluster-bg": "rgba(0,0,0,0.02)",
+    "--cluster-bg": "rgba(0,0,0,0.04)",
     "--cluster-stroke": "rgba(0,0,0,0.1)",
     "--cluster-title-color": "#222",
     "--cluster-padding-x": "220",

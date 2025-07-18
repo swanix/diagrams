@@ -3,22 +3,28 @@
 # Swanix Diagrams
 
 
-### D3 - Tree Diagram (CSV files & Google Sheets)
+### Tree Diagram (CSV files & Google Sheets)
 
 <div style="width: 780px; height: 500px; margin: 10px; position: relative;"><iframe allowfullscreen frameborder="0" style="width:780px; height:480px" src="./demo/d3"></iframe></div>
 
-D3 diagram with a tree structure. Data is dynamically loaded from a [CSV file]()
+Diagram showcasing multiple examples including:
+- A Google Sheets integration that loads data directly from a published spreadsheet
+- Simple one-cluster and multi-cluster layouts with customizable grid sizes
+- Complex cluster layouts with custom spacing and row thresholds
+- Performance tests with 300-node trees and 1000-node flat layouts
+- Special layouts like Hanzi characters display
+- Support for flat lists and hierarchical tree structures
+- Data loading from CSV, JSON and external APIs
 
 [View Fullscreen](https://swanix.org/diagrams/demo/d3)
 
-### D3 - Tree Diagram Simple
+### Clusters layout examples
 
 <div style="width: 780px; height: 500px; margin: 10px; position: relative;"><iframe allowfullscreen frameborder="0" style="width:780px; height:480px" src="./demo/d3"></iframe></div>
 
-D3 diagram with a tree structure. Data is dynamically loaded from a [Google Sheets file](https://docs.google.com/spreadsheets/d/e/2PACX-1vTQZfZhC3cWHg0QkqRoY9i3alinAnSHab5DJtWzsm_xAhLKKJdHri8fBMUawh-DhpvCkm-G1vBeWPFq/pub?gid=466976322&single=true&output=csv
-)
+Example showing different ways to configure cluster layouts per row using single values, multi-value strings (CSS-like syntax), and arrays. The test cases demonstrate various combinations including explicit row definitions and automatic row distribution.
 
-[View Fullscreen](https://swanix.org/diagrams/demo/d3/simple)
+[View Fullscreen](https://swanix.org/diagrams/demo/d3/layout)
 
 
 ## Node Images

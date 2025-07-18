@@ -16,16 +16,47 @@ Esta documentación describe todos los parámetros de configuración disponibles
 ## Configuración Básica
 
 ### `clustersPerRow`
-- **Tipo**: `number`
+- **Tipo**: `number` | `string` | `array`
 - **Default**: `7`
-- **Descripción**: Número de clusters por fila en el layout de cuadrícula
-- **Rango recomendado**: 3-10
+- **Descripción**: Número de clusters por fila en el layout de cuadrícula. Soporta múltiples valores para definir columnas específicas por fila.
+- **Rango recomendado**: Sin límite (cualquier número positivo)
 
+#### Sintaxis
+
+**1. Valor Único (Comportamiento Original)**
 ```javascript
 layout: {
   clustersPerRow: 5
 }
 ```
+
+**2. Múltiples Valores como String (CSS-like)**
+```javascript
+layout: {
+  clustersPerRow: "5 4 3 7 8"
+}
+```
+
+**3. Múltiples Valores como Array**
+```javascript
+layout: {
+  clustersPerRow: [5, 4, 3, 7, 8]
+}
+```
+
+#### Comportamiento con Múltiples Valores
+
+Cuando se definen múltiples valores, el sistema los interpreta de la siguiente manera:
+
+- **Filas definidas explícitamente**: Usan los valores especificados con prioridad total
+- **Filas adicionales**: Aplican la lógica automática por defecto con todas las validaciones
+
+**Ejemplo**: `clustersPerRow: "5 4 3"`
+- **1era fila**: 5 columnas (valor explícito)
+- **2da fila**: 4 columnas (valor explícito)  
+- **3ra fila**: 3 columnas (valor explícito)
+- **4ta fila**: Lógica automática (wideClusterThreshold, fullRowThreshold, etc.)
+- **5ta fila**: Lógica automática (wideClusterThreshold, fullRowThreshold, etc.)
 
 ### `marginX`
 - **Tipo**: `number`
@@ -142,6 +173,108 @@ layout: {
   lastRowAlignment: 'center'  // Centrar la última fila
 }
 ```
+
+---
+
+## Configuración de Múltiples Valores en clustersPerRow
+
+### Descripción General
+
+La funcionalidad de múltiples valores en `clustersPerRow` permite definir manualmente el número de columnas por fila de forma específica, similar a las propiedades combinadas de CSS. Esta funcionalidad proporciona control granular sobre el layout mientras mantiene la flexibilidad de la lógica automática para filas adicionales.
+
+### Prioridades y Comportamiento
+
+#### Valores Explícitos
+Cuando se definen valores explícitos en `clustersPerRow`, estos tienen **prioridad total** sobre los otros parámetros de layout como:
+- `wideClusterThreshold`
+- `fullRowThreshold`
+- Lógica automática de ajuste de columnas
+
+#### Lógica Automática
+Para filas que no tienen valores explícitos definidos, se aplica la lógica automática completa que incluye:
+- **wideClusterThreshold**: Si un cluster supera el 50% del ancho de la fila anterior, limita a 2 columnas
+- **fullRowThreshold**: Si un cluster supera el 70% del ancho de la fila anterior, ocupa toda la fila (1 columna)
+- **Ajuste dinámico**: Basado en el tamaño real de los clusters
+- **lastRowThreshold**: Para la última fila, verifica si debe usar ancho original o expandir
+
+### Casos de Uso Específicos
+
+#### Caso 1: Layout Progresivo
+```javascript
+layout: {
+  clustersPerRow: "3 2 1",  // Disminuye progresivamente
+  marginX: 30,
+  marginY: 30,
+  spacingX: 60,
+  spacingY: 60
+}
+```
+
+#### Caso 2: Layout Variable
+```javascript
+layout: {
+  clustersPerRow: "5 4 3 7 8",  // Patrón variable
+  marginX: 30,
+  marginY: 30,
+  spacingX: 100,
+  spacingY: 100
+}
+```
+
+#### Caso 3: Mixed Explicit + Auto Logic
+```javascript
+layout: {
+  clustersPerRow: "5 4 3",  // Solo 3 filas explícitas
+  marginX: 30,
+  marginY: 30,
+  spacingX: 100,
+  spacingY: 100,
+  fullRowThreshold: 70,     // Se aplica a filas 4+ (lógica automática)
+  wideClusterThreshold: 50  // Se aplica a filas 4+ (lógica automática)
+}
+```
+
+#### Caso 4: Layout con Valores Grandes
+```javascript
+layout: {
+  clustersPerRow: "10 12 15",  // Sin límite de columnas
+  marginX: 30,
+  marginY: 30,
+  spacingX: 100,
+  spacingY: 100
+}
+```
+
+### Logs y Debugging
+
+El sistema genera logs detallados en la consola del navegador para ayudar con el debugging:
+
+#### Ejemplo con valores explícitos:
+```
+[Layout] clustersPerRow con múltiples valores detectado: "5 4 3" -> [5, 4, 3]
+[Layout] clustersPerRow array: [5, 4, 3]
+[Layout] clustersPerRow por defecto: 5
+[Layout] Fila 0: Usando valor explícito de 5 columnas
+[Layout] Fila 1: Usando valor explícito de 4 columnas
+[Layout] Fila 2: Usando valor explícito de 3 columnas
+[Layout] Fila 3: Sin valor explícito definido, aplicando lógica automática
+[Layout] Fila 4: Sin valor explícito definido, aplicando lógica automática
+```
+
+#### Ejemplo con lógica automática:
+```
+[Layout] Fila 3: Analizando fila 3: 5 clusters, aplicando lógica automática
+[Layout] Fila 3: Cluster de fila completa detectado (>70% de fila anterior), ajustando a 1 columna
+[Layout] Fila 4: Analizando fila 4: 3 clusters, aplicando lógica automática
+[Layout] Fila 4: Cluster ancho detectado (>50% de fila anterior), ajustando a 2 columnas
+```
+
+### Compatibilidad
+
+- ✅ **Retrocompatible**: Los valores únicos mantienen el comportamiento original
+- ✅ **Sin límite de columnas**: Soporta cualquier número de columnas (no limitado a 7)
+- ✅ **Flexibilidad total**: Combina control manual con lógica automática
+- ✅ **Consistencia**: Todos los valores se procesan como arrays internamente
 
 ---
 
@@ -264,6 +397,23 @@ layout: {
 }
 ```
 
+### Configuración con Múltiples Valores
+Para control granular sobre el layout:
+
+```javascript
+layout: {
+  clustersPerRow: "6 4 2",     // Layout progresivo: 6, 4, 2 columnas
+  marginX: 40,
+  marginY: 40,
+  spacingX: 60,
+  spacingY: 60,
+  fullRowThreshold: 70,        // Se aplica a filas 4+ (lógica automática)
+  wideClusterThreshold: 50,    // Se aplica a filas 4+ (lógica automática)
+  lastRowThreshold: 40,
+  lastRowAlignment: 'center'
+}
+```
+
 ---
 
 ## Casos de Uso
@@ -324,6 +474,24 @@ layout: {
   wideClusterThreshold: 50,    // Umbral estándar para clusters anchos
   lastRowThreshold: 50,        // Umbral estándar
   lastRowAlignment: 'left'     // Alineación consistente
+}
+```
+
+### Caso 5: Diagrama con Layout Mixto
+**Problema**: Necesitas control específico sobre las primeras filas pero flexibilidad automática para el resto.
+
+**Solución**:
+```javascript
+layout: {
+  clustersPerRow: "8 6 4",     // Control específico para 3 filas
+  marginX: 40,
+  marginY: 40,
+  spacingX: 60,
+  spacingY: 60,
+  fullRowThreshold: 65,        // Lógica automática para filas 4+
+  wideClusterThreshold: 45,    // Lógica automática para filas 4+
+  lastRowThreshold: 50,
+  lastRowAlignment: 'center'
 }
 ```
 
@@ -413,7 +581,7 @@ El sistema genera logs detallados en la consola del navegador para ayudar con el
 
 ## Versión
 
-Esta documentación corresponde a la versión **0.4.3** de Swanix Diagrams.
+Esta documentación corresponde a la versión **0.4.4** de Swanix Diagrams.
 
 ## Nuevas Funcionalidades
 
@@ -422,6 +590,13 @@ Esta documentación corresponde a la versión **0.4.3** de Swanix Diagrams.
 - **Comportamiento**: Los clusters que superen el 70% del ancho de la fila anterior ocupan toda una fila
 - **Prioridad**: Tiene prioridad sobre `wideClusterThreshold`
 - **Compatibilidad**: Totalmente retrocompatible
+
+### Múltiples Valores en clustersPerRow (v0.4.4)
+- **Nuevo comportamiento**: `clustersPerRow` ahora soporta múltiples valores
+- **Sintaxis**: String con espacios (`"5 4 3"`) o array (`[5, 4, 3]`)
+- **Comportamiento**: Valores explícitos para filas definidas, lógica automática para filas adicionales
+- **Prioridad**: Los valores explícitos tienen prioridad total sobre lógica automática
+- **Compatibilidad**: Totalmente retrocompatible con valores únicos
 
 ---
 

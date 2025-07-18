@@ -449,10 +449,30 @@ function getLayoutConfiguration(diagramConfig = null) {
     lastRowAlignment: 'left'  // Default: 'left' alignment for last row when using original width
   };
   
+  // Helper function to process clustersPerRow with multiple values
+  function processClustersPerRow(value) {
+    if (typeof value === 'string' && value.includes(' ')) {
+      // Multiple values separated by spaces (CSS-like syntax)
+      const values = value.trim().split(/\s+/).map(v => parseInt(v, 10)).filter(v => !isNaN(v));
+      console.log(`[Layout] clustersPerRow con múltiples valores detectado: "${value}" -> [${values.join(', ')}]`);
+      return values;
+    } else if (typeof value === 'number') {
+      // Single numeric value
+      return [value];
+    } else if (Array.isArray(value)) {
+      // Already an array
+      return value.map(v => parseInt(v, 10)).filter(v => !isNaN(v));
+    }
+    return [defaultLayout.clustersPerRow];
+  }
+  
   // Try diagram-specific configuration first
   if (diagramConfig && diagramConfig.layout) {
+    const rawClustersPerRow = diagramConfig.layout.clustersPerRow || defaultLayout.clustersPerRow;
+    const processedClustersPerRow = processClustersPerRow(rawClustersPerRow);
+    
     return {
-      clustersPerRow: diagramConfig.layout.clustersPerRow || defaultLayout.clustersPerRow,
+      clustersPerRow: processedClustersPerRow,
       marginX: diagramConfig.layout.marginX || defaultLayout.marginX,
       marginY: diagramConfig.layout.marginY || defaultLayout.marginY,
       spacingX: diagramConfig.layout.spacingX || defaultLayout.spacingX,
@@ -466,8 +486,11 @@ function getLayoutConfiguration(diagramConfig = null) {
   
   // Try global configuration second
   if (options.layout) {
+    const rawClustersPerRow = options.layout.clustersPerRow || defaultLayout.clustersPerRow;
+    const processedClustersPerRow = processClustersPerRow(rawClustersPerRow);
+    
     return {
-      clustersPerRow: options.layout.clustersPerRow || defaultLayout.clustersPerRow,
+      clustersPerRow: processedClustersPerRow,
       marginX: options.layout.marginX || defaultLayout.marginX,
       marginY: options.layout.marginY || defaultLayout.marginY,
       spacingX: options.layout.spacingX || defaultLayout.spacingX,
@@ -479,7 +502,18 @@ function getLayoutConfiguration(diagramConfig = null) {
     };
   }
   
-  return defaultLayout;
+  // Return default layout with processed clustersPerRow
+  return {
+    clustersPerRow: [defaultLayout.clustersPerRow], // Convert to array for consistency
+    marginX: defaultLayout.marginX,
+    marginY: defaultLayout.marginY,
+    spacingX: defaultLayout.spacingX,
+    spacingY: defaultLayout.spacingY,
+    wideClusterThreshold: defaultLayout.wideClusterThreshold,
+    fullRowThreshold: defaultLayout.fullRowThreshold,
+    lastRowThreshold: defaultLayout.lastRowThreshold,
+    lastRowAlignment: defaultLayout.lastRowAlignment
+  };
 }
 
 // Get diagrams from modern configuration
@@ -1100,9 +1134,32 @@ function applyMasonryLayout(clusterGroups, container, originalTrees, preCalculat
   const marginY = layoutConfig.marginY;
   const spacingX = layoutConfig.spacingX;
   const spacingY = layoutConfig.spacingY;
-  const clustersPerRow = layoutConfig.clustersPerRow;
+  const clustersPerRowArray = layoutConfig.clustersPerRow;
+  
+  // Helper function to get clusters per row for a specific row
+  function getClustersPerRowForRow(rowIndex) {
+    if (Array.isArray(clustersPerRowArray) && clustersPerRowArray.length > 0) {
+      // If we have explicit values defined and this row is within the defined range
+      if (rowIndex < clustersPerRowArray.length) {
+        console.log(`[Layout] Fila ${rowIndex}: Usando valor explícito de ${clustersPerRowArray[rowIndex]} columnas`);
+        return clustersPerRowArray[rowIndex];
+      } else {
+        // For rows beyond the defined values, return null to trigger automatic logic
+        console.log(`[Layout] Fila ${rowIndex}: Sin valor explícito definido, aplicando lógica automática`);
+        return null;
+      }
+    }
+    // No explicit values defined, return null to trigger automatic logic
+    console.log(`[Layout] Fila ${rowIndex}: Sin valores explícitos, aplicando lógica automática`);
+    return null;
+  }
+  
+  // Get the default clusters per row for initial calculations
+  const defaultClustersPerRow = getClustersPerRowForRow(0);
   
   console.log(`[Layout] Configuración de layout:`, layoutConfig);
+  console.log(`[Layout] clustersPerRow array:`, clustersPerRowArray);
+  console.log(`[Layout] clustersPerRow por defecto:`, defaultClustersPerRow);
   
   // Si solo hay un cluster, centrarlo
   if (clusterGroups.length === 1) {
@@ -1198,18 +1255,36 @@ function applyMasonryLayout(clusterGroups, container, originalTrees, preCalculat
     });
     
     // PASO 4: Aplicar lógica de ajuste automático de columnas basado en el ancho de clusters
-    const initialTotalRows = Math.ceil(clusterGroups.length / clustersPerRow);
+    const initialTotalRows = Math.ceil(clusterGroups.length / defaultClustersPerRow);
     const adjustedClustersPerRow = [];
     
     console.log(`[Layout] Iniciando análisis de ${initialTotalRows} filas iniciales con ${clusterGroups.length} clusters totales`);
     
     // Calcular el número de columnas por fila con la nueva lógica
     for (let row = 0; row < initialTotalRows; row++) {
-      const startIndex = row * clustersPerRow;
-      const endIndex = Math.min(startIndex + clustersPerRow, clusterGroups.length);
+      const clustersPerRowForThisRow = getClustersPerRowForRow(row);
+      
+      // Si tenemos un valor explícito definido para esta fila, usarlo con prioridad total
+      if (clustersPerRowForThisRow !== null) {
+        const startIndex = row * clustersPerRowForThisRow;
+        const endIndex = Math.min(startIndex + clustersPerRowForThisRow, clusterGroups.length);
+        const clustersInRow = clusterRealSizes.slice(startIndex, endIndex);
+        
+        console.log(`[Layout] Analizando fila ${row}: ${clustersInRow.length} clusters (índices ${startIndex}-${endIndex-1}), usando valor explícito de ${clustersPerRowForThisRow} columnas`);
+        
+        adjustedClustersPerRow[row] = clustersPerRowForThisRow;
+        console.log(`[Layout] Fila ${row}: Usando valor explícito de ${clustersPerRowForThisRow} columnas (prioridad total)`);
+        continue;
+      }
+      
+      // Si no hay valor explícito para esta fila, aplicar lógica automática
+      // Usar el valor por defecto para calcular los índices iniciales
+      const defaultClustersForThisRow = defaultClustersPerRow;
+      const startIndex = row * defaultClustersForThisRow;
+      const endIndex = Math.min(startIndex + defaultClustersForThisRow, clusterGroups.length);
       const clustersInRow = clusterRealSizes.slice(startIndex, endIndex);
       
-      console.log(`[Layout] Analizando fila ${row}: ${clustersInRow.length} clusters (índices ${startIndex}-${endIndex-1})`);
+      console.log(`[Layout] Analizando fila ${row}: ${clustersInRow.length} clusters (índices ${startIndex}-${endIndex-1}), aplicando lógica automática`);
       
       // Si es la primera fila, usar el número de columnas configurado
       if (row === 0) {
@@ -1219,8 +1294,9 @@ function applyMasonryLayout(clusterGroups, container, originalTrees, preCalculat
       }
       
       // Para filas 2, 3 y 4, verificar si algún cluster supera el 50% del ancho de la fila anterior
-      const previousRowStartIndex = Math.max(0, (row - 1) * clustersPerRow);
-      const previousRowEndIndex = Math.min(previousRowStartIndex + clustersPerRow, clusterGroups.length);
+      const previousRowClustersPerRow = getClustersPerRowForRow(row - 1);
+      const previousRowStartIndex = Math.max(0, (row - 1) * previousRowClustersPerRow);
+      const previousRowEndIndex = Math.min(previousRowStartIndex + previousRowClustersPerRow, clusterGroups.length);
       const previousRowClusters = clusterRealSizes.slice(previousRowStartIndex, previousRowEndIndex);
       
       // Calcular el ancho total de la fila anterior
@@ -1301,9 +1377,14 @@ function applyMasonryLayout(clusterGroups, container, originalTrees, preCalculat
     let additionalRowCount = 0;
     while (currentIndex < allClusters.length) {
       const remainingClusters = allClusters.slice(currentIndex);
-      const clustersForNewRow = remainingClusters.slice(0, clustersPerRow); // Usar configuración original para filas adicionales
+      const additionalRowIndex = recalculatedRows.length;
+      const clustersPerRowForAdditionalRow = getClustersPerRowForRow(additionalRowIndex);
       
-      console.log(`[Layout] Creando fila adicional ${additionalRowCount}: ${clustersForNewRow.length} clusters restantes (índice ${currentIndex})`);
+      // Si no hay valor explícito para esta fila adicional, usar el valor por defecto
+      const clustersToUse = clustersPerRowForAdditionalRow !== null ? clustersPerRowForAdditionalRow : defaultClustersPerRow;
+      const clustersForNewRow = remainingClusters.slice(0, clustersToUse);
+      
+      console.log(`[Layout] Creando fila adicional ${additionalRowCount}: ${clustersForNewRow.length} clusters restantes (índice ${currentIndex}), usando ${clustersToUse} columnas ${clustersPerRowForAdditionalRow !== null ? '(valor explícito)' : '(lógica automática)'}`);
       
       recalculatedRows.push(clustersForNewRow);
       currentIndex += clustersForNewRow.length;

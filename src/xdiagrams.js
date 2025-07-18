@@ -494,7 +494,7 @@ function getColumnConfiguration(diagramConfig = null) {
       id: [columns.id || 'Node'],
       name: [columns.name || 'Name'],
       subtitle: [columns.subtitle || 'Description'],
-      img: [columns.img || 'thumbnail'],
+      img: [columns.img || 'img'],
       parent: [columns.parent || 'Parent'],
       url: [columns.url || 'url'],
       type: [columns.type || 'Type']
@@ -504,7 +504,7 @@ function getColumnConfiguration(diagramConfig = null) {
     columnConfig.id.push('node', 'Node', 'NODE', 'id', 'Id', 'ID');
     columnConfig.name.push('name', 'Name', 'NAME', 'title', 'Title', 'TITLE', 'section', 'Section', 'SECTION', 'project', 'Project', 'PROJECT', 'product', 'Product', 'PRODUCT');
     columnConfig.subtitle.push('subtitle', 'Subtitle', 'SUBTITLE', 'description', 'Description', 'DESCRIPTION', 'desc', 'Desc', 'DESC');
-    columnConfig.img.push('thumbnail', 'Thumbnail', 'THUMBNAIL', 'img', 'Img', 'IMG', 'icon', 'Icon', 'ICON', 'image', 'Image', 'IMAGE', 'picture', 'Picture', 'PICTURE');
+    columnConfig.img.push('img', 'Img', 'IMG', 'thumbnail', 'Thumbnail', 'THUMBNAIL', 'icon', 'Icon', 'ICON', 'image', 'Image', 'IMAGE', 'picture', 'Picture', 'PICTURE');
     columnConfig.parent.push('parent', 'Parent', 'PARENT');
     columnConfig.url.push('url', 'Url', 'URL', 'link', 'Link', 'LINK');
     columnConfig.type.push('type', 'Type', 'TYPE');
@@ -519,7 +519,7 @@ function getColumnConfiguration(diagramConfig = null) {
       id: [columns.id || 'Node'],
       name: [columns.name || 'Name'],
       subtitle: [columns.subtitle || 'Description'],
-      img: [columns.img || 'thumbnail'],
+      img: [columns.img || 'img'],
       parent: [columns.parent || 'Parent'],
       url: [columns.url || 'url'],
       type: [columns.type || 'Type']
@@ -529,7 +529,7 @@ function getColumnConfiguration(diagramConfig = null) {
     columnConfig.id.push('node', 'Node', 'NODE', 'id', 'Id', 'ID');
     columnConfig.name.push('name', 'Name', 'NAME', 'title', 'Title', 'TITLE', 'section', 'Section', 'SECTION', 'project', 'Project', 'PROJECT', 'product', 'Product', 'PRODUCT');
     columnConfig.subtitle.push('subtitle', 'Subtitle', 'SUBTITLE', 'description', 'Description', 'DESCRIPTION', 'desc', 'Desc', 'DESC');
-    columnConfig.img.push('thumbnail', 'Thumbnail', 'THUMBNAIL', 'img', 'Img', 'IMG', 'icon', 'Icon', 'ICON', 'image', 'Image', 'IMAGE', 'picture', 'Picture', 'PICTURE');
+    columnConfig.img.push('img', 'Img', 'IMG', 'thumbnail', 'Thumbnail', 'THUMBNAIL', 'icon', 'Icon', 'ICON', 'image', 'Image', 'IMAGE', 'picture', 'Picture', 'PICTURE');
     columnConfig.parent.push('parent', 'Parent', 'PARENT');
     columnConfig.url.push('url', 'Url', 'URL', 'link', 'Link', 'LINK');
     columnConfig.type.push('type', 'Type', 'TYPE');
@@ -550,7 +550,7 @@ function getColumnConfigurationLegacy() {
       id: ['node', 'Node', 'NODE', 'id', 'Id', 'ID'],
       name: ['name', 'Name', 'NAME', 'title', 'Title', 'TITLE'],
       subtitle: ['subtitle', 'Subtitle', 'SUBTITLE', 'description', 'Description', 'DESCRIPTION', 'desc', 'Desc', 'DESC'],
-      img: ['thumbnail', 'Thumbnail', 'THUMBNAIL', 'img', 'Img', 'IMG', 'type', 'Type', 'TYPE', 'icon', 'Icon', 'ICON'],
+      img: ['img', 'Img', 'IMG', 'thumbnail', 'Thumbnail', 'THUMBNAIL', 'icon', 'Icon', 'ICON'],
       parent: ['parent', 'Parent', 'PARENT'],
       url: ['url', 'Url', 'URL', 'link', 'Link', 'LINK'],
       type: ['type', 'Type', 'TYPE']
@@ -566,7 +566,7 @@ function getColumnConfigurationLegacy() {
         id: [customConfig.id || 'Node'],
         name: [customConfig.name || 'Name'],
         subtitle: [customConfig.subtitle || 'Description'],
-        img: [customConfig.img || 'Thumbnail'],
+        img: [customConfig.img || 'img'],
         parent: [customConfig.parent || 'Parent'],
         url: [customConfig.url || 'url'],
         type: [customConfig.type || 'Type']
@@ -576,7 +576,7 @@ function getColumnConfigurationLegacy() {
       config.id.push('node', 'Node', 'NODE', 'id', 'Id', 'ID');
       config.name.push('name', 'Name', 'NAME', 'title', 'Title', 'TITLE', 'section', 'Section', 'SECTION', 'project', 'Project', 'PROJECT', 'product', 'Product', 'PRODUCT');
       config.subtitle.push('subtitle', 'Subtitle', 'SUBTITLE', 'description', 'Description', 'DESCRIPTION', 'desc', 'Desc', 'DESC');
-      config.img.push('thumbnail', 'Thumbnail', 'THUMBNAIL', 'img', 'Img', 'IMG', 'type', 'Type', 'TYPE', 'icon', 'Icon', 'ICON', 'image', 'Image', 'IMAGE', 'picture', 'Picture', 'PICTURE');
+      config.img.push('img', 'Img', 'IMG', 'thumbnail', 'Thumbnail', 'THUMBNAIL', 'icon', 'Icon', 'ICON', 'image', 'Image', 'IMAGE', 'picture', 'Picture', 'PICTURE');
       config.parent.push('parent', 'Parent', 'PARENT');
       config.url.push('url', 'Url', 'URL', 'link', 'Link', 'LINK');
       config.type.push('type', 'Type', 'TYPE');
@@ -592,7 +592,7 @@ function getColumnConfigurationLegacy() {
     id: [container.getAttribute('data-column-id') || 'Node'],
     name: [container.getAttribute('data-column-name') || 'Name'],
     subtitle: [container.getAttribute('data-column-subtitle') || 'Description'],
-    img: [container.getAttribute('data-column-img') || 'Thumbnail'],
+    img: [container.getAttribute('data-column-img') || 'img'],
     parent: [container.getAttribute('data-column-parent') || 'Parent'],
     url: [container.getAttribute('data-column-url') || 'url'],
     type: [container.getAttribute('data-column-type') || 'Type']
@@ -602,7 +602,7 @@ function getColumnConfigurationLegacy() {
   config.id.push('node', 'Node', 'NODE', 'id', 'Id', 'ID');
   config.name.push('name', 'Name', 'NAME', 'title', 'Title', 'TITLE', 'section', 'Section', 'SECTION', 'project', 'Project', 'PROJECT', 'product', 'Product', 'PRODUCT');
   config.subtitle.push('subtitle', 'Subtitle', 'SUBTITLE', 'description', 'Description', 'DESCRIPTION', 'desc', 'Desc', 'DESC');
-  config.img.push('thumbnail', 'Thumbnail', 'THUMBNAIL', 'img', 'Img', 'IMG', 'type', 'Type', 'TYPE', 'icon', 'Icon', 'ICON', 'image', 'Image', 'IMAGE', 'picture', 'Picture', 'PICTURE');
+  config.img.push('img', 'Img', 'IMG', 'thumbnail', 'Thumbnail', 'THUMBNAIL', 'icon', 'Icon', 'ICON', 'image', 'Image', 'IMAGE', 'picture', 'Picture', 'PICTURE');
   config.parent.push('parent', 'Parent', 'PARENT');
   config.url.push('url', 'Url', 'URL', 'link', 'Link', 'LINK');
   config.type.push('type', 'Type', 'TYPE');
@@ -639,6 +639,8 @@ function buildHierarchies(data, diagramConfig = null) {
     let parent = getColumnValue(d, columnConfig.parent, "");
     let url = getColumnValue(d, columnConfig.url, "");
     let type = getColumnValue(d, columnConfig.type, "");
+
+
 
     // Generate auto ID if not provided or empty
     if (!id || id.trim() === "") {
@@ -2003,6 +2005,9 @@ function wrap(text, width) {
       }
     }
 
+    // Asignamos el texto final que sí cabe a la primera línea.
+    tspan1.text(currentLine);
+
     // --- Segunda línea: puede venir de salto de línea o del wrap automático ---
     let secondLineText = '';
     if (secondLine) {
@@ -2024,8 +2029,6 @@ function wrap(text, width) {
         .text('');
       const words2 = secondLineText.split(/\s+/);
       let currentLine2 = '';
-      
-
       
       for (let i = 0; i < words2.length; i++) {
         let testLine2 = currentLine2 ? currentLine2 + ' ' + words2[i] : words2[i];
@@ -5432,12 +5435,14 @@ function createImageElement(baseUrl, fallbackUrl, className = "image-base") {
   return img;
 }
 
-// Helper function to resolve node image URL prioritizing the `img` column over the thumbnail `type`
+// Helper function to resolve node image URL - FORZAR uso de columna img, solo usar type si img está vacío
 function resolveNodeImage(node) {
+  // Obtener valor de la columna img directamente del nodo
   const imgVal = node.img || (node.data && node.data.img) || "";
   const typeVal = node.type || (node.data && node.data.type) || "";
 
-  if (imgVal) {
+  // SIEMPRE usar img si tiene valor (prioridad absoluta)
+  if (imgVal && imgVal.trim() !== "") {
     // Si es una URL absoluta, data URI o ruta con barra, úsala directamente
     if (/^(https?:\/\/|data:|\/)/i.test(imgVal) || imgVal.includes('/')) {
       return imgVal;
@@ -5450,7 +5455,7 @@ function resolveNodeImage(node) {
     return `img/${fileName}`;
   }
 
-  // Fallback al thumbnail por tipo
+  // SOLO si img está completamente vacío, usar type como fallback
   const typeName = (typeVal || 'detail').toLowerCase().replace(/\s+/g, '-');
   return `img/${typeName}.svg`;
 }
@@ -5466,8 +5471,11 @@ function shouldApplyFilter(url) {
   // Extraer el nombre del archivo sin parámetros
   const baseUrl = url.split('?')[0].toLowerCase();
   
-  // Para todos los demás archivos SVG, aplicar filtro
-  return baseUrl.endsWith('.svg');
+  // Si no es un archivo SVG, no aplicar filtro
+  if (!baseUrl.endsWith('.svg')) return false;
+  
+  // Aplicar filtro a todas las imágenes locales SVG
+  return true;
 }
 
 // ============================================================================

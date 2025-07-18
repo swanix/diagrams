@@ -5466,8 +5466,21 @@ function shouldApplyFilter(url) {
   // Extraer el nombre del archivo sin parámetros
   const baseUrl = url.split('?')[0].toLowerCase();
   
-  // Para todos los demás archivos SVG, aplicar filtro
-  return baseUrl.endsWith('.svg');
+  // Si no es un archivo SVG, no aplicar filtro
+  if (!baseUrl.endsWith('.svg')) return false;
+  
+  // Lista de imágenes del sistema que SÍ deben tener filtros aplicados
+  const systemImages = [
+    'detail.svg', 'document.svg', 'settings.svg', 'form.svg', 'list.svg', 
+    'modal.svg', 'mosaic.svg', 'report.svg', 'file-csv.svg', 'file-pdf.svg', 
+    'file-xls.svg', 'file-xml.svg', 'home.svg', 'transparent.svg'
+  ];
+  
+  // Extraer solo el nombre del archivo de la ruta
+  const fileName = baseUrl.split('/').pop();
+  
+  // Solo aplicar filtro a las imágenes del sistema
+  return systemImages.includes(fileName);
 }
 
 // ============================================================================

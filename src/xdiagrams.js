@@ -821,46 +821,65 @@ function drawGridLayout(nodes, svg) {
     .attr("height", nodeHeight);
 
   // Node image with enhanced loading
-  nodeGroups.append("image")
-    .attr("href", "img/transparent.svg")
-    .attr("data-src", d => {
-      const url = resolveNodeImage(d);
-      const cacheBuster = `?t=${Date.now()}`;
-      return url.includes('?') ? `${url}&_cb=${Date.now()}` : `${url}${cacheBuster}`;
-    })
-    .attr("x", -15)
-    .attr("y", -25)
-    .attr("class", "image-base")
-    .attr("width", 30)
-    .attr("height", 30)
-    .on("load", function() {
-      const element = d3.select(this);
-      const dataSrc = element.attr("data-src");
-      
-      if (dataSrc && element.attr("href") === "img/transparent.svg") {
-        // Cambiar a la imagen real
-        element.attr("href", dataSrc);
-      } else {
-        // Image loaded successfully
-        element.classed("loaded", true);
+  nodeGroups.each(function(d) {
+    const nodeGroup = d3.select(this);
+    const imageUrl = resolveNodeImage(d);
+    
+    // Usar la función apropiada según el tipo de imagen
+    if (isEmbeddedThumbnailUrl(imageUrl)) {
+      // Para thumbnails embebidos, crear SVG directo
+      const svgString = getEmbeddedThumbnailSvgString(imageUrl);
+      if (svgString) {
+        const svgElement = createEmbeddedSVGElement(svgString, "image-base", {
+          x: -15,
+          y: -25,
+          width: 30,
+          height: 30
+        });
+        if (svgElement) {
+          nodeGroup.node().appendChild(svgElement);
+        }
       }
-      // Solo aplicar el filtro si es necesario
-      if (shouldApplyFilter(dataSrc)) {
-        element.classed("image-filter", true);
-      }
-    })
-    .on("error", function() {
-      const element = d3.select(this);
-      const currentSrc = element.attr("href");
-      
-      if (currentSrc !== "img/detail.svg") {
-        const fallbackUrl = `img/detail.svg?t=${Date.now()}`;
-        element.attr("href", fallbackUrl);
-      } else {
-        // Si el fallback también falla, ocultar la imagen
-        element.style("display", "none");
-      }
-    });
+    } else {
+      // Para imágenes no embebidas, usar elemento image tradicional
+      const imageElement = nodeGroup.append("image")
+        .attr("href", "img/transparent.svg")
+        .attr("data-src", imageUrl)
+        .attr("x", -15)
+        .attr("y", -25)
+        .attr("class", "image-base")
+        .attr("width", 30)
+        .attr("height", 30)
+        .on("load", function() {
+          const element = d3.select(this);
+          const dataSrc = element.attr("data-src");
+          
+          if (dataSrc && element.attr("href") === "img/transparent.svg") {
+            // Cambiar a la imagen real
+            element.attr("href", dataSrc);
+          } else {
+            // Image loaded successfully
+            element.classed("loaded", true);
+          }
+          // Solo aplicar el filtro si es necesario
+          if (shouldApplyFilter(dataSrc)) {
+            element.classed("image-filter", true);
+          }
+        })
+        .on("error", function() {
+          const element = d3.select(this);
+          const currentSrc = element.attr("href");
+          
+          if (currentSrc !== "img/detail.svg") {
+            const fallbackUrl = `img/detail.svg?t=${Date.now()}`;
+            element.attr("href", fallbackUrl);
+          } else {
+            // Si el fallback también falla, ocultar la imagen
+            element.style("display", "none");
+          }
+        });
+    }
+  });
 
   // Node text
   const textGroup = nodeGroups.append("g").attr("class", "text-group");
@@ -969,45 +988,65 @@ function drawGridLayout(nodes, svg) {
         .attr("width", parseFloat(themeVars.getPropertyValue('--node-bg-width')) || 60)
         .attr("height", parseFloat(themeVars.getPropertyValue('--node-bg-height')) || 40);
       
-      node.append("image")
-        .attr("href", "img/transparent.svg")
-        .attr("data-src", d => {
-          const url = resolveNodeImage(d);
-          const cacheBuster = `?t=${Date.now()}`;
-          return url.includes('?') ? `${url}&_cb=${Date.now()}` : `${url}${cacheBuster}`;
-        })
-        .attr("x", parseFloat(themeVars.getPropertyValue('--image-x')))
-        .attr("y", parseFloat(themeVars.getPropertyValue('--image-y')))
-        .attr("class", "image-base")
-        .attr("width", parseFloat(themeVars.getPropertyValue('--image-width')))
-        .attr("height", parseFloat(themeVars.getPropertyValue('--image-height')))
-        .on("load", function() {
-          const element = d3.select(this);
-          const dataSrc = element.attr("data-src");
-          
-          if (dataSrc && element.attr("href") === "img/transparent.svg") {
-            // Cambiar a la imagen real
-            element.attr("href", dataSrc);
+      // Node image with enhanced loading
+      node.each(function(d) {
+        const nodeSel = d3.select(this);
+        const imageUrl = resolveNodeImage(d);
+        
+        // Usar la función apropiada según el tipo de imagen
+        if (isEmbeddedThumbnailUrl(imageUrl)) {
+          // Para thumbnails embebidos, crear SVG directo
+          const svgString = getEmbeddedThumbnailSvgString(imageUrl);
+          if (svgString) {
+            const svgElement = createEmbeddedSVGElement(svgString, "image-base", {
+              x: parseFloat(themeVars.getPropertyValue('--image-x')),
+              y: parseFloat(themeVars.getPropertyValue('--image-y')),
+              width: parseFloat(themeVars.getPropertyValue('--image-width')),
+              height: parseFloat(themeVars.getPropertyValue('--image-height'))
+            });
+            if (svgElement) {
+              nodeSel.node().appendChild(svgElement);
+            }
           }
-          // Marcar cargada
-          element.classed("loaded", true);
-          // Solo aplicar el filtro si es necesario
-          if (shouldApplyFilter(dataSrc)) {
-            element.classed("image-filter", true);
-          }
-        })
-        .on("error", function() {
-          const element = d3.select(this);
-          const currentSrc = element.attr("href");
-          
-          if (currentSrc !== "img/detail.svg") {
-            const fallbackUrl = `img/detail.svg?t=${Date.now()}`;
-            element.attr("href", fallbackUrl);
-          } else {
-            // Si el fallback también falla, ocultar la imagen
-            element.style("display", "none");
-          }
-        });
+        } else {
+          // Para imágenes no embebidas, usar elemento image tradicional
+          const imageElement = nodeSel.append("image")
+            .attr("href", "img/transparent.svg")
+            .attr("data-src", imageUrl)
+            .attr("x", parseFloat(themeVars.getPropertyValue('--image-x')))
+            .attr("y", parseFloat(themeVars.getPropertyValue('--image-y')))
+            .attr("class", "image-base")
+            .attr("width", parseFloat(themeVars.getPropertyValue('--image-width')))
+            .attr("height", parseFloat(themeVars.getPropertyValue('--image-height')))
+            .on("load", function() {
+              const element = d3.select(this);
+              const dataSrc = element.attr("data-src");
+              
+              if (dataSrc && element.attr("href") === "img/transparent.svg") {
+                // Cambiar a la imagen real
+                element.attr("href", dataSrc);
+              }
+              // Marcar cargada
+              element.classed("loaded", true);
+              // Solo aplicar el filtro si es necesario
+              if (shouldApplyFilter(dataSrc)) {
+                element.classed("image-filter", true);
+              }
+            })
+            .on("error", function() {
+              const element = d3.select(this);
+              const currentSrc = element.attr("href");
+              
+              if (currentSrc !== "img/detail.svg") {
+                const fallbackUrl = `img/detail.svg?t=${Date.now()}`;
+                element.attr("href", fallbackUrl);
+              } else {
+                // Si el fallback también falla, ocultar la imagen
+                element.style("display", "none");
+              }
+            });
+        }
+      });
       
       const textGroup = node.append("g").attr("class", "text-group");
       textGroup.append("text")
@@ -1810,49 +1849,68 @@ function drawTrees(trees, diagramConfig = null) {
           .attr("height", parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--node-bg-height')) || 40);
 
         // Node image with enhanced loading
-        node.append("image")
-          .attr("href", "img/transparent.svg") // No cache buster here
-          .attr("data-src", d => {
-            const url = resolveNodeImage(d);
-            const cacheBuster = `?t=${Date.now()}`;
-            return url.includes('?') ? `${url}&_cb=${Date.now()}` : `${url}${cacheBuster}`;
-          })
-          .attr("x", parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--image-x')))
-          .attr("y", parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--image-y')))
-          .attr("class", "image-base")
-          .attr("width", parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--image-width')))
-          .attr("height", parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--image-height')))
-          .on("load", function() {
-            const element = d3.select(this);
-            const dataSrc = element.attr("data-src");
-            
-            if (dataSrc && element.attr("href") === "img/transparent.svg") {
-              // Cambiar a la imagen real
-              element.attr("href", dataSrc)
-                    .classed("loaded", true);
-              // Solo aplicar el filtro si es necesario
-              if (shouldApplyFilter(dataSrc)) {
-                element.classed("image-filter", true);
+        node.each(function(d) {
+          const nodeSel = d3.select(this);
+          const imageUrl = resolveNodeImage(d);
+          
+          // Usar la función apropiada según el tipo de imagen
+          if (isEmbeddedThumbnailUrl(imageUrl)) {
+            // Para thumbnails embebidos, crear SVG directo
+            const svgString = getEmbeddedThumbnailSvgString(imageUrl);
+            if (svgString) {
+              const svgElement = createEmbeddedSVGElement(svgString, "image-base", {
+                x: parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--image-x')),
+                y: parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--image-y')),
+                width: parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--image-width')),
+                height: parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--image-height'))
+              });
+              if (svgElement) {
+                nodeSel.node().appendChild(svgElement);
               }
             }
-          })
-          .on("error", function() {
-            const element = d3.select(this);
-            const currentSrc = element.attr("href");
-            const fileName = currentSrc.split('/').pop().split('?')[0];
-            
-            // Si la imagen actual no es el fallback, intentar con detail.svg
-            if (currentSrc !== "img/detail.svg") {
-              console.log(`[Image Load] Error loading ${fileName}, falling back to detail.svg`);
-              const fallbackUrl = `img/detail.svg?t=${Date.now()}`;
-              element.attr("href", fallbackUrl)
-                    .classed("loaded", true);
-            } else {
-              // Si el fallback también falla, ocultar la imagen
-              console.log(`[Image Load] Error loading fallback image, hiding element`);
-              element.style("display", "none");
-            }
-          });
+          } else {
+            // Para imágenes no embebidas, usar elemento image tradicional
+            const imageElement = nodeSel.append("image")
+              .attr("href", "img/transparent.svg") // No cache buster here
+              .attr("data-src", imageUrl)
+              .attr("x", parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--image-x')))
+              .attr("y", parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--image-y')))
+              .attr("class", "image-base")
+              .attr("width", parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--image-width')))
+              .attr("height", parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--image-height')))
+              .on("load", function() {
+                const element = d3.select(this);
+                const dataSrc = element.attr("data-src");
+                
+                if (dataSrc && element.attr("href") === "img/transparent.svg") {
+                  // Cambiar a la imagen real
+                  element.attr("href", dataSrc)
+                        .classed("loaded", true);
+                  // Solo aplicar el filtro si es necesario
+                  if (shouldApplyFilter(dataSrc)) {
+                    element.classed("image-filter", true);
+                  }
+                }
+              })
+              .on("error", function() {
+                const element = d3.select(this);
+                const currentSrc = element.attr("href");
+                const fileName = currentSrc.split('/').pop().split('?')[0];
+                
+                // Si la imagen actual no es el fallback, intentar con detail.svg
+                if (currentSrc !== "img/detail.svg") {
+                  console.log(`[Image Load] Error loading ${fileName}, falling back to detail.svg`);
+                  const fallbackUrl = `img/detail.svg?t=${Date.now()}`;
+                  element.attr("href", fallbackUrl)
+                        .classed("loaded", true);
+                } else {
+                  // Si el fallback también falla, ocultar la imagen
+                  console.log(`[Image Load] Error loading fallback image, hiding element`);
+                  element.style("display", "none");
+                }
+              });
+          }
+        });
 
         // Node text
         const textGroup = node.append("g").attr("class", "text-group");
@@ -5699,6 +5757,14 @@ function resolveNodeImage(node) {
 
   // SOLO si img está completamente vacío, usar type como fallback
   const typeName = (typeVal || 'detail').toLowerCase().replace(/\s+/g, '-');
+  
+  // Verificar si el type existe como thumbnail embebido
+  const embeddedThumbnail = getEmbeddedThumbnail(typeName);
+  if (embeddedThumbnail) {
+    console.log(`[resolveNodeImage] Type "${typeName}" -> thumbnail embebido encontrado`);
+    return embeddedThumbnail;
+  }
+  
   return `img/${typeName}.svg`;
 }
 
@@ -5752,4 +5818,400 @@ function detectAutoLogo() {
     };
     testImg.src = logoUrl;
   }
+}
+
+// ============================================================================
+// THUMBNAILS EMBEBIDOS - SISTEMA DE GESTIÓN INTERNA
+// ============================================================================
+
+/**
+ * Biblioteca de thumbnails embebidos para evitar peticiones externas
+ * Los thumbnails se almacenan como strings SVG y se convierten a data URIs
+ * cuando se necesitan. Esto mejora el rendimiento y reduce las peticiones HTTP.
+ */
+const EMBEDDED_THUMBNAILS = {
+  // Thumbnails básicos del sistema
+  'detail': `
+  <svg width="200" height="180" viewBox="0 0 200 180" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <rect x="20" y="84" width="160" height="82" fill="black" fill-opacity="0.1"/>
+    <rect x="20" y="23" width="160" height="43" fill="black" fill-opacity="0.1"/>
+  </svg>
+  ` ,
+    
+  'document': `<svg width="200" height="180" viewBox="0 0 200 180" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <path d="M29 21H144L174 51V171H29V21Z" fill="black" fill-opacity="0.05"/>
+  <path d="M144 21L174 51L144 51L144 21Z" fill="black" fill-opacity="0.1"/>
+  <rect x="55" y="124" width="94" height="16" fill="black" fill-opacity="0.1"/>
+  <rect x="55" y="92" width="94" height="16" fill="black" fill-opacity="0.1"/>
+  <rect x="55" y="58" width="40" height="16" fill="black" fill-opacity="0.1"/>
+  </svg>`,
+    
+  'form': `
+  <svg width="200" height="180" viewBox="0 0 200 180" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <rect x="20" y="133" width="83" height="27" fill="black" fill-opacity="0.2"/>
+    <rect x="119" y="133" width="61" height="27" fill="black" fill-opacity="0.5"/>
+    <rect x="20" y="75" width="160" height="32" fill="black" fill-opacity="0.1"/>
+    <rect x="20" y="25" width="160" height="32" fill="black" fill-opacity="0.1"/>
+  </svg>
+  `,
+    
+    'list': `<svg width="200" height="180" viewBox="0 0 200 180" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect x="20" y="20" width="160" height="140" fill="black" fill-opacity="0.05"/>
+  <rect x="40" y="40" width="100" height="8" fill="black" fill-opacity="0.1"/>
+  <rect x="40" y="60" width="120" height="8" fill="black" fill-opacity="0.1"/>
+  <rect x="40" y="80" width="80" height="8" fill="black" fill-opacity="0.1"/>
+  <rect x="40" y="100" width="110" height="8" fill="black" fill-opacity="0.1"/>
+  <rect x="40" y="120" width="90" height="8" fill="black" fill-opacity="0.1"/>
+  <rect x="40" y="140" width="70" height="8" fill="black" fill-opacity="0.1"/>
+  </svg>`,
+    
+    'mosaic': `<svg width="200" height="180" viewBox="0 0 200 180" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect x="20" y="20" width="70" height="70" fill="black" fill-opacity="0.1"/>
+  <rect x="110" y="20" width="70" height="70" fill="black" fill-opacity="0.1"/>
+  <rect x="20" y="110" width="70" height="50" fill="black" fill-opacity="0.1"/>
+  <rect x="110" y="110" width="70" height="50" fill="black" fill-opacity="0.1"/>
+  </svg>`,
+    
+    'report': `<svg width="200" height="180" viewBox="0 0 200 180" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect x="20" y="20" width="160" height="140" fill="black" fill-opacity="0.05"/>
+  <rect x="40" y="40" width="120" height="8" fill="black" fill-opacity="0.1"/>
+  <rect x="40" y="60" width="100" height="8" fill="black" fill-opacity="0.1"/>
+  <rect x="40" y="80" width="80" height="8" fill="black" fill-opacity="0.1"/>
+  <rect x="40" y="100" width="110" height="8" fill="black" fill-opacity="0.1"/>
+  <rect x="40" y="120" width="90" height="8" fill="black" fill-opacity="0.1"/>
+  <rect x="40" y="140" width="70" height="8" fill="black" fill-opacity="0.1"/>
+  <rect x="160" y="40" width="8" height="8" fill="black" fill-opacity="0.2"/>
+  <rect x="160" y="60" width="8" height="8" fill="black" fill-opacity="0.2"/>
+  <rect x="160" y="80" width="8" height="8" fill="black" fill-opacity="0.2"/>
+  <rect x="160" y="100" width="8" height="8" fill="black" fill-opacity="0.2"/>
+  <rect x="160" y="120" width="8" height="8" fill="black" fill-opacity="0.2"/>
+  <rect x="160" y="140" width="8" height="8" fill="black" fill-opacity="0.2"/>
+  </svg>`,
+    
+    'settings': `<svg width="200" height="180" viewBox="0 0 200 180" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <circle cx="100" cy="90" r="30" fill="black" fill-opacity="0.1"/>
+  <circle cx="100" cy="90" r="20" fill="black" fill-opacity="0.05"/>
+  <circle cx="100" cy="90" r="10" fill="black" fill-opacity="0.2"/>
+  <rect x="95" y="20" width="10" height="20" fill="black" fill-opacity="0.1"/>
+  <rect x="95" y="150" width="10" height="20" fill="black" fill-opacity="0.1"/>
+  <rect x="20" y="95" width="20" height="10" fill="black" fill-opacity="0.1"/>
+  <rect x="160" y="95" width="20" height="10" fill="black" fill-opacity="0.1"/>
+  <rect x="35" y="35" width="15" height="15" fill="black" fill-opacity="0.1"/>
+  <rect x="150" y="35" width="15" height="15" fill="black" fill-opacity="0.1"/>
+  <rect x="35" y="130" width="15" height="15" fill="black" fill-opacity="0.1"/>
+  <rect x="150" y="130" width="15" height="15" fill="black" fill-opacity="0.1"/>
+  </svg>`,
+    
+    'modal': `<svg width="200" height="180" viewBox="0 0 200 180" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect x="20" y="20" width="160" height="140" fill="black" fill-opacity="0.05"/>
+  <rect x="40" y="40" width="120" height="8" fill="black" fill-opacity="0.1"/>
+  <rect x="40" y="60" width="100" height="8" fill="black" fill-opacity="0.1"/>
+  <rect x="40" y="80" width="80" height="8" fill="black" fill-opacity="0.1"/>
+  <rect x="40" y="100" width="110" height="8" fill="black" fill-opacity="0.1"/>
+  <rect x="40" y="120" width="90" height="8" fill="black" fill-opacity="0.1"/>
+  <rect x="40" y="140" width="70" height="8" fill="black" fill-opacity="0.1"/>
+  <rect x="160" y="40" width="8" height="8" fill="black" fill-opacity="0.2"/>
+  <rect x="160" y="60" width="8" height="8" fill="black" fill-opacity="0.2"/>
+  <rect x="160" y="80" width="8" height="8" fill="black" fill-opacity="0.2"/>
+  <rect x="160" y="100" width="8" height="8" fill="black" fill-opacity="0.2"/>
+  <rect x="160" y="120" width="8" height="8" fill="black" fill-opacity="0.2"/>
+  <rect x="160" y="140" width="8" height="8" fill="black" fill-opacity="0.2"/>
+  </svg>`,
+    
+    // Thumbnails de archivos
+    'file-csv': `<svg width="200" height="180" viewBox="0 0 200 180" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <path d="M29 21H144L174 51V171H29V21Z" fill="black" fill-opacity="0.05"/>
+  <path d="M144 21L174 51L144 51L144 21Z" fill="black" fill-opacity="0.1"/>
+  <rect x="55" y="124" width="94" height="16" fill="black" fill-opacity="0.1"/>
+  <rect x="55" y="92" width="94" height="16" fill="black" fill-opacity="0.1"/>
+  <rect x="55" y="58" width="40" height="16" fill="black" fill-opacity="0.1"/>
+  <text x="100" y="105" text-anchor="middle" font-family="monospace" font-size="12" fill="black" fill-opacity="0.3">CSV</text>
+  </svg>`,
+    
+    'file-pdf': `<svg width="200" height="180" viewBox="0 0 200 180" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <path d="M29 21H144L174 51V171H29V21Z" fill="black" fill-opacity="0.05"/>
+  <path d="M144 21L174 51L144 51L144 21Z" fill="black" fill-opacity="0.1"/>
+  <rect x="55" y="124" width="94" height="16" fill="black" fill-opacity="0.1"/>
+  <rect x="55" y="92" width="94" height="16" fill="black" fill-opacity="0.1"/>
+  <rect x="55" y="58" width="40" height="16" fill="black" fill-opacity="0.1"/>
+  <text x="100" y="105" text-anchor="middle" font-family="monospace" font-size="12" fill="black" fill-opacity="0.3">PDF</text>
+  </svg>`,
+    
+    'file-xls': `<svg width="200" height="180" viewBox="0 0 200 180" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <path d="M29 21H144L174 51V171H29V21Z" fill="black" fill-opacity="0.05"/>
+  <path d="M144 21L174 51L144 51L144 21Z" fill="black" fill-opacity="0.1"/>
+  <rect x="55" y="124" width="94" height="16" fill="black" fill-opacity="0.1"/>
+  <rect x="55" y="92" width="94" height="16" fill="black" fill-opacity="0.1"/>
+  <rect x="55" y="58" width="40" height="16" fill="black" fill-opacity="0.1"/>
+  <text x="100" y="105" text-anchor="middle" font-family="monospace" font-size="12" fill="black" fill-opacity="0.3">XLS</text>
+  </svg>`,
+    
+    'file-xml': `<svg width="200" height="180" viewBox="0 0 200 180" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <path d="M29 21H144L174 51V171H29V21Z" fill="black" fill-opacity="0.05"/>
+  <path d="M144 21L174 51L144 51L144 21Z" fill="black" fill-opacity="0.1"/>
+  <rect x="55" y="124" width="94" height="16" fill="black" fill-opacity="0.1"/>
+  <rect x="55" y="92" width="94" height="16" fill="black" fill-opacity="0.1"/>
+  <rect x="55" y="58" width="40" height="16" fill="black" fill-opacity="0.1"/>
+  <text x="100" y="105" text-anchor="middle" font-family="monospace" font-size="12" fill="black" fill-opacity="0.3">XML</text>
+  </svg>`,
+    
+    'file-html': `<svg width="200" height="180" viewBox="0 0 200 180" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <path d="M29 21H144L174 51V171H29V21Z" fill="black" fill-opacity="0.05"/>
+  <path d="M144 21L174 51L144 51L144 21Z" fill="black" fill-opacity="0.1"/>
+  <rect x="55" y="124" width="94" height="16" fill="black" fill-opacity="0.1"/>
+  <rect x="55" y="92" width="94" height="16" fill="black" fill-opacity="0.1"/>
+  <rect x="55" y="58" width="40" height="16" fill="black" fill-opacity="0.1"/>
+  <text x="100" y="105" text-anchor="middle" font-family="monospace" font-size="12" fill="black" fill-opacity="0.3">HTML</text>
+  </svg>`,
+    
+    'file-js': `<svg width="200" height="180" viewBox="0 0 200 180" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <path d="M29 21H144L174 51V171H29V21Z" fill="black" fill-opacity="0.05"/>
+  <path d="M144 21L174 51L144 51L144 21Z" fill="black" fill-opacity="0.1"/>
+  <rect x="55" y="124" width="94" height="16" fill="black" fill-opacity="0.1"/>
+  <rect x="55" y="92" width="94" height="16" fill="black" fill-opacity="0.1"/>
+  <rect x="55" y="58" width="40" height="16" fill="black" fill-opacity="0.1"/>
+  <text x="100" y="105" text-anchor="middle" font-family="monospace" font-size="12" fill="black" fill-opacity="0.3">JS</text>
+  </svg>`,
+    
+    'file-css': `<svg width="200" height="180" viewBox="0 0 200 180" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <path d="M29 21H144L174 51V171H29V21Z" fill="black" fill-opacity="0.05"/>
+  <path d="M144 21L174 51L144 51L144 21Z" fill="black" fill-opacity="0.1"/>
+  <rect x="55" y="124" width="94" height="16" fill="black" fill-opacity="0.1"/>
+  <rect x="55" y="92" width="94" height="16" fill="black" fill-opacity="0.1"/>
+  <rect x="55" y="58" width="40" height="16" fill="black" fill-opacity="0.1"/>
+  <text x="100" y="105" text-anchor="middle" font-family="monospace" font-size="12" fill="black" fill-opacity="0.3">CSS</text>
+  </svg>`,
+    
+    'file-txt': `<svg width="200" height="180" viewBox="0 0 200 180" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <path d="M29 21H144L174 51V171H29V21Z" fill="black" fill-opacity="0.05"/>
+  <path d="M144 21L174 51L144 51L144 21Z" fill="black" fill-opacity="0.1"/>
+  <rect x="55" y="124" width="94" height="16" fill="black" fill-opacity="0.1"/>
+  <rect x="55" y="92" width="94" height="16" fill="black" fill-opacity="0.1"/>
+  <rect x="55" y="58" width="40" height="16" fill="black" fill-opacity="0.1"/>
+  <text x="100" y="105" text-anchor="middle" font-family="monospace" font-size="12" fill="black" fill-opacity="0.3">TXT</text>
+  </svg>`,
+    
+    'file-docx': `<svg width="200" height="180" viewBox="0 0 200 180" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <path d="M29 21H144L174 51V171H29V21Z" fill="black" fill-opacity="0.05"/>
+  <path d="M144 21L174 51L144 51L144 21Z" fill="black" fill-opacity="0.1"/>
+  <rect x="55" y="124" width="94" height="16" fill="black" fill-opacity="0.1"/>
+  <rect x="55" y="92" width="94" height="16" fill="black" fill-opacity="0.1"/>
+  <rect x="55" y="58" width="40" height="16" fill="black" fill-opacity="0.1"/>
+  <text x="100" y="105" text-anchor="middle" font-family="monospace" font-size="12" fill="black" fill-opacity="0.3">DOCX</text>
+  </svg>`,
+    
+    // Thumbnails especiales
+    'home': `<svg width="200" height="180" viewBox="0 0 200 180" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <path d="M20 90L100 20L180 90V160H140V120H60V160H20V90Z" fill="black" fill-opacity="0.1"/>
+  <rect x="80" y="100" width="40" height="60" fill="black" fill-opacity="0.05"/>
+  <rect x="90" y="110" width="20" height="20" fill="black" fill-opacity="0.1"/>
+  </svg>`,
+    
+    'profile': `<svg width="200" height="180" viewBox="0 0 200 180" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <circle cx="100" cy="70" r="25" fill="black" fill-opacity="0.1"/>
+  <path d="M40 140C40 120 60 100 100 100C140 100 160 120 160 140V160H40V140Z" fill="black" fill-opacity="0.1"/>
+  </svg>`,
+    
+    'logo': `<svg width="200" height="180" viewBox="0 0 200 180" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect x="20" y="20" width="160" height="140" fill="black" fill-opacity="0.05"/>
+  <circle cx="100" cy="90" r="40" fill="black" fill-opacity="0.1"/>
+  <text x="100" y="100" text-anchor="middle" font-family="Arial, sans-serif" font-size="24" font-weight="bold" fill="black" fill-opacity="0.3">LOGO</text>
+  </svg>`,
+    
+    // Thumbnails para tipos problemáticos que causaban loop infinito
+    'custom': `<svg width="200" height="180" viewBox="0 0 200 180" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect x="20" y="20" width="160" height="140" fill="black" fill-opacity="0.05"/>
+  <circle cx="100" cy="90" r="30" fill="black" fill-opacity="0.1"/>
+  <text x="100" y="100" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="black" fill-opacity="0.3">CUSTOM</text>
+  </svg>`,
+    
+    'external': `<svg width="200" height="180" viewBox="0 0 200 180" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect x="20" y="20" width="160" height="140" fill="black" fill-opacity="0.05"/>
+  <path d="M40 40L160 140M160 40L40 140" stroke="black" stroke-opacity="0.2" stroke-width="2"/>
+  <text x="100" y="100" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="black" fill-opacity="0.3">EXTERNAL</text>
+  </svg>`
+  };
+
+/**
+ * Convierte un SVG string a data URI
+ * @param {string} svgString - String SVG a convertir
+ * @returns {string} Data URI del SVG
+ */
+function svgToDataUri(svgString) {
+  const encoded = encodeURIComponent(svgString);
+  return `data:image/svg+xml;charset=utf-8,${encoded}`;
+}
+
+/**
+ * Obtiene un thumbnail embebido por nombre
+ * @param {string} thumbnailName - Nombre del thumbnail (sin extensión)
+ * @returns {string|null} Data URI del thumbnail o null si no existe
+ */
+function getEmbeddedThumbnail(thumbnailName) {
+  const normalizedName = thumbnailName.toLowerCase().replace(/\s+/g, '-');
+  const svgString = EMBEDDED_THUMBNAILS[normalizedName];
+  
+  if (svgString) {
+    return svgToDataUri(svgString);
+  }
+  
+  return null;
+}
+
+/**
+ * Verifica si un thumbnail está disponible como embebido
+ * @param {string} thumbnailName - Nombre del thumbnail
+ * @returns {boolean} True si está disponible como embebido
+ */
+function isEmbeddedThumbnailAvailable(thumbnailName) {
+  const normalizedName = thumbnailName.toLowerCase().replace(/\s+/g, '-');
+  return EMBEDDED_THUMBNAILS.hasOwnProperty(normalizedName);
+}
+
+/**
+ * Determina si una URL es un thumbnail embebido
+ * @param {string} url - URL a verificar
+ * @returns {boolean} True si es un thumbnail embebido
+ */
+function isEmbeddedThumbnailUrl(url) {
+  return url && url.startsWith('data:image/svg+xml;');
+}
+
+/**
+ * Extrae el string SVG de un data URI de thumbnail embebido
+ * @param {string} dataUri - Data URI del thumbnail embebido
+ * @returns {string|null} String SVG o null si no es válido
+ */
+function getEmbeddedThumbnailSvgString(dataUri) {
+  if (!isEmbeddedThumbnailUrl(dataUri)) {
+    return null;
+  }
+  
+  try {
+    // Extraer la parte después de la coma en el data URI
+    const svgPart = dataUri.split(',')[1];
+    if (svgPart) {
+      const decodedSvg = decodeURIComponent(svgPart);
+      
+      // Verificar si el SVG decodificado es válido
+      if (decodedSvg.includes('<svg')) {
+        return decodedSvg;
+      }
+    }
+  } catch (error) {
+    console.error('[Embedded SVG] Error al decodificar data URI:', error);
+  }
+  
+  return null;
+}
+
+/**
+ * Crea un elemento SVG con código SVG directo para thumbnails embebidos
+ * @param {string} svgString - String SVG del thumbnail embebido
+ * @param {string} className - Clase CSS para el elemento
+ * @param {Object} attributes - Atributos adicionales (x, y, width, height)
+ * @returns {SVGElement} Elemento SVG creado
+ */
+function createEmbeddedSVGElement(svgString, className = "image-base", attributes = {}) {
+  // Crear un contenedor temporal para parsear el SVG
+  const tempDiv = document.createElement('div');
+  tempDiv.innerHTML = svgString.trim();
+  
+  // Obtener el elemento SVG
+  const svgElement = tempDiv.querySelector('svg');
+  if (!svgElement) {
+    console.error('[Embedded SVG] Error al parsear SVG string');
+    return null;
+  }
+  
+  // Limpiar solo el atributo fill de todos los elementos internos del SVG
+  // para permitir que las variables CSS controlen el color pero mantener las transparencias originales
+  const allElements = svgElement.querySelectorAll('*');
+  allElements.forEach(element => {
+    if (element.hasAttribute('fill')) {
+      element.removeAttribute('fill');
+    }
+    if (element.hasAttribute('stroke')) {
+      element.removeAttribute('stroke');
+    }
+  });
+  
+  // Aplicar atributos personalizados
+  if (attributes.x !== undefined) svgElement.setAttribute('x', attributes.x);
+  if (attributes.y !== undefined) svgElement.setAttribute('y', attributes.y);
+  if (attributes.width !== undefined) svgElement.setAttribute('width', attributes.width);
+  if (attributes.height !== undefined) svgElement.setAttribute('height', attributes.height);
+  
+  // Aplicar clase CSS específica para thumbnails embebidos
+  const embeddedClasses = 'embedded-thumbnail loaded';
+  const finalClasses = className ? `${className} ${embeddedClasses}` : embeddedClasses;
+  svgElement.setAttribute('class', finalClasses);
+  
+  // Aplicar fade-in usando clases CSS
+  svgElement.classList.add('fade-in');
+  
+  // Completar fade-in después de un pequeño delay
+  setTimeout(() => {
+    svgElement.classList.add('loaded');
+    console.log(`[Embedded SVG] ✅ Fade-in completado para thumbnail embebido`);
+  }, 200);
+  
+  return svgElement;
+}
+
+/**
+ * Determina si se debe aplicar filtro CSS a una imagen
+ * @param {string} url - URL de la imagen
+ * @returns {boolean} True si se debe aplicar filtro
+ */
+function shouldApplyFilter(url) {
+  // Si es una URL de datos (data URI), no aplicar filtro
+  if (url.startsWith('data:')) return false;
+  
+  // Si es un thumbnail embebido, no aplicar filtro
+  if (isEmbeddedThumbnailUrl(url)) return false;
+  
+  // Si es una URL externa (http/https), no aplicar filtro
+  if (url.match(/^https?:\/\//i)) return false;
+  
+  // Extraer el nombre del archivo sin parámetros
+  const baseUrl = url.split('?')[0].toLowerCase();
+  
+  // Solo aplicar filtro a imágenes SVG del sistema para consistencia visual
+  return baseUrl.endsWith('.svg');
+}
+
+/**
+ * Crea un elemento de imagen apropiado según el tipo de URL
+ * @param {Object} d3Selection - Selección D3 donde agregar el elemento
+ * @param {string} imageUrl - URL de la imagen
+ * @param {Object} attributes - Atributos del elemento (x, y, width, height)
+ * @param {string} className - Clase CSS
+ * @param {Object} node - Objeto del nodo
+ * @returns {Object} Selección D3 con el elemento creado
+ */
+function appendAppropriateImageElement(d3Selection, imageUrl, attributes = {}, className = "image-base", node = null) {
+  // Si es un thumbnail embebido, crear elemento SVG directo
+  if (isEmbeddedThumbnailUrl(imageUrl)) {
+    console.log(`[Append Image] Creando SVG embebido para: ${imageUrl.substring(0, 50)}...`);
+    const svgString = getEmbeddedThumbnailSvgString(imageUrl);
+    if (svgString) {
+      const svgElement = createEmbeddedSVGElement(svgString, className, attributes);
+      if (svgElement) {
+        return d3Selection.each(function() {
+          this.appendChild(svgElement);
+        });
+      }
+    }
+  }
+  
+  // Para imágenes no embebidas, usar elemento image tradicional
+  console.log(`[Append Image] Usando elemento image tradicional para: ${imageUrl}`);
+  return d3Selection.append("image")
+    .attr("href", imageUrl)
+    .attr("x", attributes.x || 0)
+    .attr("y", attributes.y || 0)
+    .attr("width", attributes.width || 30)
+    .attr("height", attributes.height || 30)
+    .attr("class", className);
 }

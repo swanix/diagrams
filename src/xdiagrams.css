@@ -359,6 +359,177 @@
   svg image.image-base.image-filter[class*="image-filter"] {
     filter: var(--image-filter) !important;
   }
+  
+  /* Estilos para thumbnails embebidos */
+  .embedded-thumbnail {
+      opacity: var(--thumb-opacity, 0.8);
+  transition: all 0.3s ease-in-out;
+  transform: scale(1.0) rotate(0deg);
+  filter: var(--thumb-filter, none);
+  border-radius: 0px;
+    
+      /* Hacer independiente de los estilos del nodo padre */
+  stroke: var(--thumb-stroke, transparent) !important;
+  stroke-width: 0px !important;
+  outline: none !important;
+  box-shadow: none !important;
+    
+    /* Prevenir herencia de estilos del nodo */
+    pointer-events: none;
+  }
+  
+  .embedded-thumbnail.loaded {
+    opacity: var(--thumb-opacity, 0.8);
+  }
+  
+  .embedded-thumbnail.fade-in {
+    animation: fadeIn 0.8s ease-in-out;
+  }
+  
+  /* Asegurar que los thumbnails embebidos usen las variables CSS para colores */
+  .embedded-thumbnail * {
+      fill: var(--thumb-fill, var(--text-color)) !important;
+  stroke: var(--thumb-stroke, transparent) !important;
+  stroke-width: 0px !important;
+  }
+  
+  /* Aplicar filtro a thumbnails embebidos si es necesario */
+  .embedded-thumbnail.image-filter {
+    filter: var(--image-filter) !important;
+  }
+  
+  /* Reglas específicas para prevenir herencia de estilos del nodo */
+  .node .embedded-thumbnail,
+  .node-clickable .embedded-thumbnail,
+  .node.node-selected .embedded-thumbnail {
+    stroke: var(--thumb-stroke, transparent) !important;
+    stroke-width: 0px !important;
+    outline: none !important;
+    box-shadow: none !important;
+    
+    background: transparent !important;
+  }
+  
+  /* Prevenir efectos hover del nodo en thumbnails embebidos */
+  .node:hover .embedded-thumbnail,
+  .node-clickable:hover .embedded-thumbnail {
+    stroke: var(--thumb-stroke, transparent) !important;
+    stroke-width: 0px !important;
+    outline: none !important;
+    box-shadow: none !important;
+    
+  }
+  
+  /* Prevenir efectos de selección del nodo en thumbnails embebidos */
+  .node.node-selected .embedded-thumbnail,
+  .node.node-selected .embedded-thumbnail *,
+  .node.node-selected .embedded-thumbnail rect,
+  .node.node-selected .embedded-thumbnail path,
+  .node.node-selected .embedded-thumbnail circle,
+  .node.node-selected .embedded-thumbnail polygon {
+    stroke: var(--thumb-stroke, transparent) !important;
+    stroke-width: 0px !important;
+    outline: none !important;
+    box-shadow: none !important;
+    
+    animation: none !important;
+    filter: var(--thumb-filter, none) !important;
+  }
+  
+  /* Reglas adicionales para prevenir efectos de selección específicos */
+  .node.node-selected .embedded-thumbnail {
+    /* Prevenir cualquier efecto de drop-shadow del nodo seleccionado */
+    filter: var(--thumb-filter, none) !important;
+    /* Prevenir cualquier transformación del nodo seleccionado */
+    transform: scale(1.0) rotate(0deg) !important;
+    /* Prevenir cualquier z-index del nodo seleccionado */
+    z-index: auto !important;
+    /* Prevenir cualquier posición absoluta del nodo seleccionado */
+    position: static !important;
+  }
+  
+  /* Prevenir efectos de pulse animation en thumbnails embebidos */
+  .node.node-selected .embedded-thumbnail,
+  .node.node-selected .embedded-thumbnail * {
+    animation: none !important;
+    animation-name: none !important;
+    animation-duration: 0s !important;
+    animation-iteration-count: 0 !important;
+  }
+  
+  /* Prevenir efectos de drop-shadow del nodo seleccionado en thumbnails */
+  .node.node-selected .embedded-thumbnail {
+    filter: var(--thumb-filter, none) !important;
+  }
+  
+  /* Reglas con máxima especificidad para thumbnails embebidos en nodos seleccionados */
+  svg .node.node-selected .embedded-thumbnail,
+  .node.node-selected .embedded-thumbnail {
+    filter: var(--thumb-filter, none) !important;
+    stroke: var(--thumb-stroke, transparent) !important;
+    stroke-width: 0px !important;
+    outline: none !important;
+    box-shadow: none !important;
+    
+    animation: none !important;
+    transform: scale(1.0) rotate(0deg) !important;
+  }
+  
+  /* Prevenir específicamente el drop-shadow del nodo seleccionado */
+  svg .node.node-selected .embedded-thumbnail {
+    filter: var(--thumb-filter, none) !important;
+  }
+  
+  /* Regla con máxima especificidad para cualquier elemento dentro del thumbnail en nodo seleccionado */
+  .node.node-selected .embedded-thumbnail,
+  .node.node-selected .embedded-thumbnail *,
+  .node.node-selected .embedded-thumbnail svg,
+  .node.node-selected .embedded-thumbnail svg * {
+    stroke: var(--thumb-stroke, transparent) !important;
+    stroke-width: 0px !important;
+    outline: none !important;
+    box-shadow: none !important;
+    
+    animation: none !important;
+    filter: var(--thumb-filter, none) !important;
+  }
+  
+  /* Prevenir el drop-shadow específico que se aplica al nodo seleccionado */
+  svg .node.node-selected .embedded-thumbnail {
+    filter: var(--thumb-filter, none) !important;
+  }
+  
+  /* Regla con máxima especificidad para prevenir cualquier efecto del nodo seleccionado */
+  .node.node-selected .embedded-thumbnail,
+  .node.node-selected .embedded-thumbnail * {
+    /* Prevenir cualquier efecto de drop-shadow */
+    filter: var(--thumb-filter, none) !important;
+    /* Prevenir cualquier stroke del nodo seleccionado */
+    stroke: var(--thumb-stroke, transparent) !important;
+    stroke-width: 0px !important;
+    /* Prevenir cualquier outline o box-shadow */
+    outline: none !important;
+    box-shadow: none !important;
+    /* Prevenir cualquier borde */
+    
+    /* Prevenir cualquier animación */
+    animation: none !important;
+    /* Mantener solo las transformaciones propias del thumbnail */
+    transform: scale(1.0) rotate(0deg) !important;
+  }
+  
+  /* Efectos hover para thumbnails embebidos */
+  .embedded-thumbnail:hover {
+    transform: scale(1.05) rotate(var(--thumb-rotation, 0deg));
+    filter: var(--thumb-filter, none);
+    
+    /* Mantener independencia de estilos del nodo padre */
+    stroke: var(--thumb-stroke, transparent) !important;
+    stroke-width: 0px !important;
+    outline: none !important;
+    box-shadow: none !important;
+    
+  }
  
   .label-text {
     font-size: var(--label-font-size);

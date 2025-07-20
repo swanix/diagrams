@@ -301,7 +301,7 @@
     /* Prevenir imagen por defecto de Chrome */
     background: transparent;
     opacity: 0;
-    transition: opacity 0.2s ease-in-out;
+    transition: opacity 0.15s ease-in-out;
   }
 
   /* Mostrar imagen cuando esté cargada */
@@ -324,6 +324,16 @@
   /* Prevenir imagen por defecto de Chrome en elementos image de SVG */
   svg image {
     background: transparent !important;
+  }
+  
+  /* Reglas específicas para elementos SVG image con clase image-base */
+  svg image.image-base {
+    opacity: 1; /* Cambiado de 0 a 1 para hacer las imágenes visibles */
+    transition: opacity 0.15s ease-in-out;
+  }
+  
+  svg image.image-base.loaded {
+    opacity: 1;
   }
 
   /* Estilo para imágenes que fallan */
@@ -358,6 +368,35 @@
   /* Regla con máxima especificidad para asegurar que se aplique */
   svg image.image-base.image-filter[class*="image-filter"] {
     filter: var(--image-filter) !important;
+  }
+
+  /* ===== FADE-IN EFFECT FOR ALL IMAGES ===== */
+  .image-base {
+    opacity: 0 !important;
+    transition: opacity 0.3s ease-in-out !important;
+  }
+
+  .image-base.loaded {
+    opacity: 1 !important;
+  }
+
+  /* Fade-in para elementos SVG */
+  svg image {
+    opacity: 0 !important;
+    transition: opacity 0.3s ease-in-out !important;
+  }
+
+  svg image.loaded {
+    opacity: 1 !important;
+  }
+
+  /* Forzar fade-in para todas las imágenes incluso si no tienen clase loaded */
+  .image-base:not(.loaded) {
+    opacity: 0 !important;
+  }
+
+  svg image:not(.loaded) {
+    opacity: 0 !important;
   }
  
   .label-text {
@@ -813,11 +852,25 @@ svg .node.node-selected {
   stroke-width: 2px;
 }
 
+/* Excluir thumbnails embebidos del hover de nodos */
+.node-clickable:hover .embedded-thumbnail rect {
+  stroke: var(--thumb-strokes, transparent) !important;
+  stroke-width: 1px !important;
+}
+
 .node.node-selected rect {
   stroke: var(--node-stroke-focus) !important;
   stroke-width: 5px !important;
   filter: drop-shadow(0 0 6px var(--node-stroke-focus)aa) !important;
   animation: node-pulse 1.2s infinite alternate !important;
+}
+
+/* Excluir thumbnails embebidos de la selección de nodos */
+.node.node-selected .embedded-thumbnail rect {
+  stroke: var(--thumb-strokes, transparent) !important;
+  stroke-width: 1px !important;
+  filter: none !important;
+  animation: none !important;
 }
 
 /* Visual indicator for keyboard navigation */
@@ -1799,7 +1852,7 @@ body.theme-neon .theme-toggle .moon-icon {
 }
 #main-diagram-svg {
     opacity: 0 !important;
-    transition: opacity 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    transition: opacity 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
     visibility: visible;
 }
 #main-diagram-svg.loaded {
@@ -2386,4 +2439,245 @@ body.theme-neon .theme-toggle .moon-icon {
 
 .data-refresh-btn:hover svg {
     opacity: 1;
+}
+
+/* ============================================================================
+   THUMBNAIL PLACEHOLDER STYLES
+   ============================================================================ */
+
+/* Placeholder para thumbnails cuando no se pueden cargar */
+.side-panel-title-thumbnail-placeholder {
+    width: 24px;
+    height: 24px;
+    background-color: #e0e0e0;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    display: inline-block;
+    margin-right: 8px;
+    flex-shrink: 0;
+}
+
+/* Placeholder para imágenes de nodos cuando fallan */
+.image-placeholder {
+    width: 30px;
+    height: 30px;
+    background-color: #e0e0e0;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    display: block;
+    transition: all 0.2s ease-in-out;
+}
+
+/* Eliminar completamente el ícono roto del navegador */
+image[href*="error"],
+image[src*="error"],
+img[src*="error"],
+.image-base[href*="error"],
+.image-base[src*="error"] {
+    display: none !important;
+}
+
+/* Ocultar íconos rotos por defecto y mostrar placeholders */
+image:not([href*="data:image"]):not([href*="img/transparent.svg"]),
+img:not([src*="data:image"]):not([src*="img/transparent.svg"]) {
+    background-image: none !important;
+}
+
+/* Placeholder por defecto para imágenes SVG que fallan */
+image {
+    background-color: transparent;
+    background-image: none;
+    border-radius: 4px;
+}
+
+/* Placeholder para imágenes que fallan */
+image[href*="error"],
+image[href*="detail.svg"],
+image.image-failed {
+    background-color: #e0e0e0;
+    background-image: url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAiIGhlaWdodD0iMzAiIHZpZXdCb3g9IjAgMCAzMCAzMCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjMwIiBoZWlnaHQ9IjMwIiBmaWxsPSIjZTBhMGEwIiBzdHJva2U9IiNjY2MiIHN0cm9rZS13aWR0aD0iMSIgcng9IjQiIHJ5PSI0Ii8+CjxwYXRoIGQ9Ik0xMCAxMEgyMFYyMEgxMFYxMFoiIGZpbGw9IiM5OTkiLz4KPC9zdmc+');
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+}
+
+/* Asegurar que las imágenes transparentes no muestren placeholder */
+image[href*="transparent.svg"] {
+    background-image: none !important;
+    background-color: transparent !important;
+}
+
+/* Placeholder para contenedores de imagen */
+.image-container {
+    position: relative;
+}
+
+/* Estilos para placeholders en diferentes temas */
+body.theme-onyx .image-placeholder,
+body.theme-neon .image-placeholder {
+    background-color: #404040;
+    border-color: #666;
+}
+
+body.theme-vintage .image-placeholder {
+    background-color: #f5f5dc;
+    border-color: #d2b48c;
+}
+
+body.theme-pastel .image-placeholder {
+    background-color: #f0f8ff;
+    border-color: #b0c4de;
+}
+
+/* Placeholder más pequeño para thumbnails en side panel */
+.side-panel-thumbnail-placeholder {
+    width: 20px;
+    height: 20px;
+    background-color: #e0e0e0;
+    border: 1px solid #ccc;
+    border-radius: 3px;
+    display: inline-block;
+    margin-right: 6px;
+    flex-shrink: 0;
+}
+
+/* Estilos para placeholders en modo oscuro */
+body.theme-onyx .side-panel-title-thumbnail-placeholder,
+body.theme-onyx .image-placeholder,
+body.theme-onyx .side-panel-thumbnail-placeholder {
+    background-color: #404040;
+    border-color: #666;
+}
+
+body.theme-neon .side-panel-title-thumbnail-placeholder,
+body.theme-neon .image-placeholder,
+body.theme-neon .side-panel-thumbnail-placeholder {
+    background-color: #2a2a2a;
+    border-color: #444;
+}
+
+/* Animación sutil para placeholders */
+.side-panel-title-thumbnail-placeholder,
+.image-placeholder,
+.side-panel-thumbnail-placeholder {
+    transition: all 0.2s ease-in-out;
+}
+
+.side-panel-title-thumbnail-placeholder:hover,
+.image-placeholder:hover,
+.side-panel-thumbnail-placeholder:hover {
+    background-color: #d0d0d0;
+    border-color: #bbb;
+}
+
+body.theme-onyx .side-panel-title-thumbnail-placeholder:hover,
+body.theme-onyx .image-placeholder:hover,
+body.theme-onyx .side-panel-thumbnail-placeholder:hover {
+    background-color: #505050;
+    border-color: #777;
+}
+
+body.theme-neon .side-panel-title-thumbnail-placeholder:hover,
+body.theme-neon .image-placeholder:hover,
+body.theme-neon .side-panel-thumbnail-placeholder:hover {
+    background-color: #3a3a3a;
+    border-color: #555;
+}
+
+/* ===== Embedded Thumbnails ===== */
+.embedded-thumbnail {
+    background: var(--thumb-bg, transparent) !important;
+    border: var(--thumb-bg-border, transparent) !important;
+    border-radius: var(--thumb-border-radius, 0) !important;
+    padding: var(--thumb-padding, 0) !important;
+    box-shadow: var(--thumb-shadow, none) !important;
+    transition: all 0.3s ease-in-out;
+}
+
+/* Estilos para elementos internos del SVG */
+.embedded-thumbnail rect,
+.embedded-thumbnail path,
+.embedded-thumbnail circle,
+.embedded-thumbnail polygon {
+    fill: var(--thumb-fill, black) !important;
+    stroke: var(--thumb-strokes, transparent) !important;
+}
+
+.embedded-thumbnail text {
+    fill: var(--thumb-fill, black) !important;
+}
+
+/* Excluir thumbnails embebidos del filtro de imagen global */
+.embedded-thumbnail {
+    filter: none !important;
+}
+
+.embedded-thumbnail.image-filter {
+    filter: none !important;
+}
+
+/* Fade-in para thumbnails embebidos */
+.embedded-thumbnail.fade-in {
+    opacity: 0 !important;
+    transition: opacity 0.8s ease-in-out, transform 0.3s ease-in-out !important;
+}
+
+.embedded-thumbnail.fade-in.loaded {
+    opacity: 1 !important;
+}
+
+/* Fade-in para imágenes SVG */
+svg image.fade-in {
+    opacity: 0 !important;
+    transition: opacity 0.8s ease-in-out !important;
+}
+
+svg image.fade-in.loaded {
+    opacity: 1 !important;
+}
+
+.embedded-thumbnail:hover {
+  cursor: pointer !important;
+}
+
+/* Asegurar que los thumbnails embebidos siempre muestren cursor de puntero */
+.embedded-thumbnail {
+  cursor: pointer !important;
+}
+
+/* Estilos específicos por tema para thumbnails embebidos */
+body.theme-snow .embedded-thumbnail {
+    --thumb-bg: red !important;
+    --thumb-bg-border: transparent;
+    --thumb-shadow: none;
+}
+
+body.theme-onyx .embedded-thumbnail {
+    --thumb-bg: transparent;
+    --thumb-bg-border: transparent;
+    --thumb-shadow: none;
+}
+
+body.theme-vintage .embedded-thumbnail {
+    --thumb-bg: transparent;
+    --thumb-bg-border: transparent;
+    --thumb-shadow: none;
+}
+
+body.theme-pastel .embedded-thumbnail {
+    --thumb-bg: transparent;
+    --thumb-bg-border: transparent;
+    --thumb-shadow: none;
+}
+
+body.theme-cyberpunk .embedded-thumbnail {
+    --thumb-bg: transparent;
+    --thumb-bg-border: transparent;
+    --thumb-shadow: none;
+}
+
+body.theme-forest .embedded-thumbnail {
+    --thumb-bg: transparent;
+    --thumb-bg-border: transparent;
+    --thumb-shadow: none;
 }

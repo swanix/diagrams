@@ -208,7 +208,7 @@ window.$xDiagrams = {
     id: "Node",
     name: "Name", 
     parent: "Parent",
-    img: "Type",
+    img: "Img",
     url: "URL",
     type: "Type",
     subtitle: "Description"

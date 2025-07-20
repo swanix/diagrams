@@ -434,6 +434,7 @@ function isOptionEnabled(optionName) {
 
 // Get layout configuration with sensible defaults
 function getLayoutConfiguration(diagramConfig = null) {
+  console.log(`[Layout] getLayoutConfiguration llamado con:`, diagramConfig);
   const options = getDiagramOptions();
   
   // Define default values for layout options
@@ -468,10 +469,11 @@ function getLayoutConfiguration(diagramConfig = null) {
   
   // Try diagram-specific configuration first
   if (diagramConfig && diagramConfig.layout) {
+    console.log(`[Layout] Usando configuración específica del diagrama:`, diagramConfig.layout);
     const rawClustersPerRow = diagramConfig.layout.clustersPerRow || defaultLayout.clustersPerRow;
     const processedClustersPerRow = processClustersPerRow(rawClustersPerRow);
     
-    return {
+    const result = {
       clustersPerRow: processedClustersPerRow,
       marginX: diagramConfig.layout.marginX || defaultLayout.marginX,
       marginY: diagramConfig.layout.marginY || defaultLayout.marginY,
@@ -482,14 +484,17 @@ function getLayoutConfiguration(diagramConfig = null) {
       lastRowThreshold: diagramConfig.layout.lastRowThreshold || defaultLayout.lastRowThreshold,
       lastRowAlignment: diagramConfig.layout.lastRowAlignment || defaultLayout.lastRowAlignment
     };
+    console.log(`[Layout] Configuración final del diagrama:`, result);
+    return result;
   }
   
   // Try global configuration second
   if (options.layout) {
+    console.log(`[Layout] Usando configuración global:`, options.layout);
     const rawClustersPerRow = options.layout.clustersPerRow || defaultLayout.clustersPerRow;
     const processedClustersPerRow = processClustersPerRow(rawClustersPerRow);
     
-    return {
+    const result = {
       clustersPerRow: processedClustersPerRow,
       marginX: options.layout.marginX || defaultLayout.marginX,
       marginY: options.layout.marginY || defaultLayout.marginY,
@@ -500,10 +505,12 @@ function getLayoutConfiguration(diagramConfig = null) {
       lastRowThreshold: options.layout.lastRowThreshold || defaultLayout.lastRowThreshold,
       lastRowAlignment: options.layout.lastRowAlignment || defaultLayout.lastRowAlignment
     };
+    console.log(`[Layout] Configuración final global:`, result);
+    return result;
   }
   
   // Return default layout with processed clustersPerRow
-  return {
+  const result = {
     clustersPerRow: [defaultLayout.clustersPerRow], // Convert to array for consistency
     marginX: defaultLayout.marginX,
     marginY: defaultLayout.marginY,
@@ -514,6 +521,8 @@ function getLayoutConfiguration(diagramConfig = null) {
     lastRowThreshold: defaultLayout.lastRowThreshold,
     lastRowAlignment: defaultLayout.lastRowAlignment
   };
+  console.log(`[Layout] Usando configuración por defecto:`, result);
+  return result;
 }
 
 // Get diagrams from modern configuration
@@ -529,21 +538,110 @@ function getDiagrams() {
   return window.$xDiagrams?.diagrams || [];
 }
 
+// ============================================================================
+// COLUMN CONFIGURATION VALIDATION
+// ============================================================================
+
+/**
+ * Valida la configuración de columnas para prevenir conflictos
+ * @param {Object} columns - Configuración de columnas del usuario
+ * @returns {Object} Configuración validada con conflictos resueltos
+ */
+function validateColumnConfiguration(columns) {
+  if (!columns) return {};
+  
+  // Definir todos los nombres de columnas reservados del sistema
+  const reservedNames = {
+    // Nombres principales
+    'id': ['id', 'Id', 'ID', 'node', 'Node', 'NODE'],
+    'name': ['name', 'Name', 'NAME', 'title', 'Title', 'TITLE', 'section', 'Section', 'SECTION', 'project', 'Project', 'PROJECT', 'product', 'Product', 'PRODUCT'],
+    'subtitle': ['subtitle', 'Subtitle', 'SUBTITLE', 'description', 'Description', 'DESCRIPTION', 'desc', 'Desc', 'DESC'],
+    'img': ['img', 'Img', 'IMG', 'thumbnail', 'Thumbnail', 'THUMBNAIL', 'icon', 'Icon', 'ICON', 'image', 'Image', 'IMAGE', 'picture', 'Picture', 'PICTURE'],
+    'parent': ['parent', 'Parent', 'PARENT'],
+    'url': ['url', 'Url', 'URL', 'link', 'Link', 'LINK'],
+    'type': ['type', 'Type', 'TYPE']
+  };
+  
+  // Crear lista plana de todos los nombres reservados
+  const allReservedNames = Object.values(reservedNames).flat();
+  
+  // Función para verificar si un valor está reservado
+  const isReservedName = (value) => {
+    if (!value) return false;
+    return allReservedNames.includes(value.toString());
+  };
+  
+  // Función para encontrar qué campo reservado usa este nombre
+  const findReservedField = (value) => {
+    if (!value) return null;
+    for (const [field, names] of Object.entries(reservedNames)) {
+      if (names.includes(value.toString())) {
+        return field;
+      }
+    }
+    return null;
+  };
+  
+  // Validar cada campo de la configuración
+  const validatedColumns = {};
+  const conflicts = [];
+  
+  Object.entries(columns).forEach(([field, value]) => {
+    if (isReservedName(value)) {
+      const reservedField = findReservedField(value);
+      conflicts.push({
+        field: field,
+        value: value,
+        reservedBy: reservedField,
+        message: `La columna '${field}' no puede usar '${value}' porque está reservado para '${reservedField}'`
+      });
+      
+      // Usar valor por defecto en lugar del conflicto
+      const defaults = {
+        id: 'Node',
+        name: 'Name',
+        subtitle: 'Description',
+        img: 'Img',
+        parent: 'Parent',
+        url: 'URL',
+        type: 'Type'
+      };
+      
+      validatedColumns[field] = defaults[field] || value;
+      
+      console.warn(`[Column Validation] Conflicto detectado: ${field} = "${value}" está reservado para ${reservedField}. Usando valor por defecto: "${validatedColumns[field]}"`);
+    } else {
+      validatedColumns[field] = value;
+    }
+  });
+  
+  // Mostrar resumen de conflictos si los hay
+  if (conflicts.length > 0) {
+    console.warn(`[Column Validation] Se detectaron ${conflicts.length} conflicto(s) en la configuración de columnas:`);
+    conflicts.forEach(conflict => {
+      console.warn(`  - ${conflict.message}`);
+    });
+    console.warn('[Column Validation] Para evitar conflictos, usa nombres únicos que no estén reservados por el sistema.');
+  }
+  
+  return validatedColumns;
+}
+
 // Get column configuration with modern style fallback
 function getColumnConfiguration(diagramConfig = null) {
   const config = getXDiagramsConfiguration();
   
   // Try diagram-specific configuration first
   if (diagramConfig && diagramConfig.cols) {
-    const columns = diagramConfig.cols;
+    const validatedColumns = validateColumnConfiguration(diagramConfig.cols);
     const columnConfig = {
-      id: [columns.id || 'Node'],
-      name: [columns.name || 'Name'],
-      subtitle: [columns.subtitle || 'Description'],
-      img: [columns.img || 'img'],
-      parent: [columns.parent || 'Parent'],
-      url: [columns.url || 'url'],
-      type: [columns.type || 'Type']
+      id: [validatedColumns.id || 'Node'],
+      name: [validatedColumns.name || 'Name'],
+      subtitle: [validatedColumns.subtitle || 'Description'],
+      img: [validatedColumns.img || 'img'],
+      parent: [validatedColumns.parent || 'Parent'],
+      url: [validatedColumns.url || 'url'],
+      type: [validatedColumns.type || 'Type']
     };
 
     // Add fallback names for each field
@@ -560,15 +658,15 @@ function getColumnConfiguration(diagramConfig = null) {
   
   // Try global configuration second
   if (config.columns) {
-    const columns = config.columns;
+    const validatedColumns = validateColumnConfiguration(config.columns);
     const columnConfig = {
-      id: [columns.id || 'Node'],
-      name: [columns.name || 'Name'],
-      subtitle: [columns.subtitle || 'Description'],
-      img: [columns.img || 'img'],
-      parent: [columns.parent || 'Parent'],
-      url: [columns.url || 'url'],
-      type: [columns.type || 'Type']
+      id: [validatedColumns.id || 'Node'],
+      name: [validatedColumns.name || 'Name'],
+      subtitle: [validatedColumns.subtitle || 'Description'],
+      img: [validatedColumns.img || 'img'],
+      parent: [validatedColumns.parent || 'Parent'],
+      url: [validatedColumns.url || 'url'],
+      type: [validatedColumns.type || 'Type']
     };
 
     // Add fallback names for each field
@@ -608,14 +706,15 @@ function getColumnConfigurationLegacy() {
   if (jsonConfig) {
     try {
       const customConfig = JSON.parse(jsonConfig);
+      const validatedColumns = validateColumnConfiguration(customConfig);
       const config = {
-        id: [customConfig.id || 'Node'],
-        name: [customConfig.name || 'Name'],
-        subtitle: [customConfig.subtitle || 'Description'],
-        img: [customConfig.img || 'img'],
-        parent: [customConfig.parent || 'Parent'],
-        url: [customConfig.url || 'url'],
-        type: [customConfig.type || 'Type']
+        id: [validatedColumns.id || 'Node'],
+        name: [validatedColumns.name || 'Name'],
+        subtitle: [validatedColumns.subtitle || 'Description'],
+        img: [validatedColumns.img || 'img'],
+        parent: [validatedColumns.parent || 'Parent'],
+        url: [validatedColumns.url || 'url'],
+        type: [validatedColumns.type || 'Type']
       };
 
       // Add fallback names for each field
@@ -820,46 +919,39 @@ function drawGridLayout(nodes, svg) {
     .attr("width", nodeWidth)
     .attr("height", nodeHeight);
 
-  // Node image with enhanced loading
+  // Node image with direct URL setting and CSS-based placeholder
   nodeGroups.append("image")
-    .attr("href", "img/transparent.svg")
-    .attr("data-src", d => {
-      const url = resolveNodeImage(d);
-      const cacheBuster = `?t=${Date.now()}`;
-      return url.includes('?') ? `${url}&_cb=${Date.now()}` : `${url}${cacheBuster}`;
-    })
+            .attr("href", d => {
+          const url = (ThumbnailEngine && ThumbnailEngine.resolveNodeImage) ? ThumbnailEngine.resolveNodeImage(d) : `img/detail.svg`;
+          return url;
+        })
     .attr("x", -15)
     .attr("y", -25)
     .attr("class", "image-base")
     .attr("width", 30)
     .attr("height", 30)
-    .on("load", function() {
-      const element = d3.select(this);
-      const dataSrc = element.attr("data-src");
-      
-      if (dataSrc && element.attr("href") === "img/transparent.svg") {
-        // Cambiar a la imagen real
-        element.attr("href", dataSrc);
-      } else {
-        // Image loaded successfully
-        element.classed("loaded", true);
-      }
-      // Solo aplicar el filtro si es necesario
-      if (shouldApplyFilter(dataSrc)) {
-        element.classed("image-filter", true);
-      }
+    .each(function(d) {
+      console.log(`[Image Debug] Elemento image (grid) creado con clase:`, this.getAttribute('class'));
+      console.log(`[Image Debug] URL asignada (grid):`, this.getAttribute('href'));
     })
+            .each(function(d) {
+          const element = d3.select(this);
+          const url = element.attr("href");
+          // Aplicar filtro si es necesario
+          if (ThumbnailEngine && ThumbnailEngine.shouldApplyFilter && ThumbnailEngine.shouldApplyFilter(url)) {
+            element.classed("image-filter", true);
+          }
+          
+          // Usar la función auxiliar para manejar la carga de imagen SVG
+          if (ThumbnailEngine && ThumbnailEngine.handleSVGImageLoad) {
+            ThumbnailEngine.handleSVGImageLoad(this, url, 'grid');
+          } else {
+            // Fallback simple si ThumbnailEngine no está disponible
+            console.log(`[Fallback] Cargando imagen sin ThumbnailEngine: ${url}`);
+          }
+        })
     .on("error", function() {
-      const element = d3.select(this);
-      const currentSrc = element.attr("href");
-      
-      if (currentSrc !== "img/detail.svg") {
-        const fallbackUrl = `img/detail.svg?t=${Date.now()}`;
-        element.attr("href", fallbackUrl);
-      } else {
-        // Si el fallback también falla, ocultar la imagen
-        element.style("display", "none");
-      }
+      console.log(`[Image Error] Error loading image: ${this.getAttribute('href')}`);
     });
 
   // Node text
@@ -881,6 +973,7 @@ function drawGridLayout(nodes, svg) {
 
   // Draw clusters in masonry-like grid layout
   function drawClusterGrid(trees, svg, diagramConfig = null) {
+  console.log(`[ClusterGrid] drawClusterGrid llamado con diagramConfig:`, diagramConfig);
   const g = d3.select(svg).append("g");
   const clusterGroups = [];
   
@@ -969,44 +1062,42 @@ function drawGridLayout(nodes, svg) {
         .attr("width", parseFloat(themeVars.getPropertyValue('--node-bg-width')) || 60)
         .attr("height", parseFloat(themeVars.getPropertyValue('--node-bg-height')) || 40);
       
+      // Create image element with direct URL setting and CSS-based placeholder
       node.append("image")
-        .attr("href", "img/transparent.svg")
-        .attr("data-src", d => {
-          const url = resolveNodeImage(d);
-          const cacheBuster = `?t=${Date.now()}`;
-          return url.includes('?') ? `${url}&_cb=${Date.now()}` : `${url}${cacheBuster}`;
+        .attr("href", d => {
+          const url = (ThumbnailEngine && ThumbnailEngine.resolveNodeImage) ? ThumbnailEngine.resolveNodeImage(d) : `img/detail.svg`;
+          return url;
         })
         .attr("x", parseFloat(themeVars.getPropertyValue('--image-x')))
         .attr("y", parseFloat(themeVars.getPropertyValue('--image-y')))
         .attr("class", "image-base")
         .attr("width", parseFloat(themeVars.getPropertyValue('--image-width')))
         .attr("height", parseFloat(themeVars.getPropertyValue('--image-height')))
-        .on("load", function() {
+        .each(function(d) {
+          console.log(`[Image Debug] Elemento image creado con clase:`, this.getAttribute('class'));
+          console.log(`[Image Debug] URL asignada:`, this.getAttribute('href'));
+        })
+        .each(function(d) {
           const element = d3.select(this);
-          const dataSrc = element.attr("data-src");
-          
-          if (dataSrc && element.attr("href") === "img/transparent.svg") {
-            // Cambiar a la imagen real
-            element.attr("href", dataSrc);
-          }
-          // Marcar cargada
-          element.classed("loaded", true);
-          // Solo aplicar el filtro si es necesario
-          if (shouldApplyFilter(dataSrc)) {
+          const url = element.attr("href");
+          // Aplicar filtro si es necesario
+          if (ThumbnailEngine && ThumbnailEngine.shouldApplyFilter && ThumbnailEngine.shouldApplyFilter(url)) {
             element.classed("image-filter", true);
+          }
+          
+          // Usar la función auxiliar para manejar la carga de imagen SVG
+          if (ThumbnailEngine && ThumbnailEngine.handleSVGImageLoad) {
+            ThumbnailEngine.handleSVGImageLoad(this, url, 'cluster');
+          } else {
+            // Fallback simple si ThumbnailEngine no está disponible
+            console.log(`[Fallback] Cargando imagen sin ThumbnailEngine: ${url}`);
           }
         })
         .on("error", function() {
           const element = d3.select(this);
-          const currentSrc = element.attr("href");
-          
-          if (currentSrc !== "img/detail.svg") {
-            const fallbackUrl = `img/detail.svg?t=${Date.now()}`;
-            element.attr("href", fallbackUrl);
-          } else {
-            // Si el fallback también falla, ocultar la imagen
-            element.style("display", "none");
-          }
+          console.log(`[Image Error] Error cargando imagen: ${element.attr("href")}`);
+          // Use fallback image
+          element.attr("href", "img/transparent.svg");
         });
       
       const textGroup = node.append("g").attr("class", "text-group");
@@ -1062,46 +1153,44 @@ function drawGridLayout(nodes, svg) {
         });
       
       // Medir el tamaño real del cluster después de renderizarlo
-      setTimeout(() => {
-        const bounds = treeGroup.node().getBBox();
-        const clusterHeight = bounds.height + 2 * clusterPaddingY;
+      const bounds = treeGroup.node().getBBox();
+      const clusterHeight = bounds.height + 2 * clusterPaddingY;
+      
+      clusterGroups.push({
+        group: treeGroup,
+        width: bounds.width + 2 * clusterPaddingX,
+        height: clusterHeight,
+        innerWidth: bounds.width,
+        innerHeight: bounds.height,
+        paddingX: clusterPaddingX,
+        paddingY: clusterPaddingY,
+        id: root.data.id,
+        name: root.data.name,
+        index: index,
+        treeDepth: treeDepths ? treeDepths[index] : null
+      });
+      
+      if (clusterGroups.length === trees.length) {
+        // Paso 2: Calcular altura uniforme basada en el cluster con más niveles
+        let uniformHeight = null;
         
-        clusterGroups.push({
-          group: treeGroup,
-          width: bounds.width + 2 * clusterPaddingX,
-          height: clusterHeight,
-          innerWidth: bounds.width,
-          innerHeight: bounds.height,
-          paddingX: clusterPaddingX,
-          paddingY: clusterPaddingY,
-          id: root.data.id,
-          name: root.data.name,
-          index: index,
-          treeDepth: treeDepths ? treeDepths[index] : null
-        });
-        
-        if (clusterGroups.length === trees.length) {
-          // Paso 2: Calcular altura uniforme basada en el cluster con más niveles
-          let uniformHeight = null;
+        if (!isFlat && treeDepths) {
+          // Comprobar si hay variación en la profundidad (niveles)
+          const minDepth = Math.min(...treeDepths);
+          const depthVariation = maxDepth !== minDepth;
           
-          if (!isFlat && treeDepths) {
-            // Comprobar si hay variación en la profundidad (niveles)
-            const minDepth = Math.min(...treeDepths);
-            const depthVariation = maxDepth !== minDepth;
-            
-            if (depthVariation) {
-              // Tomar como referencia cualquier cluster cuyo árbol tenga la profundidad máxima
-              const clusterWithMaxDepth = clusterGroups.find((cluster, idx) => treeDepths[idx] === maxDepth);
-              if (clusterWithMaxDepth) {
-                uniformHeight = clusterWithMaxDepth.height;
-              }
+          if (depthVariation) {
+            // Tomar como referencia cualquier cluster cuyo árbol tenga la profundidad máxima
+            const clusterWithMaxDepth = clusterGroups.find((cluster, idx) => treeDepths[idx] === maxDepth);
+            if (clusterWithMaxDepth) {
+              uniformHeight = clusterWithMaxDepth.height;
             }
           }
-          
-          // Paso 3: Implementar layout tipo Masonry
-          applyMasonryLayout(clusterGroups, g, trees, uniformHeight, diagramConfig);
         }
-      }, 0);
+        
+        // Paso 3: Implementar layout tipo Masonry
+        applyMasonryLayout(clusterGroups, g, trees, uniformHeight, diagramConfig);
+      }
       
     } catch (err) {
       console.error(`Error al renderizar cluster ${index + 1}:`, err);
@@ -1128,6 +1217,7 @@ function getMaxTreeDepth(node) {
 
 // Función simplificada para aplicar layout de clusters
 function applyMasonryLayout(clusterGroups, container, originalTrees, preCalculatedUniformHeight = null, diagramConfig = null) {
+  console.log(`[Masonry] applyMasonryLayout llamado con diagramConfig:`, diagramConfig);
   // Obtener configuración de layout desde las opciones
   const layoutConfig = getLayoutConfiguration(diagramConfig);
   const marginX = layoutConfig.marginX;
@@ -1198,18 +1288,33 @@ function applyMasonryLayout(clusterGroups, container, originalTrees, preCalculat
   const waitForAllClustersToLoad = () => {
     // Verificar si todas las imágenes están cargadas
     const allImages = document.querySelectorAll('.image-base');
-    const loadedImages = Array.from(allImages).filter(img => img.classList.contains('loaded'));
+    const loadedImages = Array.from(allImages).filter(img => {
+      const classes = img.getAttribute('class') || '';
+      return classes.includes('loaded');
+    });
     
-    console.log(`[Layout] Imágenes cargadas: ${loadedImages.length}/${allImages.length}`);
+    console.log(`[Layout Debug] Total de imágenes encontradas: ${allImages.length}`);
+    console.log(`[Layout Debug] Imágenes con clase 'loaded': ${loadedImages.length}`);
+    
+    // Log detallado de cada imagen
+    allImages.forEach((img, index) => {
+      const classes = img.getAttribute('class') || '';
+      const hasLoadedClass = classes.includes('loaded');
+      const href = img.getAttribute('href') || img.getAttribute('src') || 'unknown';
+      console.log(`[Layout Debug] Imagen ${index + 1}: ${href} - loaded: ${hasLoadedClass} - clases: "${classes}"`);
+    });
     
     if (loadedImages.length === allImages.length && allImages.length > 0) {
       // Todas las imágenes están cargadas, proceder con el layout
+              console.log(`[Layout Debug] [OK] Todas las imágenes cargadas, procediendo con layout`);
       applyFinalLayout();
     } else if (allImages.length === 0) {
       // No hay imágenes, proceder inmediatamente
+              console.log(`[Layout Debug] [ADVERTENCIA] No se encontraron imágenes, procediendo inmediatamente`);
       applyFinalLayout();
     } else {
       // Esperar más tiempo para que se carguen las imágenes restantes
+              console.log(`[Layout Debug] [ESPERANDO] Esperando más imágenes... (${loadedImages.length}/${allImages.length})`);
       setTimeout(waitForAllClustersToLoad, 100);
     }
   };
@@ -1524,7 +1629,7 @@ function applyMasonryLayout(clusterGroups, container, originalTrees, preCalculat
         const actualGap = nextLeftEdge - currentRightEdge;
         const expectedGap = spacingX;
         const gapDiff = Math.abs(actualGap - expectedGap);
-        const status = gapDiff < 5 ? '✅' : '❌';
+        const status = gapDiff < 5 ? '[OK]' : '[ERROR]';
         
         console.log(`${status} Gap horizontal ${i}→${i+1}: ${actualGap.toFixed(1)}px (esperado: ${expectedGap}px, diff: ${gapDiff.toFixed(1)}px)`);
         console.log(`  Cluster ${i}: ancho=${current.realWidth.toFixed(1)}px, fin=${currentRightEdge.toFixed(1)}px`);
@@ -1547,7 +1652,7 @@ function applyMasonryLayout(clusterGroups, container, originalTrees, preCalculat
         const actualVerticalGap = minTopEdge - maxBottomEdge;
         const expectedVerticalGap = spacingY;
         const verticalGapDiff = Math.abs(actualVerticalGap - expectedVerticalGap);
-        const verticalStatus = verticalGapDiff < 5 ? '✅' : '❌';
+        const verticalStatus = verticalGapDiff < 5 ? '[OK]' : '[ERROR]';
         
         console.log(`${verticalStatus} Gap vertical fila ${row}→${row+1}: ${actualVerticalGap.toFixed(1)}px (esperado: ${expectedVerticalGap}px, diff: ${verticalGapDiff.toFixed(1)}px)`);
         console.log(`  Fila ${row}: borde_inferior=${maxBottomEdge.toFixed(1)}px`);
@@ -1809,49 +1914,35 @@ function drawTrees(trees, diagramConfig = null) {
           .attr("width", parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--node-bg-width')) || 60)
           .attr("height", parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--node-bg-height')) || 40);
 
-        // Node image with enhanced loading
+        // Node image with direct URL setting and CSS-based placeholder
         node.append("image")
-          .attr("href", "img/transparent.svg") // No cache buster here
-          .attr("data-src", d => {
-            const url = resolveNodeImage(d);
-            const cacheBuster = `?t=${Date.now()}`;
-            return url.includes('?') ? `${url}&_cb=${Date.now()}` : `${url}${cacheBuster}`;
+          .attr("href", d => {
+            const url = (ThumbnailEngine && ThumbnailEngine.resolveNodeImage) ? ThumbnailEngine.resolveNodeImage(d) : `img/detail.svg`;
+            return url;
           })
           .attr("x", parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--image-x')))
           .attr("y", parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--image-y')))
           .attr("class", "image-base")
           .attr("width", parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--image-width')))
           .attr("height", parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--image-height')))
-          .on("load", function() {
+          .each(function(d) {
             const element = d3.select(this);
-            const dataSrc = element.attr("data-src");
+            const url = element.attr("href");
+            // Aplicar filtro si es necesario
+            if (ThumbnailEngine && ThumbnailEngine.shouldApplyFilter && ThumbnailEngine.shouldApplyFilter(url)) {
+              element.classed("image-filter", true);
+            }
             
-            if (dataSrc && element.attr("href") === "img/transparent.svg") {
-              // Cambiar a la imagen real
-              element.attr("href", dataSrc)
-                    .classed("loaded", true);
-              // Solo aplicar el filtro si es necesario
-              if (shouldApplyFilter(dataSrc)) {
-                element.classed("image-filter", true);
-              }
+            // Usar la función auxiliar para manejar la carga de imagen SVG
+            if (ThumbnailEngine && ThumbnailEngine.handleSVGImageLoad) {
+              ThumbnailEngine.handleSVGImageLoad(this, url, 'tree');
+            } else {
+              // Fallback simple si ThumbnailEngine no está disponible
+              console.log(`[Fallback] Cargando imagen sin ThumbnailEngine: ${url}`);
             }
           })
           .on("error", function() {
-            const element = d3.select(this);
-            const currentSrc = element.attr("href");
-            const fileName = currentSrc.split('/').pop().split('?')[0];
-            
-            // Si la imagen actual no es el fallback, intentar con detail.svg
-            if (currentSrc !== "img/detail.svg") {
-              console.log(`[Image Load] Error loading ${fileName}, falling back to detail.svg`);
-              const fallbackUrl = `img/detail.svg?t=${Date.now()}`;
-              element.attr("href", fallbackUrl)
-                    .classed("loaded", true);
-            } else {
-              // Si el fallback también falla, ocultar la imagen
-              console.log(`[Image Load] Error loading fallback image, hiding element`);
-              element.style("display", "none");
-            }
+            console.log(`[Image Error] Error loading image: ${this.getAttribute('href')}`);
           });
 
         // Node text
@@ -2364,8 +2455,8 @@ function openSidePanel(nodeData) {
     const nodeName = dataToShow.name || dataToShow.Name || dataToShow.NAME || nodeData.name || 'Nodo sin nombre';
     // Get the type for thumbnail
     const nodeType = dataToShow.type || dataToShow.Type || dataToShow.TYPE || nodeData.type || 'detail';
-    // Create thumbnail HTML with enhanced loading
-    const thumbnailHtml = `<img src="img/${nodeType}.svg" alt="${nodeType}" class="side-panel-title-thumbnail" style="opacity: 0; transition: opacity 0.2s ease-in-out;" onload="this.style.opacity='1'" onerror="this.src='img/detail.svg'; this.style.opacity='1'">`;
+    // Create thumbnail HTML with enhanced loading or fallback
+            const thumbnailHtml = (ThumbnailEngine && ThumbnailEngine.createSidePanelThumbnailHtml) ? ThumbnailEngine.createSidePanelThumbnailHtml(nodeType) : `<div class="side-panel-title-thumbnail-placeholder" style="width: 24px; height: 24px; background-color: #e0e0e0; border: 1px solid #ccc; border-radius: 4px; display: inline-block; margin-right: 8px;"></div>`;
 
     // Truncar el texto del título por ancho disponible antes del botón de cerrar
     function truncateSidePanelTitle(text, maxWidth, fontSize, fontWeight, fontFamily) {
@@ -2616,10 +2707,7 @@ async function setTheme(themeId, forceReload = false) {
   
   console.log('[Theme System] Tema guardado:', themeId, 'en clave:', storageKey, 'y global');
   
-  // Clear cache before applying theme
-  if (window.$xDiagrams && window.$xDiagrams.clearCache) {
-    window.$xDiagrams.clearCache();
-  }
+      // Cache system disabled
   
   // Apply theme CSS variables (with force reload if requested)
   const themeVariables = await getThemeVariables(themeId, forceReload);
@@ -2741,61 +2829,14 @@ function updateSVGColors() {
 }
 
 // Update image filters for all images with image-filter class
-function updateImageFilters(filterValue) {
-  console.log('[Image Filter] Aplicando filtro:', filterValue);
-  
-  // Verificar que el filtro no esté vacío
-  if (!filterValue || filterValue.trim() === '') {
-    console.warn('[Image Filter] Filtro vacío, no se aplicará');
-    return;
-  }
-  
-  // En lugar de aplicar estilos inline, usar variables CSS
-  // Esto permite que el filtro se actualice automáticamente cuando cambie el tema
-  const imagesWithFilter = document.querySelectorAll('.image-filter');
-  console.log('[Image Filter] Encontradas', imagesWithFilter.length, 'imágenes con clase image-filter');
-  
-  // Remover cualquier estilo inline previo
-  imagesWithFilter.forEach((img, index) => {
-    img.style.removeProperty('filter');
-    console.log(`[Image Filter] Estilo inline removido de imagen ${index + 1} (${img.src.split('/').pop()})`);
-  });
-  
-  // También remover estilos inline del side panel
-  const sidePanelImages = document.querySelectorAll('.side-panel-title-thumbnail');
-  sidePanelImages.forEach((img, index) => {
-    img.style.removeProperty('filter');
-    console.log(`[Image Filter] Estilo inline removido de side panel imagen ${index + 1}`);
-  });
-  
-  // Agregar regla CSS que use la variable --image-filter
-  const styleId = 'image-filter-css-rule';
-  let existingStyle = document.getElementById(styleId);
-  if (existingStyle) {
-    existingStyle.remove();
-  }
-  
-  const style = document.createElement('style');
-  style.id = styleId;
-  style.textContent = `
-    .image-filter {
-      filter: var(--image-filter) !important;
-    }
-    .side-panel-title-thumbnail {
-      filter: var(--image-filter) !important;
-    }
-  `;
-  document.head.appendChild(style);
-  
-  console.log('[Image Filter] Regla CSS agregada usando variable --image-filter');
-  console.log('[Image Filter] Valor actual de --image-filter:', filterValue);
-}
+// updateImageFilters moved to thumbnail-engine.js
+// Using ThumbnailEngine.updateImageFilters
 
 // Update switcher colors
 function updateSwitcherColors() {
   // This function is no longer needed as CSS handles all styling
   // The diagram buttons now use CSS variables for consistent theming
-  console.log('[Theme] Switcher colors are now handled by CSS variables');
+      console.log('[Theme] Los colores del switcher ahora son manejados por variables CSS');
 }
 
 // Generate unique key for localStorage based on file URL
@@ -3725,12 +3766,12 @@ window.$xDiagrams.updateTopbarTitle = function(diagramIndex) {
         fixedTitle = pageTitle ? pageTitle.textContent : 'Swanix Diagrams';
     }
     
-    console.log('[Debug] fixedTitle value:', fixedTitle);
-    console.log('[Debug] logoUrl value:', logoUrl);
+    console.log('[Debug] valor de fixedTitle:', fixedTitle);
+    console.log('[Debug] valor de logoUrl:', logoUrl);
     
     // Find the title-dropdown-container
     const titleDropdownContainer = document.querySelector('.title-dropdown-container');
-    console.log('[Debug] titleDropdownContainer found:', !!titleDropdownContainer);
+    console.log('[Debug] titleDropdownContainer encontrado:', !!titleDropdownContainer);
     if (titleDropdownContainer) {
         // Clear existing content except the dropdown
         const dropdown = titleDropdownContainer.querySelector('.diagram-dropdown');
@@ -3819,10 +3860,7 @@ window.$xDiagrams.renderDiagramButtons = function() {
                     window.closeSidePanel();
                 }
                 
-                // Clear cache before switching diagrams (only for remote files)
-                if (window.$xDiagrams.clearCache && typeof d.file === 'string') {
-                    window.$xDiagrams.clearCache();
-                }
+                    // Cache system disabled
                 
                 const url = new URL(window.location);
                 url.searchParams.set('d', idx.toString());
@@ -3840,14 +3878,10 @@ window.$xDiagrams.renderDiagramButtons = function() {
         dropdownContent.appendChild(link);
     });
     
-    // Remove any existing Google Sheets button and cache refresh button
+    // Remove any existing Google Sheets button
     const existingSheetsBtn = dropdown.querySelector('.sheets-btn');
-    const existingCacheBtn = dropdown.querySelector('.cache-refresh-btn');
     if (existingSheetsBtn) {
         existingSheetsBtn.remove();
-    }
-    if (existingCacheBtn) {
-        existingCacheBtn.remove();
     }
     
     // Add Google Sheets button if current diagram is from Google Sheets AND has edit URL
@@ -3882,74 +3916,7 @@ window.$xDiagrams.renderDiagramButtons = function() {
         dropdown.appendChild(sheetsButton);
     }
     
-    // Add cache refresh button SOLO para diagramas que se cargan desde una API REST REMOTA (no local)
-    if (currentDiagram && (currentDiagram.url || currentDiagram.file) && typeof isRestApiEndpoint === 'function') {
-        const diagramUrl = currentDiagram.url || currentDiagram.file;
-        // Detectar si la URL pertenece al mismo origen (local) o es relativa → tratar como local
-        let isLocalResource = false;
-        try {
-            const parsed = new URL(diagramUrl, window.location.href);
-            isLocalResource = parsed.origin === window.location.origin;
-        } catch (e) {
-            // URL relativa → local
-            isLocalResource = true;
-        }
-
-        // Sólo mostrar el botón si ES endpoint REST y NO es recurso local
-        if (isRestApiEndpoint(diagramUrl) && !isLocalResource) {
-            const cacheButton = document.createElement('button');
-            cacheButton.className = 'cache-refresh-btn';
-            cacheButton.innerHTML = `
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M17.65,6.35C16.2,4.9 14.21,4 12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20C15.73,20 18.84,17.45 19.73,14H17.65C16.83,16.33 14.61,18 12,18A6,6 0 0,1 6,12A6,6 0 0,1 12,6C13.66,6 15.14,6.69 16.22,7.78L13,11H20V4L17.65,6.35Z"/>
-                </svg>
-            `;
-            cacheButton.title = 'Refrescar caché y recargar';
-            
-            // Si NO hay botón de Sheets, agrego clase 'solo' para ajustar posición
-            if (!sheetsButton) {
-                cacheButton.classList.add('solo');
-            }
-            
-            cacheButton.addEventListener('click', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                
-                // Add loading animation
-                cacheButton.classList.add('loading');
-                
-                // Get the URL to clear cache for
-                const diagramUrl = currentDiagram.url || currentDiagram.file;
-                
-                // Clear cache for this specific URL
-                if (window.xDiagramsCache && window.xDiagramsCache.clear) {
-                    window.xDiagramsCache.clear(diagramUrl);
-                    console.log('Cache cleared for:', diagramUrl);
-                }
-                
-                // Also clear legacy cache
-                if (window.$xDiagrams.clearCache) {
-                    window.$xDiagrams.clearCache();
-                }
-                
-                // Reload the current diagram after a short delay
-                setTimeout(() => {
-                    window.$xDiagrams.loadDiagram(currentDiagram);
-                    
-                    // Remove loading animation after a bit more delay
-                    setTimeout(() => {
-                        cacheButton.classList.remove('loading');
-                    }, 1000);
-                }, 100);
-                
-                // Close dropdown
-                dropdown.classList.remove('open');
-            });
-            
-            // Insert button after the dropdown content (before sheets button if it exists)
-            dropdown.appendChild(cacheButton);
-        }
-    }
+    // Cache refresh button disabled
     
     // Apply current theme colors to the switcher buttons
     updateSwitcherColors();
@@ -3978,7 +3945,13 @@ window.$xDiagrams.loadDiagram = function(input) {
     let diagramToLoad = input;
     if (typeof input === 'string') {
         // Buscar el objeto diagrama si existe (por url o file)
-        diagramToLoad = diagrams.find(d => d.url === input || d.file === input) || { url: input };
+        const foundDiagram = diagrams.find(d => d.url === input || d.file === input);
+        if (foundDiagram) {
+            diagramToLoad = foundDiagram;
+        } else {
+            // Si no se encuentra, crear un objeto con la URL pero mantener la configuración por defecto
+            diagramToLoad = { url: input };
+        }
         window.$xDiagrams.currentUrl = input;
     } else if (typeof input === 'object' && input !== null) {
         if (input.data) {
@@ -3996,11 +3969,7 @@ window.$xDiagrams.loadDiagram = function(input) {
         }
     }
 
-    // Limpia el cache solo si es una URL remota
-    if ((diagramToLoad.url && typeof diagramToLoad.url === 'string') || 
-        (diagramToLoad.file && typeof diagramToLoad.file === 'string')) {
-        window.$xDiagrams.clearCache();
-    }
+    // Cache system disabled
 
     // Decide qué pasar a initDiagram:
     // - Si tiene data, pásalo directo
@@ -4009,15 +3978,15 @@ window.$xDiagrams.loadDiagram = function(input) {
     let toInit = diagramToLoad;
     if (diagramToLoad.data) {
         toInit = diagramToLoad;
-        console.log('Pasando objeto con data a initDiagram');
+        console.log('Pasando objeto con datos a initDiagram');
     } else if (diagramToLoad.url) {
         toInit = diagramToLoad.url;
         console.log('Pasando URL a initDiagram:', diagramToLoad.url);
     } else if (diagramToLoad.file) {
         toInit = diagramToLoad.file;
-        console.log('Pasando file a initDiagram:', diagramToLoad.file);
+        console.log('Pasando archivo a initDiagram:', diagramToLoad.file);
     } else {
-        console.log('No se encontró data, url o file en el diagrama:', diagramToLoad);
+        console.log('No se encontró datos, url o archivo en el diagrama:', diagramToLoad);
     }
 
     // Limpieza visual
@@ -4037,6 +4006,7 @@ window.$xDiagrams.loadDiagram = function(input) {
     if (error) error.textContent = '';
 
     if (window.initDiagram) {
+        console.log('[LoadDiagram] Pasando configuración a initDiagram:', diagramToLoad);
         window.initDiagram(toInit, function() {
             if (isOptionEnabled('autoZoom') !== false && window.applyAutoZoom) {
                 window.applyAutoZoom();
@@ -4067,48 +4037,7 @@ window.$xDiagrams.loadDiagram = function(input) {
     }
 };
 window.$xDiagrams.clearCache = function() {
-    window.$xDiagrams.loadedDiagrams.clear();
-    window.$xDiagrams.currentUrl = null;
-    
-    // Clear browser cache for CSV and SVG files
-    if ('caches' in window) {
-        caches.keys().then(function(names) {
-            for (let name of names) {
-                caches.delete(name);
-            }
-        });
-    }
-    
-    // Force reload of images by clearing their cache
-    const images = document.querySelectorAll('image');
-    images.forEach(img => {
-        const currentSrc = img.getAttribute('href');
-        if (currentSrc) {
-            const cacheBuster = `?t=${Date.now()}`;
-            const newSrc = currentSrc.includes('?') ? 
-                `${currentSrc}&_cb=${Date.now()}` : 
-                `${currentSrc}${cacheBuster}`;
-            img.setAttribute('href', newSrc);
-        }
-    });
-    
-    // Limpia solo claves de caché obsoletas o no utilizadas, pero
-    // preserva las claves del nuevo sistema de caché (xdiagrams_cache_*)
-    const keysToRemove = [];
-    for (let i = 0; i < localStorage.length; i++) {
-        const key = localStorage.key(i);
-        // Mantener la nueva caché inteligente y sus estadísticas
-        if (key && (key.startsWith('xdiagrams_cache_') || key === 'xdiagrams_cache_stats')) {
-            continue; // no eliminar
-        }
-        // Eliminar entradas antiguas o irrelevantes
-        if (key && (key.includes('diagram') || key.includes('cache') || key.includes('data'))) {
-            keysToRemove.push(key);
-        }
-    }
-    keysToRemove.forEach(key => localStorage.removeItem(key));
-    
-    console.log('[Cache] Cache cleared (legacy only) and images refreshed');
+    console.log('[Cache] Sistema de caché deshabilitado');
 };
 
 // --- End diagram management ---
@@ -4172,7 +4101,9 @@ function renderSwDiagramBase() {
     
     // If still no logo, try auto-detection
     if (!logoUrl) {
-        detectAutoLogo();
+        if (ThumbnailEngine && ThumbnailEngine.detectAutoLogo) {
+          ThumbnailEngine.detectAutoLogo();
+        }
         // Check again after auto-detection
         logoUrl = window.$xDiagrams && window.$xDiagrams.logo ? window.$xDiagrams.logo : null;
     }
@@ -4272,9 +4203,7 @@ function renderSwDiagramBase() {
     `;
     document.body.appendChild(container);
     // Configuro el botón de refresco global
-    if (typeof setupDataRefreshButton === 'function') {
-      setupDataRefreshButton();
-    }
+    // Data refresh button disabled
   }
   // Initialize theme system after base structure is rendered
   initializeThemeSystem().then(() => {
@@ -4300,10 +4229,14 @@ function renderSwDiagramBase() {
 // Call base rendering function when library loads
 function initializeWhenReady() {
   // Preload common images to prevent Chrome's default image flash
-  preloadCommonImages();
+  if (ThumbnailEngine && ThumbnailEngine.preloadCommonImages) {
+    ThumbnailEngine.preloadCommonImages();
+  }
   
   // Try auto-detection of logo early
-  detectAutoLogo();
+  if (ThumbnailEngine && ThumbnailEngine.detectAutoLogo) {
+    ThumbnailEngine.detectAutoLogo();
+  }
   
   // Wait for diagrams to be defined
   const diagrams = getDiagrams();
@@ -4350,55 +4283,38 @@ window.getStorageKey = getStorageKey;
 window.getOppositeTheme = getOppositeTheme;
 window.isLightTheme = isLightTheme;
 
-// Cache management functions (for console access)
+// Cache management functions (for console access) - DISABLED
 window.xDiagramsCache = {
   // Get cache statistics
   stats: function() {
-    const stats = CacheManager.getStats();
-            console.log('Cache Statistics:', stats);
-    return stats;
+    console.log('Sistema de caché deshabilitado');
+    return null;
   },
   
   // Clear specific cache entry
   clear: function(url) {
-    CacheManager.clear(url);
-    console.log('Cache cleared for:', url);
+    console.log('Sistema de caché deshabilitado');
   },
   
   // Clear all cache
   clearAll: function() {
-    CacheManager.clearAll();
-    console.log('🗑️ All cache cleared');
+    console.log('Sistema de caché deshabilitado');
   },
   
   // Get cache size
   size: function() {
-    const size = CacheManager.getCacheSize();
-    console.log('📏 Cache size:', size.toFixed(2), 'MB');
-    return size;
+    console.log('Sistema de caché deshabilitado');
+    return 0;
   },
   
   // List all cached URLs
   list: function() {
-    const keys = Object.keys(localStorage);
-    const cacheKeys = keys.filter(key => key.startsWith('xdiagrams_cache_'));
-    
-    console.log('📋 Cached URLs:');
-    cacheKeys.forEach(key => {
-      try {
-        const data = JSON.parse(localStorage.getItem(key));
-        const age = Math.floor((Date.now() - data.timestamp) / (1000 * 60)); // minutes
-        console.log(`  - ${data.url} (${age} min ago)`);
-      } catch (e) {
-        console.log(`  - ${key} (invalid data)`);
-      }
-    });
+    console.log('Sistema de caché deshabilitado');
   },
   
   // Force refresh (clear cache and reload)
   refresh: function(url) {
-    CacheManager.clear(url);
-    console.log('Cache cleared, next load will fetch fresh data for:', url);
+    console.log('Sistema de caché deshabilitado');
   }
 };
 
@@ -4923,15 +4839,9 @@ function isCsvUrl(url) {
          /google\.com\/spreadsheets/i.test(url);
 }
 
-// Load data from REST API (now uses intelligent caching)
+// Load data from REST API
 function loadFromRestApi(apiUrl, onComplete, retryCount = 0, diagramConfig = null) {
-  // Use the enhanced version with caching
-  loadFromRestApiWithCache(apiUrl, onComplete, retryCount, diagramConfig);
-}
-
-// Load data from CSV URL (existing functionality)
-function loadFromCsvUrl(csvUrl, onComplete, retryCount = 0, diagramConfig = null) {
-  console.log("📄 Cargando desde URL CSV:", csvUrl);
+  console.log("[REST API] Cargando desde API REST:", apiUrl);
   
   const loadingElement = document.querySelector("#loading");
   const errorElement = document.querySelector("#error-message");
@@ -4939,13 +4849,93 @@ function loadFromCsvUrl(csvUrl, onComplete, retryCount = 0, diagramConfig = null
   if (loadingElement) loadingElement.style.display = "block";
   if (errorElement) errorElement.style.display = "none";
 
-  // Add cache-busting parameter to force fresh data
-  const cacheBuster = `?t=${Date.now()}`;
-  const urlWithCacheBuster = csvUrl.includes('?') ? `${csvUrl}&_cb=${Date.now()}` : `${csvUrl}${cacheBuster}`;
-  
-  console.log('[Cache] Loading with cache buster:', urlWithCacheBuster);
+  fetch(apiUrl)
+    .then(response => {
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return response.json();
+    })
+    .then(data => {
+      console.log("Datos de API cargados exitosamente:", data);
+      
+      try {
+        // Convert JSON to CSV-like format
+        const csvData = convertJsonToCsvFormat(data);
+        const trees = buildHierarchies(csvData, diagramConfig);
+        drawTrees(trees, diagramConfig);
+        
+        // Create side panel only if enabled
+        if (isOptionEnabled('sidePanel') !== false) {
+          createSidePanel();
+        }
+        
+        // Preserve current theme after loading diagram
+        setTimeout(async () => {
+          if (window.preserveCurrentTheme) {
+            await window.preserveCurrentTheme();
+          }
+        }, 100);
+        
+        console.log("Diagrama cargado desde: REST API | URL: " + apiUrl + " | Registros: " + csvData.length);
+        
+        // Trigger onLoad hook
+        triggerHook('onLoad', { 
+          url: apiUrl, 
+          data: csvData, 
+          trees: trees,
+          sourceType: 'rest-api',
+          timestamp: new Date().toISOString()
+        });
+        
+        if (onComplete && typeof onComplete === 'function') {
+          onComplete();
+        }
+      } catch (error) {
+        console.error("Error durante la inicialización:", error);
+        if (errorElement) errorElement.innerText = `Error: ${error.message}`;
+        if (loadingElement) loadingElement.style.display = "none";
+        
+        if (onComplete && typeof onComplete === 'function') {
+          onComplete();
+        }
+      }
+    })
+    .catch(error => {
+      console.error("Error al cargar datos de API:", error);
+      
+      // Handle retry logic
+      if (retryCount < 2) {
+        console.log(`[Retry] Reintentando en 2 segundos... (intento ${retryCount + 1})`);
+        setTimeout(() => {
+          loadFromRestApi(apiUrl, onComplete, retryCount + 1, diagramConfig);
+        }, 2000);
+        return;
+      }
+      
+      if (errorElement) {
+        errorElement.innerText = `Error: ${error.message}`;
+        errorElement.style.display = "block";
+      }
+      if (loadingElement) loadingElement.style.display = "none";
+      
+      if (onComplete && typeof onComplete === 'function') {
+        onComplete();
+      }
+    });
+}
 
-  Papa.parse(urlWithCacheBuster, {
+// Load data from CSV URL (existing functionality)
+function loadFromCsvUrl(csvUrl, onComplete, retryCount = 0, diagramConfig = null) {
+      console.log("[CSV] Cargando desde URL CSV:", csvUrl);
+  
+  const loadingElement = document.querySelector("#loading");
+  const errorElement = document.querySelector("#error-message");
+  
+  if (loadingElement) loadingElement.style.display = "block";
+  if (errorElement) errorElement.style.display = "none";
+
+  Papa.parse(csvUrl, {
     download: true,
     header: true,
     complete: function(results) {
@@ -5027,7 +5017,7 @@ function loadFromCsvUrl(csvUrl, onComplete, retryCount = 0, diagramConfig = null
                           errorMessage.includes('ERR_CONNECTION_REFUSED');
       
       if (isFileNotFound) {
-        console.log('[File Not Found] Showing "Diagram not found" message');
+        console.log('[Archivo No Encontrado] Mostrando mensaje "Diagrama no encontrado"');
         showDiagramNotFound();
         if (loadingElement) loadingElement.style.display = "none";
         if (onComplete && typeof onComplete === 'function') {
@@ -5066,7 +5056,7 @@ function loadFromObject(diagramObject, onComplete, diagramConfig = null) {
   try {
     // Check if data is valid
     if (!diagramObject.data || !Array.isArray(diagramObject.data) || diagramObject.data.length === 0) {
-      console.log('[Object] Empty or invalid data, showing "Diagram not found"');
+      console.log('[Objeto] Datos vacíos o inválidos, mostrando "Diagrama no encontrado"');
       showDiagramNotFound();
       if (loadingElement) loadingElement.style.display = "none";
       if (onComplete && typeof onComplete === 'function') {
@@ -5107,7 +5097,7 @@ function loadFromObject(diagramObject, onComplete, diagramConfig = null) {
     }
   } catch (error) {
     console.error("Error durante la inicialización del diagrama desde objeto:", error);
-    console.log('[Object] Error processing data, showing "Diagram not found"');
+    console.log('[Objeto] Error procesando datos, mostrando "Diagrama no encontrado"');
     showDiagramNotFound();
     if (loadingElement) loadingElement.style.display = "none";
     
@@ -5149,607 +5139,13 @@ function convertJsonToCsvFormat(jsonData) {
   return dataArray;
 }
 
-// ============================================================================
-// INTELLIGENT CACHE SYSTEM
-// ============================================================================
-
-// Cache TTL constants for easy configuration
-const CACHE_TTL = {
-  // Short durations (development/testing)
-  ONE_MINUTE: 1 * 60 * 1000,
-  FIVE_MINUTES: 5 * 60 * 1000,
-  FIFTEEN_MINUTES: 15 * 60 * 1000,
-  THIRTY_MINUTES: 30 * 60 * 1000,
-  
-  // Medium durations (production)
-  ONE_HOUR: 60 * 60 * 1000,
-  TWO_HOURS: 2 * 60 * 60 * 1000,
-  FOUR_HOURS: 4 * 60 * 60 * 1000,
-  SIX_HOURS: 6 * 60 * 60 * 1000,
-  
-  // Long durations (stable data)
-  TWELVE_HOURS: 12 * 60 * 60 * 1000,
-  ONE_DAY: 24 * 60 * 60 * 1000,
-  THREE_DAYS: 3 * 24 * 60 * 60 * 1000,
-  ONE_WEEK: 7 * 24 * 60 * 60 * 1000,
-  
-  // Special values
-  NO_CACHE: 0,
-  INFINITE: -1
-};
-
-// Cache configuration
-const CACHE_CONFIG = {
-  // Cache duration in milliseconds (default: 1 hour)
-  DEFAULT_TTL: CACHE_TTL.ONE_HOUR,
-  // Maximum cache size in MB
-  MAX_SIZE: 10,
-  // Cache version for invalidation
-  VERSION: '1.0'
-};
-
-// Get cache configuration from user settings or use defaults
-function getCacheConfig() {
-  const userConfig = window.$xDiagrams?.cache || {};
-  return {
-    ttl: userConfig.ttl || CACHE_CONFIG.DEFAULT_TTL,
-    maxSize: userConfig.maxSize || CACHE_CONFIG.MAX_SIZE,
-    version: CACHE_CONFIG.VERSION
-  };
-}
-
-// Cache management functions
-const CacheManager = {
-  // Generate cache key for URL
-  getCacheKey: function(url) {
-    // Use a simple hash function to avoid issues with btoa and special characters
-    let hash = 0;
-    for (let i = 0; i < url.length; i++) {
-      const char = url.charCodeAt(i);
-      hash = ((hash << 5) - hash) + char;
-      hash = hash & hash; // Convert to 32-bit integer
-    }
-    const key = `xdiagrams_cache_${Math.abs(hash)}`;
-    return key;
-  },
-
-  // Get cached data
-  get: function(url) {
-    try {
-      const key = this.getCacheKey(url);
-      const cached = localStorage.getItem(key);
-      
-      if (!cached) {
-        return null;
-      }
-
-      const data = JSON.parse(cached);
-      
-      // Check if cache is expired
-      if (data.expires && Date.now() > data.expires) {
-        localStorage.removeItem(key);
-        return null;
-      }
-
-      // Check cache version
-      const config = getCacheConfig();
-      if (data.version !== config.version) {
-        localStorage.removeItem(key);
-        return null;
-      }
-
-      return data.data;
-    } catch (error) {
-      console.error('📦 [Cache] Error reading cache:', error);
-      return null;
-    }
-  },
-
-  // Set cached data
-  set: function(url, data) {
-    try {
-      const key = this.getCacheKey(url);
-      const config = getCacheConfig();
-      const cacheData = {
-        data: data,
-        timestamp: Date.now(),
-        expires: Date.now() + config.ttl,
-        version: config.version,
-        url: url
-      };
-
-      // Check cache size before storing
-      if (this.getCacheSize() > config.maxSize) {
-        this.cleanup();
-      }
-
-      localStorage.setItem(key, JSON.stringify(cacheData));
-      
-      // Update cache statistics
-      this.updateStats();
-    } catch (error) {
-      console.error('📦 [Cache] Error writing cache:', error);
-    }
-  },
-
-  // Clear specific cache entry
-  clear: function(url) {
-    try {
-      const key = this.getCacheKey(url);
-      localStorage.removeItem(key);
-      console.log('📦 [Cache] Cleared cache for:', url);
-    } catch (error) {
-      console.error('📦 [Cache] Error clearing cache:', error);
-    }
-  },
-
-  // Clear all cache
-  clearAll: function() {
-    try {
-      const keys = Object.keys(localStorage);
-      const cacheKeys = keys.filter(key => key.startsWith('xdiagrams_cache_'));
-      
-      cacheKeys.forEach(key => localStorage.removeItem(key));
-      console.log('📦 [Cache] All cache cleared');
-    } catch (error) {
-      console.error('📦 [Cache] Error clearing all cache:', error);
-    }
-  },
-
-  // Get cache size in MB
-  getCacheSize: function() {
-    try {
-      const keys = Object.keys(localStorage);
-      const cacheKeys = keys.filter(key => key.startsWith('xdiagrams_cache_'));
-      
-      let totalSize = 0;
-      cacheKeys.forEach(key => {
-        totalSize += localStorage.getItem(key).length;
-      });
-      
-      return totalSize / (1024 * 1024); // Convert to MB
-    } catch (error) {
-      console.error('📦 [Cache] Error calculating cache size:', error);
-      return 0;
-    }
-  },
-
-  // Cleanup old cache entries
-  cleanup: function() {
-    try {
-      const keys = Object.keys(localStorage);
-      const cacheKeys = keys.filter(key => key.startsWith('xdiagrams_cache_'));
-      
-      const cacheEntries = cacheKeys.map(key => {
-        try {
-          const data = JSON.parse(localStorage.getItem(key));
-          return { key, timestamp: data.timestamp, expires: data.expires };
-        } catch {
-          return { key, timestamp: 0, expires: 0 };
-        }
-      });
-
-      // Sort by timestamp (oldest first)
-      cacheEntries.sort((a, b) => a.timestamp - b.timestamp);
-
-      // Remove oldest entries until we're under the limit
-      const config = getCacheConfig();
-      const maxEntries = Math.floor(config.maxSize * 2); // Rough estimate
-      if (cacheEntries.length > maxEntries) {
-              const toRemove = cacheEntries.slice(0, cacheEntries.length - maxEntries);
-      toRemove.forEach(entry => {
-        localStorage.removeItem(entry.key);
-      });
-    }
-  } catch (error) {
-    console.error('📦 [Cache] Error during cleanup:', error);
-  }
-},
-
-// Update cache statistics
-updateStats: function() {
-  try {
-    const keys = Object.keys(localStorage);
-    const cacheKeys = keys.filter(key => key.startsWith('xdiagrams_cache_'));
-    
-    const stats = {
-      entries: cacheKeys.length,
-      size: this.getCacheSize(),
-      timestamp: Date.now()
-    };
-
-    localStorage.setItem('xdiagrams_cache_stats', JSON.stringify(stats));
-  } catch (error) {
-    console.error('Error updating cache stats:', error);
-    }
-  },
-
-  // Get cache statistics
-  getStats: function() {
-    try {
-      const stats = localStorage.getItem('xdiagrams_cache_stats');
-      return stats ? JSON.parse(stats) : { entries: 0, size: 0, timestamp: 0 };
-    } catch (error) {
-      console.error('📦 [Cache] Error reading stats:', error);
-      return { entries: 0, size: 0, timestamp: 0 };
-    }
-  },
-
-  // Check if URL should be cached
-  shouldCache: function(url) {
-    // 1) Evitar caché para archivos locales (mismo origen o rutas relativas)
-    try {
-      const parsed = new URL(url, window.location.href);
-      if (parsed.origin === window.location.origin) {
-        return false;
-      }
-    } catch (e) {
-      // Si falla el parseo asumimos que es una ruta relativa → local
-      return false;
-    }
-
-    // 2) Para URLs remotas, aplicar la caché solo si son endpoints REST
-    return isRestApiEndpoint(url);
-  }
-};
 
 
 
-// Enhanced loadFromRestApi with intelligent caching
-function loadFromRestApiWithCache(apiUrl, onComplete, retryCount = 0, diagramConfig = null) {
-  console.log("🌐 Cargando desde API REST:", apiUrl);
-  console.log("🔍 [Cache] Function called with URL:", apiUrl);
-  
-  // Debug: Check all cache entries before processing
-  const allKeys = Object.keys(localStorage);
-  const cacheKeys = allKeys.filter(key => key.startsWith('xdiagrams_cache_'));
-  console.log("🔍 [Cache] All cache keys before processing:", cacheKeys);
-  if (cacheKeys.length > 0) {
-    cacheKeys.forEach(key => {
-      try {
-        const data = JSON.parse(localStorage.getItem(key));
-        console.log("🔍 [Cache] Found cache entry:", key, "for URL:", data.url);
-      } catch (e) {
-        console.log("🔍 [Cache] Invalid cache entry:", key);
-      }
-    });
-  }
-  
-  const loadingElement = document.querySelector("#loading");
-  const errorElement = document.querySelector("#error-message");
-  
-  if (loadingElement) loadingElement.style.display = "block";
-  if (errorElement) errorElement.style.display = "none";
 
-  // Check cache first
-  console.log("🔍 [Cache] Checking if should cache:", apiUrl);
-  const shouldCache = CacheManager.shouldCache(apiUrl);
-  console.log("🔍 [Cache] Should cache result:", shouldCache);
-  
-  if (shouldCache) {
-    console.log("✅ [Cache] URL is cacheable, checking cache...");
-    const cachedData = CacheManager.get(apiUrl);
-    console.log("🔍 [Cache] Cache result:", cachedData ? "FOUND" : "NOT FOUND");
-    if (cachedData) {
-      console.log("📦 [Cache] Using cached data, skipping API call");
-      
-      try {
-        const trees = buildHierarchies(cachedData, diagramConfig);
-        drawTrees(trees, diagramConfig);
-        
-        // Create side panel only if enabled
-        if (isOptionEnabled('sidePanel') !== false) {
-          createSidePanel();
-        }
-        
-        // Preserve current theme after loading diagram
-        setTimeout(async () => {
-          if (window.preserveCurrentTheme) {
-            await window.preserveCurrentTheme();
-          }
-        }, 100);
-        
-        console.log("Diagrama cargado desde: CACHE | URL: " + apiUrl + " | Registros: " + cachedData.length);
-        
-        // Trigger onLoad hook
-        triggerHook('onLoad', { 
-          url: apiUrl, 
-          data: cachedData, 
-          trees: trees,
-          sourceType: 'rest-api-cached',
-          timestamp: new Date().toISOString()
-        });
-        
-        if (onComplete && typeof onComplete === 'function') {
-          onComplete();
-        }
-        return;
-      } catch (error) {
-        console.error("❌ Error procesando datos del cache:", error);
-        // Fall back to API call
-        console.log("🔄 Fallback: cargando desde API...");
-      }
-    }
-  }
 
-  // Add cache-busting parameter (only if not using cache)
-  const cacheBuster = `?t=${Date.now()}`;
-  const urlWithCacheBuster = apiUrl.includes('?') ? `${apiUrl}&_cb=${Date.now()}` : `${apiUrl}${cacheBuster}`;
-  
-  fetch(urlWithCacheBuster)
-    .then(response => {
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      }
-      return response.json();
-    })
-    .then(jsonData => {
-      console.log("✅ JSON cargado exitosamente:", jsonData);
-      
-      // Convert JSON to CSV-like format
-      const csvData = convertJsonToCsvFormat(jsonData);
-      
-      if (!csvData || csvData.length === 0) {
-        throw new Error('No se encontraron datos válidos en la respuesta JSON');
-      }
 
-      // Cache the data if appropriate
-      console.log("🔍 [Cache] Checking if should cache after fetch:", apiUrl);
-      if (CacheManager.shouldCache(apiUrl)) {
-        console.log("✅ [Cache] Caching data for:", apiUrl);
-        CacheManager.set(apiUrl, csvData);
-      } else {
-        console.log("❌ [Cache] Not caching data for:", apiUrl);
-      }
-      
-      // Process the data
-      const trees = buildHierarchies(csvData, diagramConfig);
-      drawTrees(trees, diagramConfig);
-      
-      // Create side panel only if enabled
-      if (isOptionEnabled('sidePanel') !== false) {
-        createSidePanel();
-      }
-      
-      // Preserve current theme after loading diagram
-      setTimeout(async () => {
-        if (window.preserveCurrentTheme) {
-          await window.preserveCurrentTheme();
-        }
-      }, 100);
-      
-      console.log("Diagrama cargado desde: API REST | URL: " + apiUrl + " | Registros: " + csvData.length);
-      
-      // Trigger onLoad hook
-      triggerHook('onLoad', { 
-        url: apiUrl, 
-        data: csvData, 
-        trees: trees,
-        sourceType: 'rest-api',
-        timestamp: new Date().toISOString()
-      });
-      
-      if (onComplete && typeof onComplete === 'function') {
-        onComplete();
-      }
-    })
-    .catch(error => {
-      console.error("❌ Error cargando desde API REST:", error);
-      
-      // Handle retry logic for network errors
-      if (retryCount < 2 && (error.message.includes('Failed to fetch') || error.message.includes('NetworkError'))) {
-        console.log(`[Retry] Network error detected, retrying in 2 seconds... (attempt ${retryCount + 1})`);
-        setTimeout(() => {
-          loadFromRestApiWithCache(apiUrl, onComplete, retryCount + 1);
-        }, 2000);
-        return;
-      }
-      
-      // Show error
-      if (errorElement) {
-        errorElement.innerText = `Error cargando API: ${error.message}`;
-        errorElement.style.display = "block";
-      }
-      if (loadingElement) loadingElement.style.display = "none";
-      
-      if (onComplete && typeof onComplete === 'function') {
-        onComplete();
-      }
-    });
-}
 
-// Nueva función: configurar botón de refresco global
-function setupDataRefreshButton() {
-  const refreshBtn = document.getElementById('data-refresh');
-  if (!refreshBtn) {
-    console.warn('[Refresh] Botón de refresh no encontrado');
-    return;
-  }
 
-  // Eliminar posibles listeners previos clonando el nodo
-  const newBtn = refreshBtn.cloneNode(true);
-  refreshBtn.parentNode.replaceChild(newBtn, refreshBtn);
 
-  newBtn.addEventListener('click', (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    console.log('[Refresh] Click en botón de refresh');
 
-    // Animación de carga
-    newBtn.classList.add('loading');
-
-    // Limpiar caché inteligente
-    if (window.xDiagramsCache && window.xDiagramsCache.clearAll) {
-      window.xDiagramsCache.clearAll();
-    }
-    // Limpiar caché heredada
-    if (window.$xDiagrams && window.$xDiagrams.clearCache) {
-      window.$xDiagrams.clearCache();
-    }
-
-    // Vaciar diagramas cargados en memoria
-    if (window.$xDiagrams && window.$xDiagrams.loadedDiagrams) {
-      window.$xDiagrams.loadedDiagrams.clear();
-    }
-
-    // Recargar diagrama actual
-    const diagrams = typeof getDiagrams === 'function' ? getDiagrams() : [];
-    const idx = window.$xDiagrams && typeof window.$xDiagrams.currentDiagramIdx === 'number' ? window.$xDiagrams.currentDiagramIdx : 0;
-    const currentDiagram = diagrams && diagrams[idx] ? diagrams[idx] : null;
-
-    if (currentDiagram && window.$xDiagrams && typeof window.$xDiagrams.loadDiagram === 'function') {
-      setTimeout(() => {
-        window.$xDiagrams.loadDiagram(currentDiagram);
-        // Quitar animación tras recarga
-        setTimeout(() => newBtn.classList.remove('loading'), 1000);
-      }, 120);
-    } else {
-      // Fallback: recargar página
-      setTimeout(() => window.location.reload(), 300);
-    }
-  });
-}
-
-// Preload common thumbnail images to prevent Chrome's default image flash
-function preloadCommonImages() {
-  const commonImages = [
-    'detail', 'document', 'settings', 'form', 'list', 'modal', 
-    'mosaic', 'report', 'file-csv', 'file-pdf', 'file-xls', 'file-xml',
-    'home', 'transparent'
-  ].map(name => name.toLowerCase().replace(/\s+/g, '-'));
-  
-  let loadedCount = 0;
-  const totalImages = commonImages.length;
-  
-  commonImages.forEach(imageName => {
-    const img = new Image();
-    img.onload = function() {
-      loadedCount++;
-      if (loadedCount === totalImages) {
-        console.log('🖼️ [Preload] All common images preloaded successfully');
-      }
-    };
-    img.onerror = function() {
-      console.warn(`[Preload] Failed to load image: ${imageName}.svg`);
-      loadedCount++;
-      if (loadedCount === totalImages) {
-        console.log('🖼️ [Preload] Common images preload completed with some errors');
-      }
-    };
-    img.src = `img/${imageName}.svg?t=${Date.now()}`;
-  });
-}
-
-// Enhanced image loading with better error handling
-function createImageElement(baseUrl, fallbackUrl, className = "image-base") {
-  const img = new Image();
-  const cacheBuster = `?t=${Date.now()}`;
-  const finalUrl = baseUrl.includes('?') ? `${baseUrl}&_cb=${Date.now()}` : `${baseUrl}${cacheBuster}`;
-  
-  img.onload = function() {
-    // Image loaded successfully
-    this.classList.add('loaded');
-    // Solo aplicar el filtro si es necesario
-    if (shouldApplyFilter(baseUrl)) {
-      this.classList.add('image-filter');
-    }
-  };
-  
-  img.onerror = function() {
-    // Try fallback
-    if (fallbackUrl && this.src !== fallbackUrl) {
-      this.src = fallbackUrl;
-      // Verificar si el fallback necesita filtro
-      if (shouldApplyFilter(fallbackUrl)) {
-        this.classList.add('image-filter');
-      } else {
-        this.classList.remove('image-filter');
-      }
-    } else {
-      // If fallback also fails, hide the image
-      this.style.display = 'none';
-    }
-  };
-  
-  img.src = finalUrl;
-  img.className = className;
-  
-  return img;
-}
-
-// Helper function to resolve node image URL - FORZAR uso de columna img, solo usar type si img está vacío
-function resolveNodeImage(node) {
-  // Obtener valor de la columna img directamente del nodo
-  const imgVal = node.img || (node.data && node.data.img) || "";
-  const typeVal = node.type || (node.data && node.data.type) || "";
-
-  // SIEMPRE usar img si tiene valor (prioridad absoluta)
-  if (imgVal && imgVal.trim() !== "") {
-    // Si es una URL absoluta, data URI o ruta con barra, úsala directamente
-    if (/^(https?:\/\/|data:|\/)/i.test(imgVal) || imgVal.includes('/')) {
-      return imgVal;
-    }
-    // Normalizar nombres simples (sin barra) y asegurarse de extensión .svg
-    let fileName = imgVal.toLowerCase().replace(/\s+/g, '-');
-    if (!fileName.match(/\.[a-z0-9]+$/i)) {
-      fileName += '.svg';
-    }
-    return `img/${fileName}`;
-  }
-
-  // SOLO si img está completamente vacío, usar type como fallback
-  const typeName = (typeVal || 'detail').toLowerCase().replace(/\s+/g, '-');
-  return `img/${typeName}.svg`;
-}
-
-// Helper: determine if CSS filter should be applied (para archivos SVG)
-function shouldApplyFilter(url) {
-  // Si es una URL de datos (data URI), no aplicar filtro
-  if (url.startsWith('data:')) return false;
-  
-  // Si es una URL externa (http/https), no aplicar filtro
-  if (url.match(/^https?:\/\//i)) return false;
-  
-  // Extraer el nombre del archivo sin parámetros
-  const baseUrl = url.split('?')[0].toLowerCase();
-  
-  // Si no es un archivo SVG, no aplicar filtro
-  if (!baseUrl.endsWith('.svg')) return false;
-  
-  // Aplicar filtro a todas las imágenes locales SVG
-  return true;
-}
-
-// ============================================================================
-// AUTO LOGO DETECTION
-// ============================================================================
-
-// Function to detect logo files automatically in img folder
-function detectAutoLogo() {
-  const logoExtensions = ['svg', 'png', 'jpg', 'jpeg'];
-  const imgPath = 'img/';
-  
-  // Check if any logo file exists by trying to load them
-  for (const ext of logoExtensions) {
-    const logoUrl = `${imgPath}logo.${ext}`;
-    
-    // Create a test image to check if file exists
-    const testImg = new Image();
-    testImg.onload = function() {
-      // If image loads successfully, set it as auto logo
-      if (!window.$xDiagrams.logo) {
-        window.$xDiagrams.logo = logoUrl;
-        console.log('[Auto Logo] Logo detectado automáticamente:', logoUrl);
-        
-        // Update the topbar if it already exists
-        if (window.$xDiagrams.updateTopbarTitle) {
-          window.$xDiagrams.updateTopbarTitle(window.$xDiagrams.currentDiagramIdx || 0);
-        }
-      }
-    };
-    testImg.onerror = function() {
-      // File doesn't exist, continue to next extension
-    };
-    testImg.src = logoUrl;
-  }
-}

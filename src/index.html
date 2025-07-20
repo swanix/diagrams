@@ -16,6 +16,10 @@
     title: "Diagrams",
     diagrams: [ 
       {
+        name: "Test",
+        url: ""
+      },
+      {
         name: "Google Sheets", 
         url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vT1F3LXPwnGlnF_uOlhoR-5kK1DrWLwlCAKH8Ag6hPrNLzwqWYWU8ofE19xSv4cH1-Cq7ZYm7lPys7V/pub?output=csv",
         edit: "https://docs.google.com/spreadsheets/d/12XSWGm6CAkv7SVSeBU0dtS3dhqc1dLasoxWqsW2AX40/edit?gid=0#gid=0"
@@ -118,6 +122,31 @@
           status: "status",
           joinDate: "joinDate"
         }
+      },
+      {
+        name: "Test Img Priority",
+        url: "data/test-img-priority.csv",
+        cols: {
+          id: "ID",
+          name: "Name",
+          parent: "Parent",
+          type: "Type",
+          subtitle: "Subtitle",
+          url: "URL",
+          img: "Img"
+        }
+      },
+      {
+        name: "Thumbnails Embebidos",
+        url: "data/test-embedded-thumbnails.csv",
+        grid: 5,
+        cols: {
+          id: "ID",
+          name: "Name",
+          type: "Type",
+          img: "Img",
+          subtitle: "Description"
+        }
       }
     ],
     themes: {
@@ -129,7 +158,7 @@
       id: "Node",
       name: "Name", 
       parent: "Parent",
-      img: "Type",
+      img: "Img",
       url: "URL",
       type: "Type",
       subtitle: "Description"
@@ -158,6 +187,7 @@
     }
   };
 </script>
+  <script src="thumbnail-engine.js"></script>
 <script src="xdiagrams.js"></script>
 </body>
 </html> 

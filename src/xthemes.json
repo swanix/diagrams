@@ -15,9 +15,17 @@
     "--node-selection-hover": "#616161",
     "--node-selection-selected": "#424242",
 
+    "--thumb-bg": "red",
+    "--thumb-bg-border": "transparent",
+    "--thumb-border-radius": "0",
+    "--thumb-padding": "0",
+    "--thumb-shadow": "none",
+    "--thumb-fill": "purple",
+    "--thumb-strokes": "transparent",
+
     "--conector-stroke": "#999",
 
-    "--cluster-bg": "rgba(0,0,0,0.04)",
+    "--cluster-bg": "rgba(0,0,0,0.09)",
     "--cluster-stroke": "rgba(0,0,0,0.1)",
     "--cluster-title-color": "#222",
     "--cluster-padding-x": "220",
@@ -128,6 +136,14 @@
     "--node-selection-focus": "#00eaff",
     "--node-selection-hover": "#00b8cc",
     "--node-selection-selected": "#00eaff",
+
+    "--thumb-bg": "transparent",
+    "--thumb-bg-border": "transparent",
+    "--thumb-border-radius": "0",
+    "--thumb-padding": "0",
+    "--thumb-shadow": "none",
+    "--thumb-fill": "green",
+    "--thumb-strokes": "transparent",
 
     "--conector-stroke": "#666",
 
@@ -240,6 +256,14 @@
     "--node-selection-hover": "#a0522d",
     "--node-selection-selected": "#8b4513",
 
+    "--thumb-bg": "transparent",
+    "--thumb-bg-border": "transparent",
+    "--thumb-border-radius": "0",
+    "--thumb-padding": "0",
+    "--thumb-shadow": "none",
+    "--thumb-fill": "#8b4513",
+    "--thumb-strokes": "transparent",
+
     "--conector-stroke": "#8b7355",
 
     "--cluster-bg": "rgba(139, 69, 19, 0.05)",
@@ -350,6 +374,14 @@
     "--node-selection-focus": "#a8b4f5",
     "--node-selection-hover": "#8b9af0",
     "--node-selection-selected": "#a8b4f5",
+
+    "--thumb-bg": "transparent",
+    "--thumb-bg-border": "transparent",
+    "--thumb-border-radius": "0",
+    "--thumb-padding": "0",
+    "--thumb-shadow": "none",
+    "--thumb-fill": "#a8b4f5",
+    "--thumb-strokes": "transparent",
 
     "--conector-stroke": "#b8c5d6",
 
@@ -462,6 +494,14 @@
     "--node-selection-hover": "#00cc6a",
     "--node-selection-selected": "#00ff88",
 
+    "--thumb-bg": "transparent",
+    "--thumb-bg-border": "transparent",
+    "--thumb-border-radius": "0",
+    "--thumb-padding": "0",
+    "--thumb-shadow": "none",
+    "--thumb-fill": "#00ff41",
+    "--thumb-strokes": "transparent",
+
     "--conector-stroke": "#00ff88",
 
     "--cluster-bg": "rgba(0, 255, 65, 0.05)",
@@ -571,6 +611,14 @@
     "--node-selection-focus": "#4caf50",
     "--node-selection-hover": "#45a049",
     "--node-selection-selected": "#4caf50",
+
+    "--thumb-bg": "transparent",
+    "--thumb-bg-border": "transparent",
+    "--thumb-border-radius": "0",
+    "--thumb-padding": "0",
+    "--thumb-shadow": "none",
+    "--thumb-fill": "#4caf50",
+    "--thumb-strokes": "transparent",
 
     "--conector-stroke": "#6b8e6b",
 

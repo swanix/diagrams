@@ -1,0 +1,9 @@
+ID,Name,Parent,Type,Description,URL,Img
+1,Inicio,,page,Esta es la página principal del sitio web,/home,home
+2,Productos,1,list,Lista de todos los productos disponibles,/products,list
+3,Contacto,1,form,Formulario de contacto para clientes,/contact,form
+4,Acerca de,1,detail,Información detallada sobre la empresa,/about,detail
+5,Documentos,1,document,Documentos y recursos descargables,/docs,document
+6,Configuración,1,settings,Panel de configuración del sistema,/settings,settings
+7,Reportes,1,report,Reportes y estadísticas del sistema,/reports,report
+8,Perfil,1,profile,Perfil de usuario y configuración personal,/profile,profile 

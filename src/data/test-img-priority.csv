@@ -1,0 +1,11 @@
+ID,Parent,Name,Type,Subtitle,URL,Img
+ROOT,,Swanix,detail,Empresa de tecnología,https://swanix.com,
+DEV,ROOT,Desarrollo,detail,Equipo de desarrollo,https://github.com/swanix,
+FE,DEV,Frontend,detail,Desarrollo frontend,https://reactjs.org,https://cdn.jsdelivr.net/gh/devicons/devicon/icons/react/react-original.svg
+BE,DEV,Backend,detail,Desarrollo backend,https://nodejs.org,https://cdn.jsdelivr.net/gh/devicons/devicon/icons/nodejs/nodejs-original.svg
+DB,DEV,Base de Datos,detail,Gestión de datos,https://postgresql.org,https://cdn.jsdelivr.net/gh/devicons/devicon/icons/postgresql/postgresql-original.svg
+UI,DEV,Diseño UI,detail,Interfaz de usuario,https://figma.com,https://cdn.jsdelivr.net/gh/devicons/devicon/icons/figma/figma-original.svg
+UX,DEV,Experiencia,detail,Experiencia de usuario,https://adobe.com,https://cdn.jsdelivr.net/gh/devicons/devicon/icons/adobe/adobe-original.svg
+TEST,ROOT,Testing,detail,Pruebas y QA,https://jestjs.io,https://cdn.jsdelivr.net/gh/devicons/devicon/icons/jest/jest-plain.svg
+DEPLOY,ROOT,Despliegue,detail,CI/CD y DevOps,https://docker.com,https://cdn.jsdelivr.net/gh/devicons/devicon/icons/docker/docker-original.svg
+DOCS,ROOT,Documentación,detail,Documentación técnica,https://docs.github.com,https://cdn.jsdelivr.net/gh/devicons/devicon/icons/github/github-original.svg 

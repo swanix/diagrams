@@ -1,0 +1,6 @@
+ID,Name,Type,Img,Description
+1,Detalle,detail,,Componente de detalle
+2,Documento,document,,Documento del sistema
+3,Configuración,settings,,Configuración
+4,Formulario,form,,Formulario de datos
+5,Lista,list,,Lista de elementos 

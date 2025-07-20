@@ -1,0 +1,10 @@
+ID,Parent,Section,URL,Type,Description,Img
+ONB,,INICIO,,List,Main,https://alegra.design/monitor/img/section-home.svg
+ONB-F1,ONB,Iniciar sesión,https://app.alegra.com/user/login,Form,,
+ONB-F2,ONB,Crear cuenta,https://app.alegra.com/user/register,Form,,https://images.unsplash.com/photo-1438761681033-6461ffad8d80?q=80&w=256&auto=format
+ONB-F2A,ONB-F2,Wizard onboarding,,Form,,
+ONB-F2B,ONB-F1,Inicio,https://app.alegra.com/,Home,,
+INC,,INGRESOS,,Grid,Main,https://alegra.design/monitor/img/section-income.svg
+ONB-F3,INC,Wizard FE,https://mi.alegra.com/fe-wizard,Form,,
+INC-F1,INC,Facturas de venta,https://app.alegra.com/invoice,List,,
+INC-F1A,INC-F1,Nueva factura de venta,https://app.alegra.com/invoice/add,Form,, 

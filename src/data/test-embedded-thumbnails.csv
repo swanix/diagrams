@@ -1,0 +1,21 @@
+ID,Name,Type,Img,Description
+1,Configuración del Sistema,system,settings,Panel de configuración principal
+2,Documento Principal,document,document,Documento base del proyecto
+3,Formulario de Contacto,form,form,Formulario para contacto de usuarios
+4,Lista de Usuarios,list,list,Lista completa de usuarios registrados
+5,Reporte Mensual,report,report,Reporte de actividades del mes
+6,Modal de Confirmación,modal,modal,Ventana modal para confirmaciones
+7,Archivo CSV de Datos,file,file-csv,Archivo con datos en formato CSV
+8,Documento PDF,file,file-pdf,Documento en formato PDF
+9,Hoja de Cálculo,file,file-xls,Archivo Excel con cálculos
+10,Archivo XML,file,file-xml,Archivo de configuración XML
+11,Página HTML,file,file-html,Página web en HTML
+12,Script JavaScript,file,file-js,Código JavaScript
+13,Hoja de Estilos,file,file-css,Archivo CSS para estilos
+14,Archivo de Texto,file,file-txt,Documento de texto plano
+15,Documento Word,file,file-docx,Documento de Microsoft Word
+16,Página de Inicio,page,home,Página principal del sitio
+17,Perfil de Usuario,user,profile,Perfil del usuario actual
+18,Logo de la Empresa,brand,logo,Logo corporativo
+19,Detalle de Producto,product,detail,Detalles del producto
+20,Mosaico de Imágenes,gallery,mosaic,Galería de imágenes en mosaico 

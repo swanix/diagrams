@@ -1132,8 +1132,8 @@ svg .node.node-selected {
   --image-filter: grayscale(30%); /* Filtro sutil para tema snow */
   --loading-color: #1976d2; /* Azul corporativo para el spinner */
   --loading-bg: #ffffff; /* Fondo blanco para el loading */
-  --bg-image: url('img/backgrounds/light-pattern.svg'); /* Patrón sutil de puntos */
-  --bg-opacity: 0.9; /* Opacidad reducida para ver el patrón */
+  --bg-image: none; /* Sin imagen de fondo por defecto */
+  --bg-opacity: 1; /* Opacidad completa */
   /* Variables específicas para controles */
   --control-bg: #ffffff;
   --control-text: #333333;
@@ -1169,8 +1169,8 @@ svg .node.node-selected {
   --image-filter: invert(100%) brightness(3.5) contrast(200%); /* Invertir colores para tema onyx */
   --loading-color: #00eaff; /* Cyan brillante para el spinner */
   --loading-bg: #23272f; /* Fondo oscuro para el loading */
-  --bg-image: url('img/backgrounds/dark-grid.svg'); /* Imagen de fondo oscura local */
-  --bg-opacity: 0.9; /* Opacidad reducida para ver la imagen claramente */
+  --bg-image: none; /* Sin imagen de fondo por defecto */
+  --bg-opacity: 1; /* Opacidad completa */
   /* Variables específicas para controles */
   --control-bg: #2d3748;
   --control-text: #e2e8f0;
@@ -1206,8 +1206,8 @@ svg .node.node-selected {
   --image-filter: sepia(40%) brightness(1.1); /* Efecto vintage */
   --loading-color: #8b4513; /* Marrón vintage para el spinner */
   --loading-bg: #fffbe6; /* Fondo crema vintage para el loading */
-  --bg-image: url('img/backgrounds/vintage-texture.svg'); /* Textura vintage */
-  --bg-opacity: 0.8; /* Opacidad reducida para ver la textura */
+  --bg-image: none; /* Sin imagen de fondo por defecto */
+  --bg-opacity: 1; /* Opacidad completa */
   /* Variables específicas para controles */
   --control-bg: #fef7e0;
   --control-text: #5d4037;
@@ -1243,8 +1243,8 @@ svg .node.node-selected {
   --image-filter: hue-rotate(15deg) saturate(0.8); /* Tono pastel */
   --loading-color: #b6b6f7; /* Lila pastel para el spinner */
   --loading-bg: #ffffff; /* Fondo blanco para el loading */
-  --bg-image: url('img/backgrounds/pastel-dots.svg'); /* Puntos pastel */
-  --bg-opacity: 0.85; /* Opacidad reducida para ver los puntos */
+  --bg-image: none; /* Sin imagen de fondo por defecto */
+  --bg-opacity: 1; /* Opacidad completa */
   /* Variables específicas para controles */
   --control-bg: #ffffff;
   --control-text: #7a7a7a;
@@ -1280,8 +1280,8 @@ svg .node.node-selected {
   --image-filter: invert(100%) brightness(3.5) contrast(200%); /* Invertir colores para tema neon */
   --loading-color: #00ffe7; /* Cyan neon para el spinner */
   --loading-bg: #1a0033; /* Fondo púrpura oscuro para el loading */
-  --bg-image: url('img/backgrounds/neon-grid.svg'); /* Imagen de fondo neon local */
-  --bg-opacity: 0.9; /* Opacidad reducida para ver la imagen claramente */
+  --bg-image: none; /* Sin imagen de fondo por defecto */
+  --bg-opacity: 1; /* Opacidad completa */
   /* Variables específicas para controles */
   --control-bg: #2a0040;
   --control-text: #00ffe7;

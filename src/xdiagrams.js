@@ -6081,11 +6081,13 @@ const EMBEDDED_THUMBNAILS = {
 </svg>
 `,
   
-'logo': `<svg width="200" height="180" viewBox="0 0 200 180" fill="none" xmlns="http://www.w3.org/2000/svg">
+'logo': `
+<svg width="200" height="180" viewBox="0 0 200 180" fill="none" xmlns="http://www.w3.org/2000/svg">
 <rect x="20" y="20" width="160" height="140" fill="black" fill-opacity="0.05"/>
 <circle cx="100" cy="90" r="40" fill="black" fill-opacity="0.1"/>
 <text x="100" y="100" text-anchor="middle" font-family="Arial, sans-serif" font-size="24" font-weight="bold" fill="black" fill-opacity="0.3">LOGO</text>
-</svg>`,
+</svg>`
+,
   
 // Thumbnails para tipos problemáticos que causaban loop infinito
 'custom': `

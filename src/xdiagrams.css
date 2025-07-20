@@ -361,12 +361,13 @@
   }
   
   /* Estilos para thumbnails embebidos */
-  .embedded-thumbnail {
-      opacity: var(--thumb-opacity, 0.8);
-  transition: all 0.3s ease-in-out;
-  transform: scale(1.0) rotate(0deg);
-  filter: var(--thumb-filter, none);
-  border-radius: 0px;
+    .embedded-thumbnail {
+    opacity: var(--thumb-opacity, 0.8);
+    transition: none !important;
+    transform: scale(1.0) rotate(0deg);
+    filter: var(--thumb-filter, none);
+    border-radius: 0px;
+    animation: none !important;
     
       /* Hacer independiente de los estilos del nodo padre */
   stroke: var(--thumb-stroke, transparent) !important;
@@ -383,7 +384,7 @@
   }
   
   .embedded-thumbnail.fade-in {
-    animation: fadeIn 0.8s ease-in-out;
+    /* Eliminada la animación fadeIn para evitar efectos de fade out */
   }
   
   /* Asegurar que los thumbnails embebidos usen las variables CSS para colores */
@@ -406,8 +407,9 @@
     stroke-width: 0px !important;
     outline: none !important;
     box-shadow: none !important;
-    
     background: transparent !important;
+    transition: none !important;
+    animation: none !important;
   }
   
   /* Prevenir efectos hover del nodo en thumbnails embebidos */
@@ -417,7 +419,8 @@
     stroke-width: 0px !important;
     outline: none !important;
     box-shadow: none !important;
-    
+    transition: none !important;
+    animation: none !important;
   }
   
   /* Prevenir efectos de selección del nodo en thumbnails embebidos */
@@ -520,7 +523,7 @@
   
   /* Efectos hover para thumbnails embebidos */
   .embedded-thumbnail:hover {
-    transform: scale(1.05) rotate(var(--thumb-rotation, 0deg));
+    transform: scale(1.05) rotate(0deg);
     filter: var(--thumb-filter, none);
     
     /* Mantener independencia de estilos del nodo padre */

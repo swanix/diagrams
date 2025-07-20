@@ -57,7 +57,7 @@ There are two ways to set images for nodes:
 - xml
 - csv
 - xls
-- mosaic
+- grid
 
 #### Covers
 

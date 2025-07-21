@@ -30,7 +30,7 @@
     --flatlist-left-margin: 20px; /* Margen izquierdo para listas planas */
 
     /* ===== Links and Labels ===== */
-    --conector-stroke: #999;
+    --node-connector: #999;
     --node-stroke: #bdbdbd;
 
     /* ===== Clusters ===== */
@@ -178,7 +178,7 @@
       --node-stroke-focus: #fff;
 
       /* ===== Links and Labels ===== */
-      --conector-stroke: #666;
+      --node-connector: #666;
       --node-stroke: #787878;
 
       /* ===== Clusters ===== */
@@ -286,7 +286,7 @@
 
   .link {
     fill: none;
-    stroke: var(--conector-stroke);
+    stroke: var(--node-connector);
     stroke-width: 2px;
   }
 
@@ -1130,7 +1130,7 @@ svg .node.node-selected {
   --node-fill: #fff;
   --node-stroke-focus: #1976d2;
   --node-stroke: #bdbdbd;
-  --conector-stroke: #999;
+  --node-connector: #999;
   --side-panel-bg: #fff;
   --side-panel-text: #222;
   --side-panel-header-bg: #f8f9fa;
@@ -1167,7 +1167,7 @@ svg .node.node-selected {
   --node-fill: #23272f;
   --node-stroke-focus: #00eaff;
   --node-stroke: #444;
-  --conector-stroke: #666;
+  --node-connector: #666;
   --side-panel-bg: #23272f;
   --side-panel-text: #f6f7f9;
   --side-panel-header-bg: #23272f;
@@ -1204,7 +1204,7 @@ svg .node.node-selected {
   --node-fill: #fffbe6;
   --node-stroke-focus: #b97a56;
   --node-stroke: #b97a56;
-  --conector-stroke: #b97a56;
+  --node-connector: #b97a56;
   --side-panel-bg: #fffbe6;
   --side-panel-text: #7c4f20;
   --side-panel-header-bg: #f5e9da;
@@ -1241,7 +1241,7 @@ svg .node.node-selected {
   --node-fill: #fff;
   --node-stroke-focus: #b6b6f7;
   --node-stroke: #e0b1cb;
-  --conector-stroke: #b6b6f7;
+  --node-connector: #b6b6f7;
   --side-panel-bg: #fff;
   --side-panel-text: #7a7a7a;
   --side-panel-header-bg: #fdf6fb;
@@ -1278,7 +1278,7 @@ svg .node.node-selected {
   --node-fill: #1a0033;
   --node-stroke-focus: #ff00c8;
   --node-stroke: #00ffe7;
-  --conector-stroke: #ff00c8;
+  --node-connector: #ff00c8;
   --side-panel-bg: #1a0033;
   --side-panel-text: #00ffe7;
   --side-panel-header-bg: #0f0026;

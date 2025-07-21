@@ -2784,7 +2784,7 @@ function updateSVGColors() {
     textColor: computedStyle.getPropertyValue('--text-color'),
     nodeFill: computedStyle.getPropertyValue('--node-fill'),
                     labelBorder: computedStyle.getPropertyValue('--node-stroke'),
-        linkColor: computedStyle.getPropertyValue('--conector-stroke'),
+        linkColor: computedStyle.getPropertyValue('--node-connector'),
     clusterBg: computedStyle.getPropertyValue('--cluster-bg'),
     clusterStroke: computedStyle.getPropertyValue('--cluster-stroke'),
     clusterTitleColor: computedStyle.getPropertyValue('--cluster-title-color'),
@@ -3769,7 +3769,9 @@ window.$xDiagrams.updateTopbarTitle = function(diagramIndex) {
     
     // If still no logo, try auto-detection
     if (!logoUrl) {
-        detectAutoLogo();
+        detectAutoLogo().catch(error => {
+            console.log('[Auto Logo] Error durante detección automática:', error);
+        });
         // Check again after auto-detection
         logoUrl = window.$xDiagrams && window.$xDiagrams.logo ? window.$xDiagrams.logo : null;
     }
@@ -4236,7 +4238,9 @@ function renderSwDiagramBase() {
     
     // If still no logo, try auto-detection
     if (!logoUrl) {
-        detectAutoLogo();
+        detectAutoLogo().catch(error => {
+            console.log('[Auto Logo] Error durante detección automática:', error);
+        });
         // Check again after auto-detection
         logoUrl = window.$xDiagrams && window.$xDiagrams.logo ? window.$xDiagrams.logo : null;
     }
@@ -4319,7 +4323,7 @@ function renderSwDiagramBase() {
       <small id="error-message" class="error-message"></small>
       <div class="file-drop-zone" id="fileDropZone">
         <span class="icon">
-          <img src="img/document.svg" alt="Documento" width="48" height="48">
+          ${getEmbeddedDragDropIcon('document')}
         </span>
         <div class="text">Suelta tu archivo CSV aquí</div>
         <div class="subtext">o arrastra desde tu computadora</div>
@@ -4327,7 +4331,7 @@ function renderSwDiagramBase() {
       <div class="drag-overlay" id="dragOverlay">
         <div class="drag-message">
           <span class="icon">
-            <img src="img/document.svg" alt="Documento" width="48" height="48">
+            ${getEmbeddedDragDropIcon('document')}
           </span>
           <div>Suelta para cargar el archivo</div>
         </div>
@@ -4367,7 +4371,9 @@ function initializeWhenReady() {
   preloadCommonImages();
   
   // Try auto-detection of logo early
-  detectAutoLogo();
+  detectAutoLogo().catch(error => {
+    console.log('[Auto Logo] Error durante detección automática:', error);
+  });
   
   // Wait for diagrams to be defined
   const diagrams = getDiagrams();
@@ -5860,34 +5866,56 @@ function shouldApplyFilter(url) {
 // AUTO LOGO DETECTION
 // ============================================================================
 
+// Function to get embedded SVG for drag and drop icons
+function getEmbeddedDragDropIcon(iconName) {
+  if (EMBEDDED_THUMBNAILS[iconName]) {
+    const svgString = EMBEDDED_THUMBNAILS[iconName].trim();
+    // Replace the original dimensions with 48x48 for drag and drop icons
+    return svgString
+      .replace(/width="200"/, 'width="48"')
+      .replace(/height="180"/, 'height="48"')
+      .replace(/viewBox="0 0 200 180"/, 'viewBox="0 0 200 180"');
+  }
+  return null;
+}
+
 // Function to detect logo files automatically in img folder
-function detectAutoLogo() {
+async function detectAutoLogo() {
+  // If logo is already set, don't try to detect again
+  if (window.$xDiagrams && window.$xDiagrams.logo) {
+    return;
+  }
+  
   const logoExtensions = ['svg', 'png', 'jpg', 'jpeg'];
   const imgPath = 'img/';
   
-  // Check if any logo file exists by trying to load them
+  // Check if any logo file exists using fetch (more efficient than Image objects)
   for (const ext of logoExtensions) {
     const logoUrl = `${imgPath}logo.${ext}`;
     
-    // Create a test image to check if file exists
-    const testImg = new Image();
-    testImg.onload = function() {
-      // If image loads successfully, set it as auto logo
-      if (!window.$xDiagrams.logo) {
-        window.$xDiagrams.logo = logoUrl;
-        console.log('[Auto Logo] Logo detectado automáticamente:', logoUrl);
-        
-        // Update the topbar if it already exists
-        if (window.$xDiagrams.updateTopbarTitle) {
-          window.$xDiagrams.updateTopbarTitle(window.$xDiagrams.currentDiagramIdx || 0);
+    try {
+      const response = await fetch(logoUrl, { method: 'HEAD' });
+      if (response.ok) {
+        // If file exists, set it as auto logo
+        if (!window.$xDiagrams.logo) {
+          window.$xDiagrams.logo = logoUrl;
+          console.log('[Auto Logo] Logo detectado automáticamente:', logoUrl);
+          
+          // Update the topbar if it already exists
+          if (window.$xDiagrams.updateTopbarTitle) {
+            window.$xDiagrams.updateTopbarTitle(window.$xDiagrams.currentDiagramIdx || 0);
+          }
         }
+        return; // Exit early if logo found
       }
-    };
-    testImg.onerror = function() {
-      // File doesn't exist, continue to next extension
-    };
-    testImg.src = logoUrl;
+    } catch (error) {
+      // Silently continue to next extension
+      continue;
+    }
   }
+  
+  // If no logo found, log once
+  console.log('[Auto Logo] No se encontró ningún archivo de logo en img/');
 }
 
 // ============================================================================

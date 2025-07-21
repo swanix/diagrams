@@ -2751,7 +2751,7 @@ async function getThemeVariables(themeId, forceReload = false) {
       // Fallback to basic theme if JSON loading fails
       const fallbackThemes = {
         snow: {
-          '--bg-color': '#f6f7f9',
+          '--canvas-bg': '#f6f7f9',
           '--text-color': '#222',
           '--node-fill': '#fff',
           '--control-bg': '#ffffff',
@@ -2759,7 +2759,7 @@ async function getThemeVariables(themeId, forceReload = false) {
           '--control-focus': '#1976d2'
         },
         onyx: {
-          '--bg-color': '#181c24',
+          '--canvas-bg': '#181c24',
           '--text-color': '#f6f7f9',
           '--node-fill': '#23272f',
           '--control-bg': '#23272f',

@@ -45,7 +45,7 @@
   // Essential CSS variables for immediate application (prevents flash)
   const essentialThemeVariables = {
     snow: {
-      '--bg-color': '#f6f7f9',
+      '--canvas-bg': '#f6f7f9',
       '--text-color': '#222',
       '--node-fill': '#fff',
       '--side-panel-bg': '#fff',
@@ -70,7 +70,7 @@
       '--control-border': '#d1d5db'
     },
     onyx: {
-      '--bg-color': '#181c24',
+      '--canvas-bg': '#181c24',
       '--text-color': '#f6f7f9',
       '--node-fill': '#23272f',
       '--side-panel-bg': '#23272f',
@@ -95,7 +95,7 @@
       '--control-border': '#333'
     },
     vintage: {
-      '--bg-color': '#f5f1e8',
+      '--canvas-bg': '#f5f1e8',
       '--text-color': '#2c1810',
       '--node-fill': '#faf6f0',
       '--side-panel-bg': '#faf6f0',
@@ -120,7 +120,7 @@
       '--control-border': '#d4c4a8'
     },
     pastel: {
-      '--bg-color': '#f8f9ff',
+      '--canvas-bg': '#f8f9ff',
       '--text-color': '#4a4a6a',
       '--node-fill': '#ffffff',
       '--side-panel-bg': '#ffffff',
@@ -145,7 +145,7 @@
       '--control-border': '#e1e8f0'
     },
     neon: {
-      '--bg-color': '#0a0a0a',
+      '--canvas-bg': '#0a0a0a',
       '--text-color': '#00ff41',
       '--node-fill': '#1a1a1a',
       '--side-panel-bg': '#1a1a1a',
@@ -170,7 +170,7 @@
       '--control-border': '#00ff41'
     },
     forest: {
-      '--bg-color': '#1a2f1a',
+      '--canvas-bg': '#1a2f1a',
       '--text-color': '#e8f5e8',
       '--node-fill': '#2a3f2a',
       '--side-panel-bg': '#2a3f2a',

@@ -34,7 +34,7 @@
 
     /* ===== Loading ===== */
     --loading-color: #dadada;
-    --loading-bg: var(--bg-color);
+    --loading-bg: var(--canvas-bg);
 
     /* ===== Side Panel ===== */
     --side-panel-width: 350px;

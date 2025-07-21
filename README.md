@@ -455,6 +455,91 @@ npm run dev
 npm run build
 ```
 
+
+## Color System (HSL)
+
+H (hue): degree on the color wheel (0 to 360, where 0 and 360 are red, 120 is green, 240 is blue, etc.)
+S (saturation): percentage (0% is gray, 100% is fully saturated)
+L (lightness): percentage (0% black, 50% pure color, 100% white)
+A (alpha): opacity, from 0 (fully transparent) to 1 (fully opaque)
+
+### Examples in CSS
+
+```css
+
+/* Valid Syntax */
+
+color: hsla(300, 100%, 25%, 1);
+/* CSS Level 4 */
+color: hsl(300 100% 25% / 1);
+
+
+```
+
+
+```css
+
+/* Base color variables in HSL */
+
+/* Main Color */
+--color-main: 300 100% 25%;
+--color-main-h: 300;
+--color-main-s: 100%;
+--color-main-l: 25%;
+
+/* Accent Color */
+--color-accent: 300 100% 25%;
+--color-accent-h: 300;
+--color-accent-s: 100%;
+--color-accent-l: 25%;
+
+/* Neutral Dark Color */
+--color-dark: 300 100% 25%;
+--color-dark-h: 300;
+--color-dark-s: 100%;
+--color-dark-l: 25%;
+
+/* Neutral Light Color */
+--color-light: 300 100% 25%;
+--color-light-h: 300;
+--color-light-s: 100%;
+--color-light-l: 25%;
+
+/* Basic use - we can only edit the opacity */
+
+.element {
+  background: hsl(var(--color-main) / 1); 
+}
+
+/* Granular use */
+
+.element {
+  background: hsl(var(--color-main-h) 100% 25% / 1); 
+}
+
+.element {
+  background: hsl(var(--color-main-h) var(--color-main-s) 25% / 1); 
+}
+
+.element {
+  background: hsl(var(--color-main-h) 100% var(--color-main-l) / 1); 
+}
+
+```
+
+
+
+
+### Saturation and lightness control
+
+s = 0% → no color, completely gray
+s = 100% → pure color
+
+l = 0% → absolute black
+l = 50% → pure color (no lightening or darkening)
+l = 100% → absolute white
+
+
 ### Contributing
 
 1. Fork the repository

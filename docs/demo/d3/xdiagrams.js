@@ -2364,8 +2364,9 @@ function openSidePanel(nodeData) {
     const nodeName = dataToShow.name || dataToShow.Name || dataToShow.NAME || nodeData.name || 'Nodo sin nombre';
     // Get the type for thumbnail
     const nodeType = dataToShow.type || dataToShow.Type || dataToShow.TYPE || nodeData.type || 'detail';
-    // Create thumbnail HTML with enhanced loading
-    const thumbnailHtml = `<img src="img/${nodeType}.svg" alt="${nodeType}" class="side-panel-title-thumbnail" style="opacity: 0; transition: opacity 0.2s ease-in-out;" onload="this.style.opacity='1'" onerror="this.src='img/detail.svg'; this.style.opacity='1'">`;
+    
+    // Create embedded thumbnail HTML instead of external image
+    const thumbnailHtml = createSidePanelThumbnailHtml(nodeType);
 
     // Truncar el texto del título por ancho disponible antes del botón de cerrar
     function truncateSidePanelTitle(text, maxWidth, fontSize, fontWeight, fontFamily) {

@@ -2427,8 +2427,9 @@ function openSidePanel(nodeData) {
     const nodeName = dataToShow.name || dataToShow.Name || dataToShow.NAME || nodeData.name || 'Nodo sin nombre';
     // Get the type for thumbnail
     const nodeType = dataToShow.type || dataToShow.Type || dataToShow.TYPE || nodeData.type || 'detail';
-    // Create thumbnail HTML with enhanced loading
-    const thumbnailHtml = `<img src="img/${nodeType}.svg" alt="${nodeType}" class="side-panel-title-thumbnail" style="opacity: 0; transition: opacity 0.2s ease-in-out;" onload="this.style.opacity='1'" onerror="this.src='img/detail.svg'; this.style.opacity='1'">`;
+    
+    // Create embedded thumbnail HTML instead of external image
+    const thumbnailHtml = createSidePanelThumbnailHtml(nodeType);
 
     // Truncar el texto del título por ancho disponible antes del botón de cerrar
     function truncateSidePanelTitle(text, maxWidth, fontSize, fontWeight, fontFamily) {
@@ -6394,4 +6395,85 @@ function appendAppropriateImageElement(d3Selection, imageUrl, attributes = {}, c
     .attr("width", attributes.width || 30)
     .attr("height", attributes.height || 30)
     .attr("class", className);
+}
+
+/**
+ * Crea el HTML del thumbnail embebido para el side panel
+ * @param {string} nodeType - Tipo del nodo para determinar el thumbnail
+ * @returns {string} HTML del thumbnail embebido
+ */
+function createSidePanelThumbnailHtml(nodeType) {
+  // Normalizar el nombre del tipo
+  const normalizedType = nodeType.toLowerCase().replace(/\s+/g, '-');
+  
+  // Obtener el thumbnail embebido
+  const embeddedThumbnail = getEmbeddedThumbnail(normalizedType);
+  
+  if (embeddedThumbnail) {
+    // Si existe como thumbnail embebido, crear elemento SVG directo
+    const svgString = getEmbeddedThumbnailSvgString(embeddedThumbnail);
+    if (svgString) {
+      // Crear un contenedor temporal para parsear el SVG
+      const tempDiv = document.createElement('div');
+      tempDiv.innerHTML = svgString.trim();
+      
+      // Obtener el elemento SVG
+      const svgElement = tempDiv.querySelector('svg');
+      if (svgElement) {
+        // Aplicar estilos específicos para el side panel
+        svgElement.setAttribute('class', 'side-panel-title-thumbnail embedded-thumbnail loaded');
+        svgElement.setAttribute('width', '24');
+        svgElement.setAttribute('height', '24');
+        svgElement.style.opacity = '1';
+        svgElement.style.transition = 'opacity 0.2s ease-in-out';
+        
+        // Limpiar atributos fill y stroke para permitir control CSS
+        const allElements = svgElement.querySelectorAll('*');
+        allElements.forEach(element => {
+          if (element.hasAttribute('fill')) {
+            element.removeAttribute('fill');
+          }
+          if (element.hasAttribute('stroke')) {
+            element.removeAttribute('stroke');
+          }
+        });
+        
+        return svgElement.outerHTML;
+      }
+    }
+  }
+  
+  // Fallback: usar thumbnail 'detail' embebido
+  const detailThumbnail = getEmbeddedThumbnail('detail');
+  if (detailThumbnail) {
+    const svgString = getEmbeddedThumbnailSvgString(detailThumbnail);
+    if (svgString) {
+      const tempDiv = document.createElement('div');
+      tempDiv.innerHTML = svgString.trim();
+      
+      const svgElement = tempDiv.querySelector('svg');
+      if (svgElement) {
+        svgElement.setAttribute('class', 'side-panel-title-thumbnail embedded-thumbnail loaded');
+        svgElement.setAttribute('width', '24');
+        svgElement.setAttribute('height', '24');
+        svgElement.style.opacity = '1';
+        svgElement.style.transition = 'opacity 0.2s ease-in-out';
+        
+        const allElements = svgElement.querySelectorAll('*');
+        allElements.forEach(element => {
+          if (element.hasAttribute('fill')) {
+            element.removeAttribute('fill');
+          }
+          if (element.hasAttribute('stroke')) {
+            element.removeAttribute('stroke');
+          }
+        });
+        
+        return svgElement.outerHTML;
+      }
+    }
+  }
+  
+  // Fallback final: elemento img vacío (muy improbable que llegue aquí)
+  return `<div class="side-panel-title-thumbnail" style="width: 24px; height: 24px; background: transparent;"></div>`;
 }

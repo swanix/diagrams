@@ -33,14 +33,14 @@
     "--cluster-padding-y": "220",
     "--cluster-spacing": "120",
 
-    "--loading-color": "#666",
-    "--loading-bg": "#ffffff",
+    "--loading-color": "hsl(var(--color-base) 40% / 1)",
+    "--loading-bg": "hsl(var(--color-base) 95% / 1)",
 
     "--side-panel-bg": "hsl(var(--color-base) 100% / 1)",
-    "--side-panel-text": "hsl(var(--color-base) 80% / 1)",
+    "--side-panel-text": "hsl(var(--color-base) 30% / 1)",
     "--side-panel-header-bg": "none",
-    "--side-panel-header-border": "hsl(var(--color-base) 10% / 1)",
-    "--side-panel-border": "hsl(var(--color-base) 90% / 1)",
+    "--side-panel-header-border": "hsl(var(--color-base) 90% / 1)",
+    "--side-panel-border": "hsl(var(--color-base) 95% / 1)",
     "--side-panel-label": "#424242",
     "--side-panel-value": "#222",
     "--side-panel-close-bg": "#dc3545",
@@ -166,8 +166,8 @@
     "--cluster-padding-y": "220",
     "--cluster-spacing": "120",
 
-    "--loading-color": "#999",
-    "--loading-bg": "#23272f",
+    "--loading-color": "hsl(var(--color-base) 60% / 1)",
+    "--loading-bg": "hsl(var(--color-base) 9% / 1)",
 
     "--side-panel-bg": "hsl(var(--color-base) 15% / 1)",
     "--side-panel-text": "#f6f7f9",

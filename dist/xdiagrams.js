@@ -2364,8 +2364,9 @@ function openSidePanel(nodeData) {
     const nodeName = dataToShow.name || dataToShow.Name || dataToShow.NAME || nodeData.name || 'Nodo sin nombre';
     // Get the type for thumbnail
     const nodeType = dataToShow.type || dataToShow.Type || dataToShow.TYPE || nodeData.type || 'detail';
-    // Create thumbnail HTML with enhanced loading
-    const thumbnailHtml = `<img src="img/${nodeType}.svg" alt="${nodeType}" class="side-panel-title-thumbnail" style="opacity: 0; transition: opacity 0.2s ease-in-out;" onload="this.style.opacity='1'" onerror="this.src='img/detail.svg'; this.style.opacity='1'">`;
+    
+    // Create embedded thumbnail HTML instead of external image
+    const thumbnailHtml = createSidePanelThumbnailHtml(nodeType);
 
     // Truncar el texto del título por ancho disponible antes del botón de cerrar
     function truncateSidePanelTitle(text, maxWidth, fontSize, fontWeight, fontFamily) {
@@ -5752,4 +5753,227 @@ function detectAutoLogo() {
     };
     testImg.src = logoUrl;
   }
+}
+
+// ============================================================================
+// THUMBNAILS EMBEBIDOS - SISTEMA DE GESTIÓN INTERNA
+// ============================================================================
+
+/**
+ * Convierte un string SVG a data URI
+ * @param {string} svgString - String SVG
+ * @returns {string} Data URI del SVG
+ */
+function svgToDataUri(svgString) {
+  const encoded = encodeURIComponent(svgString);
+  return `data:image/svg+xml;charset=utf-8,${encoded}`;
+}
+
+/**
+ * Biblioteca de thumbnails embebidos para evitar peticiones externas
+ * Los thumbnails se almacenan como strings SVG y se convierten a data URIs
+ * cuando se necesitan. Esto mejora el rendimiento y reduce las peticiones HTTP.
+ */
+const EMBEDDED_THUMBNAILS = {
+// Thumbnails básicos del sistema
+'detail': `
+<svg width="200" height="180" viewBox="0 0 200 180" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect x="20" y="84" width="160" height="82" fill="black" fill-opacity="0.1"/>
+  <rect x="20" y="23" width="160" height="43" fill="black" fill-opacity="0.1"/>
+</svg>
+` ,
+  
+'document': `
+<svg width="200" height="180" viewBox="0 0 200 180" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <path d="M29 21H144L174 51V171H29V21Z" fill="black" fill-opacity="0.05"/>
+  <path d="M144 21L174 51L144 51L144 21Z" fill="black" fill-opacity="0.1"/>
+  <rect x="55" y="124" width="94" height="16" fill="black" fill-opacity="0.1"/>
+  <rect x="55" y="92" width="94" height="16" fill="black" fill-opacity="0.1"/>
+  <rect x="55" y="58" width="40" height="16" fill="black" fill-opacity="0.1"/>
+</svg>
+`,
+  
+'form': `
+<svg width="200" height="180" viewBox="0 0 200 180" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect x="20" y="133" width="83" height="27" fill="black" fill-opacity="0.2"/>
+  <rect x="119" y="133" width="61" height="27" fill="black" fill-opacity="0.5"/>
+  <rect x="20" y="75" width="160" height="32" fill="black" fill-opacity="0.1"/>
+  <rect x="20" y="25" width="160" height="32" fill="black" fill-opacity="0.1"/>
+</svg>
+`,
+
+'list': `
+<svg width="200" height="180" viewBox="0 0 200 180" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect x="20" y="25" width="160" height="16" fill="black" fill-opacity="0.1"/>
+  <rect x="20" y="55" width="160" height="16" fill="black" fill-opacity="0.1"/>
+  <rect x="20" y="85" width="160" height="16" fill="black" fill-opacity="0.1"/>
+  <rect x="20" y="115" width="160" height="16" fill="black" fill-opacity="0.1"/>
+  <rect x="20" y="145" width="160" height="16" fill="black" fill-opacity="0.1"/>
+</svg>
+`,
+
+'modal': `
+<svg width="200" height="180" viewBox="0 0 200 180" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect x="20" y="20" width="160" height="140" fill="black" fill-opacity="0.05"/>
+  <rect x="20" y="20" width="160" height="30" fill="black" fill-opacity="0.1"/>
+  <circle cx="170" cy="35" r="5" fill="black" fill-opacity="0.3"/>
+</svg>
+`,
+
+'settings': `
+<svg width="200" height="180" viewBox="0 0 200 180" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <circle cx="100" cy="100" r="30" fill="black" fill-opacity="0.1"/>
+  <circle cx="100" cy="100" r="15" fill="black" fill-opacity="0.2"/>
+  <circle cx="100" cy="100" r="45" fill="none" stroke="black" stroke-opacity="0.2" stroke-width="2"/>
+  <circle cx="100" cy="100" r="60" fill="none" stroke="black" stroke-opacity="0.1" stroke-width="1"/>
+</svg>
+`,
+
+'home': `
+<svg width="200" height="180" viewBox="0 0 200 180" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <path d="M100 30L30 80V150H170V80L100 30Z" fill="black" fill-opacity="0.05"/>
+  <rect x="80" y="100" width="40" height="50" fill="black" fill-opacity="0.1"/>
+  <rect x="90" y="110" width="20" height="20" fill="black" fill-opacity="0.2"/>
+</svg>
+`,
+
+'transparent': `
+<svg width="200" height="180" viewBox="0 0 200 180" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Thumbnail transparente para placeholder -->
+</svg>
+`
+};
+
+/**
+ * Obtiene un thumbnail embebido por nombre
+ * @param {string} thumbnailName - Nombre del thumbnail (sin extensión)
+ * @returns {string|null} Data URI del thumbnail o null si no existe
+ */
+function getEmbeddedThumbnail(thumbnailName) {
+  const normalizedName = thumbnailName.toLowerCase().replace(/\s+/g, '-');
+  const svgString = EMBEDDED_THUMBNAILS[normalizedName];
+  
+  if (svgString) {
+    return svgToDataUri(svgString);
+  }
+  
+  return null;
+}
+
+/**
+ * Determina si una URL es un thumbnail embebido
+ * @param {string} url - URL a verificar
+ * @returns {boolean} True si es un thumbnail embebido
+ */
+function isEmbeddedThumbnailUrl(url) {
+  return url && url.startsWith('data:image/svg+xml;');
+}
+
+/**
+ * Extrae el string SVG de un data URI de thumbnail embebido
+ * @param {string} dataUri - Data URI del thumbnail embebido
+ * @returns {string|null} String SVG o null si no es válido
+ */
+function getEmbeddedThumbnailSvgString(dataUri) {
+  if (!isEmbeddedThumbnailUrl(dataUri)) {
+    return null;
+  }
+  
+  try {
+    // Extraer la parte después de la coma en el data URI
+    const svgPart = dataUri.split(',')[1];
+    if (svgPart) {
+      const decodedSvg = decodeURIComponent(svgPart);
+      
+      // Verificar si el SVG decodificado es válido
+      if (decodedSvg.includes('<svg')) {
+        return decodedSvg;
+      }
+    }
+  } catch (error) {
+    console.error('[Embedded SVG] Error al decodificar data URI:', error);
+  }
+  
+  return null;
+}
+
+/**
+ * Crea el HTML del thumbnail embebido para el side panel
+ * @param {string} nodeType - Tipo del nodo para determinar el thumbnail
+ * @returns {string} HTML del thumbnail embebido
+ */
+function createSidePanelThumbnailHtml(nodeType) {
+  // Normalizar el nombre del tipo
+  const normalizedType = nodeType.toLowerCase().replace(/\s+/g, '-');
+  
+  // Obtener el thumbnail embebido
+  const embeddedThumbnail = getEmbeddedThumbnail(normalizedType);
+  
+  if (embeddedThumbnail) {
+    // Si existe como thumbnail embebido, crear elemento SVG directo
+    const svgString = getEmbeddedThumbnailSvgString(embeddedThumbnail);
+    if (svgString) {
+      // Crear un contenedor temporal para parsear el SVG
+      const tempDiv = document.createElement('div');
+      tempDiv.innerHTML = svgString.trim();
+      
+      // Obtener el elemento SVG
+      const svgElement = tempDiv.querySelector('svg');
+      if (svgElement) {
+        // Aplicar estilos específicos para el side panel
+        svgElement.setAttribute('class', 'side-panel-title-thumbnail embedded-thumbnail loaded');
+        svgElement.setAttribute('width', '24');
+        svgElement.setAttribute('height', '24');
+        svgElement.style.opacity = '1';
+        svgElement.style.transition = 'opacity 0.2s ease-in-out';
+        
+        // Limpiar atributos fill y stroke para permitir control CSS
+        const allElements = svgElement.querySelectorAll('*');
+        allElements.forEach(element => {
+          if (element.hasAttribute('fill')) {
+            element.removeAttribute('fill');
+          }
+          if (element.hasAttribute('stroke')) {
+            element.removeAttribute('stroke');
+          }
+        });
+        
+        return svgElement.outerHTML;
+      }
+    }
+  }
+  
+  // Fallback: usar thumbnail 'detail' embebido
+  const detailThumbnail = getEmbeddedThumbnail('detail');
+  if (detailThumbnail) {
+    const svgString = getEmbeddedThumbnailSvgString(detailThumbnail);
+    if (svgString) {
+      const tempDiv = document.createElement('div');
+      tempDiv.innerHTML = svgString.trim();
+      
+      const svgElement = tempDiv.querySelector('svg');
+      if (svgElement) {
+        svgElement.setAttribute('class', 'side-panel-title-thumbnail embedded-thumbnail loaded');
+        svgElement.setAttribute('width', '24');
+        svgElement.setAttribute('height', '24');
+        svgElement.style.opacity = '1';
+        svgElement.style.transition = 'opacity 0.2s ease-in-out';
+        
+        const allElements = svgElement.querySelectorAll('*');
+        allElements.forEach(element => {
+          if (element.hasAttribute('fill')) {
+            element.removeAttribute('fill');
+          }
+          if (element.hasAttribute('stroke')) {
+            element.removeAttribute('stroke');
+          }
+        });
+        
+        return svgElement.outerHTML;
+      }
+    }
+  }
+  
+  // Fallback final: elemento img vacío (muy improbable que llegue aquí)
+  return `<div class="side-panel-title-thumbnail" style="width: 24px; height: 24px; background: transparent;"></div>`;
 }

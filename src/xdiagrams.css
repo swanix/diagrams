@@ -275,14 +275,16 @@
   }
 
   svg {
-    background-color: transparent; /* Cambiar a transparente para que se vea la imagen de fondo */
-    display: block;
-    margin: 0;
-    cursor: grab;
-    width: var(--svg-width);
-    height: var(--svg-height);
-    opacity: 0;
-  }
+  background-color: transparent; /* Cambiar a transparente para que se vea la imagen de fondo */
+  display: block;
+  margin: 0;
+  cursor: grab;
+  width: var(--svg-width);
+  height: var(--svg-height);
+  opacity: 0;
+  position: relative;
+  z-index: 1;
+}
 
   .link {
     fill: none;
@@ -629,6 +631,8 @@
   transition: right 0.3s ease-in-out;
   overflow-y: auto;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  will-change: right;
+  transform: translateZ(0); /* Force hardware acceleration */
 }
 
 .side-panel.open {
@@ -690,7 +694,7 @@
 }
 
 .side-panel-close:hover {
-  background-color: var(--control-border-hover) !important;
+  background-color: var(--side-panel-close-hover) !important;
   color: var(--control-text) !important;
   box-shadow: 0 2px 6px var(--control-shadow);
 }
@@ -1338,7 +1342,9 @@ svg .node.node-selected {
 
 /* === TOPBAR === */
 .topbar {
-  position: relative;
+  position: fixed;
+  top: 0;
+  left: 0;
   width: 100%;
   height: 60px;
   background: var(--topbar-bg, #fff);
@@ -1401,8 +1407,8 @@ svg .node.node-selected {
 }
 
 .diagram-logo {
-  max-height: 32px;
-  max-width: 120px;
+  max-height: 48px;
+  max-width: 180px;
   object-fit: contain;
   display: block;
   padding: 8px 0;
@@ -1423,8 +1429,8 @@ svg .node.node-selected {
 
 .logo-title-container .diagram-title {
   margin: 0;
-  font-size: 1.1em;
-  font-weight: 400;
+  font-size: 1em;
+  font-weight: 600;
   color: var(--topbar-text, #333);
   white-space: nowrap;
   overflow: hidden;
@@ -1435,7 +1441,7 @@ svg .node.node-selected {
 .title-dropdown-container {
   display: flex;
   align-items: center;
-  gap: 20px;
+  gap: 16px;
   height: 100%;
   margin: 0;
   padding: 0;
@@ -1444,8 +1450,9 @@ svg .node.node-selected {
 
 .title-dropdown-container .diagram-title {
   margin: 0;
-  font-size: 1.1em;
-  font-weight: 400;
+  margin-right: 8px;
+  font-size: 1em;
+  font-weight: 600;
   color: var(--topbar-text, #333);
   white-space: nowrap;
   overflow: hidden;
@@ -1459,10 +1466,11 @@ svg .node.node-selected {
 }
 
 .title-dropdown-container .diagram-logo {
-  max-height: 32px;
-  max-width: 120px;
+  max-height: 48px;
+  max-width: 180px;
   object-fit: contain;
   padding: 8px 0;
+  margin-right: -4px;
   filter: var(--logo-filter, none);
   display: flex;
   align-items: center;
@@ -1484,6 +1492,9 @@ svg {
   display: block;
   z-index: 1; /* Asegurar que esté por debajo de los controles */
   position: relative;
+  transform-origin: center center;
+  will-change: transform;
+  margin-top: 60px; /* Posicionar debajo del topbar fijo */
 }
 
 /* Ajustar selector de tema para el topbar */
@@ -2293,6 +2304,11 @@ body.theme-neon .theme-toggle .moon-icon {
     font-size: 0.95rem;
   }
   
+  .diagram-logo {
+    max-height: 40px;
+    max-width: 140px;
+  }
+  
   /* Switcher más compacto */
   .diagram-dropdown-btn {
     padding: 8px 12px;
@@ -2392,6 +2408,11 @@ body.theme-neon .theme-toggle .moon-icon {
   
   .diagram-title {
     font-size: 0.85rem;
+  }
+  
+  .diagram-logo {
+    max-height: 36px;
+    max-width: 120px;
   }
   
   /* Switcher muy compacto */
@@ -2502,6 +2523,11 @@ body.theme-neon .theme-toggle .moon-icon {
   
   .diagram-title {
     font-size: 0.8rem;
+  }
+  
+  .diagram-logo {
+    max-height: 32px;
+    max-width: 100px;
   }
   
   .diagram-dropdown-btn {

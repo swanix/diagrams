@@ -5,7 +5,10 @@
 const zoom = d3.zoom()
   .scaleExtent([0.1, 4])
   .on("zoom", event => {
-    d3.select("#main-diagram-svg g").attr("transform", event.transform);
+    const svgGroup = d3.select("#main-diagram-svg g");
+    if (!svgGroup.empty()) {
+      svgGroup.attr("transform", event.transform);
+    }
   });
 
 // Function to format diagram name for display
@@ -2261,11 +2264,19 @@ function applyAutoZoom() {
 function ensureZoomBehavior() {
   const svg = d3.select("#main-diagram-svg");
   if (!svg.empty()) {
+    // Remove existing zoom behavior to prevent conflicts
+    svg.on('.zoom', null);
+    
+    // Apply new zoom behavior
     svg.call(zoom);
     svg.style('pointer-events', 'auto');
     
     // Store reference to current zoom for external access
     window.$xDiagrams.currentZoom = zoom;
+    
+    // Ensure SVG maintains proper dimensions
+    svg.style('width', '100%');
+    svg.style('height', 'calc(100vh - 60px)');
   }
 }
 
@@ -2383,6 +2394,23 @@ function openSidePanel(nodeData) {
   const sidePanel = document.getElementById('side-panel');
   const content = document.getElementById('side-panel-content');
   const titleElement = document.getElementById('side-panel-title');
+  
+  // Stabilize viewport to prevent layout shifts
+  const body = document.body;
+  const html = document.documentElement;
+  
+  // Prevent body scroll during panel opening
+  const originalOverflow = body.style.overflow;
+  body.style.overflow = 'hidden';
+  
+  // Ensure topbar stays in place
+  const topbar = document.querySelector('.topbar');
+  if (topbar) {
+    topbar.style.position = 'fixed';
+    topbar.style.top = '0';
+    topbar.style.left = '0';
+    topbar.style.width = '100%';
+  }
 
   if (!sidePanel || !content) {
     console.error("No se encontró el panel lateral");
@@ -2494,6 +2522,11 @@ function openSidePanel(nodeData) {
 
 sidePanel.classList.add('open');
   
+  // Restore body overflow after panel is opened
+  setTimeout(() => {
+    body.style.overflow = originalOverflow;
+  }, 300); // Wait for panel animation to complete
+  
   // Trigger onNodeClick hook
   triggerHook('onNodeClick', { 
     node: nodeData, 
@@ -2507,6 +2540,13 @@ function closeSidePanel() {
   if (sidePanel) {
     d3.selectAll('.node.node-selected').classed('node-selected', false);
     sidePanel.classList.remove('open');
+    
+    // Ensure zoom behavior is maintained after panel closes
+    setTimeout(() => {
+      if (window.ensureZoomBehavior) {
+        window.ensureZoomBehavior();
+      }
+    }, 300);
   }
 }
 
@@ -3808,10 +3848,11 @@ window.$xDiagrams.updateTopbarTitle = function(diagramIndex) {
             newLogoElement.className = 'diagram-logo';
             newLogoElement.src = logoUrl;
             newLogoElement.alt = 'Logo';
-            newLogoElement.style.maxHeight = '32px';
-            newLogoElement.style.maxWidth = '120px';
+            newLogoElement.style.maxHeight = '48px';
+            newLogoElement.style.maxWidth = '180px';
             newLogoElement.style.objectFit = 'contain';
             newLogoElement.style.padding = '8px 0';
+            newLogoElement.style.marginRight = '-4px';
             titleDropdownContainer.appendChild(newLogoElement);
             console.log('[Logo] Logo aplicado:', logoUrl);
         }
@@ -3821,9 +3862,9 @@ window.$xDiagrams.updateTopbarTitle = function(diagramIndex) {
             const newTitleElement = document.createElement('h1');
             newTitleElement.className = 'diagram-title';
             newTitleElement.textContent = fixedTitle;
-            newTitleElement.style.margin = '0';
-            newTitleElement.style.fontSize = '1.1em';
-            newTitleElement.style.fontWeight = '400';
+            newTitleElement.style.margin = '0 8px 0 0';
+            newTitleElement.style.fontSize = '1em';
+            newTitleElement.style.fontWeight = '600';
             newTitleElement.style.color = 'var(--topbar-text, #333)';
             titleDropdownContainer.appendChild(newTitleElement);
             console.log('[Title] Título aplicado:', fixedTitle);
@@ -4267,7 +4308,7 @@ function renderSwDiagramBase() {
       <div class="topbar">
         <div class="topbar-left">
           <div class="title-dropdown-container">
-            ${logoUrl ? `<img class="diagram-logo" src="${logoUrl}" alt="Logo" style="max-height: 32px; max-width: 120px; object-fit: contain; padding: 8px 0;">` : ''}
+            ${logoUrl ? `<img class="diagram-logo" src="${logoUrl}" alt="Logo" style="max-height: 48px; max-width: 180px; object-fit: contain; padding: 8px 0; margin-right: -4px;">` : ''}
             <h1 class="diagram-title">${fixedTitle}</h1>
             <div class="diagram-dropdown" id="diagram-dropdown">
               <button class="diagram-dropdown-btn" id="diagram-dropdown-btn">

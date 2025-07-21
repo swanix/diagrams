@@ -43,8 +43,8 @@
     "--side-panel-border": "hsl(var(--color-base) 95% / 1)",
     "--side-panel-label": "#424242",
     "--side-panel-value": "#222",
-    "--side-panel-close-bg": "#dc3545",
-    "--side-panel-close-hover": "#c82333",
+    "--side-panel-close-bg": "hsl(var(--color-base) 100% / 1)",
+    "--side-panel-close-hover": "hsl(var(--color-base) 95% / 1)",
 
     "--control-bg": "#ffffff",
     "--control-text": "#333333",
@@ -172,10 +172,12 @@
     "--side-panel-bg": "hsl(var(--color-base) 15% / 1)",
     "--side-panel-text": "#f6f7f9",
     "--side-panel-header-bg": "none",
-    "--side-panel-header-border": "hsl(var(--color-base) 30% / 1)",
+    "--side-panel-header-border": "hsl(var(--color-base) 20% / 1)",
     "--side-panel-border": "#333",
     "--side-panel-label": "#cccccc",
     "--side-panel-value": "#f6f7f9",
+    "--side-panel-close-bg": "#dc3545",
+    "--side-panel-close-hover": "hsl(var(--color-base) 25% / 1)",
 
     "--control-bg": "hsl(var(--color-base) 15% / 1)",
     "--control-text": "#f6f7f9",
@@ -303,6 +305,8 @@
     "--side-panel-border": "#d4c4a8",
     "--side-panel-label": "#424242",
     "--side-panel-value": "#2c1810",
+    "--side-panel-close-bg": "#dc3545",
+    "--side-panel-close-hover": "#c82333",
 
     "--control-bg": "#faf6f0",
     "--control-text": "#2c1810",
@@ -430,6 +434,8 @@
     "--side-panel-border": "#e1e8f0",
     "--side-panel-label": "#424242",
     "--side-panel-value": "#4a4a6a",
+    "--side-panel-close-bg": "#dc3545",
+    "--side-panel-close-hover": "#c82333",
 
     "--control-bg": "#ffffff",
     "--control-text": "#4a4a6a",
@@ -557,6 +563,8 @@
     "--side-panel-border": "#00ff41",
     "--side-panel-label": "#cccccc",
     "--side-panel-value": "#00ff41",
+    "--side-panel-close-bg": "#dc3545",
+    "--side-panel-close-hover": "#c82333",
 
     "--control-bg": "#1a1a1a",
     "--control-text": "#00ff41",
@@ -683,6 +691,8 @@
     "--side-panel-border": "#4a5f4a",
     "--side-panel-label": "#cccccc",
     "--side-panel-value": "#e8f5e8",
+    "--side-panel-close-bg": "#dc3545",
+    "--side-panel-close-hover": "#c82333",
 
     "--control-bg": "#2a3f2a",
     "--control-text": "#e8f5e8",

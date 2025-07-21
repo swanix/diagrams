@@ -3,11 +3,14 @@
 
 // Global zoom behavior - defined at the beginning to avoid scope issues
 const zoom = d3.zoom()
-  .scaleExtent([0.1, 4])
+  .scaleExtent([0.01, 2.5]) // Allow much more zoom out (0.01 = 1% of original size)
+  .wheelDelta(event => -event.deltaY * 0.002) // Smoother wheel zoom
   .on("zoom", event => {
     const svgGroup = d3.select("#main-diagram-svg g");
     if (!svgGroup.empty()) {
-      svgGroup.attr("transform", event.transform);
+      // Apply transform with better precision
+      const transform = event.transform;
+      svgGroup.attr("transform", `translate(${transform.x},${transform.y}) scale(${transform.k})`);
     }
   });
 
@@ -797,6 +800,9 @@ function drawGridLayout(nodes, svg) {
     .on("click", function(event, d) {
       event.stopPropagation();
       
+      // Prevent zoom behavior interference
+      event.preventDefault();
+      
       // Enable keyboard navigation when a node is clicked (only if enabled)
       if (isOptionEnabled('keyboardNavigation') && window.$xDiagrams.keyboardNavigation) {
         window.$xDiagrams.keyboardNavigation.enable();
@@ -937,11 +943,12 @@ function drawGridLayout(nodes, svg) {
       const treeLayout = d3.tree().nodeSize([treeVertical, treeHorizontal]);
       treeLayout(root);
       
-      // Render en posición temporal (x=0, y=index*1000)
+      // Render en posición temporal (x=0, y=index*1000) - será movido a posición final después
       const treeGroup = g.append("g")
         .attr("class", "diagram-group")
         .attr("data-root-id", root.data.id)
-        .attr("transform", `translate(0, ${index * 1000})`);
+        .attr("transform", `translate(0, ${index * 1000})`)
+        .style("opacity", 0); // Inicialmente invisible para fade in
       
       const contentGroup = treeGroup.append("g").attr("class", "cluster-content");
 
@@ -971,6 +978,10 @@ function drawGridLayout(nodes, svg) {
         .attr("transform", d => `translate(${d.x},${d.y})`)
         .on("click", function(event, d) {
           event.stopPropagation();
+          
+          // Prevent zoom behavior interference
+          event.preventDefault();
+          
           if (isOptionEnabled('keyboardNavigation') && window.$xDiagrams.keyboardNavigation) {
             window.$xDiagrams.keyboardNavigation.enable();
             const nodeIndex = window.$xDiagrams.currentData.findIndex(item => item.id === d.data.id);
@@ -1533,8 +1544,21 @@ function applyMasonryLayout(clusterGroups, container, originalTrees, preCalculat
         const rectCenterY_relative = rectBounds.y + realHeight / 2;
         const ty = rowCenterY - rectCenterY_relative;
 
-        // Aplicar la transformación al grupo del cluster
-        clusterData.cluster.group.attr("transform", `translate(${tx},${ty})`);
+        // Aplicar fade in elegante con ligero movimiento hacia arriba
+        const finalTransform = `translate(${tx},${ty})`;
+        const initialTransform = `translate(${tx},${ty + 20})`; // 20px hacia arriba
+        
+        // Aplicar posición inicial ligeramente desplazada
+        clusterData.cluster.group.attr("transform", initialTransform);
+        
+        // Animar a posición final con fade in y delay escalonado
+        const delay = (row * 200) + (colIndex * 100); // 200ms entre filas, 100ms entre clusters
+        clusterData.cluster.group.transition()
+          .delay(delay)
+          .duration(800)
+          .ease(d3.easeCubicOut)
+          .attr("transform", finalTransform)
+          .style("opacity", 1);
 
         // Almacenar las posiciones absolutas finales para verificación
         clusterData.realX = tx + rectBounds.x; // Debería ser igual a currentX
@@ -1824,6 +1848,9 @@ function drawTrees(trees, diagramConfig = null) {
           .attr("transform", d => `translate(${d.x},${d.y})`)
           .on("click", function(event, d) {
             event.stopPropagation();
+            
+            // Prevent zoom behavior interference
+            event.preventDefault();
             
             // Enable keyboard navigation when a node is clicked (only if enabled)
             if (isOptionEnabled('keyboardNavigation') && window.$xDiagrams.keyboardNavigation) {
@@ -2178,9 +2205,42 @@ function applyAutoZoom() {
     // For single cluster: zoom out to show entire cluster with aura
     scale = Math.min(scale * 0.6, 0.6); // More aggressive zoom out to show aura
   } else {
-    // For multiple clusters: use maximum zoom out (0.15) for large diagrams
-    // This ensures users can see the entire diagram at once
-    scale = Math.min(scale * 0.6, 0.15); // Maximum zoom out for multiple clusters
+    // For multiple clusters: use more aggressive zoom out for better overview
+    // Calculate zoom based on diagram size and complexity
+    const totalArea = totalBounds.width * totalBounds.height;
+    const nodeDensity = nodeCount / Math.max(1, diagramGroupCount);
+    
+    // More balanced zoom out for multiple clusters
+    let maxZoomOut = 0.12; // Increased base zoom out for better visibility
+    
+    // Calculate diagram area and complexity
+    const diagramArea = totalBounds.width * totalBounds.height;
+    
+    // Adjust based on diagram complexity and size - more conservative values
+    if (nodeCount > 50) {
+      maxZoomOut = 0.06; // More reasonable zoom out for extremely large diagrams
+    } else if (nodeCount > 30) {
+      maxZoomOut = 0.08; // More reasonable zoom out for very large diagrams
+    } else if (nodeCount > 20) {
+      maxZoomOut = 0.10; // More reasonable zoom out for large diagrams
+    } else if (nodeCount > 10) {
+      maxZoomOut = 0.12; // More reasonable zoom out for medium-large diagrams
+    } else if (diagramGroupCount > 10) {
+      maxZoomOut = 0.08; // More reasonable zoom out for many clusters
+    } else if (diagramGroupCount > 5) {
+      maxZoomOut = 0.10; // More reasonable zoom out for many clusters
+    }
+    
+    // Additional adjustment based on diagram area - more conservative
+    if (diagramArea > 1000000) { // Very large area
+      maxZoomOut = Math.min(maxZoomOut, 0.06);
+    } else if (diagramArea > 500000) { // Large area
+      maxZoomOut = Math.min(maxZoomOut, 0.08);
+    } else if (diagramArea > 200000) { // Medium-large area
+      maxZoomOut = Math.min(maxZoomOut, 0.10);
+    }
+    
+    scale = Math.min(scale * 0.6, maxZoomOut); // Less aggressive zoom out for multiple clusters
   }
   
   let translateX = svgCenterX - contentCenterX * scale;
@@ -2208,11 +2268,11 @@ function applyAutoZoom() {
       const firstClusterLeftEdge = firstClusterBounds.x + firstClusterOffsetX;
       const zoomVarsLeft = getComputedStyle(document.documentElement);
       if (isFlatListDiagram) {
-        const flatLeftMargin = parseFloat(zoomVarsLeft.getPropertyValue('--flatlist-left-margin')) || 20; // px
+        const flatLeftMargin = parseFloat(zoomVarsLeft.getPropertyValue('--flatlist-left-margin')) || 40; // Reduced from 60 to 40
         translateX = flatLeftMargin - firstClusterLeftEdge * scale;
       } else {
         // Usar el mismo marginX que se usa en el layout para consistencia
-        const clusterLeftMargin = parseFloat(zoomVarsLeft.getPropertyValue('--cluster-left-margin')) || 50; // px
+        const clusterLeftMargin = parseFloat(zoomVarsLeft.getPropertyValue('--cluster-left-margin')) || 50; // Reduced from 80 to 50
         translateX = clusterLeftMargin - firstClusterLeftEdge * scale; // margen consistente con el layout
       }
           } else {
@@ -2235,23 +2295,55 @@ function applyAutoZoom() {
     
     // Calcular translateX dinámicamente basado en el ancho del diagrama
     // Para diagramas pequeños: más margen izquierdo, para grandes: menos margen
-    const baseLeftMargin = 0; // Reducido de 20 a 0 para posicionar al borde izquierdo
-    const dynamicLeftMargin = Math.max(0, baseLeftMargin - (diagramWidth * scale * 0.1));
+    const baseLeftMargin = 30; // Reduced margin for better balance
+    const dynamicLeftMargin = Math.max(20, baseLeftMargin - (diagramWidth * scale * 0.03));
     translateX = dynamicLeftMargin - totalBounds.x * scale;
     
     // Calcular translateY dinámicamente basado en la altura del diagrama
     // Para diagramas pequeños: más margen superior, para grandes: menos margen
-    const baseTopMargin = 45;
-    const dynamicTopMargin = Math.max(20, baseTopMargin - (diagramHeight * scale * 0.05));
+    const baseTopMargin = 60; // Reduced top margin for better balance
+    const dynamicTopMargin = Math.max(30, baseTopMargin - (diagramHeight * scale * 0.02));
     translateY = dynamicTopMargin - totalBounds.y * scale;
   }
 
-  // Apply transformation
+  // Apply transformation immediately without transition
   const transform = d3.zoomIdentity
     .translate(translateX, translateY)
     .scale(scale);
 
+  // Apply immediately to prevent any movement
   svg.call(zoom.transform, transform);
+  
+  // Store zoom info for debugging
+  window.$xDiagrams.lastAutoZoom = {
+    scale: scale,
+    translateX: translateX,
+    translateY: translateY,
+    nodeCount: nodeCount,
+    diagramGroupCount: diagramGroupCount,
+    isSingleGroup: isSingleGroup,
+    isFlatListDiagram: isFlatListDiagram,
+    totalBounds: totalBounds
+  };
+  
+  console.log('[AutoZoom] Applied zoom:', {
+    scale: scale.toFixed(3),
+    translateX: translateX.toFixed(0),
+    translateY: translateY.toFixed(0),
+    nodeCount: nodeCount,
+    diagramGroupCount: diagramGroupCount,
+    diagramType: isSingleGroup ? 'single' : (isFlatListDiagram ? 'flat' : 'multi'),
+    diagramArea: (totalBounds.width * totalBounds.height).toFixed(0)
+  });
+  
+  // Auto-apply extreme zoom for very large diagrams - disabled to prevent jumps
+  // if (!isSingleGroup && (nodeCount > 100 || diagramGroupCount > 20 || (totalBounds.width * totalBounds.height) > 2000000)) {
+  //   setTimeout(() => {
+  //     console.log('[AutoZoom] Detected very large diagram, applying extreme zoom out...');
+  //     applyExtremeZoomOut();
+  //   }, 500);
+  // }
+  
   // Preserve current theme after zoom
   setTimeout(async () => {
     if (window.preserveCurrentTheme) {
@@ -2267,7 +2359,7 @@ function ensureZoomBehavior() {
     // Remove existing zoom behavior to prevent conflicts
     svg.on('.zoom', null);
     
-    // Apply new zoom behavior
+    // Apply new zoom behavior with constraints
     svg.call(zoom);
     svg.style('pointer-events', 'auto');
     
@@ -2277,8 +2369,98 @@ function ensureZoomBehavior() {
     // Ensure SVG maintains proper dimensions
     svg.style('width', '100%');
     svg.style('height', 'calc(100vh - 60px)');
+    
+    // Ensure body overflow is properly set for zoom behavior
+    const body = document.body;
+    if (!body.style.overflow || body.style.overflow === '') {
+      body.style.overflow = 'hidden';
+    }
+    
+    // Add touch-action to prevent conflicts on mobile
+    svg.style('touch-action', 'none');
   }
 }
+
+// Function to reset zoom to default state
+function resetZoom() {
+  const svg = d3.select("#main-diagram-svg");
+  if (!svg.empty() && window.$xDiagrams.currentZoom) {
+    svg.transition().duration(300).call(
+      window.$xDiagrams.currentZoom.transform,
+      d3.zoomIdentity
+    );
+  }
+}
+
+// Function to check if zoom is in a problematic state
+function isZoomProblematic() {
+  const svgGroup = d3.select("#main-diagram-svg g");
+  if (!svgGroup.empty()) {
+    const transform = svgGroup.attr("transform");
+    if (transform) {
+      const scaleMatch = transform.match(/scale\(([^)]+)\)/);
+      if (scaleMatch) {
+        const scale = parseFloat(scaleMatch[1]);
+        return scale > 2.5 || scale < 0.01 || isNaN(scale); // Updated to allow zoom out to 0.01
+      }
+    }
+  }
+  return false;
+}
+
+// Make functions globally available for debugging
+window.resetZoom = resetZoom;
+window.isZoomProblematic = isZoomProblematic;
+
+// Function to apply custom zoom for multiclusters
+window.applyCustomZoom = function(scaleFactor = 0.5) {
+  const svg = d3.select("#main-diagram-svg");
+  if (!svg.empty() && window.$xDiagrams.lastAutoZoom) {
+    const lastZoom = window.$xDiagrams.lastAutoZoom;
+    const newScale = Math.max(0.01, lastZoom.scale * scaleFactor); // Ensure minimum zoom of 0.01
+    
+    const transform = d3.zoomIdentity
+      .translate(lastZoom.translateX, lastZoom.translateY)
+      .scale(newScale);
+    
+    svg.call(zoom.transform, transform);
+    console.log('[CustomZoom] Applied custom zoom with factor:', scaleFactor, 'new scale:', newScale.toFixed(3));
+  } else {
+    console.warn('[CustomZoom] No previous zoom info available');
+  }
+};
+
+// Function to apply extreme zoom out for very large diagrams
+window.applyExtremeZoomOut = function() {
+  const svg = d3.select("#main-diagram-svg");
+  if (!svg.empty() && window.$xDiagrams.lastAutoZoom) {
+    const lastZoom = window.$xDiagrams.lastAutoZoom;
+    const newScale = 0.01; // Extreme zoom out (1% of original size)
+    
+    const transform = d3.zoomIdentity
+      .translate(lastZoom.translateX, lastZoom.translateY)
+      .scale(newScale);
+    
+    svg.call(zoom.transform, transform);
+    console.log('[ExtremeZoom] Applied extreme zoom out, scale:', newScale.toFixed(3));
+  } else {
+    console.warn('[ExtremeZoom] No previous zoom info available');
+  }
+};
+
+// Function to get current zoom info
+window.getZoomInfo = function() {
+  const svg = d3.select("#main-diagram-svg");
+  if (!svg.empty()) {
+    const transform = d3.zoomTransform(svg.node());
+    return {
+      scale: transform.k,
+      translateX: transform.x,
+      translateY: transform.y
+    };
+  }
+  return null;
+};
 
 // Function to wrap text
 function wrap(text, width) {
@@ -2399,9 +2581,9 @@ function openSidePanel(nodeData) {
   const body = document.body;
   const html = document.documentElement;
   
-  // Prevent body scroll during panel opening
+  // Store original overflow state but don't change it immediately
+  // This prevents conflicts with D3 zoom behavior
   const originalOverflow = body.style.overflow;
-  body.style.overflow = 'hidden';
   
   // Ensure topbar stays in place
   const topbar = document.querySelector('.topbar');
@@ -2522,16 +2704,27 @@ function openSidePanel(nodeData) {
 
 sidePanel.classList.add('open');
   
-  // Restore body overflow after panel is opened
-  setTimeout(() => {
-    body.style.overflow = originalOverflow;
-  }, 300); // Wait for panel animation to complete
+  // Only restore body overflow if it was explicitly set before
+  // This prevents conflicts with D3 zoom behavior
+  if (originalOverflow) {
+    setTimeout(() => {
+      body.style.overflow = originalOverflow;
+    }, 300); // Wait for panel animation to complete
+  }
   
   // Trigger onNodeClick hook
   triggerHook('onNodeClick', { 
     node: nodeData, 
     timestamp: new Date().toISOString() 
   });
+  
+  // Check if zoom is in a problematic state and reset if necessary
+  setTimeout(() => {
+    if (isZoomProblematic()) {
+      console.log('[Zoom] Detected problematic zoom state after opening panel, resetting...');
+      resetZoom();
+    }
+  }, 200);
 }
 
 // Close side panel
@@ -2542,11 +2735,18 @@ function closeSidePanel() {
     sidePanel.classList.remove('open');
     
     // Ensure zoom behavior is maintained after panel closes
+    // Use a shorter delay to prevent conflicts
     setTimeout(() => {
       if (window.ensureZoomBehavior) {
         window.ensureZoomBehavior();
       }
-    }, 300);
+      
+      // Check if zoom is in a problematic state and reset if necessary
+      if (isZoomProblematic()) {
+        console.log('[Zoom] Detected problematic zoom state, resetting...');
+        resetZoom();
+      }
+    }, 100);
   }
 }
 
@@ -2696,7 +2896,10 @@ function setupClosePanelOnSvgClick() {
   svg.addEventListener('click', handleSvgClick);
   
   function handleSvgClick(event) {
-    if (!event.target.closest('.node')) {
+    // Only close panel if clicking on empty space, not on nodes or other interactive elements
+    if (!event.target.closest('.node') && 
+        !event.target.closest('.cluster') && 
+        !event.target.closest('.link')) {
       closeSidePanel();
     }
   }
@@ -3195,6 +3398,41 @@ window.$xDiagrams.keyboardNavigation = {
         case 'Enter':
           e.preventDefault();
           this.openCurrentNodeLink();
+          break;
+        case '0':
+          if (e.ctrlKey || e.metaKey) {
+            e.preventDefault();
+            resetZoom();
+            console.log('[Keyboard] Zoom reset to default');
+          }
+          break;
+        case '9':
+          if (e.ctrlKey || e.metaKey) {
+            e.preventDefault();
+            applyCustomZoom(0.3); // Very zoomed out
+            console.log('[Keyboard] Applied very zoomed out view');
+          }
+          break;
+        case '8':
+          if (e.ctrlKey || e.metaKey) {
+            e.preventDefault();
+            applyCustomZoom(0.5); // More zoomed out
+            console.log('[Keyboard] Applied more zoomed out view');
+          }
+          break;
+        case '7':
+          if (e.ctrlKey || e.metaKey) {
+            e.preventDefault();
+            applyCustomZoom(0.4); // More reasonable zoom out
+            console.log('[Keyboard] Applied reasonable zoom out view');
+          }
+          break;
+        case '6':
+          if (e.ctrlKey || e.metaKey) {
+            e.preventDefault();
+            applyCustomZoom(0.2); // Very zoomed out but not extreme
+            console.log('[Keyboard] Applied very zoomed out view');
+          }
           break;
       }
     });
@@ -4693,6 +4931,16 @@ function createKeyboardInstructionsPanel() {
       <span class="description">Último nodo</span>
       <span class="key">Esc</span>
       <span class="description">Deseleccionar</span>
+      <span class="key">Ctrl+0</span>
+      <span class="description">Resetear zoom</span>
+      <span class="key">Ctrl+6</span>
+      <span class="description">Zoom muy alejado</span>
+      <span class="key">Ctrl+7</span>
+      <span class="description">Zoom alejado</span>
+      <span class="key">Ctrl+8</span>
+      <span class="description">Zoom más alejado</span>
+      <span class="key">Ctrl+9</span>
+      <span class="description">Zoom alejado</span>
     </div>
   `;
   

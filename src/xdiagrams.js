@@ -1,5 +1,5 @@
 // Swanix Diagrams - JS
-// v0.4.3
+// v0.4.5
 
 // Global zoom behavior - defined at the beginning to avoid scope issues
 const zoom = d3.zoom()
@@ -2211,36 +2211,36 @@ function applyAutoZoom() {
     const nodeDensity = nodeCount / Math.max(1, diagramGroupCount);
     
     // More balanced zoom out for multiple clusters
-    let maxZoomOut = 0.12; // Increased base zoom out for better visibility
+    let maxZoomOut = 0.18; // Increased base zoom out for better visibility
     
     // Calculate diagram area and complexity
     const diagramArea = totalBounds.width * totalBounds.height;
     
     // Adjust based on diagram complexity and size - more conservative values
     if (nodeCount > 50) {
-      maxZoomOut = 0.06; // More reasonable zoom out for extremely large diagrams
+      maxZoomOut = 0.10; // More reasonable zoom out for extremely large diagrams
     } else if (nodeCount > 30) {
-      maxZoomOut = 0.08; // More reasonable zoom out for very large diagrams
+      maxZoomOut = 0.12; // More reasonable zoom out for very large diagrams
     } else if (nodeCount > 20) {
-      maxZoomOut = 0.10; // More reasonable zoom out for large diagrams
+      maxZoomOut = 0.15; // More reasonable zoom out for large diagrams
     } else if (nodeCount > 10) {
-      maxZoomOut = 0.12; // More reasonable zoom out for medium-large diagrams
+      maxZoomOut = 0.18; // More reasonable zoom out for medium-large diagrams
     } else if (diagramGroupCount > 10) {
-      maxZoomOut = 0.08; // More reasonable zoom out for many clusters
+      maxZoomOut = 0.12; // More reasonable zoom out for many clusters
     } else if (diagramGroupCount > 5) {
-      maxZoomOut = 0.10; // More reasonable zoom out for many clusters
+      maxZoomOut = 0.15; // More reasonable zoom out for many clusters
     }
     
     // Additional adjustment based on diagram area - more conservative
     if (diagramArea > 1000000) { // Very large area
-      maxZoomOut = Math.min(maxZoomOut, 0.06);
-    } else if (diagramArea > 500000) { // Large area
-      maxZoomOut = Math.min(maxZoomOut, 0.08);
-    } else if (diagramArea > 200000) { // Medium-large area
       maxZoomOut = Math.min(maxZoomOut, 0.10);
+    } else if (diagramArea > 500000) { // Large area
+      maxZoomOut = Math.min(maxZoomOut, 0.12);
+    } else if (diagramArea > 200000) { // Medium-large area
+      maxZoomOut = Math.min(maxZoomOut, 0.15);
     }
     
-    scale = Math.min(scale * 0.6, maxZoomOut); // Less aggressive zoom out for multiple clusters
+    scale = Math.min(scale * 0.7, maxZoomOut); // Less aggressive zoom out for multiple clusters
   }
   
   let translateX = svgCenterX - contentCenterX * scale;

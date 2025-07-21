@@ -1,17 +1,11 @@
 // Swanix Diagrams - JS
-// v0.4.5
+// v0.4.3
 
 // Global zoom behavior - defined at the beginning to avoid scope issues
 const zoom = d3.zoom()
-  .scaleExtent([0.01, 2.5]) // Allow much more zoom out (0.01 = 1% of original size)
-  .wheelDelta(event => -event.deltaY * 0.002) // Smoother wheel zoom
+  .scaleExtent([0.1, 4])
   .on("zoom", event => {
-    const svgGroup = d3.select("#main-diagram-svg g");
-    if (!svgGroup.empty()) {
-      // Apply transform with better precision
-      const transform = event.transform;
-      svgGroup.attr("transform", `translate(${transform.x},${transform.y}) scale(${transform.k})`);
-    }
+    d3.select("#main-diagram-svg g").attr("transform", event.transform);
   });
 
 // Function to format diagram name for display
@@ -800,9 +794,6 @@ function drawGridLayout(nodes, svg) {
     .on("click", function(event, d) {
       event.stopPropagation();
       
-      // Prevent zoom behavior interference
-      event.preventDefault();
-      
       // Enable keyboard navigation when a node is clicked (only if enabled)
       if (isOptionEnabled('keyboardNavigation') && window.$xDiagrams.keyboardNavigation) {
         window.$xDiagrams.keyboardNavigation.enable();
@@ -830,65 +821,46 @@ function drawGridLayout(nodes, svg) {
     .attr("height", nodeHeight);
 
   // Node image with enhanced loading
-  nodeGroups.each(function(d) {
-    const nodeGroup = d3.select(this);
-    const imageUrl = resolveNodeImage(d);
-    
-    // Usar la función apropiada según el tipo de imagen
-    if (isEmbeddedThumbnailUrl(imageUrl)) {
-      // Para thumbnails embebidos, crear SVG directo
-      const svgString = getEmbeddedThumbnailSvgString(imageUrl);
-      if (svgString) {
-        const svgElement = createEmbeddedSVGElement(svgString, "image-base", {
-          x: -15,
-          y: -25,
-          width: 30,
-          height: 30
-        });
-        if (svgElement) {
-          nodeGroup.node().appendChild(svgElement);
-        }
+  nodeGroups.append("image")
+    .attr("href", "img/transparent.svg")
+    .attr("data-src", d => {
+      const url = resolveNodeImage(d);
+      const cacheBuster = `?t=${Date.now()}`;
+      return url.includes('?') ? `${url}&_cb=${Date.now()}` : `${url}${cacheBuster}`;
+    })
+    .attr("x", -15)
+    .attr("y", -25)
+    .attr("class", "image-base")
+    .attr("width", 30)
+    .attr("height", 30)
+    .on("load", function() {
+      const element = d3.select(this);
+      const dataSrc = element.attr("data-src");
+      
+      if (dataSrc && element.attr("href") === "img/transparent.svg") {
+        // Cambiar a la imagen real
+        element.attr("href", dataSrc);
+      } else {
+        // Image loaded successfully
+        element.classed("loaded", true);
       }
-    } else {
-      // Para imágenes no embebidas, usar elemento image tradicional
-      const imageElement = nodeGroup.append("image")
-        .attr("href", "img/transparent.svg")
-        .attr("data-src", imageUrl)
-        .attr("x", -15)
-        .attr("y", -25)
-        .attr("class", "image-base")
-        .attr("width", 30)
-        .attr("height", 30)
-        .on("load", function() {
-          const element = d3.select(this);
-          const dataSrc = element.attr("data-src");
-          
-          if (dataSrc && element.attr("href") === "img/transparent.svg") {
-            // Cambiar a la imagen real
-            element.attr("href", dataSrc);
-          } else {
-            // Image loaded successfully
-            element.classed("loaded", true);
-          }
-          // Solo aplicar el filtro si es necesario
-          if (shouldApplyFilter(dataSrc)) {
-            element.classed("image-filter", true);
-          }
-        })
-        .on("error", function() {
-          const element = d3.select(this);
-          const currentSrc = element.attr("href");
-          
-          if (currentSrc !== "img/detail.svg") {
-            const fallbackUrl = `img/detail.svg?t=${Date.now()}`;
-            element.attr("href", fallbackUrl);
-          } else {
-            // Si el fallback también falla, ocultar la imagen
-            element.style("display", "none");
-          }
-        });
-    }
-  });
+      // Solo aplicar el filtro si es necesario
+      if (shouldApplyFilter(dataSrc)) {
+        element.classed("image-filter", true);
+      }
+    })
+    .on("error", function() {
+      const element = d3.select(this);
+      const currentSrc = element.attr("href");
+      
+      if (currentSrc !== "img/detail.svg") {
+        const fallbackUrl = `img/detail.svg?t=${Date.now()}`;
+        element.attr("href", fallbackUrl);
+      } else {
+        // Si el fallback también falla, ocultar la imagen
+        element.style("display", "none");
+      }
+    });
 
   // Node text
   const textGroup = nodeGroups.append("g").attr("class", "text-group");
@@ -943,12 +915,11 @@ function drawGridLayout(nodes, svg) {
       const treeLayout = d3.tree().nodeSize([treeVertical, treeHorizontal]);
       treeLayout(root);
       
-      // Render en posición temporal (x=0, y=index*1000) - será movido a posición final después
+      // Render en posición temporal (x=0, y=index*1000)
       const treeGroup = g.append("g")
         .attr("class", "diagram-group")
         .attr("data-root-id", root.data.id)
-        .attr("transform", `translate(0, ${index * 1000})`)
-        .style("opacity", 0); // Inicialmente invisible para fade in
+        .attr("transform", `translate(0, ${index * 1000})`);
       
       const contentGroup = treeGroup.append("g").attr("class", "cluster-content");
 
@@ -978,10 +949,6 @@ function drawGridLayout(nodes, svg) {
         .attr("transform", d => `translate(${d.x},${d.y})`)
         .on("click", function(event, d) {
           event.stopPropagation();
-          
-          // Prevent zoom behavior interference
-          event.preventDefault();
-          
           if (isOptionEnabled('keyboardNavigation') && window.$xDiagrams.keyboardNavigation) {
             window.$xDiagrams.keyboardNavigation.enable();
             const nodeIndex = window.$xDiagrams.currentData.findIndex(item => item.id === d.data.id);
@@ -1002,65 +969,45 @@ function drawGridLayout(nodes, svg) {
         .attr("width", parseFloat(themeVars.getPropertyValue('--node-bg-width')) || 60)
         .attr("height", parseFloat(themeVars.getPropertyValue('--node-bg-height')) || 40);
       
-      // Node image with enhanced loading
-      node.each(function(d) {
-        const nodeSel = d3.select(this);
-        const imageUrl = resolveNodeImage(d);
-        
-        // Usar la función apropiada según el tipo de imagen
-        if (isEmbeddedThumbnailUrl(imageUrl)) {
-          // Para thumbnails embebidos, crear SVG directo
-          const svgString = getEmbeddedThumbnailSvgString(imageUrl);
-          if (svgString) {
-            const svgElement = createEmbeddedSVGElement(svgString, "image-base", {
-              x: parseFloat(themeVars.getPropertyValue('--image-x')),
-              y: parseFloat(themeVars.getPropertyValue('--image-y')),
-              width: parseFloat(themeVars.getPropertyValue('--image-width')),
-              height: parseFloat(themeVars.getPropertyValue('--image-height'))
-            });
-            if (svgElement) {
-              nodeSel.node().appendChild(svgElement);
-            }
+      node.append("image")
+        .attr("href", "img/transparent.svg")
+        .attr("data-src", d => {
+          const url = resolveNodeImage(d);
+          const cacheBuster = `?t=${Date.now()}`;
+          return url.includes('?') ? `${url}&_cb=${Date.now()}` : `${url}${cacheBuster}`;
+        })
+        .attr("x", parseFloat(themeVars.getPropertyValue('--image-x')))
+        .attr("y", parseFloat(themeVars.getPropertyValue('--image-y')))
+        .attr("class", "image-base")
+        .attr("width", parseFloat(themeVars.getPropertyValue('--image-width')))
+        .attr("height", parseFloat(themeVars.getPropertyValue('--image-height')))
+        .on("load", function() {
+          const element = d3.select(this);
+          const dataSrc = element.attr("data-src");
+          
+          if (dataSrc && element.attr("href") === "img/transparent.svg") {
+            // Cambiar a la imagen real
+            element.attr("href", dataSrc);
           }
-        } else {
-          // Para imágenes no embebidas, usar elemento image tradicional
-          const imageElement = nodeSel.append("image")
-            .attr("href", "img/transparent.svg")
-            .attr("data-src", imageUrl)
-            .attr("x", parseFloat(themeVars.getPropertyValue('--image-x')))
-            .attr("y", parseFloat(themeVars.getPropertyValue('--image-y')))
-            .attr("class", "image-base")
-            .attr("width", parseFloat(themeVars.getPropertyValue('--image-width')))
-            .attr("height", parseFloat(themeVars.getPropertyValue('--image-height')))
-            .on("load", function() {
-              const element = d3.select(this);
-              const dataSrc = element.attr("data-src");
-              
-              if (dataSrc && element.attr("href") === "img/transparent.svg") {
-                // Cambiar a la imagen real
-                element.attr("href", dataSrc);
-              }
-              // Marcar cargada
-              element.classed("loaded", true);
-              // Solo aplicar el filtro si es necesario
-              if (shouldApplyFilter(dataSrc)) {
-                element.classed("image-filter", true);
-              }
-            })
-            .on("error", function() {
-              const element = d3.select(this);
-              const currentSrc = element.attr("href");
-              
-              if (currentSrc !== "img/detail.svg") {
-                const fallbackUrl = `img/detail.svg?t=${Date.now()}`;
-                element.attr("href", fallbackUrl);
-              } else {
-                // Si el fallback también falla, ocultar la imagen
-                element.style("display", "none");
-              }
-            });
-        }
-      });
+          // Marcar cargada
+          element.classed("loaded", true);
+          // Solo aplicar el filtro si es necesario
+          if (shouldApplyFilter(dataSrc)) {
+            element.classed("image-filter", true);
+          }
+        })
+        .on("error", function() {
+          const element = d3.select(this);
+          const currentSrc = element.attr("href");
+          
+          if (currentSrc !== "img/detail.svg") {
+            const fallbackUrl = `img/detail.svg?t=${Date.now()}`;
+            element.attr("href", fallbackUrl);
+          } else {
+            // Si el fallback también falla, ocultar la imagen
+            element.style("display", "none");
+          }
+        });
       
       const textGroup = node.append("g").attr("class", "text-group");
       textGroup.append("text")
@@ -1544,21 +1491,8 @@ function applyMasonryLayout(clusterGroups, container, originalTrees, preCalculat
         const rectCenterY_relative = rectBounds.y + realHeight / 2;
         const ty = rowCenterY - rectCenterY_relative;
 
-        // Aplicar fade in elegante con ligero movimiento hacia arriba
-        const finalTransform = `translate(${tx},${ty})`;
-        const initialTransform = `translate(${tx},${ty + 20})`; // 20px hacia arriba
-        
-        // Aplicar posición inicial ligeramente desplazada
-        clusterData.cluster.group.attr("transform", initialTransform);
-        
-        // Animar a posición final con fade in y delay escalonado
-        const delay = (row * 200) + (colIndex * 100); // 200ms entre filas, 100ms entre clusters
-        clusterData.cluster.group.transition()
-          .delay(delay)
-          .duration(800)
-          .ease(d3.easeCubicOut)
-          .attr("transform", finalTransform)
-          .style("opacity", 1);
+        // Aplicar la transformación al grupo del cluster
+        clusterData.cluster.group.attr("transform", `translate(${tx},${ty})`);
 
         // Almacenar las posiciones absolutas finales para verificación
         clusterData.realX = tx + rectBounds.x; // Debería ser igual a currentX
@@ -1849,9 +1783,6 @@ function drawTrees(trees, diagramConfig = null) {
           .on("click", function(event, d) {
             event.stopPropagation();
             
-            // Prevent zoom behavior interference
-            event.preventDefault();
-            
             // Enable keyboard navigation when a node is clicked (only if enabled)
             if (isOptionEnabled('keyboardNavigation') && window.$xDiagrams.keyboardNavigation) {
               window.$xDiagrams.keyboardNavigation.enable();
@@ -1879,73 +1810,49 @@ function drawTrees(trees, diagramConfig = null) {
           .attr("height", parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--node-bg-height')) || 40);
 
         // Node image with enhanced loading
-        node.each(function(d) {
-          const nodeSel = d3.select(this);
-          const imageUrl = resolveNodeImage(d);
-          
-          // Usar la función apropiada según el tipo de imagen
-          if (isEmbeddedThumbnailUrl(imageUrl)) {
-            // Para thumbnails embebidos, crear SVG directo
-            const svgString = getEmbeddedThumbnailSvgString(imageUrl);
-            if (svgString) {
-              const svgElement = createEmbeddedSVGElement(svgString, "image-base", {
-                x: parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--image-x')),
-                y: parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--image-y')),
-                width: parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--image-width')),
-                height: parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--image-height'))
-              });
-              if (svgElement) {
-                nodeSel.node().appendChild(svgElement);
+        node.append("image")
+          .attr("href", "img/transparent.svg") // No cache buster here
+          .attr("data-src", d => {
+            const url = resolveNodeImage(d);
+            const cacheBuster = `?t=${Date.now()}`;
+            return url.includes('?') ? `${url}&_cb=${Date.now()}` : `${url}${cacheBuster}`;
+          })
+          .attr("x", parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--image-x')))
+          .attr("y", parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--image-y')))
+          .attr("class", "image-base")
+          .attr("width", parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--image-width')))
+          .attr("height", parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--image-height')))
+          .on("load", function() {
+            const element = d3.select(this);
+            const dataSrc = element.attr("data-src");
+            
+            if (dataSrc && element.attr("href") === "img/transparent.svg") {
+              // Cambiar a la imagen real
+              element.attr("href", dataSrc)
+                    .classed("loaded", true);
+              // Solo aplicar el filtro si es necesario
+              if (shouldApplyFilter(dataSrc)) {
+                element.classed("image-filter", true);
               }
             }
-          } else {
-            // Para imágenes no embebidas, usar elemento image tradicional
-            const imageElement = nodeSel.append("image")
-              .attr("href", getEmbeddedThumbnail('transparent') || "img/transparent.svg") // Usar thumbnail transparent embebido
-              .attr("data-src", imageUrl)
-              .attr("x", parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--image-x')))
-              .attr("y", parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--image-y')))
-              .attr("class", "image-base")
-              .attr("width", parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--image-width')))
-              .attr("height", parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--image-height')))
-              .on("load", function() {
-                const element = d3.select(this);
-                const dataSrc = element.attr("data-src");
-                const currentHref = element.attr("href");
-                
-                // Verificar si estamos cargando el placeholder transparent y tenemos una imagen real en data-src
-                if (dataSrc && (currentHref === "img/transparent.svg" || currentHref.includes('transparent'))) {
-                  console.log(`[Image Load] Loading real image: ${dataSrc}`);
-                  // Cambiar a la imagen real
-                  element.attr("href", dataSrc)
-                        .classed("loaded", true);
-                  // Solo aplicar el filtro si es necesario
-                  if (shouldApplyFilter(dataSrc)) {
-                    element.classed("image-filter", true);
-                  }
-                }
-              })
-              .on("error", function() {
-                const element = d3.select(this);
-                const currentSrc = element.attr("href");
-                const dataSrc = element.attr("data-src");
-                
-                console.log(`[Image Load] Error detected - currentSrc: ${currentSrc}, dataSrc: ${dataSrc}`);
-                
-                // Si la imagen actual es el placeholder transparent o una imagen externa que falló, usar thumbnail embebido del type
-                if (currentSrc.includes('transparent') || (dataSrc && dataSrc !== currentSrc)) {
-                  console.log(`[Image Load] Error loading image from Img column, using embedded thumbnail from Type column`);
-                  
-                  // Crear fallback embebido sin hacer peticiones adicionales
-                  createEmbeddedFallback(d, nodeSel, element);
-                } else {
-                  // Si ya es un thumbnail embebido (no transparent) y falla, ocultar la imagen
-                  console.log(`[Image Load] Error loading embedded thumbnail, hiding element`);
-                  element.style("display", "none");
-                }
-              });
-          }
-        });
+          })
+          .on("error", function() {
+            const element = d3.select(this);
+            const currentSrc = element.attr("href");
+            const fileName = currentSrc.split('/').pop().split('?')[0];
+            
+            // Si la imagen actual no es el fallback, intentar con detail.svg
+            if (currentSrc !== "img/detail.svg") {
+              console.log(`[Image Load] Error loading ${fileName}, falling back to detail.svg`);
+              const fallbackUrl = `img/detail.svg?t=${Date.now()}`;
+              element.attr("href", fallbackUrl)
+                    .classed("loaded", true);
+            } else {
+              // Si el fallback también falla, ocultar la imagen
+              console.log(`[Image Load] Error loading fallback image, hiding element`);
+              element.style("display", "none");
+            }
+          });
 
         // Node text
         const textGroup = node.append("g").attr("class", "text-group");
@@ -2205,42 +2112,9 @@ function applyAutoZoom() {
     // For single cluster: zoom out to show entire cluster with aura
     scale = Math.min(scale * 0.6, 0.6); // More aggressive zoom out to show aura
   } else {
-    // For multiple clusters: use more aggressive zoom out for better overview
-    // Calculate zoom based on diagram size and complexity
-    const totalArea = totalBounds.width * totalBounds.height;
-    const nodeDensity = nodeCount / Math.max(1, diagramGroupCount);
-    
-    // More balanced zoom out for multiple clusters
-    let maxZoomOut = 0.18; // Increased base zoom out for better visibility
-    
-    // Calculate diagram area and complexity
-    const diagramArea = totalBounds.width * totalBounds.height;
-    
-    // Adjust based on diagram complexity and size - more conservative values
-    if (nodeCount > 50) {
-      maxZoomOut = 0.10; // More reasonable zoom out for extremely large diagrams
-    } else if (nodeCount > 30) {
-      maxZoomOut = 0.12; // More reasonable zoom out for very large diagrams
-    } else if (nodeCount > 20) {
-      maxZoomOut = 0.15; // More reasonable zoom out for large diagrams
-    } else if (nodeCount > 10) {
-      maxZoomOut = 0.18; // More reasonable zoom out for medium-large diagrams
-    } else if (diagramGroupCount > 10) {
-      maxZoomOut = 0.12; // More reasonable zoom out for many clusters
-    } else if (diagramGroupCount > 5) {
-      maxZoomOut = 0.15; // More reasonable zoom out for many clusters
-    }
-    
-    // Additional adjustment based on diagram area - more conservative
-    if (diagramArea > 1000000) { // Very large area
-      maxZoomOut = Math.min(maxZoomOut, 0.10);
-    } else if (diagramArea > 500000) { // Large area
-      maxZoomOut = Math.min(maxZoomOut, 0.12);
-    } else if (diagramArea > 200000) { // Medium-large area
-      maxZoomOut = Math.min(maxZoomOut, 0.15);
-    }
-    
-    scale = Math.min(scale * 0.7, maxZoomOut); // Less aggressive zoom out for multiple clusters
+    // For multiple clusters: use maximum zoom out (0.15) for large diagrams
+    // This ensures users can see the entire diagram at once
+    scale = Math.min(scale * 0.6, 0.15); // Maximum zoom out for multiple clusters
   }
   
   let translateX = svgCenterX - contentCenterX * scale;
@@ -2268,11 +2142,11 @@ function applyAutoZoom() {
       const firstClusterLeftEdge = firstClusterBounds.x + firstClusterOffsetX;
       const zoomVarsLeft = getComputedStyle(document.documentElement);
       if (isFlatListDiagram) {
-        const flatLeftMargin = parseFloat(zoomVarsLeft.getPropertyValue('--flatlist-left-margin')) || 40; // Reduced from 60 to 40
+        const flatLeftMargin = parseFloat(zoomVarsLeft.getPropertyValue('--flatlist-left-margin')) || 20; // px
         translateX = flatLeftMargin - firstClusterLeftEdge * scale;
       } else {
         // Usar el mismo marginX que se usa en el layout para consistencia
-        const clusterLeftMargin = parseFloat(zoomVarsLeft.getPropertyValue('--cluster-left-margin')) || 50; // Reduced from 80 to 50
+        const clusterLeftMargin = parseFloat(zoomVarsLeft.getPropertyValue('--cluster-left-margin')) || 50; // px
         translateX = clusterLeftMargin - firstClusterLeftEdge * scale; // margen consistente con el layout
       }
           } else {
@@ -2295,55 +2169,23 @@ function applyAutoZoom() {
     
     // Calcular translateX dinámicamente basado en el ancho del diagrama
     // Para diagramas pequeños: más margen izquierdo, para grandes: menos margen
-    const baseLeftMargin = 30; // Reduced margin for better balance
-    const dynamicLeftMargin = Math.max(20, baseLeftMargin - (diagramWidth * scale * 0.03));
+    const baseLeftMargin = 0; // Reducido de 20 a 0 para posicionar al borde izquierdo
+    const dynamicLeftMargin = Math.max(0, baseLeftMargin - (diagramWidth * scale * 0.1));
     translateX = dynamicLeftMargin - totalBounds.x * scale;
     
     // Calcular translateY dinámicamente basado en la altura del diagrama
     // Para diagramas pequeños: más margen superior, para grandes: menos margen
-    const baseTopMargin = 60; // Reduced top margin for better balance
-    const dynamicTopMargin = Math.max(30, baseTopMargin - (diagramHeight * scale * 0.02));
+    const baseTopMargin = 45;
+    const dynamicTopMargin = Math.max(20, baseTopMargin - (diagramHeight * scale * 0.05));
     translateY = dynamicTopMargin - totalBounds.y * scale;
   }
 
-  // Apply transformation immediately without transition
+  // Apply transformation
   const transform = d3.zoomIdentity
     .translate(translateX, translateY)
     .scale(scale);
 
-  // Apply immediately to prevent any movement
   svg.call(zoom.transform, transform);
-  
-  // Store zoom info for debugging
-  window.$xDiagrams.lastAutoZoom = {
-    scale: scale,
-    translateX: translateX,
-    translateY: translateY,
-    nodeCount: nodeCount,
-    diagramGroupCount: diagramGroupCount,
-    isSingleGroup: isSingleGroup,
-    isFlatListDiagram: isFlatListDiagram,
-    totalBounds: totalBounds
-  };
-  
-  console.log('[AutoZoom] Applied zoom:', {
-    scale: scale.toFixed(3),
-    translateX: translateX.toFixed(0),
-    translateY: translateY.toFixed(0),
-    nodeCount: nodeCount,
-    diagramGroupCount: diagramGroupCount,
-    diagramType: isSingleGroup ? 'single' : (isFlatListDiagram ? 'flat' : 'multi'),
-    diagramArea: (totalBounds.width * totalBounds.height).toFixed(0)
-  });
-  
-  // Auto-apply extreme zoom for very large diagrams - disabled to prevent jumps
-  // if (!isSingleGroup && (nodeCount > 100 || diagramGroupCount > 20 || (totalBounds.width * totalBounds.height) > 2000000)) {
-  //   setTimeout(() => {
-  //     console.log('[AutoZoom] Detected very large diagram, applying extreme zoom out...');
-  //     applyExtremeZoomOut();
-  //   }, 500);
-  // }
-  
   // Preserve current theme after zoom
   setTimeout(async () => {
     if (window.preserveCurrentTheme) {
@@ -2356,111 +2198,13 @@ function applyAutoZoom() {
 function ensureZoomBehavior() {
   const svg = d3.select("#main-diagram-svg");
   if (!svg.empty()) {
-    // Remove existing zoom behavior to prevent conflicts
-    svg.on('.zoom', null);
-    
-    // Apply new zoom behavior with constraints
     svg.call(zoom);
     svg.style('pointer-events', 'auto');
     
     // Store reference to current zoom for external access
     window.$xDiagrams.currentZoom = zoom;
-    
-    // Ensure SVG maintains proper dimensions
-    svg.style('width', '100%');
-    svg.style('height', 'calc(100vh - 60px)');
-    
-    // Ensure body overflow is properly set for zoom behavior
-    const body = document.body;
-    if (!body.style.overflow || body.style.overflow === '') {
-      body.style.overflow = 'hidden';
-    }
-    
-    // Add touch-action to prevent conflicts on mobile
-    svg.style('touch-action', 'none');
   }
 }
-
-// Function to reset zoom to default state
-function resetZoom() {
-  const svg = d3.select("#main-diagram-svg");
-  if (!svg.empty() && window.$xDiagrams.currentZoom) {
-    svg.transition().duration(300).call(
-      window.$xDiagrams.currentZoom.transform,
-      d3.zoomIdentity
-    );
-  }
-}
-
-// Function to check if zoom is in a problematic state
-function isZoomProblematic() {
-  const svgGroup = d3.select("#main-diagram-svg g");
-  if (!svgGroup.empty()) {
-    const transform = svgGroup.attr("transform");
-    if (transform) {
-      const scaleMatch = transform.match(/scale\(([^)]+)\)/);
-      if (scaleMatch) {
-        const scale = parseFloat(scaleMatch[1]);
-        return scale > 2.5 || scale < 0.01 || isNaN(scale); // Updated to allow zoom out to 0.01
-      }
-    }
-  }
-  return false;
-}
-
-// Make functions globally available for debugging
-window.resetZoom = resetZoom;
-window.isZoomProblematic = isZoomProblematic;
-
-// Function to apply custom zoom for multiclusters
-window.applyCustomZoom = function(scaleFactor = 0.5) {
-  const svg = d3.select("#main-diagram-svg");
-  if (!svg.empty() && window.$xDiagrams.lastAutoZoom) {
-    const lastZoom = window.$xDiagrams.lastAutoZoom;
-    const newScale = Math.max(0.01, lastZoom.scale * scaleFactor); // Ensure minimum zoom of 0.01
-    
-    const transform = d3.zoomIdentity
-      .translate(lastZoom.translateX, lastZoom.translateY)
-      .scale(newScale);
-    
-    svg.call(zoom.transform, transform);
-    console.log('[CustomZoom] Applied custom zoom with factor:', scaleFactor, 'new scale:', newScale.toFixed(3));
-  } else {
-    console.warn('[CustomZoom] No previous zoom info available');
-  }
-};
-
-// Function to apply extreme zoom out for very large diagrams
-window.applyExtremeZoomOut = function() {
-  const svg = d3.select("#main-diagram-svg");
-  if (!svg.empty() && window.$xDiagrams.lastAutoZoom) {
-    const lastZoom = window.$xDiagrams.lastAutoZoom;
-    const newScale = 0.01; // Extreme zoom out (1% of original size)
-    
-    const transform = d3.zoomIdentity
-      .translate(lastZoom.translateX, lastZoom.translateY)
-      .scale(newScale);
-    
-    svg.call(zoom.transform, transform);
-    console.log('[ExtremeZoom] Applied extreme zoom out, scale:', newScale.toFixed(3));
-  } else {
-    console.warn('[ExtremeZoom] No previous zoom info available');
-  }
-};
-
-// Function to get current zoom info
-window.getZoomInfo = function() {
-  const svg = d3.select("#main-diagram-svg");
-  if (!svg.empty()) {
-    const transform = d3.zoomTransform(svg.node());
-    return {
-      scale: transform.k,
-      translateX: transform.x,
-      translateY: transform.y
-    };
-  }
-  return null;
-};
 
 // Function to wrap text
 function wrap(text, width) {
@@ -2576,23 +2320,6 @@ function openSidePanel(nodeData) {
   const sidePanel = document.getElementById('side-panel');
   const content = document.getElementById('side-panel-content');
   const titleElement = document.getElementById('side-panel-title');
-  
-  // Stabilize viewport to prevent layout shifts
-  const body = document.body;
-  const html = document.documentElement;
-  
-  // Store original overflow state but don't change it immediately
-  // This prevents conflicts with D3 zoom behavior
-  const originalOverflow = body.style.overflow;
-  
-  // Ensure topbar stays in place
-  const topbar = document.querySelector('.topbar');
-  if (topbar) {
-    topbar.style.position = 'fixed';
-    topbar.style.top = '0';
-    topbar.style.left = '0';
-    topbar.style.width = '100%';
-  }
 
   if (!sidePanel || !content) {
     console.error("No se encontró el panel lateral");
@@ -2637,9 +2364,8 @@ function openSidePanel(nodeData) {
     const nodeName = dataToShow.name || dataToShow.Name || dataToShow.NAME || nodeData.name || 'Nodo sin nombre';
     // Get the type for thumbnail
     const nodeType = dataToShow.type || dataToShow.Type || dataToShow.TYPE || nodeData.type || 'detail';
-    
-    // Create embedded thumbnail HTML instead of external image
-    const thumbnailHtml = createSidePanelThumbnailHtml(nodeType);
+    // Create thumbnail HTML with enhanced loading
+    const thumbnailHtml = `<img src="img/${nodeType}.svg" alt="${nodeType}" class="side-panel-title-thumbnail" style="opacity: 0; transition: opacity 0.2s ease-in-out;" onload="this.style.opacity='1'" onerror="this.src='img/detail.svg'; this.style.opacity='1'">`;
 
     // Truncar el texto del título por ancho disponible antes del botón de cerrar
     function truncateSidePanelTitle(text, maxWidth, fontSize, fontWeight, fontFamily) {
@@ -2704,27 +2430,11 @@ function openSidePanel(nodeData) {
 
 sidePanel.classList.add('open');
   
-  // Only restore body overflow if it was explicitly set before
-  // This prevents conflicts with D3 zoom behavior
-  if (originalOverflow) {
-    setTimeout(() => {
-      body.style.overflow = originalOverflow;
-    }, 300); // Wait for panel animation to complete
-  }
-  
   // Trigger onNodeClick hook
   triggerHook('onNodeClick', { 
     node: nodeData, 
     timestamp: new Date().toISOString() 
   });
-  
-  // Check if zoom is in a problematic state and reset if necessary
-  setTimeout(() => {
-    if (isZoomProblematic()) {
-      console.log('[Zoom] Detected problematic zoom state after opening panel, resetting...');
-      resetZoom();
-    }
-  }, 200);
 }
 
 // Close side panel
@@ -2733,20 +2443,6 @@ function closeSidePanel() {
   if (sidePanel) {
     d3.selectAll('.node.node-selected').classed('node-selected', false);
     sidePanel.classList.remove('open');
-    
-    // Ensure zoom behavior is maintained after panel closes
-    // Use a shorter delay to prevent conflicts
-    setTimeout(() => {
-      if (window.ensureZoomBehavior) {
-        window.ensureZoomBehavior();
-      }
-      
-      // Check if zoom is in a problematic state and reset if necessary
-      if (isZoomProblematic()) {
-        console.log('[Zoom] Detected problematic zoom state, resetting...');
-        resetZoom();
-      }
-    }, 100);
   }
 }
 
@@ -2896,10 +2592,7 @@ function setupClosePanelOnSvgClick() {
   svg.addEventListener('click', handleSvgClick);
   
   function handleSvgClick(event) {
-    // Only close panel if clicking on empty space, not on nodes or other interactive elements
-    if (!event.target.closest('.node') && 
-        !event.target.closest('.cluster') && 
-        !event.target.closest('.link')) {
+    if (!event.target.closest('.node')) {
       closeSidePanel();
     }
   }
@@ -2995,7 +2688,7 @@ async function getThemeVariables(themeId, forceReload = false) {
       // Fallback to basic theme if JSON loading fails
       const fallbackThemes = {
         snow: {
-          '--canvas-bg': '#f6f7f9',
+          '--bg-color': '#f6f7f9',
           '--text-color': '#222',
           '--node-fill': '#fff',
           '--control-bg': '#ffffff',
@@ -3003,7 +2696,7 @@ async function getThemeVariables(themeId, forceReload = false) {
           '--control-focus': '#1976d2'
         },
         onyx: {
-          '--canvas-bg': '#181c24',
+          '--bg-color': '#181c24',
           '--text-color': '#f6f7f9',
           '--node-fill': '#23272f',
           '--control-bg': '#23272f',
@@ -3027,7 +2720,7 @@ function updateSVGColors() {
     textColor: computedStyle.getPropertyValue('--text-color'),
     nodeFill: computedStyle.getPropertyValue('--node-fill'),
                     labelBorder: computedStyle.getPropertyValue('--node-stroke'),
-        linkColor: computedStyle.getPropertyValue('--node-connector'),
+        linkColor: computedStyle.getPropertyValue('--conector-stroke'),
     clusterBg: computedStyle.getPropertyValue('--cluster-bg'),
     clusterStroke: computedStyle.getPropertyValue('--cluster-stroke'),
     clusterTitleColor: computedStyle.getPropertyValue('--cluster-title-color'),
@@ -3398,41 +3091,6 @@ window.$xDiagrams.keyboardNavigation = {
         case 'Enter':
           e.preventDefault();
           this.openCurrentNodeLink();
-          break;
-        case '0':
-          if (e.ctrlKey || e.metaKey) {
-            e.preventDefault();
-            resetZoom();
-            console.log('[Keyboard] Zoom reset to default');
-          }
-          break;
-        case '9':
-          if (e.ctrlKey || e.metaKey) {
-            e.preventDefault();
-            applyCustomZoom(0.3); // Very zoomed out
-            console.log('[Keyboard] Applied very zoomed out view');
-          }
-          break;
-        case '8':
-          if (e.ctrlKey || e.metaKey) {
-            e.preventDefault();
-            applyCustomZoom(0.5); // More zoomed out
-            console.log('[Keyboard] Applied more zoomed out view');
-          }
-          break;
-        case '7':
-          if (e.ctrlKey || e.metaKey) {
-            e.preventDefault();
-            applyCustomZoom(0.4); // More reasonable zoom out
-            console.log('[Keyboard] Applied reasonable zoom out view');
-          }
-          break;
-        case '6':
-          if (e.ctrlKey || e.metaKey) {
-            e.preventDefault();
-            applyCustomZoom(0.2); // Very zoomed out but not extreme
-            console.log('[Keyboard] Applied very zoomed out view');
-          }
           break;
       }
     });
@@ -4047,9 +3705,7 @@ window.$xDiagrams.updateTopbarTitle = function(diagramIndex) {
     
     // If still no logo, try auto-detection
     if (!logoUrl) {
-        detectAutoLogo().catch(error => {
-            console.log('[Auto Logo] Error durante detección automática:', error);
-        });
+        detectAutoLogo();
         // Check again after auto-detection
         logoUrl = window.$xDiagrams && window.$xDiagrams.logo ? window.$xDiagrams.logo : null;
     }
@@ -4086,11 +3742,10 @@ window.$xDiagrams.updateTopbarTitle = function(diagramIndex) {
             newLogoElement.className = 'diagram-logo';
             newLogoElement.src = logoUrl;
             newLogoElement.alt = 'Logo';
-            newLogoElement.style.maxHeight = '48px';
-            newLogoElement.style.maxWidth = '180px';
+            newLogoElement.style.maxHeight = '32px';
+            newLogoElement.style.maxWidth = '120px';
             newLogoElement.style.objectFit = 'contain';
             newLogoElement.style.padding = '8px 0';
-            newLogoElement.style.marginRight = '-4px';
             titleDropdownContainer.appendChild(newLogoElement);
             console.log('[Logo] Logo aplicado:', logoUrl);
         }
@@ -4100,9 +3755,9 @@ window.$xDiagrams.updateTopbarTitle = function(diagramIndex) {
             const newTitleElement = document.createElement('h1');
             newTitleElement.className = 'diagram-title';
             newTitleElement.textContent = fixedTitle;
-            newTitleElement.style.margin = '0 8px 0 0';
-            newTitleElement.style.fontSize = '1em';
-            newTitleElement.style.fontWeight = '600';
+            newTitleElement.style.margin = '0';
+            newTitleElement.style.fontSize = '1.1em';
+            newTitleElement.style.fontWeight = '400';
             newTitleElement.style.color = 'var(--topbar-text, #333)';
             titleDropdownContainer.appendChild(newTitleElement);
             console.log('[Title] Título aplicado:', fixedTitle);
@@ -4517,9 +4172,7 @@ function renderSwDiagramBase() {
     
     // If still no logo, try auto-detection
     if (!logoUrl) {
-        detectAutoLogo().catch(error => {
-            console.log('[Auto Logo] Error durante detección automática:', error);
-        });
+        detectAutoLogo();
         // Check again after auto-detection
         logoUrl = window.$xDiagrams && window.$xDiagrams.logo ? window.$xDiagrams.logo : null;
     }
@@ -4546,7 +4199,7 @@ function renderSwDiagramBase() {
       <div class="topbar">
         <div class="topbar-left">
           <div class="title-dropdown-container">
-            ${logoUrl ? `<img class="diagram-logo" src="${logoUrl}" alt="Logo" style="max-height: 48px; max-width: 180px; object-fit: contain; padding: 8px 0; margin-right: -4px;">` : ''}
+            ${logoUrl ? `<img class="diagram-logo" src="${logoUrl}" alt="Logo" style="max-height: 32px; max-width: 120px; object-fit: contain; padding: 8px 0;">` : ''}
             <h1 class="diagram-title">${fixedTitle}</h1>
             <div class="diagram-dropdown" id="diagram-dropdown">
               <button class="diagram-dropdown-btn" id="diagram-dropdown-btn">
@@ -4602,7 +4255,7 @@ function renderSwDiagramBase() {
       <small id="error-message" class="error-message"></small>
       <div class="file-drop-zone" id="fileDropZone">
         <span class="icon">
-          ${getEmbeddedDragDropIcon('document')}
+          <img src="img/document.svg" alt="Documento" width="48" height="48">
         </span>
         <div class="text">Suelta tu archivo CSV aquí</div>
         <div class="subtext">o arrastra desde tu computadora</div>
@@ -4610,7 +4263,7 @@ function renderSwDiagramBase() {
       <div class="drag-overlay" id="dragOverlay">
         <div class="drag-message">
           <span class="icon">
-            ${getEmbeddedDragDropIcon('document')}
+            <img src="img/document.svg" alt="Documento" width="48" height="48">
           </span>
           <div>Suelta para cargar el archivo</div>
         </div>
@@ -4650,9 +4303,7 @@ function initializeWhenReady() {
   preloadCommonImages();
   
   // Try auto-detection of logo early
-  detectAutoLogo().catch(error => {
-    console.log('[Auto Logo] Error durante detección automática:', error);
-  });
+  detectAutoLogo();
   
   // Wait for diagrams to be defined
   const diagrams = getDiagrams();
@@ -4931,16 +4582,6 @@ function createKeyboardInstructionsPanel() {
       <span class="description">Último nodo</span>
       <span class="key">Esc</span>
       <span class="description">Deseleccionar</span>
-      <span class="key">Ctrl+0</span>
-      <span class="description">Resetear zoom</span>
-      <span class="key">Ctrl+6</span>
-      <span class="description">Zoom muy alejado</span>
-      <span class="key">Ctrl+7</span>
-      <span class="description">Zoom alejado</span>
-      <span class="key">Ctrl+8</span>
-      <span class="description">Zoom más alejado</span>
-      <span class="key">Ctrl+9</span>
-      <span class="description">Zoom alejado</span>
     </div>
   `;
   
@@ -5969,11 +5610,11 @@ function setupDataRefreshButton() {
   });
 }
 
-// Preload common thumbnail images using embedded thumbnails to prevent Chrome's default image flash
+// Preload common thumbnail images to prevent Chrome's default image flash
 function preloadCommonImages() {
   const commonImages = [
     'detail', 'document', 'settings', 'form', 'list', 'modal', 
-    'grid', 'report', 'file-csv', 'file-pdf', 'file-xls', 'file-xml',
+    'mosaic', 'report', 'file-csv', 'file-pdf', 'file-xls', 'file-xml',
     'home', 'transparent'
   ].map(name => name.toLowerCase().replace(/\s+/g, '-'));
   
@@ -5981,47 +5622,25 @@ function preloadCommonImages() {
   const totalImages = commonImages.length;
   
   commonImages.forEach(imageName => {
-    // Verificar si existe como thumbnail embebido
-    const embeddedThumbnail = getEmbeddedThumbnail(imageName);
-    if (embeddedThumbnail) {
-      // Usar thumbnail embebido
-      const img = new Image();
-      img.onload = function() {
-        loadedCount++;
-        if (loadedCount === totalImages) {
-          console.log('🖼️ [Preload] All common embedded thumbnails preloaded successfully');
-        }
-      };
-      img.onerror = function() {
-        console.warn(`[Preload] Failed to load embedded thumbnail: ${imageName}`);
-        loadedCount++;
-        if (loadedCount === totalImages) {
-          console.log('🖼️ [Preload] Common embedded thumbnails preload completed with some errors');
-        }
-      };
-      img.src = embeddedThumbnail;
-    } else {
-      // Si no existe como embebido, intentar cargar como archivo externo
-      const img = new Image();
-      img.onload = function() {
-        loadedCount++;
-        if (loadedCount === totalImages) {
-          console.log('🖼️ [Preload] All common images preloaded successfully');
-        }
-      };
-      img.onerror = function() {
-        console.warn(`[Preload] Failed to load image: ${imageName}.svg`);
-        loadedCount++;
-        if (loadedCount === totalImages) {
-          console.log('🖼️ [Preload] Common images preload completed with some errors');
-        }
-      };
-      img.src = `img/${imageName}.svg?t=${Date.now()}`;
-    }
+    const img = new Image();
+    img.onload = function() {
+      loadedCount++;
+      if (loadedCount === totalImages) {
+        console.log('🖼️ [Preload] All common images preloaded successfully');
+      }
+    };
+    img.onerror = function() {
+      console.warn(`[Preload] Failed to load image: ${imageName}.svg`);
+      loadedCount++;
+      if (loadedCount === totalImages) {
+        console.log('🖼️ [Preload] Common images preload completed with some errors');
+      }
+    };
+    img.src = `img/${imageName}.svg?t=${Date.now()}`;
   });
 }
 
-// Enhanced image loading with embedded thumbnail fallback
+// Enhanced image loading with better error handling
 function createImageElement(baseUrl, fallbackUrl, className = "image-base") {
   const img = new Image();
   const cacheBuster = `?t=${Date.now()}`;
@@ -6037,7 +5656,7 @@ function createImageElement(baseUrl, fallbackUrl, className = "image-base") {
   };
   
   img.onerror = function() {
-    // Try fallback URL first
+    // Try fallback
     if (fallbackUrl && this.src !== fallbackUrl) {
       this.src = fallbackUrl;
       // Verificar si el fallback necesita filtro
@@ -6047,29 +5666,7 @@ function createImageElement(baseUrl, fallbackUrl, className = "image-base") {
         this.classList.remove('image-filter');
       }
     } else {
-      // If no fallback URL or fallback also fails, use detail embedded thumbnail
-      console.log(`[Image Load] Error loading ${baseUrl}, using detail embedded thumbnail`);
-      
-      // Para esta función, usar detail como fallback por defecto
-      // (ya que no tenemos acceso al contexto del nodo aquí)
-      const detailThumbnail = getEmbeddedThumbnail('detail');
-      if (detailThumbnail) {
-        // Crear elemento SVG embebido
-        const svgString = getEmbeddedThumbnailSvgString(detailThumbnail);
-        if (svgString) {
-          const svgElement = createEmbeddedSVGElement(svgString, className, {});
-          if (svgElement) {
-            // Reemplazar el elemento image fallido con el SVG embebido
-            if (this.parentNode) {
-              this.parentNode.replaceChild(svgElement, this);
-              return;
-            }
-          }
-        }
-      }
-      
-      // Si no se pudo crear el SVG embebido, ocultar la imagen
-      console.log(`[Image Load] Could not create embedded thumbnail, hiding element`);
+      // If fallback also fails, hide the image
       this.style.display = 'none';
     }
   };
@@ -6080,56 +5677,28 @@ function createImageElement(baseUrl, fallbackUrl, className = "image-base") {
   return img;
 }
 
-// Helper function to resolve node image URL - COLUMNA IMG TIENE PRIORIDAD ABSOLUTA
+// Helper function to resolve node image URL - FORZAR uso de columna img, solo usar type si img está vacío
 function resolveNodeImage(node) {
   // Obtener valor de la columna img directamente del nodo
   const imgVal = node.img || (node.data && node.data.img) || "";
   const typeVal = node.type || (node.data && node.data.type) || "";
 
-  // COLUMNA IMG TIENE PRIORIDAD ABSOLUTA - SIEMPRE usar img si tiene valor
+  // SIEMPRE usar img si tiene valor (prioridad absoluta)
   if (imgVal && imgVal.trim() !== "") {
     // Si es una URL absoluta, data URI o ruta con barra, úsala directamente
     if (/^(https?:\/\/|data:|\/)/i.test(imgVal) || imgVal.includes('/')) {
-      console.log(`[resolveNodeImage] Img "${imgVal}" -> imagen externa/local (prioridad absoluta)`);
       return imgVal;
     }
-    
-    // Si es un nombre simple sin ruta, verificar si existe como thumbnail embebido
+    // Normalizar nombres simples (sin barra) y asegurarse de extensión .svg
     let fileName = imgVal.toLowerCase().replace(/\s+/g, '-');
     if (!fileName.match(/\.[a-z0-9]+$/i)) {
       fileName += '.svg';
     }
-    
-    // Verificar si existe como thumbnail embebido
-    const embeddedThumbnail = getEmbeddedThumbnail(fileName.replace('.svg', ''));
-    if (embeddedThumbnail) {
-      console.log(`[resolveNodeImage] Img "${fileName}" -> thumbnail embebido encontrado`);
-      return embeddedThumbnail;
-    }
-    
-    // Si no es embebido, usar como archivo externo (el sistema de error handling se encargará del fallback)
-    console.log(`[resolveNodeImage] Img "${fileName}" -> archivo externo (prioridad absoluta)`);
     return `img/${fileName}`;
   }
 
   // SOLO si img está completamente vacío, usar type como fallback
   const typeName = (typeVal || 'detail').toLowerCase().replace(/\s+/g, '-');
-  
-  // Verificar si el type existe como thumbnail embebido
-  const embeddedThumbnail = getEmbeddedThumbnail(typeName);
-  if (embeddedThumbnail) {
-    console.log(`[resolveNodeImage] Type "${typeName}" -> thumbnail embebido encontrado`);
-    return embeddedThumbnail;
-  }
-  
-  // Si no existe el thumbnail embebido, usar detail como fallback final
-  const detailThumbnail = getEmbeddedThumbnail('detail');
-  if (detailThumbnail) {
-    console.log(`[resolveNodeImage] Type "${typeName}" no encontrado, usando detail embebido`);
-    return detailThumbnail;
-  }
-  
-  // Último recurso: archivo externo (el sistema de error handling se encargará del fallback)
   return `img/${typeName}.svg`;
 }
 
@@ -6155,642 +5724,32 @@ function shouldApplyFilter(url) {
 // AUTO LOGO DETECTION
 // ============================================================================
 
-// Function to get embedded SVG for drag and drop icons
-function getEmbeddedDragDropIcon(iconName) {
-  if (EMBEDDED_THUMBNAILS[iconName]) {
-    const svgString = EMBEDDED_THUMBNAILS[iconName].trim();
-    // Replace the original dimensions with 48x48 for drag and drop icons
-    return svgString
-      .replace(/width="200"/, 'width="48"')
-      .replace(/height="180"/, 'height="48"')
-      .replace(/viewBox="0 0 200 180"/, 'viewBox="0 0 200 180"');
-  }
-  return null;
-}
-
 // Function to detect logo files automatically in img folder
-async function detectAutoLogo() {
-  // If logo is already set, don't try to detect again
-  if (window.$xDiagrams && window.$xDiagrams.logo) {
-    return;
-  }
-  
+function detectAutoLogo() {
   const logoExtensions = ['svg', 'png', 'jpg', 'jpeg'];
   const imgPath = 'img/';
   
-  // Check if any logo file exists using fetch (more efficient than Image objects)
+  // Check if any logo file exists by trying to load them
   for (const ext of logoExtensions) {
     const logoUrl = `${imgPath}logo.${ext}`;
     
-    try {
-      const response = await fetch(logoUrl, { method: 'HEAD' });
-      if (response.ok) {
-        // If file exists, set it as auto logo
-        if (!window.$xDiagrams.logo) {
-          window.$xDiagrams.logo = logoUrl;
-          console.log('[Auto Logo] Logo detectado automáticamente:', logoUrl);
-          
-          // Update the topbar if it already exists
-          if (window.$xDiagrams.updateTopbarTitle) {
-            window.$xDiagrams.updateTopbarTitle(window.$xDiagrams.currentDiagramIdx || 0);
-          }
+    // Create a test image to check if file exists
+    const testImg = new Image();
+    testImg.onload = function() {
+      // If image loads successfully, set it as auto logo
+      if (!window.$xDiagrams.logo) {
+        window.$xDiagrams.logo = logoUrl;
+        console.log('[Auto Logo] Logo detectado automáticamente:', logoUrl);
+        
+        // Update the topbar if it already exists
+        if (window.$xDiagrams.updateTopbarTitle) {
+          window.$xDiagrams.updateTopbarTitle(window.$xDiagrams.currentDiagramIdx || 0);
         }
-        return; // Exit early if logo found
       }
-    } catch (error) {
-      // Silently continue to next extension
-      continue;
-    }
-  }
-  
-  // If no logo found, log once
-  console.log('[Auto Logo] No se encontró ningún archivo de logo en img/');
-}
-
-// ============================================================================
-// THUMBNAILS EMBEBIDOS - SISTEMA DE GESTIÓN INTERNA
-// ============================================================================
-
-/**
- * Biblioteca de thumbnails embebidos para evitar peticiones externas
- * Los thumbnails se almacenan como strings SVG y se convierten a data URIs
- * cuando se necesitan. Esto mejora el rendimiento y reduce las peticiones HTTP.
- */
-const EMBEDDED_THUMBNAILS = {
-// Thumbnails básicos del sistema
-'detail': `
-<svg width="200" height="180" viewBox="0 0 200 180" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <rect x="20" y="84" width="160" height="82" fill="black" fill-opacity="0.1"/>
-  <rect x="20" y="23" width="160" height="43" fill="black" fill-opacity="0.1"/>
-</svg>
-` ,
-  
-'document': `
-<svg width="200" height="180" viewBox="0 0 200 180" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <path d="M29 21H144L174 51V171H29V21Z" fill="black" fill-opacity="0.05"/>
-  <path d="M144 21L174 51L144 51L144 21Z" fill="black" fill-opacity="0.1"/>
-  <rect x="55" y="124" width="94" height="16" fill="black" fill-opacity="0.1"/>
-  <rect x="55" y="92" width="94" height="16" fill="black" fill-opacity="0.1"/>
-  <rect x="55" y="58" width="40" height="16" fill="black" fill-opacity="0.1"/>
-</svg>
-`,
-  
-'form': `
-<svg width="200" height="180" viewBox="0 0 200 180" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <rect x="20" y="133" width="83" height="27" fill="black" fill-opacity="0.2"/>
-  <rect x="119" y="133" width="61" height="27" fill="black" fill-opacity="0.5"/>
-  <rect x="20" y="75" width="160" height="32" fill="black" fill-opacity="0.1"/>
-  <rect x="20" y="25" width="160" height="32" fill="black" fill-opacity="0.1"/>
-</svg>
-`,
-  
-'list': `
-<svg width="200" height="180" viewBox="0 0 200 180" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <rect x="20" y="61" width="160" height="24" fill="black" fill-opacity="0.1"/>
-  <rect x="20" y="101" width="160" height="24" fill="black" fill-opacity="0.1"/>
-  <rect x="20" y="141" width="160" height="24" fill="black" fill-opacity="0.1"/>
-  <rect x="20" y="21" width="160" height="24" fill="black" fill-opacity="0.1"/>
-</svg>
-`,
-  
-'grid': `
-<svg width="200" height="180" viewBox="0 0 200 180" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <rect x="26" y="103" width="64" height="64" fill="black" fill-opacity="0.1"/>
-  <rect x="110" y="103" width="64" height="64" fill="black" fill-opacity="0.1"/>
-  <rect x="26" y="19" width="64" height="64" fill="black" fill-opacity="0.1"/>
-  <rect x="110" y="19" width="64" height="64" fill="black" fill-opacity="0.1"/>
-</svg>
-`,
-  
-'report': `
-<svg width="200" height="180" viewBox="0 0 200 180" fill="none" xmlns="http://www.w3.org/2000/svg">
-<rect x="20" y="136" width="160" height="30" fill="black" fill-opacity="0.1"/>
-<path d="M154 53C166.976 53 173.997 63.2091 180 71.4629V118H22.7783C28.3323 111.031 34.7425 103.057 41.6133 96.4492C49.8404 88.5368 57.323 84 63.5 84C66.5083 84 69.6098 85.0108 73.168 86.833C76.9895 88.7902 80.1119 90.9665 84.4668 93.499C88.4181 95.7968 93.0546 98.1512 98.1924 98.9121C103.615 99.7151 109.196 98.6937 114.795 95.0146C125.945 87.6878 132.947 75.5616 138.594 66.9316C141.591 62.3512 144.157 58.7661 146.82 56.3037C149.345 53.9688 151.571 53 154 53ZM180 52.4072C173.912 46.4123 165.48 41 154 41C147.679 41 142.679 43.7882 138.673 47.4932C134.804 51.071 131.531 55.8097 128.553 60.3613C122.249 69.9954 116.751 79.3693 108.205 84.9854C105.054 87.056 102.442 87.4098 99.9512 87.041C97.1758 86.63 94.1783 85.2656 90.499 83.126C87.2234 81.2211 82.7179 78.241 78.6377 76.1514C74.2939 73.9268 69.219 72 63.5 72C52.2223 72 41.7041 79.7132 33.2949 87.8008C28.572 92.3431 24.0716 97.4546 20 102.356V19H180V52.4072Z" fill="black" fill-opacity="0.1"/>
-</svg>
-`,
-  
-'settings': `
-<svg width="200" height="180" viewBox="0 0 200 180" fill="none" xmlns="http://www.w3.org/2000/svg">
-<path fill-rule="evenodd" clip-rule="evenodd" d="M152.5 91.0449C152.5 93.574 151.005 95.864 148.689 96.8814L143.246 99.2732C142.532 101.628 141.623 103.882 140.52 106.061L143.808 114.457C144.731 116.815 144.171 119.495 142.382 121.287L135.88 127.796C134.091 129.587 131.411 130.15 129.052 129.229L120.416 125.858C118.543 126.762 116.577 127.536 114.565 128.172L112.135 133.71C111.119 136.027 108.828 137.523 106.298 137.523H97.0919C94.5569 137.523 92.2627 136.021 91.2489 133.698L88.8984 128.311C86.6822 127.638 84.5448 126.813 82.4955 125.821L73.4091 129.372C71.051 130.293 68.3711 129.732 66.5809 127.942L60.0809 121.442C58.291 119.652 57.7296 116.972 58.6507 114.614L62.2022 105.523C61.2378 103.511 60.4172 101.42 59.7542 99.2732L54.3106 96.8814C51.9951 95.864 50.5 93.574 50.5 91.0449V81.8336C50.5 79.3026 51.9973 77.0113 54.3154 75.9951L59.7959 73.5924C60.6073 70.9867 61.6644 68.4692 62.9208 66.1L60.3471 59.5052C59.4264 57.1461 59.9894 54.4657 61.7814 52.6763L68.293 46.1745C70.0828 44.3874 72.7598 43.8274 75.1158 44.7471L82.0458 47.4525C84.2249 46.3676 86.5199 45.4404 88.903 44.7264L91.2546 39.3287C92.2677 37.0035 94.5627 35.5 97.099 35.5H106.302C108.833 35.5 111.123 36.9965 112.14 39.3136L114.57 44.8515C116.911 45.598 119.183 46.5345 121.33 47.6334L128.382 44.8817C130.74 43.962 133.418 44.5236 135.207 46.3129L141.708 52.8134C143.498 54.604 144.059 57.2847 143.137 59.6431L140.385 66.6795C141.498 68.8957 142.462 71.1954 143.204 73.5924L148.685 75.9951C151.003 77.0113 152.5 79.3026 152.5 81.8336V91.0449ZM127 86.5C127 100.583 115.583 112 101.5 112C87.4167 112 76 100.583 76 86.5C76 72.4167 87.4167 61 101.5 61C115.583 61 127 72.4167 127 86.5Z" fill="black" fill-opacity="0.12"/>
-</svg>
-`,
-  
-'modal': `
-<svg width="200" height="180" viewBox="0 0 200 180" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <g clip-path="url(#clip0_6524_904)">
-  <path d="M200 180H0V0H200V180ZM35 23V153H165V23H35Z" fill="black" fill-opacity="0.03"/>
-  <rect x="53" y="113.45" width="48.7625" height="15.8625" fill="black" fill-opacity="0.3"/>
-  <rect x="111.162" y="113.45" width="35.8375" height="15.8625" fill="black" fill-opacity="0.6"/>
-  <rect x="53" y="79.375" width="94" height="18.8" fill="black" fill-opacity="0.1"/>
-  <rect x="53" y="50" width="94" height="18.8" fill="black" fill-opacity="0.1"/>
-  </g>
-  <defs>
-  <clipPath id="clip0_6524_904">
-  <rect width="200" height="180" fill="white"/>
-  </clipPath>
-  </defs>
-</svg>
-`,
-  
-// Thumbnails de archivos
-'file-csv': `
-<svg width="200" height="180" viewBox="0 0 200 180" fill="none" xmlns="http://www.w3.org/2000/svg">
-<path d="M29 21H144L174 51V171H29V21Z" fill="black" fill-opacity="0.05"/>
-<path d="M144 21L174 51L144 51L144 21Z" fill="black" fill-opacity="0.1"/>
-<path d="M117.377 92.6365L121.931 107.551H122.1L126.654 92.6365H132.162L125.291 113H118.739L111.868 92.6365H117.377Z" fill="black" fill-opacity="0.4"/>
-<path d="M104.156 98.7414C104.089 98.0123 103.794 97.4455 103.271 97.0411C102.754 96.6302 102.015 96.4247 101.053 96.4247C100.417 96.4247 99.8868 96.5075 99.4626 96.6733C99.0383 96.839 98.7202 97.0677 98.508 97.3593C98.2959 97.6444 98.1865 97.9725 98.1799 98.3437C98.1667 98.6486 98.2263 98.9171 98.3589 99.1491C98.4981 99.3811 98.697 99.5866 98.9555 99.7656C99.2206 99.9379 99.5388 100.09 99.91 100.223C100.281 100.356 100.699 100.472 101.163 100.571L102.913 100.969C103.92 101.187 104.809 101.479 105.578 101.844C106.353 102.208 107.003 102.642 107.526 103.146C108.057 103.65 108.458 104.23 108.73 104.886C109.001 105.543 109.141 106.278 109.147 107.094C109.141 108.38 108.816 109.483 108.173 110.405C107.53 111.326 106.605 112.032 105.399 112.523C104.199 113.013 102.75 113.258 101.053 113.258C99.3499 113.258 97.865 113.003 96.5989 112.493C95.3328 111.982 94.3485 111.207 93.6458 110.166C92.9432 109.125 92.5819 107.81 92.562 106.219H97.2751C97.3149 106.875 97.4905 107.422 97.8021 107.859C98.1136 108.297 98.5412 108.628 99.0847 108.854C99.6349 109.079 100.271 109.192 100.994 109.192C101.657 109.192 102.22 109.102 102.684 108.923C103.155 108.744 103.516 108.496 103.768 108.178C104.02 107.859 104.149 107.495 104.156 107.084C104.149 106.699 104.03 106.371 103.798 106.099C103.566 105.821 103.208 105.582 102.724 105.383C102.247 105.178 101.637 104.989 100.894 104.817L98.7666 104.32C97.0033 103.915 95.6146 103.262 94.6004 102.361C93.5862 101.453 93.0824 100.226 93.089 98.6818C93.0824 97.4223 93.4204 96.3186 94.1032 95.3707C94.786 94.4228 95.7306 93.6837 96.937 93.1534C98.1435 92.6231 99.5189 92.3579 101.063 92.3579C102.641 92.3579 104.01 92.6264 105.17 93.1633C106.337 93.6936 107.241 94.4393 107.884 95.4005C108.527 96.3617 108.856 97.4753 108.869 98.7414H104.156Z" fill="black" fill-opacity="0.4"/>
-<path d="M89.2122 100.014H84.2406C84.1743 99.5037 84.0384 99.043 83.8329 98.6321C83.6274 98.2211 83.3556 97.8697 83.0176 97.5781C82.6795 97.2864 82.2784 97.0644 81.8144 96.9119C81.357 96.7528 80.8499 96.6733 80.2931 96.6733C79.3054 96.6733 78.4536 96.9152 77.7377 97.3991C77.0284 97.883 76.4816 98.5823 76.0971 99.4971C75.7193 100.412 75.5303 101.519 75.5303 102.818C75.5303 104.17 75.7226 105.304 76.107 106.219C76.4981 107.127 77.045 107.813 77.7477 108.277C78.457 108.734 79.2955 108.963 80.2633 108.963C80.8069 108.963 81.3007 108.893 81.7448 108.754C82.1956 108.615 82.59 108.413 82.9281 108.148C83.2728 107.876 83.5545 107.548 83.7732 107.163C83.9986 106.772 84.1544 106.331 84.2406 105.841L89.2122 105.871C89.126 106.772 88.8641 107.66 88.4266 108.535C87.9958 109.41 87.4025 110.209 86.6468 110.932C85.8911 111.648 84.9697 112.218 83.8826 112.642C82.8021 113.066 81.5625 113.278 80.1639 113.278C78.3211 113.278 76.6705 112.874 75.2122 112.065C73.7605 111.25 72.6137 110.063 71.7718 108.506C70.93 106.948 70.509 105.052 70.509 102.818C70.509 100.578 70.9366 98.6785 71.7917 97.1207C72.6468 95.5629 73.8035 94.3797 75.2619 93.571C76.7202 92.7623 78.3542 92.3579 80.1639 92.3579C81.3968 92.3579 82.537 92.5303 83.5843 92.875C84.6317 93.213 85.5531 93.7102 86.3485 94.3664C87.144 95.0161 87.7903 95.8148 88.2874 96.7627C88.7846 97.7107 89.0928 98.7945 89.2122 100.014Z" fill="black" fill-opacity="0.4"/>
-</svg>
-`,
-  
-'file-pdf': `
-<svg width="200" height="180" viewBox="0 0 200 180" fill="none" xmlns="http://www.w3.org/2000/svg">
-<path d="M29 21H144L174 51V171H29V21Z" fill="black" fill-opacity="0.05"/>
-<path d="M144 21L174 51L144 51L144 21Z" fill="black" fill-opacity="0.1"/>
-<path d="M114.831 113V92.6365H128.732V96.6336H119.753V100.81H127.847V104.817H119.753V113H114.831Z" fill="black" fill-opacity="0.4"/>
-<path d="M100.785 113H93.2581V92.6365H100.775C102.85 92.6365 104.636 93.0441 106.134 93.8595C107.639 94.6682 108.799 95.8349 109.615 97.3595C110.43 98.8775 110.838 100.694 110.838 102.808C110.838 104.93 110.43 106.752 109.615 108.277C108.806 109.802 107.649 110.972 106.144 111.787C104.64 112.596 102.853 113 100.785 113ZM98.1799 108.804H100.596C101.736 108.804 102.701 108.612 103.49 108.227C104.285 107.836 104.885 107.203 105.289 106.328C105.7 105.447 105.906 104.273 105.906 102.808C105.906 101.343 105.7 100.177 105.289 99.3083C104.878 98.4333 104.272 97.8036 103.47 97.4191C102.674 97.028 101.693 96.8325 100.527 96.8325H98.1799V108.804Z" fill="black" fill-opacity="0.4"/>
-<path d="M73.8723 113V92.6365H82.2842C83.8089 92.6365 85.1247 92.9348 86.2317 93.5314C87.3453 94.1213 88.2038 94.9466 88.807 96.0072C89.4102 97.0612 89.7118 98.2875 89.7118 99.6862C89.7118 101.091 89.4036 102.321 88.7871 103.375C88.1772 104.422 87.3056 105.234 86.172 105.811C85.0385 106.388 83.6929 106.676 82.1351 106.676H76.9448V102.798H81.2203C81.9628 102.798 82.5825 102.669 83.0797 102.411C83.5835 102.152 83.9646 101.791 84.2232 101.327C84.4817 100.856 84.611 100.309 84.611 99.6862C84.611 99.0565 84.4817 98.5129 84.2232 98.0555C83.9646 97.5915 83.5835 97.2335 83.0797 96.9816C82.5759 96.7298 81.9561 96.6038 81.2203 96.6038H78.7942V113H73.8723Z" fill="black" fill-opacity="0.4"/>
-</svg>
-`,
-  
-'file-xls': `
-<svg width="200" height="180" viewBox="0 0 200 180" fill="none" xmlns="http://www.w3.org/2000/svg">
-<path d="M29 21H144L174 51V171H29V21Z" fill="black" fill-opacity="0.05"/>
-<path d="M144 21L174 51L144 51L144 21Z" fill="black" fill-opacity="0.1"/>
-<path d="M123.733 98.7414C123.666 98.0123 123.371 97.4455 122.848 97.0411C122.331 96.6302 121.592 96.4247 120.63 96.4247C119.994 96.4247 119.464 96.5075 119.039 96.6733C118.615 96.839 118.297 97.0677 118.085 97.3593C117.873 97.6444 117.763 97.9725 117.757 98.3437C117.744 98.6486 117.803 98.9171 117.936 99.1491C118.075 99.3811 118.274 99.5866 118.532 99.7656C118.798 99.9379 119.116 100.09 119.487 100.223C119.858 100.356 120.276 100.472 120.74 100.571L122.49 100.969C123.497 101.187 124.386 101.479 125.155 101.844C125.93 102.208 126.58 102.642 127.103 103.146C127.634 103.65 128.035 104.23 128.307 104.886C128.578 105.543 128.718 106.278 128.724 107.094C128.718 108.38 128.393 109.483 127.75 110.405C127.107 111.326 126.182 112.032 124.976 112.523C123.776 113.013 122.327 113.258 120.63 113.258C118.927 113.258 117.442 113.003 116.176 112.493C114.91 111.982 113.925 111.207 113.223 110.166C112.52 109.125 112.159 107.81 112.139 106.219H116.852C116.892 106.875 117.067 107.422 117.379 107.859C117.691 108.297 118.118 108.628 118.662 108.854C119.212 109.079 119.848 109.192 120.571 109.192C121.234 109.192 121.797 109.102 122.261 108.923C122.732 108.744 123.093 108.496 123.345 108.178C123.597 107.859 123.726 107.495 123.733 107.084C123.726 106.699 123.607 106.371 123.375 106.099C123.143 105.821 122.785 105.582 122.301 105.383C121.824 105.178 121.214 104.989 120.471 104.817L118.343 104.32C116.58 103.915 115.191 103.262 114.177 102.361C113.163 101.453 112.659 100.226 112.666 98.6818C112.659 97.4223 112.997 96.3186 113.68 95.3707C114.363 94.4228 115.307 93.6837 116.514 93.1534C117.72 92.6231 119.096 92.3579 120.64 92.3579C122.218 92.3579 123.587 92.6264 124.747 93.1633C125.914 93.6936 126.818 94.4393 127.461 95.4005C128.104 96.3617 128.432 97.4753 128.446 98.7414H123.733Z" fill="black" fill-opacity="0.4"/>
-<path d="M95.6643 113V92.6365H100.586V109.003H109.058V113H95.6643Z" fill="black" fill-opacity="0.4"/>
-<path d="M78.8539 92.6365L82.5726 99.0697H82.7317L86.4902 92.6365H91.9988L85.8539 102.818L92.1976 113H86.5499L82.7317 106.497H82.5726L78.7544 113H73.1465L79.4604 102.818L73.3056 92.6365H78.8539Z" fill="black" fill-opacity="0.4"/>
-</svg>
-`,
-  
-'file-xml': `
-<svg width="200" height="180" viewBox="0 0 200 180" fill="none" xmlns="http://www.w3.org/2000/svg">
-<path d="M29 21H144L174 51V171H29V21Z" fill="black" fill-opacity="0.05"/>
-<path d="M144 21L174 51L144 51L144 21Z" fill="black" fill-opacity="0.1"/>
-<path d="M119.446 113V92.6365H124.368V109.003H132.84V113H119.446Z" fill="black" fill-opacity="0.4"/>
-<path d="M92.4866 92.6365H98.5817L103.752 105.244H103.991L109.161 92.6365H115.256V113H110.464V100.492H110.295L105.403 112.871H102.34L97.4482 100.422H97.2792V113H92.4866V92.6365Z" fill="black" fill-opacity="0.4"/>
-<path d="M75.6761 92.6365L79.3949 99.0697H79.554L83.3125 92.6365H88.821L82.6761 102.818L89.0199 113H83.3722L79.554 106.497H79.3949L75.5767 113H69.9688L76.2827 102.818L70.1278 92.6365H75.6761Z" fill="black" fill-opacity="0.4"/>
-</svg>
-`,
-  
-'file-html': `
-<svg width="200" height="180" viewBox="0 0 200 180" fill="none" xmlns="http://www.w3.org/2000/svg">
-<path d="M29 21H144L174 51V171H29V21Z" fill="black" fill-opacity="0.05"/>
-<path d="M144 21L174 51L144 51L144 21Z" fill="black" fill-opacity="0.1"/>
-<path d="M129.118 113V92.6362H134.04V109.003H142.511V113H129.118Z" fill="black" fill-opacity="0.4"/>
-<path d="M102.158 92.6362H108.253L113.423 105.244H113.662L118.832 92.6362H124.928V113H120.135V100.491H119.966L115.074 112.871H112.011L107.119 100.422H106.95V113H102.158V92.6362Z" fill="black" fill-opacity="0.4"/>
-<path d="M81.4224 96.6334V92.6362H98.634V96.6334H92.4593V113H87.607V96.6334H81.4224Z" fill="black" fill-opacity="0.4"/>
-<path d="M60.0232 113V92.6362H64.9451V100.81H72.9692V92.6362H77.8811V113H72.9692V104.817H64.9451V113H60.0232Z" fill="black" fill-opacity="0.4"/>
-</svg>
-`,
-  
-'file-js': `
-<svg width="200" height="180" viewBox="0 0 200 180" fill="none" xmlns="http://www.w3.org/2000/svg">
-<path d="M29 21H144L174 51V171H29V21Z" fill="black" fill-opacity="0.05"/>
-<path d="M144 21L174 51L144 51L144 21Z" fill="black" fill-opacity="0.1"/>
-<path d="M112.974 98.7414C112.907 98.0123 112.612 97.4455 112.089 97.0411C111.572 96.6302 110.833 96.4247 109.871 96.4247C109.235 96.4247 108.705 96.5075 108.28 96.6733C107.856 96.839 107.538 97.0677 107.326 97.3593C107.114 97.6444 107.004 97.9725 106.998 98.3437C106.985 98.6486 107.044 98.9171 107.177 99.1491C107.316 99.3811 107.515 99.5866 107.773 99.7656C108.038 99.9379 108.357 100.09 108.728 100.223C109.099 100.356 109.517 100.472 109.981 100.571L111.731 100.969C112.738 101.187 113.627 101.479 114.396 101.844C115.171 102.208 115.821 102.642 116.344 103.146C116.875 103.65 117.276 104.23 117.547 104.886C117.819 105.543 117.958 106.278 117.965 107.094C117.958 108.38 117.634 109.483 116.991 110.405C116.348 111.326 115.423 112.032 114.217 112.523C113.017 113.013 111.568 113.258 109.871 113.258C108.168 113.258 106.683 113.003 105.417 112.493C104.151 111.982 103.166 111.207 102.464 110.166C101.761 109.125 101.4 107.81 101.38 106.219H106.093C106.133 106.875 106.308 107.422 106.62 107.859C106.931 108.297 107.359 108.628 107.903 108.854C108.453 109.079 109.089 109.192 109.812 109.192C110.475 109.192 111.038 109.102 111.502 108.923C111.973 108.744 112.334 108.496 112.586 108.178C112.838 107.859 112.967 107.495 112.974 107.084C112.967 106.699 112.848 106.371 112.616 106.099C112.384 105.821 112.026 105.582 111.542 105.383C111.065 105.178 110.455 104.989 109.712 104.817L107.584 104.32C105.821 103.915 104.432 103.262 103.418 102.361C102.404 101.453 101.9 100.226 101.907 98.6818C101.9 97.4223 102.238 96.3186 102.921 95.3707C103.604 94.4228 104.548 93.6837 105.755 93.1534C106.961 92.6231 108.337 92.3579 109.881 92.3579C111.459 92.3579 112.828 92.6264 113.988 93.1633C115.155 93.6936 116.059 94.4393 116.702 95.4005C117.345 96.3617 117.673 97.4753 117.687 98.7414H112.974Z" fill="black" fill-opacity="0.4"/>
-<path d="M92.9042 92.6362H97.7565V106.716C97.7498 108.035 97.435 109.188 96.8119 110.176C96.1888 111.157 95.327 111.919 94.2266 112.463C93.1329 113.006 91.8668 113.278 90.4284 113.278C89.1556 113.278 87.9989 113.056 86.9582 112.612C85.9241 112.168 85.0988 111.479 84.4823 110.544C83.8725 109.609 83.5709 108.413 83.5775 106.954H88.4795C88.4994 107.478 88.5988 107.926 88.7778 108.297C88.9634 108.661 89.2186 108.936 89.5434 109.122C89.8682 109.308 90.256 109.4 90.7068 109.4C91.1774 109.4 91.5751 109.301 91.8999 109.102C92.2248 108.897 92.47 108.595 92.6357 108.197C92.8081 107.8 92.8976 107.306 92.9042 106.716V92.6362Z" fill="black" fill-opacity="0.4"/>
-</svg>
-`,
-  
-'file-css': `
-<svg width="200" height="180" viewBox="0 0 200 180" fill="none" xmlns="http://www.w3.org/2000/svg">
-<path d="M29 21H144L174 51V171H29V21Z" fill="black" fill-opacity="0.05"/>
-<path d="M144 21L174 51L144 51L144 21Z" fill="black" fill-opacity="0.1"/>
-<path d="M125.819 98.7414C125.752 98.0123 125.457 97.4455 124.934 97.0411C124.417 96.6302 123.678 96.4247 122.716 96.4247C122.08 96.4247 121.55 96.5075 121.125 96.6733C120.701 96.839 120.383 97.0677 120.171 97.3593C119.959 97.6444 119.849 97.9725 119.843 98.3437C119.829 98.6486 119.889 98.9171 120.022 99.1491C120.161 99.3811 120.36 99.5866 120.618 99.7656C120.883 99.9379 121.202 100.09 121.573 100.223C121.944 100.356 122.362 100.472 122.826 100.571L124.576 100.969C125.583 101.187 126.472 101.479 127.24 101.844C128.016 102.208 128.666 102.642 129.189 103.146C129.72 103.65 130.121 104.23 130.392 104.886C130.664 105.543 130.803 106.278 130.81 107.094C130.803 108.38 130.479 109.483 129.836 110.405C129.193 111.326 128.268 112.032 127.062 112.523C125.862 113.013 124.413 113.258 122.716 113.258C121.013 113.258 119.528 113.003 118.262 112.493C116.996 111.982 116.011 111.207 115.309 110.166C114.606 109.125 114.245 107.81 114.225 106.219H118.938C118.978 106.875 119.153 107.422 119.465 107.859C119.776 108.297 120.204 108.628 120.748 108.854C121.298 109.079 121.934 109.192 122.657 109.192C123.32 109.192 123.883 109.102 124.347 108.923C124.818 108.744 125.179 108.496 125.431 108.178C125.683 107.859 125.812 107.495 125.819 107.084C125.812 106.699 125.693 106.371 125.461 106.099C125.229 105.821 124.871 105.582 124.387 105.383C123.91 105.178 123.3 104.989 122.557 104.817L120.429 104.32C118.666 103.915 117.277 103.262 116.263 102.361C115.249 101.453 114.745 100.226 114.752 98.6818C114.745 97.4223 115.083 96.3186 115.766 95.3707C116.449 94.4228 117.393 93.6837 118.6 93.1534C119.806 92.6231 121.182 92.3579 122.726 92.3579C124.304 92.3579 125.673 92.6264 126.833 93.1633C127.999 93.6936 128.904 94.4393 129.547 95.4005C130.19 96.3617 130.518 97.4753 130.532 98.7414H125.819Z" fill="black" fill-opacity="0.4"/>
-<path d="M106.214 98.7414C106.148 98.0123 105.853 97.4455 105.329 97.0411C104.812 96.6302 104.073 96.4247 103.112 96.4247C102.476 96.4247 101.945 96.5075 101.521 96.6733C101.097 96.839 100.779 97.0677 100.567 97.3593C100.355 97.6444 100.245 97.9725 100.239 98.3437C100.225 98.6486 100.285 98.9171 100.417 99.1491C100.557 99.3811 100.756 99.5866 101.014 99.7656C101.279 99.9379 101.597 100.09 101.969 100.223C102.34 100.356 102.757 100.472 103.221 100.571L104.971 100.969C105.979 101.187 106.867 101.479 107.636 101.844C108.412 102.208 109.061 102.642 109.585 103.146C110.115 103.65 110.516 104.23 110.788 104.886C111.06 105.543 111.199 106.278 111.206 107.094C111.199 108.38 110.874 109.483 110.231 110.405C109.588 111.326 108.664 112.032 107.457 112.523C106.257 113.013 104.809 113.258 103.112 113.258C101.408 113.258 99.9236 113.003 98.6575 112.493C97.3914 111.982 96.4071 111.207 95.7044 110.166C95.0018 109.125 94.6405 107.81 94.6206 106.219H99.3337C99.3734 106.875 99.5491 107.422 99.8607 107.859C100.172 108.297 100.6 108.628 101.143 108.854C101.694 109.079 102.33 109.192 103.052 109.192C103.715 109.192 104.279 109.102 104.743 108.923C105.213 108.744 105.575 108.496 105.827 108.178C106.078 107.859 106.208 107.495 106.214 107.084C106.208 106.699 106.088 106.371 105.856 106.099C105.624 105.821 105.266 105.582 104.783 105.383C104.305 105.178 103.695 104.989 102.953 104.817L100.825 104.32C99.0619 103.915 97.6732 103.262 96.659 102.361C95.6448 101.453 95.141 100.226 95.1476 98.6818C95.141 97.4223 95.479 96.3186 96.1618 95.3707C96.8446 94.4228 97.7892 93.6837 98.9956 93.1534C100.202 92.6231 101.578 92.3579 103.122 92.3579C104.7 92.3579 106.069 92.6264 107.229 93.1633C108.395 93.6936 109.3 94.4393 109.943 95.4005C110.586 96.3617 110.914 97.4753 110.927 98.7414H106.214Z" fill="black" fill-opacity="0.4"/>
-<path d="M91.2708 100.014H86.2992C86.2329 99.5037 86.097 99.043 85.8915 98.6321C85.686 98.2211 85.4142 97.8697 85.0762 97.5781C84.7381 97.2864 84.337 97.0644 83.873 96.9119C83.4156 96.7528 82.9085 96.6733 82.3517 96.6733C81.364 96.6733 80.5122 96.9152 79.7963 97.3991C79.087 97.883 78.5402 98.5823 78.1557 99.4971C77.7779 100.412 77.5889 101.519 77.5889 102.818C77.5889 104.17 77.7812 105.304 78.1656 106.219C78.5567 107.127 79.1036 107.813 79.8063 108.277C80.5155 108.734 81.3541 108.963 82.3219 108.963C82.8654 108.963 83.3593 108.893 83.8034 108.754C84.2542 108.615 84.6486 108.413 84.9867 108.148C85.3314 107.876 85.6131 107.548 85.8318 107.163C86.0572 106.772 86.213 106.331 86.2992 105.841L91.2708 105.871C91.1846 106.772 90.9227 107.66 90.4852 108.535C90.0544 109.41 89.4611 110.209 88.7054 110.932C87.9497 111.648 87.0283 112.218 85.9412 112.642C84.8607 113.066 83.6211 113.278 82.2225 113.278C80.3797 113.278 78.7291 112.874 77.2708 112.065C75.819 111.25 74.6723 110.063 73.8304 108.506C72.9886 106.948 72.5676 105.052 72.5676 102.818C72.5676 100.578 72.9952 98.6785 73.8503 97.1207C74.7054 95.5629 75.8621 94.3797 77.3205 93.571C78.7788 92.7623 80.4128 92.3579 82.2225 92.3579C83.4554 92.3579 84.5956 92.5303 85.6429 92.875C86.6903 93.213 87.6117 93.7102 88.4071 94.3664C89.2026 95.0161 89.8489 95.8148 90.346 96.7627C90.8432 97.7107 91.1514 98.7945 91.2708 100.014Z" fill="black" fill-opacity="0.4"/>
-</svg>
-`,
-  
-'file-txt': `
-<svg width="200" height="180" viewBox="0 0 200 180" fill="none" xmlns="http://www.w3.org/2000/svg">
-<path d="M29 21H144L174 51V171H29V21Z" fill="black" fill-opacity="0.05"/>
-<path d="M144 21L174 51L144 51L144 21Z" fill="black" fill-opacity="0.1"/>
-<path d="M113.831 96.6334V92.6362H131.043V96.6334H124.868V113H120.016V96.6334H113.831Z" fill="black" fill-opacity="0.4"/>
-<path d="M97.6869 92.6362L101.406 99.0695H101.565L105.323 92.6362H110.832L104.687 102.818L111.031 113H105.383L101.565 106.497H101.406L97.5874 113H91.9795L98.2934 102.818L92.1386 92.6362H97.6869Z" fill="black" fill-opacity="0.4"/>
-<path d="M71.9697 96.6334V92.6362H89.1814V96.6334H83.0067V113H78.1544V96.6334H71.9697Z" fill="black" fill-opacity="0.4"/>
-</svg>
-`,
-  
-'file-docx': `
-<svg width="200" height="180" viewBox="0 0 200 180" fill="none" xmlns="http://www.w3.org/2000/svg">
-<path d="M29 21H144L174 51V171H29V21Z" fill="black" fill-opacity="0.05"/>
-<path d="M144 21L174 51L144 51L144 21Z" fill="black" fill-opacity="0.1"/>
-<path d="M130.517 92.6362L134.236 99.0695H134.395L138.154 92.6362H143.662L137.517 102.818L143.861 113H138.213L134.395 106.497H134.236L130.418 113H124.81L131.124 102.818L124.969 92.6362H130.517Z" fill="black" fill-opacity="0.4"/>
-<path d="M122.146 100.014H117.174C117.108 99.5037 116.972 99.043 116.767 98.6321C116.561 98.2211 116.289 97.8697 115.951 97.5781C115.613 97.2864 115.212 97.0644 114.748 96.9119C114.291 96.7528 113.784 96.6733 113.227 96.6733C112.239 96.6733 111.387 96.9152 110.672 97.3991C109.962 97.883 109.415 98.5823 109.031 99.4971C108.653 100.412 108.464 101.519 108.464 102.818C108.464 104.17 108.656 105.304 109.041 106.219C109.432 107.127 109.979 107.813 110.682 108.277C111.391 108.734 112.229 108.963 113.197 108.963C113.741 108.963 114.235 108.893 114.679 108.754C115.129 108.615 115.524 108.413 115.862 108.148C116.207 107.876 116.488 107.548 116.707 107.163C116.932 106.772 117.088 106.331 117.174 105.841L122.146 105.871C122.06 106.772 121.798 107.66 121.36 108.535C120.93 109.41 120.336 110.209 119.581 110.932C118.825 111.648 117.904 112.218 116.816 112.642C115.736 113.066 114.496 113.278 113.098 113.278C111.255 113.278 109.604 112.874 108.146 112.065C106.694 111.25 105.548 110.063 104.706 108.506C103.864 106.948 103.443 105.052 103.443 102.818C103.443 100.578 103.87 98.6785 104.726 97.1207C105.581 95.5629 106.737 94.3797 108.196 93.571C109.654 92.7623 111.288 92.3579 113.098 92.3579C114.331 92.3579 115.471 92.5303 116.518 92.875C117.566 93.213 118.487 93.7102 119.282 94.3664C120.078 95.0161 120.724 95.8148 121.221 96.7627C121.718 97.7107 122.027 98.7945 122.146 100.014Z" fill="black" fill-opacity="0.4"/>
-<path d="M99.6682 102.818C99.6682 105.059 99.2373 106.958 98.3756 108.516C97.5138 110.073 96.3471 111.257 94.8756 112.065C93.4106 112.874 91.7667 113.278 89.9437 113.278C88.1142 113.278 86.4669 112.871 85.002 112.055C83.537 111.24 82.3737 110.057 81.5119 108.506C80.6568 106.948 80.2292 105.052 80.2292 102.818C80.2292 100.578 80.6568 98.6785 81.5119 97.1207C82.3737 95.5629 83.537 94.3797 85.002 93.571C86.4669 92.7623 88.1142 92.3579 89.9437 92.3579C91.7667 92.3579 93.4106 92.7623 94.8756 93.571C96.3471 94.3797 97.5138 95.5629 98.3756 97.1207C99.2373 98.6785 99.6682 100.578 99.6682 102.818ZM94.6369 102.818C94.6369 101.492 94.448 100.372 94.0702 99.4573C93.6989 98.5426 93.162 97.8499 92.4594 97.3792C91.7633 96.9086 90.9248 96.6733 89.9437 96.6733C88.9693 96.6733 88.1308 96.9086 87.4281 97.3792C86.7255 97.8499 86.1852 98.5426 85.8074 99.4573C85.4362 100.372 85.2506 101.492 85.2506 102.818C85.2506 104.144 85.4362 105.264 85.8074 106.179C86.1852 107.094 86.7255 107.786 87.4281 108.257C88.1308 108.728 88.9693 108.963 89.9437 108.963C90.9248 108.963 91.7633 108.728 92.4594 108.257C93.162 107.786 93.6989 107.094 94.0702 106.179C94.448 105.264 94.6369 104.144 94.6369 102.818Z" fill="black" fill-opacity="0.4"/>
-<path d="M66.4017 113H58.8748V92.6362H66.3918C68.4666 92.6362 70.2531 93.0439 71.7512 93.8592C73.2559 94.668 74.4159 95.8346 75.2313 97.3592C76.0466 98.8772 76.4543 100.694 76.4543 102.808C76.4543 104.929 76.0466 106.752 75.2313 108.277C74.4226 109.801 73.2659 110.971 71.7611 111.787C70.2564 112.596 68.4699 113 66.4017 113ZM63.7966 108.804H66.2128C67.353 108.804 68.3175 108.612 69.1063 108.227C69.9017 107.836 70.5016 107.203 70.906 106.328C71.317 105.446 71.5225 104.273 71.5225 102.808C71.5225 101.343 71.317 100.176 70.906 99.3081C70.495 98.4331 69.8885 97.8034 69.0864 97.4189C68.2909 97.0278 67.3099 96.8323 66.1432 96.8323H63.7966V108.804Z" fill="black" fill-opacity="0.4"/>
-</svg>
-`,
-  
-// Thumbnails especiales
-'home': `
-<svg width="200" height="180" viewBox="0 0 200 180" fill="none" xmlns="http://www.w3.org/2000/svg">
-<rect width="200" height="173" fill="black" fill-opacity="0.03"/>
-<path d="M95.8977 64.8359C98.3398 62.7173 101.969 62.7176 104.41 64.8369L119.632 78.0527L136.872 93.0117C138.294 94.2451 139.11 96.0351 139.11 97.917V128.506C139.11 132.092 136.202 135 132.615 135H114.648V102.559C114.648 98.9724 111.74 96.0654 108.154 96.0654H92.1418C88.5556 96.0654 85.6479 98.9724 85.6477 102.559V135H67.679C64.0927 135 61.1858 132.092 61.1858 128.506V97.917C61.1858 96.0351 62.0017 94.2451 63.4231 93.0117L80.6624 78.0527L95.8977 64.8359ZM94.9573 38.7451C97.395 36.64 101.008 36.6392 103.446 38.7441L157.966 85.8213L155.07 88.3213C152.632 90.4257 149.021 90.4257 146.583 88.3213L99.2014 47.417L53.095 87.2314C50.6587 89.3353 47.0486 89.337 44.6106 87.2354L41.7043 84.7295L94.9573 38.7451Z" fill="black" fill-opacity="0.15"/>
-</svg>
-`,
-  
-'profile': `
-<svg width="200" height="180" viewBox="0 0 200 180" fill="none" xmlns="http://www.w3.org/2000/svg">
-<path d="M144.341 109.787C157.22 119.76 150.167 140.386 133.879 140.386H66.1211C49.8327 140.386 42.7805 119.76 55.6592 109.787L80.0351 90.9121C84.3165 97.3841 91.6591 101.654 100 101.654C108.341 101.654 115.682 97.3839 119.964 90.9121L144.341 109.787Z" fill="black" fill-opacity="0.12"/>
-<circle cx="100" cy="62.9224" r="23.9224" fill="black" fill-opacity="0.12"/>
-</svg>
-`,
-  
-'logo': `
-<svg width="200" height="180" viewBox="0 0 200 180" fill="none" xmlns="http://www.w3.org/2000/svg">
-<rect x="20" y="20" width="160" height="140" fill="black" fill-opacity="0.05"/>
-<circle cx="100" cy="90" r="40" fill="black" fill-opacity="0.1"/>
-<text x="100" y="100" text-anchor="middle" font-family="Arial, sans-serif" font-size="24" font-weight="bold" fill="black" fill-opacity="0.3">LOGO</text>
-</svg>`
-,
-  
-// Thumbnails para tipos problemáticos que causaban loop infinito
-'custom': `
-<svg width="200" height="180" viewBox="0 0 200 180" fill="none" xmlns="http://www.w3.org/2000/svg">
-<rect x="20" y="20" width="160" height="140" fill="black" fill-opacity="0.05"/>
-<circle cx="100" cy="90" r="30" fill="black" fill-opacity="0.1"/>
-<text x="100" y="100" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="black" fill-opacity="0.3">CUSTOM</text>
-</svg>
-`,
-  
-'external': `
-<svg width="200" height="180" viewBox="0 0 200 180" fill="none" xmlns="http://www.w3.org/2000/svg">
-<rect x="20" y="20" width="160" height="140" fill="black" fill-opacity="0.05"/>
-<path d="M40 40L160 140M160 40L40 140" stroke="black" stroke-opacity="0.2" stroke-width="2"/>
-<text x="100" y="100" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="black" fill-opacity="0.3">EXTERNAL</text>
-</svg>
-`,
-
-'transparent': `
-<svg width="200" height="180" viewBox="0 0 200 180" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <!-- Thumbnail transparente para placeholders -->
-</svg>
-`
-};
-
-/**
- * Convierte un SVG string a data URI
- * @param {string} svgString - String SVG a convertir
- * @returns {string} Data URI del SVG
- */
-function svgToDataUri(svgString) {
-  const encoded = encodeURIComponent(svgString);
-  return `data:image/svg+xml;charset=utf-8,${encoded}`;
-}
-
-/**
- * Obtiene un thumbnail embebido por nombre
- * @param {string} thumbnailName - Nombre del thumbnail (sin extensión)
- * @returns {string|null} Data URI del thumbnail o null si no existe
- */
-function getEmbeddedThumbnail(thumbnailName) {
-  const normalizedName = thumbnailName.toLowerCase().replace(/\s+/g, '-');
-  const svgString = EMBEDDED_THUMBNAILS[normalizedName];
-  
-  if (svgString) {
-    return svgToDataUri(svgString);
-  }
-  
-  return null;
-}
-
-/**
- * Verifica si un thumbnail está disponible como embebido
- * @param {string} thumbnailName - Nombre del thumbnail
- * @returns {boolean} True si está disponible como embebido
- */
-function isEmbeddedThumbnailAvailable(thumbnailName) {
-  const normalizedName = thumbnailName.toLowerCase().replace(/\s+/g, '-');
-  return EMBEDDED_THUMBNAILS.hasOwnProperty(normalizedName);
-}
-
-/**
- * Determina si una URL es un thumbnail embebido
- * @param {string} url - URL a verificar
- * @returns {boolean} True si es un thumbnail embebido
- */
-function isEmbeddedThumbnailUrl(url) {
-  return url && url.startsWith('data:image/svg+xml;');
-}
-
-/**
- * Extrae el string SVG de un data URI de thumbnail embebido
- * @param {string} dataUri - Data URI del thumbnail embebido
- * @returns {string|null} String SVG o null si no es válido
- */
-function getEmbeddedThumbnailSvgString(dataUri) {
-  if (!isEmbeddedThumbnailUrl(dataUri)) {
-    return null;
-  }
-  
-  try {
-    // Extraer la parte después de la coma en el data URI
-    const svgPart = dataUri.split(',')[1];
-    if (svgPart) {
-      const decodedSvg = decodeURIComponent(svgPart);
-      
-      // Verificar si el SVG decodificado es válido
-      if (decodedSvg.includes('<svg')) {
-        return decodedSvg;
-      }
-    }
-  } catch (error) {
-    console.error('[Embedded SVG] Error al decodificar data URI:', error);
-  }
-  
-  return null;
-}
-
-/**
- * Crea un elemento SVG con código SVG directo para thumbnails embebidos
- * @param {string} svgString - String SVG del thumbnail embebido
- * @param {string} className - Clase CSS para el elemento
- * @param {Object} attributes - Atributos adicionales (x, y, width, height)
- * @returns {SVGElement} Elemento SVG creado
- */
-function createEmbeddedSVGElement(svgString, className = "image-base", attributes = {}) {
-  // Crear un contenedor temporal para parsear el SVG
-  const tempDiv = document.createElement('div');
-  tempDiv.innerHTML = svgString.trim();
-  
-  // Obtener el elemento SVG
-  const svgElement = tempDiv.querySelector('svg');
-  if (!svgElement) {
-    console.error('[Embedded SVG] Error al parsear SVG string');
-    return null;
-  }
-  
-  // Limpiar solo el atributo fill de todos los elementos internos del SVG
-  // para permitir que las variables CSS controlen el color pero mantener las transparencias originales
-  const allElements = svgElement.querySelectorAll('*');
-  allElements.forEach(element => {
-    if (element.hasAttribute('fill')) {
-      element.removeAttribute('fill');
-    }
-    if (element.hasAttribute('stroke')) {
-      element.removeAttribute('stroke');
-    }
-  });
-  
-  // Aplicar atributos personalizados
-  if (attributes.x !== undefined) svgElement.setAttribute('x', attributes.x);
-  if (attributes.y !== undefined) svgElement.setAttribute('y', attributes.y);
-  if (attributes.width !== undefined) svgElement.setAttribute('width', attributes.width);
-  if (attributes.height !== undefined) svgElement.setAttribute('height', attributes.height);
-  
-  // Aplicar clase CSS específica para thumbnails embebidos
-  const embeddedClasses = 'embedded-thumbnail loaded';
-  const finalClasses = className ? `${className} ${embeddedClasses}` : embeddedClasses;
-  svgElement.setAttribute('class', finalClasses);
-  
-  // Aplicar fade-in usando clases CSS
-  svgElement.classList.add('fade-in');
-  
-  // Completar fade-in después de un pequeño delay
-  setTimeout(() => {
-    svgElement.classList.add('loaded');
-    console.log(`[Embedded SVG] ✅ Fade-in completado para thumbnail embebido`);
-  }, 200);
-  
-  return svgElement;
-}
-
-/**
- * Obtiene el thumbnail embebido apropiado para un nodo
- * @param {Object} node - Objeto del nodo
- * @returns {string|null} Data URI del thumbnail embebido apropiado
- */
-function getAppropriateEmbeddedThumbnail(node) {
-  const typeVal = node.type || (node.data && node.data.type) || 'detail';
-  const typeName = typeVal.toLowerCase().replace(/\s+/g, '-');
-  
-  // Intentar usar el thumbnail embebido correspondiente al type
-  let thumbnail = getEmbeddedThumbnail(typeName);
-  
-  // Si no existe el thumbnail del type, usar detail como fallback
-  if (!thumbnail) {
-    console.log(`[getAppropriateEmbeddedThumbnail] Type "${typeName}" not found, using detail thumbnail`);
-    thumbnail = getEmbeddedThumbnail('detail');
-  } else {
-    console.log(`[getAppropriateEmbeddedThumbnail] Using embedded thumbnail for type "${typeName}"`);
-  }
-  
-  return thumbnail;
-}
-
-/**
- * Crea un elemento SVG embebido como fallback cuando falla una imagen de la columna Img
- * @param {Object} node - Objeto del nodo
- * @param {Object} nodeSel - Selección D3 del nodo
- * @param {Object} element - Elemento image que falló
- * @returns {boolean} True si se pudo crear el fallback
- */
-function createEmbeddedFallback(node, nodeSel, element) {
-  console.log(`[Embedded Fallback] Creating fallback for failed Img column image`);
-  console.log(`[Embedded Fallback] Node type: ${node.type || (node.data && node.data.type) || 'detail'}`);
-  
-  // Obtener el thumbnail embebido correspondiente al type del nodo
-  const fallbackThumbnail = getAppropriateEmbeddedThumbnail(node);
-  console.log(`[Embedded Fallback] Fallback thumbnail found: ${fallbackThumbnail ? 'YES' : 'NO'}`);
-  
-  if (fallbackThumbnail) {
-    // Crear elemento SVG embebido
-    const svgString = getEmbeddedThumbnailSvgString(fallbackThumbnail);
-    console.log(`[Embedded Fallback] SVG string extracted: ${svgString ? 'YES' : 'NO'}`);
-    
-    if (svgString) {
-      const svgElement = createEmbeddedSVGElement(svgString, "image-base", {
-        x: parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--image-x')),
-        y: parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--image-y')),
-        width: parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--image-width')),
-        height: parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--image-height'))
-      });
-      console.log(`[Embedded Fallback] SVG element created: ${svgElement ? 'YES' : 'NO'}`);
-      
-      if (svgElement) {
-        // Reemplazar el elemento image fallido con el SVG embebido
-        element.remove();
-        nodeSel.node().appendChild(svgElement);
-        console.log(`[Embedded Fallback] Successfully replaced failed image with embedded thumbnail`);
-        return true;
-      }
-    }
-  }
-  
-  // Si no se pudo crear el SVG embebido, ocultar la imagen
-  console.log(`[Embedded Fallback] Could not create embedded thumbnail, hiding element`);
-  element.style("display", "none");
-  return false;
-}
-
-/**
- * Verifica si una imagen existe antes de intentar cargarla
- * @param {string} url - URL de la imagen
- * @returns {Promise<boolean>} True si la imagen existe
- */
-function checkImageExists(url) {
-  return new Promise((resolve) => {
-    // Si es un thumbnail embebido, siempre existe
-    if (isEmbeddedThumbnailUrl(url)) {
-      resolve(true);
-      return;
-    }
-    
-    // Si es una URL externa, asumir que existe
-    if (url.match(/^https?:\/\//i)) {
-      resolve(true);
-      return;
-    }
-    
-    // Para archivos locales, verificar si existe
-    const img = new Image();
-    img.onload = function() {
-      resolve(true);
     };
-    img.onerror = function() {
-      resolve(false);
+    testImg.onerror = function() {
+      // File doesn't exist, continue to next extension
     };
-    img.src = url;
-  });
-}
-
-/**
- * Determina si se debe aplicar filtro CSS a una imagen
- * @param {string} url - URL de la imagen
- * @returns {boolean} True si se debe aplicar filtro
- */
-function shouldApplyFilter(url) {
-  // Si es una URL de datos (data URI), no aplicar filtro
-  if (url.startsWith('data:')) return false;
-  
-  // Si es un thumbnail embebido, no aplicar filtro
-  if (isEmbeddedThumbnailUrl(url)) return false;
-  
-  // Si es una URL externa (http/https), no aplicar filtro
-  if (url.match(/^https?:\/\//i)) return false;
-  
-  // Extraer el nombre del archivo sin parámetros
-  const baseUrl = url.split('?')[0].toLowerCase();
-  
-  // Solo aplicar filtro a imágenes SVG del sistema para consistencia visual
-  return baseUrl.endsWith('.svg');
-}
-
-/**
- * Crea un elemento de imagen apropiado según el tipo de URL
- * @param {Object} d3Selection - Selección D3 donde agregar el elemento
- * @param {string} imageUrl - URL de la imagen
- * @param {Object} attributes - Atributos del elemento (x, y, width, height)
- * @param {string} className - Clase CSS
- * @param {Object} node - Objeto del nodo
- * @returns {Object} Selección D3 con el elemento creado
- */
-function appendAppropriateImageElement(d3Selection, imageUrl, attributes = {}, className = "image-base", node = null) {
-  // Si es un thumbnail embebido, crear elemento SVG directo
-  if (isEmbeddedThumbnailUrl(imageUrl)) {
-    console.log(`[Append Image] Creando SVG embebido para: ${imageUrl.substring(0, 50)}...`);
-    const svgString = getEmbeddedThumbnailSvgString(imageUrl);
-    if (svgString) {
-      const svgElement = createEmbeddedSVGElement(svgString, className, attributes);
-      if (svgElement) {
-        return d3Selection.each(function() {
-          this.appendChild(svgElement);
-        });
-      }
-    }
+    testImg.src = logoUrl;
   }
-  
-  // Para imágenes no embebidas, usar elemento image tradicional
-  console.log(`[Append Image] Usando elemento image tradicional para: ${imageUrl}`);
-  return d3Selection.append("image")
-    .attr("href", imageUrl)
-    .attr("x", attributes.x || 0)
-    .attr("y", attributes.y || 0)
-    .attr("width", attributes.width || 30)
-    .attr("height", attributes.height || 30)
-    .attr("class", className);
-}
-
-/**
- * Crea el HTML del thumbnail embebido para el side panel
- * @param {string} nodeType - Tipo del nodo para determinar el thumbnail
- * @returns {string} HTML del thumbnail embebido
- */
-function createSidePanelThumbnailHtml(nodeType) {
-  // Normalizar el nombre del tipo
-  const normalizedType = nodeType.toLowerCase().replace(/\s+/g, '-');
-  
-  // Obtener el thumbnail embebido
-  const embeddedThumbnail = getEmbeddedThumbnail(normalizedType);
-  
-  if (embeddedThumbnail) {
-    // Si existe como thumbnail embebido, crear elemento SVG directo
-    const svgString = getEmbeddedThumbnailSvgString(embeddedThumbnail);
-    if (svgString) {
-      // Crear un contenedor temporal para parsear el SVG
-      const tempDiv = document.createElement('div');
-      tempDiv.innerHTML = svgString.trim();
-      
-      // Obtener el elemento SVG
-      const svgElement = tempDiv.querySelector('svg');
-      if (svgElement) {
-        // Aplicar estilos específicos para el side panel
-        svgElement.setAttribute('class', 'side-panel-title-thumbnail embedded-thumbnail loaded');
-        svgElement.setAttribute('width', '24');
-        svgElement.setAttribute('height', '24');
-        svgElement.style.opacity = '1';
-        svgElement.style.transition = 'opacity 0.2s ease-in-out';
-        
-        // Limpiar atributos fill y stroke para permitir control CSS
-        const allElements = svgElement.querySelectorAll('*');
-        allElements.forEach(element => {
-          if (element.hasAttribute('fill')) {
-            element.removeAttribute('fill');
-          }
-          if (element.hasAttribute('stroke')) {
-            element.removeAttribute('stroke');
-          }
-        });
-        
-        return svgElement.outerHTML;
-      }
-    }
-  }
-  
-  // Fallback: usar thumbnail 'detail' embebido
-  const detailThumbnail = getEmbeddedThumbnail('detail');
-  if (detailThumbnail) {
-    const svgString = getEmbeddedThumbnailSvgString(detailThumbnail);
-    if (svgString) {
-      const tempDiv = document.createElement('div');
-      tempDiv.innerHTML = svgString.trim();
-      
-      const svgElement = tempDiv.querySelector('svg');
-      if (svgElement) {
-        svgElement.setAttribute('class', 'side-panel-title-thumbnail embedded-thumbnail loaded');
-        svgElement.setAttribute('width', '24');
-        svgElement.setAttribute('height', '24');
-        svgElement.style.opacity = '1';
-        svgElement.style.transition = 'opacity 0.2s ease-in-out';
-        
-        const allElements = svgElement.querySelectorAll('*');
-        allElements.forEach(element => {
-          if (element.hasAttribute('fill')) {
-            element.removeAttribute('fill');
-          }
-          if (element.hasAttribute('stroke')) {
-            element.removeAttribute('stroke');
-          }
-        });
-        
-        return svgElement.outerHTML;
-      }
-    }
-  }
-  
-  // Fallback final: elemento img vacío (muy improbable que llegue aquí)
-  return `<div class="side-panel-title-thumbnail" style="width: 24px; height: 24px; background: transparent;"></div>`;
 }

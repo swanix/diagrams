@@ -1,62 +1,18 @@
 // Swanix Diagrams - JS
 // v0.4.5
 
-// Default zoom configuration
-const DEFAULT_ZOOM_CONFIG = {
-  minScale: 0.01,    // Minimum zoom out (1% of original size)
-  maxScale: 2.5,     // Maximum zoom in (250% of original size)
-  wheelDelta: 0.002  // Wheel zoom sensitivity
-};
-
-// Global zoom behavior - will be recreated dynamically based on diagram config
-let zoom = null;
-
-// Function to create zoom behavior with custom configuration
-function createZoomBehavior(zoomConfig = {}) {
-  const config = { ...DEFAULT_ZOOM_CONFIG, ...zoomConfig };
-  
-  return d3.zoom()
-    .scaleExtent([config.minScale, config.maxScale])
-    .wheelDelta(event => -event.deltaY * config.wheelDelta)
-    .on("zoom", event => {
-      const svgGroup = d3.select("#main-diagram-svg g");
-      if (!svgGroup.empty()) {
-        // Apply transform with better precision
-        const transform = event.transform;
-        svgGroup.attr("transform", `translate(${transform.x},${transform.y}) scale(${transform.k})`);
-      }
-    });
-}
-
-// Function to get zoom configuration for current diagram
-function getCurrentZoomConfig() {
-  const currentDiagramIndex = window.$xDiagrams.currentDiagramIndex || 0;
-  const diagrams = window.$xDiagrams.diagrams || [];
-  const currentDiagram = diagrams[currentDiagramIndex];
-  
-  if (currentDiagram && currentDiagram.zoom) {
-    return currentDiagram.zoom;
-  }
-  
-  // Return global zoom config if no diagram-specific config
-  return window.$xDiagrams.zoom || DEFAULT_ZOOM_CONFIG;
-}
-
-// Function to apply zoom configuration to current diagram
-function applyZoomConfiguration() {
-  const zoomConfig = getCurrentZoomConfig();
-  zoom = createZoomBehavior(zoomConfig);
-  
-  // Apply to current SVG if it exists
-  const svg = d3.select("#main-diagram-svg");
-  if (!svg.empty()) {
-    svg.on('.zoom', null); // Remove existing zoom
-    svg.call(zoom);
-    window.$xDiagrams.currentZoom = zoom;
-  }
-  
-  console.log('[Zoom] Applied configuration:', zoomConfig);
-}
+// Global zoom behavior - defined at the beginning to avoid scope issues
+const zoom = d3.zoom()
+  .scaleExtent([0.01, 2.5]) // Allow much more zoom out (0.01 = 1% of original size)
+  .wheelDelta(event => -event.deltaY * 0.002) // Smoother wheel zoom
+  .on("zoom", event => {
+    const svgGroup = d3.select("#main-diagram-svg g");
+    if (!svgGroup.empty()) {
+      // Apply transform with better precision
+      const transform = event.transform;
+      svgGroup.attr("transform", `translate(${transform.x},${transform.y}) scale(${transform.k})`);
+    }
+  });
 
 // Function to format diagram name for display
 window.formatDiagramName = function(name) {
@@ -2400,13 +2356,19 @@ function applyAutoZoom() {
 function ensureZoomBehavior() {
   const svg = d3.select("#main-diagram-svg");
   if (!svg.empty()) {
-    // Apply zoom configuration for current diagram
-    applyZoomConfiguration();
+    // Remove existing zoom behavior to prevent conflicts
+    svg.on('.zoom', null);
+    
+    // Apply new zoom behavior with constraints
+    svg.call(zoom);
+    svg.style('pointer-events', 'auto');
+    
+    // Store reference to current zoom for external access
+    window.$xDiagrams.currentZoom = zoom;
     
     // Ensure SVG maintains proper dimensions
     svg.style('width', '100%');
     svg.style('height', 'calc(100vh - 60px)');
-    svg.style('pointer-events', 'auto');
     
     // Ensure body overflow is properly set for zoom behavior
     const body = document.body;
@@ -4343,23 +4305,6 @@ window.$xDiagrams.loadDiagram = function(input) {
         return;
     }
     if (window.$xDiagrams.isLoading) return;
-
-    // Update current diagram index
-    if (typeof input === 'string') {
-        const diagramIndex = diagrams.findIndex(d => d.url === input || d.file === input);
-        if (diagramIndex !== -1) {
-            window.$xDiagrams.currentDiagramIndex = diagramIndex;
-        }
-    } else if (typeof input === 'object' && input !== null) {
-        const diagramIndex = diagrams.findIndex(d => 
-            (d.url && input.url && d.url === input.url) || 
-            (d.file && input.file && d.file === input.file) ||
-            (d.data && input.data && d.data === input.data)
-        );
-        if (diagramIndex !== -1) {
-            window.$xDiagrams.currentDiagramIndex = diagramIndex;
-        }
-    }
 
     // Cierra el panel lateral si está abierto
     if (window.closeSidePanel) {

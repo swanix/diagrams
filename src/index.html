@@ -14,6 +14,12 @@
 <script>
   window.$xDiagrams = {
     title: "Diagrams",
+    // Global zoom configuration (default for all diagrams)
+    zoom: {
+      minScale: 0.01,    // Minimum zoom out (1% of original size)
+      maxScale: 2.5,     // Maximum zoom in (250% of original size)
+      wheelDelta: 0.002  // Wheel zoom sensitivity
+    },
     diagrams: [ 
       {
         name: "Google Sheets", 
@@ -22,12 +28,22 @@
       },
       {
         name: "One Cluster",
-        url: "data/one-cluster.csv"
+        url: "data/one-cluster.csv",
+        zoom: {
+          minScale: 0.1,     // Less zoom out for single cluster
+          maxScale: 3.0,     // More zoom in for single cluster
+          wheelDelta: 0.003  // Faster zoom for single cluster
+        }
       },
       {
         name: "Clusters Simple",
         url: "data/multi-clusters.csv",
-        grid: 3
+        grid: 3,
+        zoom: {
+          minScale: 0.05,    // More zoom out for multi-clusters
+          maxScale: 2.0,     // Less zoom in for multi-clusters
+          wheelDelta: 0.001  // Slower zoom for multi-clusters
+        }
       },
       {
         name: "Clusters Custom Sizes",
@@ -107,6 +123,11 @@
         name: "Flat - 1000 Nodes",
         url: "data/flat-1000-nodes.json",
         grid: 30,
+        zoom: {
+          minScale: 0.005,   // Very zoom out for large diagrams
+          maxScale: 1.5,     // Limited zoom in for large diagrams
+          wheelDelta: 0.0005 // Very slow zoom for large diagrams
+        },
         cols: {
           name: "name",
           type: "type",

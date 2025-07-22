@@ -1,9 +1,9 @@
 // Swanix Diagrams - JS
-// v0.4.5
+// v0.5.0
 
 // Global zoom behavior - defined at the beginning to avoid scope issues
 const zoom = d3.zoom()
-  .scaleExtent([0.01, 2.5]) // Allow much more zoom out (0.01 = 1% of original size)
+  .scaleExtent([0.09, 2.5]) // Limit zoom out to 9% of original size (more reasonable)
   .wheelDelta(event => -event.deltaY * 0.002) // Smoother wheel zoom
   .on("zoom", event => {
     const svgGroup = d3.select("#main-diagram-svg g");
@@ -70,267 +70,14 @@ function saveDiagramToStorage(diagram) {
   }
 }
 
-// Process CSV file
-function processCSVFile(file) {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    
-    reader.onload = function(e) {
-      try {
-        const csvContent = e.target.result;
-        Papa.parse(csvContent, {
-          header: true,
-          skipEmptyLines: true,
-          complete: function(results) {
-            const fatalErrors = results.errors.filter(err => err.code !== 'TooFewFields');
-            if (fatalErrors.length > 0) {
-              reject(new Error('Error parsing CSV: ' + fatalErrors[0].message));
-              return;
-            }
-            
-            const diagram = {
-              name: file.name.replace('.csv', ''),
-              url: null,
-              data: results.data,
-              isLocal: true,
-              timestamp: new Date().toISOString()
-            };
-            
-            resolve(diagram);
-          },
-          error: function(error) {
-            reject(new Error('Error parsing CSV: ' + error.message));
-          }
-        });
-      } catch (error) {
-        reject(error);
-      }
-    };
-    
-    reader.onerror = function() {
-      reject(new Error('Error reading file'));
-    };
-    
-    reader.readAsText(file);
-  });
-}
+// Drag & Drop functionality moved to XDragDrop plugin
+// See docs/xdragdrop.js for file processing functions
 
-// Process JSON file
-function processJSONFile(file) {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
+// Drag & Drop functionality moved to XDragDrop plugin
+// See docs/xdragdrop.js for addAndLoadDiagram implementation
 
-    reader.onload = function(e) {
-      try {
-        const jsonContent = e.target.result;
-        let jsonData;
-        try {
-          jsonData = JSON.parse(jsonContent);
-        } catch (parseErr) {
-          return reject(new Error('Error parsing JSON: ' + parseErr.message));
-        }
-
-        // Convert JSON to internal array-of-objects format
-        const dataArray = convertJsonToCsvFormat(jsonData);
-
-        if (!Array.isArray(dataArray) || dataArray.length === 0) {
-          return reject(new Error('JSON vacío o en formato no reconocido'));
-        }
-
-        // Create diagram object
-        const diagram = {
-          name: file.name.replace(/\.json$/i, ''),
-          url: null, // Local file, no URL
-          data: dataArray,
-          isLocal: true,
-          timestamp: new Date().toISOString()
-        };
-
-        resolve(diagram);
-      } catch (error) {
-        reject(error);
-      }
-    };
-
-    reader.onerror = function() {
-      reject(new Error('Error reading file'));
-    };
-
-    reader.readAsText(file);
-  });
-}
-
-// Add diagram to switcher and load it
-window.addAndLoadDiagram = function(diagram) {
-  // Add to configuration
-  window.$xDiagrams.diagrams.push(diagram);
-  
-  // Save to localStorage
-  saveDiagramToStorage(diagram);
-  
-  // Trigger hook
-  if (window.$xDiagrams.hooks && window.$xDiagrams.hooks.onFileDrop) {
-    window.$xDiagrams.hooks.onFileDrop(diagram);
-  }
-  
-  // Reload the diagram system to include the new diagram
-  if (window.reloadDiagramSystem) {
-    window.reloadDiagramSystem();
-  } else {
-    // Fallback: reload the page
-    setTimeout(() => {
-      window.location.reload();
-    }, 500);
-  }
-};
-
-// Handle file drop
-function handleFileDrop(e) {
-  e.preventDefault();
-  
-  // Hide drag overlay
-  const dragOverlay = document.getElementById('dragOverlay');
-  const fileDropZone = document.getElementById('fileDropZone');
-  const canvas = document.getElementById('sw-diagram');
-  
-  if (dragOverlay) dragOverlay.classList.remove('active');
-  if (fileDropZone) fileDropZone.classList.remove('active');
-  if (canvas) canvas.classList.remove('drag-over');
-  
-  const files = e.dataTransfer.files;
-  if (files.length > 0) {
-    // Filtrar archivos CSV o JSON compatibles
-    const supportedFiles = Array.from(files).filter(file => {
-      const name = file.name.toLowerCase();
-      const type = file.type;
-      return (
-        type === 'text/csv' || name.endsWith('.csv') ||
-        type === 'application/json' || type === 'text/json' || name.endsWith('.json')
-      );
-    });
-
-    if (supportedFiles.length === 0) {
-      showToast('Por favor, selecciona archivos CSV o JSON válidos.', 'error');
-      return;
-    }
-
-    const processFile = (file) => {
-      const isCsv = file.name.toLowerCase().endsWith('.csv') || file.type === 'text/csv';
-      return isCsv ? processCSVFile(file) : processJSONFile(file);
-    };
-
-    if (supportedFiles.length === 1) {
-      // Single file
-      const file = supportedFiles[0];
-      console.log('Procesando archivo:', file.name);
-
-      processFile(file)
-        .then(diagram => {
-          console.log('Archivo procesado exitosamente:', diagram.name);
-          window.addAndLoadDiagram(diagram);
-        })
-        .catch(error => {
-          console.error('Error procesando archivo:', error);
-          showToast('Error al procesar el archivo: ' + error.message, 'error');
-        });
-    } else {
-      // Multiple files
-      console.log(`Procesando ${supportedFiles.length} archivos...`);
-
-      Promise.allSettled(supportedFiles.map(file => processFile(file)))
-        .then(results => {
-          const successful = results.filter(r => r.status === 'fulfilled').map(r => r.value);
-          const failed = results
-            .map((r, i) => r.status === 'rejected' ? { name: supportedFiles[i].name, reason: r.reason && r.reason.message ? r.reason.message : r.reason } : null)
-            .filter(Boolean);
-
-          // Agregar los diagramas exitosos
-          successful.forEach(diagram => {
-            window.addAndLoadDiagram(diagram);
-          });
-
-          // Feedback
-          if (failed.length > 0) {
-            let msg = `${successful.length} diagramas agregados exitosamente\n${failed.length} fallaron:\n`;
-            msg += failed.map(f => `- ${f.name}: ${f.reason}`).join('\n');
-            showToast(msg, 'mixed');
-          } else {
-            showToast(`${successful.length} diagramas agregados exitosamente`, 'success');
-          }
-        });
-    }
-  }
-}
-
-// Drag event handlers
-function handleDragEnter(e) {
-  e.preventDefault();
-  const canvas = document.getElementById('sw-diagram');
-  const dragOverlay = document.getElementById('dragOverlay');
-  
-  if (canvas) canvas.classList.add('drag-over');
-  if (dragOverlay) dragOverlay.classList.add('active');
-}
-
-function handleDragOver(e) {
-  e.preventDefault();
-}
-
-function handleDragLeave(e) {
-  e.preventDefault();
-  const canvas = document.getElementById('sw-diagram');
-  const dragOverlay = document.getElementById('dragOverlay');
-  
-  // Only remove drag state if we're leaving the canvas completely
-  if (!canvas.contains(e.relatedTarget)) {
-    if (canvas) canvas.classList.remove('drag-over');
-    if (dragOverlay) dragOverlay.classList.remove('active');
-  }
-}
-
-// Initialize drag & drop
-function initDragAndDrop() {
-  if (!isOptionEnabled('dragAndDrop')) {
-    return;
-  }
-  
-  loadSavedDiagrams();
-  
-  const canvas = document.getElementById('sw-diagram');
-  if (!canvas) {
-    return;
-  }
-  
-  canvas.addEventListener('dragenter', handleDragEnter);
-  canvas.addEventListener('dragover', handleDragOver);
-  canvas.addEventListener('dragleave', handleDragLeave);
-  canvas.addEventListener('drop', handleFileDrop);
-  
-  document.addEventListener('dragenter', function(e) {
-    e.preventDefault();
-  });
-  
-  document.addEventListener('dragover', function(e) {
-    e.preventDefault();
-  });
-  
-  document.addEventListener('drop', function(e) {
-    e.preventDefault();
-  });
-}
-
-// Initialize drag & drop when DOM is ready
-function initDragAndDropDelayed() {
-  // Wait for the sw-diagram container to be created
-  const swDiagram = document.getElementById('sw-diagram');
-  if (swDiagram) {
-    console.log('[Drag & Drop] Contenedor sw-diagram encontrado, inicializando...');
-    initDragAndDrop();
-  } else {
-    // Try again in 100ms
-    setTimeout(initDragAndDropDelayed, 100);
-  }
-}
+// Drag & Drop functionality moved to XDragDrop plugin
+// See docs/xdragdrop.js for complete drag & drop implementation
 
 // Function to show "Diagram not found" message with fade effect
 window.showDiagramNotFound = function() {
@@ -859,6 +606,7 @@ function drawGridLayout(nodes, svg) {
         .attr("class", "image-base")
         .attr("width", 30)
         .attr("height", 30)
+        .attr("crossorigin", "anonymous") // Intentar resolver problemas de CORS
         .on("load", function() {
           const element = d3.select(this);
           const dataSrc = element.attr("data-src");
@@ -871,21 +619,33 @@ function drawGridLayout(nodes, svg) {
             element.classed("loaded", true);
           }
           // Solo aplicar el filtro si es necesario
-          if (shouldApplyFilter(dataSrc)) {
+          console.log(`[Image Load] Checking if should apply filter to: ${dataSrc}`);
+          const shouldApply = shouldApplyFilter(dataSrc);
+          console.log(`[Image Load] Should apply filter: ${shouldApply}`);
+          if (shouldApply) {
             element.classed("image-filter", true);
+            console.log(`[Image Load] Applied image-filter class to: ${dataSrc}`);
+          } else {
+            console.log(`[Image Load] NOT applying image-filter class to external image: ${dataSrc}`);
           }
         })
         .on("error", function() {
           const element = d3.select(this);
           const currentSrc = element.attr("href");
+          const dataSrc = element.attr("data-src");
           
-          if (currentSrc !== "img/detail.svg") {
-            const fallbackUrl = `img/detail.svg?t=${Date.now()}`;
-            element.attr("href", fallbackUrl);
-          } else {
-            // Si el fallback también falla, ocultar la imagen
-            element.style("display", "none");
+          console.log(`[Image Load] Error detected - currentSrc: ${currentSrc}, dataSrc: ${dataSrc}`);
+          
+          // Si tenemos una URL real en data-src y es diferente de la actual, intentar usarla
+          if (dataSrc && dataSrc !== currentSrc && !dataSrc.includes('data:image/svg+xml')) {
+            console.log(`[Image Load] Retrying with real URL from data-src: ${dataSrc}`);
+            element.attr("href", dataSrc);
+            return; // Intentar cargar la URL real
           }
+          
+          // Si ya intentamos cargar la URL real y falló, crear fallback embebido
+          console.log(`[Image Load] Creating embedded fallback for failed image`);
+          createEmbeddedFallback(d, nodeGroup, element);
         });
     }
   });
@@ -1043,21 +803,33 @@ function drawGridLayout(nodes, svg) {
               // Marcar cargada
               element.classed("loaded", true);
               // Solo aplicar el filtro si es necesario
-              if (shouldApplyFilter(dataSrc)) {
+              console.log(`[Image Load] Checking if should apply filter to: ${dataSrc}`);
+              const shouldApply = shouldApplyFilter(dataSrc);
+              console.log(`[Image Load] Should apply filter: ${shouldApply}`);
+              if (shouldApply) {
                 element.classed("image-filter", true);
+                console.log(`[Image Load] Applied image-filter class to: ${dataSrc}`);
+              } else {
+                console.log(`[Image Load] NOT applying image-filter class to external image: ${dataSrc}`);
               }
             })
             .on("error", function() {
               const element = d3.select(this);
               const currentSrc = element.attr("href");
+              const dataSrc = element.attr("data-src");
               
-              if (currentSrc !== "img/detail.svg") {
-                const fallbackUrl = `img/detail.svg?t=${Date.now()}`;
-                element.attr("href", fallbackUrl);
-              } else {
-                // Si el fallback también falla, ocultar la imagen
-                element.style("display", "none");
+              console.log(`[Image Load] Error detected - currentSrc: ${currentSrc}, dataSrc: ${dataSrc}`);
+              
+              // Si tenemos una URL real en data-src y es diferente de la actual, intentar usarla
+              if (dataSrc && dataSrc !== currentSrc && !dataSrc.includes('data:image/svg+xml')) {
+                console.log(`[Image Load] Retrying with real URL from data-src: ${dataSrc}`);
+                element.attr("href", dataSrc);
+                return; // Intentar cargar la URL real
               }
+              
+              // Si ya intentamos cargar la URL real y falló, crear fallback embebido
+              console.log(`[Image Load] Creating embedded fallback for failed image`);
+              createEmbeddedFallback(d, nodeSel, element);
             });
         }
       });
@@ -1908,6 +1680,7 @@ function drawTrees(trees, diagramConfig = null) {
               .attr("class", "image-base")
               .attr("width", parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--image-width')))
               .attr("height", parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--image-height')))
+              .attr("crossorigin", "anonymous") // Intentar resolver problemas de CORS
               .on("load", function() {
                 const element = d3.select(this);
                 const dataSrc = element.attr("data-src");
@@ -1931,6 +1704,15 @@ function drawTrees(trees, diagramConfig = null) {
                 const dataSrc = element.attr("data-src");
                 
                 console.log(`[Image Load] Error detected - currentSrc: ${currentSrc}, dataSrc: ${dataSrc}`);
+                console.log(`[Image Load] Element classes: ${element.attr("class")}`);
+                console.log(`[Image Load] Element display: ${element.style("display")}`);
+                
+                // Si tenemos una URL real en data-src y es diferente de la actual, intentar usarla
+                if (dataSrc && dataSrc !== currentSrc && !dataSrc.includes('data:image/svg+xml')) {
+                  console.log(`[Image Load] Retrying with real URL from data-src: ${dataSrc}`);
+                  element.attr("href", dataSrc);
+                  return; // Intentar cargar la URL real
+                }
                 
                 // Si la imagen actual es el placeholder transparent o una imagen externa que falló, usar thumbnail embebido del type
                 if (currentSrc.includes('transparent') || (dataSrc && dataSrc !== currentSrc)) {
@@ -2545,9 +2327,14 @@ function wrap(text, width) {
 
 // Simplified side panel
 function createSidePanel() {
-  const container = document.querySelector('.xcanvas');
-  const targetParent = container || document.body;
+  // Check if side panel already exists
+  const existingPanel = document.getElementById('side-panel');
+  if (existingPanel) {
+    console.log('[Side Panel] Panel already exists, skipping creation');
+    return;
+  }
   
+  // Create side panel outside the container (fixed position)
   const sidePanel = document.createElement('div');
   sidePanel.className = 'side-panel';
   sidePanel.id = 'side-panel';
@@ -2561,7 +2348,8 @@ function createSidePanel() {
     </div>
   `;
   
-  targetParent.appendChild(sidePanel);
+  document.body.appendChild(sidePanel);
+  console.log('[Side Panel] Created new panel');
 
   // Event for Escape key
   document.addEventListener('keydown', function(event) {
@@ -3062,10 +2850,18 @@ function updateImageFilters(filterValue) {
   const imagesWithFilter = document.querySelectorAll('.image-filter');
   console.log('[Image Filter] Encontradas', imagesWithFilter.length, 'imágenes con clase image-filter');
   
-  // Remover cualquier estilo inline previo
+  // Remover cualquier estilo inline previo y limpiar clases incorrectas
   imagesWithFilter.forEach((img, index) => {
     img.style.removeProperty('filter');
-    console.log(`[Image Filter] Estilo inline removido de imagen ${index + 1} (${img.src.split('/').pop()})`);
+    const imgSrc = img.src || img.href || 'unknown';
+    console.log(`[Image Filter] Estilo inline removido de imagen ${index + 1} (${imgSrc})`);
+    
+    // Verificar si es una imagen externa que no debería tener filtro
+    if (imgSrc.match(/^https?:\/\//i)) {
+      console.log(`[Image Filter] ⚠️  ADVERTENCIA: Imagen externa con clase image-filter: ${imgSrc}`);
+      console.log(`[Image Filter] Removiendo clase image-filter de imagen externa: ${imgSrc}`);
+      img.classList.remove('image-filter');
+    }
   });
   
   // También remover estilos inline del side panel
@@ -4035,7 +3831,7 @@ window.$xDiagrams.getDiagramIndexFromURL = function() {
     }
     return 0;
 };
-window.$xDiagrams.updateTopbarTitle = function(diagramIndex) {
+window.$xDiagrams.updateTopbarTitle = async function(diagramIndex, useTransition = false) {
     // Check if logo is defined (has priority over title)
     let logoUrl = window.$xDiagrams && window.$xDiagrams.logo ? window.$xDiagrams.logo : null;
     
@@ -4047,11 +3843,13 @@ window.$xDiagrams.updateTopbarTitle = function(diagramIndex) {
     
     // If still no logo, try auto-detection
     if (!logoUrl) {
-        detectAutoLogo().catch(error => {
+        try {
+            await detectAutoLogo();
+            // Check again after auto-detection
+            logoUrl = window.$xDiagrams && window.$xDiagrams.logo ? window.$xDiagrams.logo : null;
+        } catch (error) {
             console.log('[Auto Logo] Error durante detección automática:', error);
-        });
-        // Check again after auto-detection
-        logoUrl = window.$xDiagrams && window.$xDiagrams.logo ? window.$xDiagrams.logo : null;
+        }
     }
     
     // Get title from $xDiagrams object first, then fallback to HTML
@@ -4076,9 +3874,33 @@ window.$xDiagrams.updateTopbarTitle = function(diagramIndex) {
     const titleDropdownContainer = document.querySelector('.title-dropdown-container');
     console.log('[Debug] titleDropdownContainer found:', !!titleDropdownContainer);
     if (titleDropdownContainer) {
-        // Clear existing content except the dropdown
+        // Store dropdown for later re-addition
         const dropdown = titleDropdownContainer.querySelector('.diagram-dropdown');
-        titleDropdownContainer.innerHTML = '';
+        
+        // Only apply transition if explicitly requested (for initial load)
+        if (useTransition) {
+            // Fade out current content
+            titleDropdownContainer.style.opacity = '0';
+            
+            // Wait for fade out, then update content
+            setTimeout(() => {
+                updateTitleContent();
+            }, 100);
+        } else {
+            // Direct update without transition
+            updateTitleContent();
+        }
+        
+        function updateTitleContent() {
+            // Clear existing content except the dropdown
+            titleDropdownContainer.innerHTML = '';
+            
+            // Manage no-logo class for fixed spacing
+            if (logoUrl) {
+                titleDropdownContainer.classList.remove('no-logo');
+            } else {
+                titleDropdownContainer.classList.add('no-logo');
+            }
         
         // Add logo first if available
         if (logoUrl) {
@@ -4111,6 +3933,12 @@ window.$xDiagrams.updateTopbarTitle = function(diagramIndex) {
         // Re-add the dropdown if it existed
         if (dropdown) {
             titleDropdownContainer.appendChild(dropdown);
+        }
+        
+        // Fade in the updated content only if transition was used
+        if (useTransition) {
+            titleDropdownContainer.style.opacity = '1';
+        }
         }
     }
 };
@@ -4173,7 +4001,9 @@ window.$xDiagrams.renderDiagramButtons = function() {
                 url.searchParams.set('d', idx.toString());
                 window.history.pushState({}, '', url);
                 window.$xDiagrams.currentDiagramIdx = idx;
-                window.$xDiagrams.updateTopbarTitle(idx);
+                window.$xDiagrams.updateTopbarTitle(idx).catch(error => {
+                    console.error('[Topbar] Error updating title:', error);
+                });
                 window.$xDiagrams.renderDiagramButtons();
                 window.$xDiagrams.loadDiagram(d);
                 
@@ -4349,12 +4179,16 @@ window.$xDiagrams.loadDiagram = function(input) {
 
     // Decide qué pasar a initDiagram:
     // - Si tiene data, pásalo directo
-    // - Si tiene url, pásale la url
+    // - Si tiene urls (array), pásale el array de URLs
+    // - Si tiene url (string), pásale la URL
     // - Si tiene file, pásale la file (compatibilidad)
     let toInit = diagramToLoad;
     if (diagramToLoad.data) {
         toInit = diagramToLoad;
         console.log('Pasando objeto con data a initDiagram');
+    } else if (diagramToLoad.urls && Array.isArray(diagramToLoad.urls)) {
+        toInit = diagramToLoad.urls;
+        console.log('Pasando array de URLs a initDiagram:', diagramToLoad.urls.length, 'URLs');
     } else if (diagramToLoad.url) {
         toInit = diagramToLoad.url;
         console.log('Pasando URL a initDiagram:', diagramToLoad.url);
@@ -4362,7 +4196,7 @@ window.$xDiagrams.loadDiagram = function(input) {
         toInit = diagramToLoad.file;
         console.log('Pasando file a initDiagram:', diagramToLoad.file);
     } else {
-        console.log('No se encontró data, url o file en el diagrama:', diagramToLoad);
+        console.log('No se encontró data, urls, url o file en el diagrama:', diagramToLoad);
     }
 
     // Limpieza visual
@@ -4636,12 +4470,26 @@ function renderSwDiagramBase() {
     if (document.getElementById('diagram-dropdown')) {
       const diagrams = getDiagrams();
       window.$xDiagrams.currentDiagramIdx = window.$xDiagrams.getDiagramIndexFromURL();
-      window.$xDiagrams.updateTopbarTitle(window.$xDiagrams.currentDiagramIdx);
+      window.$xDiagrams.updateTopbarTitle(window.$xDiagrams.currentDiagramIdx, isFirstVisit()).catch(error => {
+        console.error('[Topbar] Error updating title:', error);
+      }); // Use transition only for first visit
       window.$xDiagrams.renderDiagramButtons();
       if (diagrams[window.$xDiagrams.currentDiagramIdx]) {
         window.$xDiagrams.loadDiagram(diagrams[window.$xDiagrams.currentDiagramIdx]);
       }
     }
+}
+
+// Function to detect if this is the first visit or a refresh
+function isFirstVisit() {
+  // Check if we have a session storage flag
+  const hasVisited = sessionStorage.getItem('xdiagrams_visited');
+  if (!hasVisited) {
+    // First visit - set the flag
+    sessionStorage.setItem('xdiagrams_visited', 'true');
+    return true;
+  }
+  return false;
 }
 
 // Call base rendering function when library loads
@@ -4664,11 +4512,10 @@ function initializeWhenReady() {
       initializeThemeSystem();
     }
     
-    // Initialize drag & drop if enabled
-    if (isOptionEnabled('dragAndDrop')) {
-        setTimeout(() => {
-    initDragAndDropDelayed();
-  }, 200);
+    // Drag & Drop functionality moved to XDragDrop plugin
+    // Initialize XDragDrop if available
+    if (window.XDragDrop && typeof window.XDragDrop.init === 'function') {
+        window.XDragDrop.init();
     }
   } else {
     // Check again in 100ms
@@ -4771,7 +4618,9 @@ window.reloadDiagramSystem = function() {
         
         // Update topbar title
         if (window.$xDiagrams.updateTopbarTitle) {
-            window.$xDiagrams.updateTopbarTitle(lastIndex);
+            window.$xDiagrams.updateTopbarTitle(lastIndex).catch(error => {
+                console.error('[Topbar] Error updating title:', error);
+            });
         }
         
         // Re-render diagram buttons AFTER updating the index
@@ -5235,7 +5084,27 @@ function detectAndLoadDataSource(source, onComplete, retryCount = 0, diagramConf
     return loadFromObject(source, onComplete, diagramConfig);
   }
   
-  // Case 2: String URL - detect type
+  // Case 2: Array of sources - load multiple files/URLs
+  if (Array.isArray(source)) {
+    // Check if it's an array of URLs or files
+    const firstItem = source[0];
+    if (typeof firstItem === 'string') {
+      // Array of URLs
+      return loadFromMultipleUrls(source, onComplete, retryCount, diagramConfig);
+    } else if (firstItem instanceof File) {
+      // Array of files
+      return loadFromMultipleFiles(source, onComplete, retryCount, diagramConfig);
+    } else {
+      console.error('Array contains unsupported items:', firstItem);
+      showDiagramNotFound();
+      if (onComplete && typeof onComplete === 'function') {
+        onComplete();
+      }
+      return;
+    }
+  }
+  
+  // Case 3: String URL - detect type
   if (typeof source === 'string') {
     const url = source.trim();
     
@@ -5410,6 +5279,267 @@ function loadFromCsvUrl(csvUrl, onComplete, retryCount = 0, diagramConfig = null
       }
     }
   });
+}
+
+// Load data from multiple URLs (multiple Google Sheets)
+function loadFromMultipleUrls(urls, onComplete, retryCount = 0, diagramConfig = null) {
+  console.log("📄 Cargando múltiples URLs:", urls.length, "hojas");
+  
+  const loadingElement = document.querySelector("#loading");
+  const errorElement = document.querySelector("#error-message");
+  
+  if (loadingElement) loadingElement.style.display = "block";
+  if (errorElement) errorElement.style.display = "none";
+
+  let allData = [];
+  let errors = [];
+  
+  // Get combine configuration from diagram config
+  const combineConfig = diagramConfig?.combineSheets || { enabled: true, mergeStrategy: "append" };
+  const sheetNames = diagramConfig?.combineSheets?.sheetNames || urls.map((_, index) => `Hoja ${index + 1}`);
+  
+  // Process URLs sequentially to maintain order
+  async function processUrlsSequentially() {
+    for (let index = 0; index < urls.length; index++) {
+      const url = urls[index];
+      const sheetName = sheetNames[index] || `Hoja ${index + 1}`;
+      console.log(`📄 Cargando hoja ${index + 1}/${urls.length}: ${sheetName}`);
+      
+      try {
+        // Add cache-busting parameter
+        const cacheBuster = `?t=${Date.now()}`;
+        const urlWithCacheBuster = url.includes('?') ? `${url}&_cb=${Date.now()}` : `${url}${cacheBuster}`;
+        
+        // Parse CSV from URL
+        const results = await new Promise((resolve, reject) => {
+          Papa.parse(urlWithCacheBuster, {
+            download: true,
+            header: true,
+            complete: function(results) {
+              resolve(results);
+            },
+            error: function(err) {
+              reject(err);
+            }
+          });
+        });
+        
+        console.log(`✅ Hoja ${sheetName} cargada:`, results.data.length, "filas");
+        
+        // Add sheet name to each row for identification
+        const dataWithSheet = results.data.map(row => ({
+          ...row,
+          _sheetName: sheetName,
+          _sheetIndex: index
+        }));
+        
+        // Add data in order (sequential processing ensures order)
+        allData.push(...dataWithSheet);
+        
+      } catch (error) {
+        console.error(`❌ Error al cargar hoja ${sheetName}:`, error);
+        errors.push({ sheetName, error });
+        // Continue with next sheet even if one fails
+      }
+    }
+    
+    // All URLs processed, now complete
+    handleMultipleUrlsComplete();
+  }
+  
+  function handleMultipleUrlsComplete() {
+    if (allData.length === 0) {
+      console.error("❌ No se pudo cargar ninguna hoja");
+      showDiagramNotFound();
+      if (loadingElement) loadingElement.style.display = "none";
+      
+      if (onComplete && typeof onComplete === 'function') {
+        onComplete();
+      }
+      return;
+    }
+    
+    console.log("🎉 Todas las hojas cargadas. Total de registros:", allData.length);
+    
+    try {
+      const trees = buildHierarchies(allData, diagramConfig);
+      drawTrees(trees, diagramConfig);
+      
+      // Create side panel only if enabled
+      if (isOptionEnabled('sidePanel') !== false) {
+        createSidePanel();
+      }
+      
+      // Preserve current theme after loading diagram
+      setTimeout(async () => {
+        if (window.preserveCurrentTheme) {
+          await window.preserveCurrentTheme();
+        }
+      }, 100);
+      
+      console.log("Diagrama cargado desde: MÚLTIPLES URLs | Hojas: " + urls.length + " | Registros totales: " + allData.length);
+      
+      // Trigger onLoad hook
+      triggerHook('onLoad', { 
+        name: diagramConfig?.name || 'Múltiples Hojas',
+        data: allData, 
+        trees: trees,
+        sourceType: 'multiple-urls',
+        urls: urls,
+        sheetNames: sheetNames,
+        errors: errors,
+        isLocal: false,
+        timestamp: new Date().toISOString()
+      });
+      
+      if (onComplete && typeof onComplete === 'function') {
+        onComplete();
+      }
+    } catch (error) {
+      console.error("Error durante la inicialización del diagrama desde múltiples URLs:", error);
+      showDiagramNotFound();
+      if (loadingElement) loadingElement.style.display = "none";
+      
+      if (onComplete && typeof onComplete === 'function') {
+        onComplete();
+      }
+    }
+  }
+  
+  // Start sequential processing
+  processUrlsSequentially();
+}
+
+// Load data from multiple local files (CSV/JSON)
+function loadFromMultipleFiles(files, onComplete, retryCount = 0, diagramConfig = null) {
+  console.log("📁 Cargando múltiples archivos:", files.length, "archivos");
+  
+  const loadingElement = document.querySelector("#loading");
+  const errorElement = document.querySelector("#error-message");
+  
+  if (loadingElement) loadingElement.style.display = "block";
+  if (errorElement) errorElement.style.display = "none";
+
+  let allData = [];
+  let errors = [];
+  
+  // Get combine configuration from diagram config
+  const combineConfig = diagramConfig?.combineFiles || { enabled: true, mergeStrategy: "append" };
+  const fileNames = diagramConfig?.combineFiles?.fileNames || files.map(file => file.name.replace(/\.[^/.]+$/, ""));
+  
+  // Process files sequentially to maintain order
+  async function processFilesSequentially() {
+    for (let index = 0; index < files.length; index++) {
+      const file = files[index];
+      const fileName = fileNames[index] || file.name.replace(/\.[^/.]+$/, "");
+      console.log(`📁 Procesando archivo ${index + 1}/${files.length}: ${fileName} (${file.name})`);
+      
+      try {
+        // Determine file type and process accordingly
+        let diagram;
+        if (file.name.toLowerCase().endsWith('.csv')) {
+          // Use XDragDrop plugin if available, otherwise show error
+          if (window.XDragDrop && typeof window.XDragDrop.processCSVFile === 'function') {
+            diagram = await window.XDragDrop.processCSVFile(file);
+          } else {
+            throw new Error('XDragDrop plugin no disponible para procesar CSV');
+          }
+        } else if (file.name.toLowerCase().endsWith('.json')) {
+          // Use XDragDrop plugin if available, otherwise show error
+          if (window.XDragDrop && typeof window.XDragDrop.processJSONFile === 'function') {
+            diagram = await window.XDragDrop.processJSONFile(file);
+          } else {
+            throw new Error('XDragDrop plugin no disponible para procesar JSON');
+          }
+        } else {
+          throw new Error(`Tipo de archivo no soportado: ${file.name}`);
+        }
+        
+        console.log(`✅ Archivo ${fileName} procesado:`, diagram.data.length, "filas");
+        
+        // Add file identification to each row
+        const dataWithFile = diagram.data.map(row => ({
+          ...row,
+          _fileName: fileName,
+          _fileIndex: index,
+          _originalFileName: file.name
+        }));
+        
+        // Add data in order (sequential processing ensures order)
+        allData.push(...dataWithFile);
+        
+      } catch (error) {
+        console.error(`❌ Error procesando archivo ${fileName}:`, error);
+        errors.push({ fileName, error });
+        // Continue with next file even if one fails
+      }
+    }
+    
+    // All files processed, now complete
+    handleMultipleFilesComplete();
+  }
+  
+  // Start sequential processing
+  processFilesSequentially();
+  
+  function handleMultipleFilesComplete() {
+    if (allData.length === 0) {
+      console.error("❌ No se pudo procesar ningún archivo");
+      showDiagramNotFound();
+      if (loadingElement) loadingElement.style.display = "none";
+      if (onComplete && typeof onComplete === 'function') {
+        onComplete();
+      }
+      return;
+    }
+    
+    console.log("🎉 Todos los archivos procesados. Total de registros:", allData.length);
+    
+    try {
+      const trees = buildHierarchies(allData, diagramConfig);
+      drawTrees(trees, diagramConfig);
+      
+      // Create side panel only if enabled
+      if (isOptionEnabled('sidePanel') !== false) {
+        createSidePanel();
+      }
+      
+      // Preserve current theme after loading diagram
+      setTimeout(async () => {
+        if (window.preserveCurrentTheme) {
+          await window.preserveCurrentTheme();
+        }
+      }, 100);
+      
+      const successCount = files.length - errors.length;
+      console.log(`Diagrama cargado desde: MÚLTIPLES ARCHIVOS | Archivos exitosos: ${successCount} | Registros totales: ${allData.length}`);
+      
+      // Trigger onLoad hook
+      triggerHook('onLoad', { 
+        name: diagramConfig?.name || 'Múltiples Archivos',
+        data: allData, 
+        trees: trees,
+        sourceType: 'multiple-files',
+        files: files.map(f => f.name),
+        fileNames: fileNames,
+        errors: errors,
+        isLocal: true,
+        timestamp: new Date().toISOString()
+      });
+      
+      if (onComplete && typeof onComplete === 'function') {
+        onComplete();
+      }
+    } catch (error) {
+      console.error("Error durante la inicialización del diagrama desde múltiples archivos:", error);
+      showDiagramNotFound();
+      if (loadingElement) loadingElement.style.display = "none";
+      
+      if (onComplete && typeof onComplete === 'function') {
+        onComplete();
+      }
+    }
+  }
 }
 
 // Load data from object (existing functionality)
@@ -6086,6 +6216,10 @@ function resolveNodeImage(node) {
   const imgVal = node.img || (node.data && node.data.img) || "";
   const typeVal = node.type || (node.data && node.data.type) || "";
 
+  console.log(`[resolveNodeImage] Processing node: ${node.name || node.data?.name || 'unknown'}`);
+  console.log(`[resolveNodeImage] Img value: "${imgVal}"`);
+  console.log(`[resolveNodeImage] Type value: "${typeVal}"`);
+
   // COLUMNA IMG TIENE PRIORIDAD ABSOLUTA - SIEMPRE usar img si tiene valor
   if (imgVal && imgVal.trim() !== "") {
     // Si es una URL absoluta, data URI o ruta con barra, úsala directamente
@@ -6192,7 +6326,9 @@ async function detectAutoLogo() {
           
           // Update the topbar if it already exists
           if (window.$xDiagrams.updateTopbarTitle) {
-            window.$xDiagrams.updateTopbarTitle(window.$xDiagrams.currentDiagramIdx || 0);
+            window.$xDiagrams.updateTopbarTitle(window.$xDiagrams.currentDiagramIdx || 0).catch(error => {
+              console.error('[Topbar] Error updating title:', error);
+            });
           }
         }
         return; // Exit early if logo found
@@ -6639,9 +6775,20 @@ function checkImageExists(url) {
       return;
     }
     
-    // Si es una URL externa, asumir que existe
+    // Si es una URL externa, verificar si es accesible
     if (url.match(/^https?:\/\//i)) {
-      resolve(true);
+      console.log(`[checkImageExists] Checking external URL: ${url}`);
+      const img = new Image();
+      img.crossOrigin = "anonymous"; // Intentar con CORS
+      img.onload = function() {
+        console.log(`[checkImageExists] External image loaded successfully: ${url}`);
+        resolve(true);
+      };
+      img.onerror = function() {
+        console.log(`[checkImageExists] External image failed to load: ${url}`);
+        resolve(false);
+      };
+      img.src = url;
       return;
     }
     

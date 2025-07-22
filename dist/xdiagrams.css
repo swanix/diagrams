@@ -1,6 +1,6 @@
 /*
   Swanix Diagrams - CSS
-  v0.4.5
+  v0.5.0
 */
 
 :root {
@@ -272,6 +272,9 @@
     box-sizing: border-box;
     margin: 0;
     padding: 0;
+    /* Prevent layout shifts during zoom */
+    transform: translateZ(0);
+    will-change: auto;
   }
 
   svg {
@@ -284,6 +287,10 @@
   opacity: 0;
   position: relative;
   z-index: 1;
+  /* Improve zoom performance */
+  transform: translateZ(0);
+  will-change: transform;
+  backface-visibility: hidden;
 }
 
   .link {
@@ -626,17 +633,30 @@
   background-color: var(--side-panel-bg);
   border-left: 1px solid var(--side-panel-border);
   border-top: 1px solid var(--side-panel-border);
-  box-shadow: -2px 0 10px var(--side-panel-shadow);
-  z-index: 999; /* Por debajo del topbar (z-index: 1000) pero por encima del SVG */
+  /* box-shadow: -2px 0 10px var(--side-panel-shadow); */
+  z-index: 999; /* Por debajo del topbar (z-index: 2000) pero por encima del SVG */
   transition: right 0.3s ease-in-out;
   overflow-y: auto;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   will-change: right;
   transform: translateZ(0); /* Force hardware acceleration */
+  /* Prevent zoom conflicts */
+  pointer-events: auto;
+  isolation: isolate;
 }
 
 .side-panel.open {
   right: 0;
+  /* Prevent zoom conflicts when panel is open */
+  pointer-events: auto;
+}
+
+/* Prevent zoom conflicts when panel is open */
+.side-panel.open ~ #main-diagram-svg,
+.side-panel.open + #main-diagram-svg {
+  /* Ensure SVG maintains proper zoom behavior */
+  pointer-events: auto;
+  transform: translateZ(0);
 }
 
 .side-panel-header {
@@ -1350,12 +1370,12 @@ svg .node.node-selected {
   background: var(--topbar-bg, #fff);
   color: var(--topbar-text, #333);
   border-bottom: 1px solid var(--side-panel-border);
-  box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+  /* box-shadow: 0 2px 8px rgba(0,0,0,0.03); */
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 0 24px;
-  z-index: 10000;
+  z-index: 2000; /* Por encima del side panel y SVG */
   box-sizing: border-box;
   margin: 0;
 }
@@ -1446,6 +1466,10 @@ svg .node.node-selected {
   margin: 0;
   padding: 0;
   line-height: 1;
+  min-width: 200px; /* Prevent layout shift */
+  min-height: 48px; /* Maintain consistent height */
+  opacity: 1;
+  transition: opacity 0.2s ease;
 }
 
 .title-dropdown-container .diagram-title {
@@ -1478,23 +1502,44 @@ svg .node.node-selected {
   line-height: 1;
 }
 
+/* Espacio fijo para el logo para evitar cambios de posición del dropdown */
+.title-dropdown-container::before {
+  content: '';
+  width: 180px; /* Mismo ancho máximo que el logo */
+  height: 48px; /* Mismo alto máximo que el logo */
+  flex-shrink: 0;
+  margin-right: -4px; /* Mismo margin que el logo */
+  display: none; /* Oculto por defecto */
+}
+
+/* Mostrar el espacio fijo solo cuando NO hay logo */
+.title-dropdown-container.no-logo::before {
+  display: block;
+}
+
 /* Controles removidos temporalmente */
 
-/* Ajustar SVG para el topbar */
+/* Ajustar SVG para ocupar toda la pantalla */
 svg {
-  height: calc(100vh - 60px);
+  height: 100vh;
 }
 
 /* SVG principal del diagrama */
 #main-diagram-svg {
   width: 100%;
-  height: calc(100vh - 60px);
+  height: 100vh; /* Ocupar toda la pantalla */
   display: block;
   z-index: 1; /* Asegurar que esté por debajo de los controles */
   position: relative;
   transform-origin: center center;
   will-change: transform;
-  margin-top: 60px; /* Posicionar debajo del topbar fijo */
+  /* Improve zoom performance and prevent glitches */
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  perspective: 1000px;
+  /* Prevent layout shifts when panel opens */
+  box-sizing: border-box;
+  overflow: visible;
 }
 
 /* Ajustar selector de tema para el topbar */
@@ -2164,8 +2209,13 @@ body.theme-neon .theme-toggle .moon-icon {
 
 /* ===== Drag & Drop Styles ===== */
 .xcanvas {
-  position: relative;
-  transition: all 0.3s ease;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 1;
+  overflow: hidden;
   background-color: var(--canvas-bg);
 }
 

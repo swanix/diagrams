@@ -1,71 +1,60 @@
-# 🎯 Swanix Diagrams - Interactive SVG Diagram Library
+# Swanix Diagrams - Interactive SVG Diagram Library
 
-A powerful JavaScript library for creating interactive, hierarchical SVG diagrams with advanced theming, real-time switching, and responsive design.
+Una potente librería JavaScript para crear diagramas SVG interactivos y jerárquicos con sistema de temas avanzado, cambio en tiempo real y diseño responsive.
 
-## ✨ Key Features
+## ✨ Características Principales
 
-### 🎨 **Advanced Theming System**
-- **6 Built-in Themes**: Snow (light), Onyx (dark), Vintage, Pastel, Neon, Forest
-- **CSS Variables Control**: Complete visual customization through `themes.json`
-- **Theme Persistence**: Automatic theme saving and restoration
-- **FOUC Prevention**: Smooth theme transitions without white flashes
-- **Theme Loader**: Early theme application to prevent visual glitches
+### 🎨 **Sistema de Temas Avanzado**
+- **6 Temas Integrados**: Snow (claro), Onyx (oscuro), Vintage, Pastel, Neon, Forest
+- **Control por Variables CSS**: Personalización visual completa a través de `themes.json`
+- **Persistencia de Temas**: Guardado y restauración automática de temas
+- **Prevención FOUC**: Transiciones suaves sin parpadeos blancos
+- **Cargador de Temas**: Aplicación temprana para evitar problemas visuales
 
-### 🏷️ **Auto Logo Detection**
-- **Automatic Detection**: Automatically detects logo files in `img/` folder
-- **Multiple Formats**: Supports SVG, PNG, JPG, JPEG formats
-- **Priority System**: Manual configuration > data-logo attribute > auto-detection
-- **Zero Configuration**: Works without any setup if `img/logo.svg` exists
+### 🔄 **NUEVA FUNCIÓN: Diagrama Combinado de Múltiples Google Sheets**
+- **Carga Paralela**: Múltiples hojas de Google Sheets en un solo diagrama
+- **Procesamiento Secuencial**: Mantiene el orden de las fuentes
+- **Identificación por Origen**: Cada registro tiene metadatos de fuente
+- **Manejo Robusto de Errores**: Continúa aunque una hoja falle
+- **Configuración Flexible**: Nombres personalizados y estrategias de combinación
 
-### 🔄 **Dynamic Diagram Switching**
-- **Dropdown Interface**: Clean dropdown in topbar for diagram selection
-- **URL-based Navigation**: Direct access to specific diagrams via URL parameters
-- **Fallback System**: Automatic fallback URLs for improved reliability
-- **Real-time Loading**: Seamless diagram switching without page reload
+### 🏷️ **Detección Automática de Logo**
+- **Detección Automática**: Detecta automáticamente archivos de logo en carpeta `img/`
+- **Múltiples Formatos**: Soporta SVG, PNG, JPG, JPEG
+- **Sistema de Prioridad**: Configuración manual > atributo data-logo > auto-detección
+- **Cero Configuración**: Funciona sin configuración si existe `img/logo.svg`
 
-### 📊 **Hierarchical Data Visualization**
-- **Tree Structures**: Support for complex hierarchical relationships
-- **Cluster Grouping**: Visual grouping of related nodes
-- **Custom Columns**: Flexible data mapping for different diagram types
-- **Multiple Data Sources**: CSV files, REST APIs (SheetDB, Sheetson, Airtable), and local data
+### 🔄 **Cambio Dinámico de Diagramas**
+- **Interfaz Dropdown**: Dropdown limpio en la barra superior para selección
+- **Navegación por URL**: Acceso directo a diagramas específicos vía parámetros URL
+- **Sistema de Fallback**: URLs de respaldo automáticas para mayor confiabilidad
+- **Carga en Tiempo Real**: Cambio de diagramas sin recarga de página
 
-### 🎯 **Interactive Elements**
-- **Node Selection**: Click to select and highlight nodes
-- **Side Panel**: Detailed information display for selected nodes
-- **Keyboard Navigation**: Full keyboard navigation with hierarchical and sequential modes
-- **Auto Zoom**: Automatic zoom fitting for optimal viewing
-- **Responsive Design**: Adapts to different screen sizes
+### 📊 **Visualización de Datos Jerárquicos**
+- **Estructuras de Árbol**: Soporte para relaciones jerárquicas complejas
+- **Agrupación en Clusters**: Agrupación visual de nodos relacionados
+- **Columnas Personalizables**: Mapeo flexible de datos para diferentes tipos
+- **Múltiples Fuentes**: Archivos CSV, APIs REST (SheetDB, Sheetson, Airtable), datos locales
 
-### 🛠 **Developer Experience**
-- **Modular Architecture**: Clean separation of concerns
-- **Extensible Design**: Easy to add new themes and features
-- **Comprehensive Documentation**: Detailed guides for all features
-- **Error Handling**: Robust error management and fallbacks
+### 🎯 **Elementos Interactivos**
+- **Selección de Nodos**: Click para seleccionar y resaltar nodos
+- **Panel Lateral**: Visualización detallada de información de nodos seleccionados
+- **Navegación por Teclado**: Navegación completa con modos jerárquico y secuencial
+- **Zoom Automático**: Ajuste automático de zoom para visualización óptima
 
-## 🚀 Quick Start
+## 🚀 Inicio Rápido
 
-### Data Sources Supported
-
-Swanix Diagrams now supports multiple data sources for maximum flexibility:
-
-- **📄 CSV Files**: Local files and remote URLs
-- **🌐 REST APIs**: SheetDB, Sheetson, Airtable, and custom APIs
-- **📊 Local Data**: Pre-processed JavaScript objects
-- **🔄 Real-time Updates**: Automatic data refresh from APIs
-
-### Basic Implementation
+### Configuración Básica
 
 ```html
 <!DOCTYPE html>
-<html lang="es">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Diagram</title>
-    <script src="theme-loader.js"></script>
-    <link rel="stylesheet" href="sw-diagrams.css">
+  <title>Mi Diagrama</title>
+  <script src="xloader.js"></script>
+  <link href="xdiagrams.css" rel="stylesheet">
     <script src="https://d3js.org/d3.v7.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+  <script src="https://unpkg.com/papaparse@5.3.0/papaparse.min.js"></script>
 </head>
 <body>
     <div class="xcanvas" 
@@ -73,7 +62,7 @@ Swanix Diagrams now supports multiple data sources for maximum flexibility:
            "light": "snow",
            "dark": "onyx"
          }'
-         data-title="My Diagram"
+         data-title="Mi Diagrama"
          data-columns='{
            "id": "ID",
            "name": "Name", 
@@ -86,478 +75,373 @@ Swanix Diagrams now supports multiple data sources for maximum flexibility:
     </div>
     
     <script>
-      window.swDiagrams = window.swDiagrams || {};
-      window.swDiagrams.diagrams = [
+      window.$xDiagrams = {
+        title: "Mi Diagrama",
+        diagrams: [
         {
-          name: "Diagram 1", 
+            name: "Diagrama 1", 
           url: "data/sample-diagram.csv"
-        },
-        {
-          name: "SheetDB API", 
-          url: "https://sheetdb.io/api/v1/YOUR_SHEET_ID"
-        },
-        {
-          name: "Sheetson API",
-          url: "https://api.sheetson.com/v2/sheets/YOUR_SHEET_ID"
-        }
-      ];
+          }
+        ]
+      };
     </script>
     
-    <script src="sw-diagrams.js"></script>
+    <script src="xdiagrams.js"></script>
 </body>
 </html>
 ```
 
-### Advanced Configuration
+## 🔄 NUEVA FUNCIÓN: Diagrama Combinado de Múltiples Google Sheets
 
-```html
-<div class="xcanvas" 
-     data-themes='{
-       "light": "pastel",
-       "dark": "neon"
-     }'
-     data-title="Organization Chart"
-     data-columns='{
-       "id": "ID",
-       "name": "Name", 
-       "subtitle": "Role",
-       "parent": "Parent",
-       "img": "Avatar",
-       "url": "Profile",
-       "type": "Department"
-     }'>
-</div>
+### ¿Cómo Opera?
 
-<script>
-  window.swDiagrams = window.swDiagrams || {};
-  window.swDiagrams.diagrams = [
-    {
-      name: "Org Chart", 
-      url: "data/org-chart.csv"
-    },
-    {
-      name: "Team Structure", 
-      url: "data/team-structure.csv"
-    }
-  ];
-</script>
+La nueva función permite combinar múltiples hojas de Google Sheets en un solo diagrama, manteniendo la trazabilidad del origen de cada dato.
+
+#### **1. Detección Automática**
+
+El sistema detecta automáticamente cuando se proporcionan múltiples fuentes:
+
+```javascript
+// Array de URLs = Múltiples Google Sheets
+if (Array.isArray(source)) {
+  if (typeof firstItem === 'string') {
+    return loadFromMultipleUrls(source, onComplete, retryCount, diagramConfig);
+  }
+}
 ```
 
-## 📁 Project Structure
+#### **2. Procesamiento Secuencial**
+
+- **Mantiene el orden**: Procesa las URLs una por una para preservar el orden
+- **Cache busting**: Añade parámetros de tiempo para evitar caché
+- **Identificación**: Agrega metadatos a cada fila (`_sheetName`, `_sheetIndex`)
+- **Manejo de errores**: Continúa con la siguiente hoja si una falla
+
+#### **3. Metadatos Agregados**
+
+Cada registro incluye información de origen:
+- `_sheetName`: Nombre de la hoja de origen
+- `_sheetIndex`: Índice de la hoja en el array
+
+### Configuración
+
+#### **Configuración Básica**
+
+```javascript
+{
+  name: "Mi Diagrama combinado",
+  urls: [
+    "https://docs.google.com/spreadsheets/d/e/.../pub?output=csv",
+    "https://docs.google.com/spreadsheets/d/e/.../pub?output=csv&gid=123456789"
+  ],
+  combineSheets: {
+    enabled: true,
+    sheetNames: ["Sheet 1", "Sheet 2"]
+  }
+}
+```
+
+#### **Configuración Avanzada**
+
+```javascript
+{
+  name: "Diagrama Complejo",
+  urls: [
+    "https://docs.google.com/spreadsheets/d/e/.../pub?output=csv",
+    "https://docs.google.com/spreadsheets/d/e/.../pub?output=csv&gid=123456789",
+    "https://docs.google.com/spreadsheets/d/e/.../pub?output=csv&gid=987654321"
+  ],
+  combineSheets: {
+    enabled: true,
+    mergeStrategy: "append", // o "merge"
+    sheetNames: ["Departamentos", "Empleados", "Proyectos"]
+  }
+}
+```
+
+#### **Ejemplo Completo**
+
+```javascript
+window.$xDiagrams = {
+  title: "Organigrama Empresa",
+  diagrams: [
+    {
+      name: "Organigrama Completo",
+      urls: [
+        "https://docs.google.com/spreadsheets/d/e/2PACX-1vT1F3LXPwnGlnF_uOlhoR-5kK1DrWLwlCAKH8Ag6hPrNLzwqWYWU8ofE19xSv4cH1-Cq7ZYm7lPys7V/pub?output=csv",
+        "https://docs.google.com/spreadsheets/d/e/2PACX-1vT1F3LXPwnGlnF_uOlhoR-5kK1DrWLwlCAKH8Ag6hPrNLzwqWYWU8ofE19xSv4cH1-Cq7ZYm7lPys7V/pub?output=csv&gid=123456789"
+      ],
+      combineSheets: {
+        enabled: true,
+        sheetNames: ["Estructura", "Detalles"],
+        mergeStrategy: "append"
+      }
+    }
+  ],
+  columns: {
+    id: "ID",
+    name: "Nombre", 
+    parent: "Jefe",
+    type: "Departamento",
+    url: "LinkedIn",
+    subtitle: "Descripción"
+  }
+};
+```
+
+### Casos de Uso
+
+#### **1. Organigrama Multi-Departamento**
+```javascript
+{
+  name: "Organigrama Empresa",
+  urls: [
+    "https://docs.google.com/spreadsheets/d/e/.../pub?output=csv", // Departamentos
+    "https://docs.google.com/spreadsheets/d/e/.../pub?output=csv&gid=123456789", // Empleados
+    "https://docs.google.com/spreadsheets/d/e/.../pub?output=csv&gid=987654321" // Proyectos
+  ],
+  combineSheets: {
+    enabled: true,
+    sheetNames: ["Departamentos", "Empleados", "Proyectos"]
+  }
+}
+```
+
+#### **2. Mapa de Sitio Complejo**
+```javascript
+{
+  name: "Mapa de Sitio Web",
+  urls: [
+    "https://docs.google.com/spreadsheets/d/e/.../pub?output=csv", // Páginas principales
+    "https://docs.google.com/spreadsheets/d/e/.../pub?output=csv&gid=123456789", // Subpáginas
+    "https://docs.google.com/spreadsheets/d/e/.../pub?output=csv&gid=987654321" // Recursos
+  ],
+  combineSheets: {
+    enabled: true,
+    sheetNames: ["Principal", "Subpáginas", "Recursos"]
+  }
+}
+```
+
+#### **3. Monitoreo de Sistemas**
+```javascript
+{
+  name: "Arquitectura de Sistemas",
+  urls: [
+    "https://docs.google.com/spreadsheets/d/e/.../pub?output=csv", // Servicios
+    "https://docs.google.com/spreadsheets/d/e/.../pub?output=csv&gid=123456789", // Bases de datos
+    "https://docs.google.com/spreadsheets/d/e/.../pub?output=csv&gid=987654321" // APIs
+  ],
+  combineSheets: {
+    enabled: true,
+    sheetNames: ["Servicios", "Bases de Datos", "APIs"]
+  }
+}
+```
+
+### Características Técnicas
+
+#### **✅ Ventajas**
+- **Procesamiento secuencial**: Mantiene el orden de las hojas
+- **Identificación por fuente**: Cada registro tiene metadatos de origen
+- **Manejo robusto de errores**: Continúa aunque una hoja falle
+- **Cache busting**: Evita problemas de caché
+- **Compatibilidad**: Funciona con configuración existente
+- **Hooks**: Dispara eventos para integración
+
+#### **🔄 Estrategias de Combinación**
+- **"append"**: Añade todos los datos secuencialmente (por defecto)
+- **"merge"**: Combina datos basándose en claves comunes
+
+#### **📊 Integración**
+- **Sistema de temas**: Preserva el tema actual
+- **Panel lateral**: Muestra información de origen
+- **Hooks**: Dispara eventos `onLoad` con metadatos
+- **Zoom y navegación**: Funciona con todas las características existentes
+
+## 📊 Estructura de Datos
+
+### Columnas Requeridas
+
+Tu Google Sheets debe tener columnas con estos nombres (o similares):
+
+| Columna | Descripción | Ejemplos de nombres |
+|---------|-------------|-------------------|
+| **Node** | Identificador único | `Node`, `node`, `id`, `ID` |
+| **Name** | Nombre del elemento | `Name`, `name`, `title`, `Title` |
+| **Description** | Descripción | `Description`, `description`, `desc` |
+| **Parent** | Elemento padre | `Parent`, `parent` |
+| **Type** | Tipo de elemento | `Type`, `type` |
+| **URL** | Enlace | `URL`, `url`, `link` |
+| **Image** | Imagen/icono | `Image`, `image`, `img`, `icon` |
+
+### Ejemplo de Google Sheets
+
+| Node | Name | Description | Parent | Type | URL | Image |
+|------|------|-------------|--------|------|-----|-------|
+| home | Inicio | Página principal | | page | https://... | home.svg |
+| about | Acerca de | Información de la empresa | home | page | https://... | about.svg |
+| contact | Contacto | Formulario de contacto | home | form | https://... | contact.svg |
+
+## 🛠️ Configuración Avanzada
+
+### Configuración Completa
+
+```javascript
+window.$xDiagrams = {
+  // Configuración básica
+  title: "Swanix Diagrams",
+  name: "Swanix XDiagrams",
+  version: "0.4.5",
+  
+  // Configuración de temas
+  themes: {
+    light: "snow",
+    dark: "onyx",
+    default: "snow"
+  },
+  
+  // Mapeo de columnas
+  columns: {
+    id: "Node",
+    name: "Name", 
+    parent: "Parent",
+    img: "Type",
+    url: "URL",
+    type: "Type",
+    subtitle: "Description"
+  },
+  
+  // Fuentes de diagramas
+  diagrams: [
+    {
+      name: "Diagrama Único",
+      url: "https://docs.google.com/spreadsheets/d/e/.../pub?output=csv",
+      edit: "https://docs.google.com/spreadsheets/d/.../edit?gid=0#gid=0"
+    },
+    {
+      name: "Diagrama Combinado",
+      urls: [
+        "https://docs.google.com/spreadsheets/d/e/.../pub?output=csv",
+        "https://docs.google.com/spreadsheets/d/e/.../pub?output=csv&gid=123456789"
+      ],
+      combineSheets: {
+        enabled: true,
+        sheetNames: ["Hoja 1", "Hoja 2"],
+        mergeStrategy: "append"
+      }
+    }
+  ],
+  
+  // Opciones avanzadas
+  options: {
+    autoZoom: true,
+    keyboardNavigation: true,
+    sidePanel: true,
+    tooltips: true,
+    responsive: true,
+    dragAndDrop: true
+  },
+  
+  // Hooks de eventos
+  hooks: {
+    onLoad: function(diagram) {
+      console.log('Diagrama cargado:', diagram.name);
+    },
+    onThemeChange: function(theme) {
+      console.log('Tema cambiado a:', theme);
+    },
+    onNodeClick: function(node) {
+      console.log('Nodo clickeado:', node.name);
+    },
+    onFileDrop: function(file) {
+      console.log('Archivo soltado:', file.name);
+    }
+  }
+};
+```
+
+## 🎯 Casos de Uso
+
+### 1. Monitoreo de Sistemas
+- Visualizar arquitectura de aplicaciones
+- Monitorear estado de servicios
+- Mapear dependencias entre componentes
+
+### 2. Organización de Proyectos
+- Estructurar secciones de sitios web
+- Organizar módulos de software
+- Mapear flujos de trabajo
+
+### 3. Documentación Técnica
+- Crear mapas de sitio
+- Documentar APIs
+- Visualizar bases de datos
+
+### 4. Organigramas Empresariales
+- Estructura organizacional
+- Roles y responsabilidades
+- Jerarquías departamentales
+
+## 🛠️ Tecnologías
+
+- **Frontend**: HTML5, CSS3, JavaScript (ES6+)
+- **Visualización**: D3.js v7
+- **Parsing**: Papa Parse v5.3.0
+- **Iconos**: SVG embebidos
+- **Temas**: CSS Variables
+- **Plugins**: XDragDrop (drag & drop opcional)
+
+## 📁 Estructura del Proyecto
 
 ```
 diagrams/
 ├── src/
-│   ├── sw-diagrams.js          # Main library file
-│   ├── sw-diagrams.css         # Core styles
-│   ├── themes.json             # Theme definitions
-│   ├── theme-loader.js         # Early theme loading
-│   ├── data/                   # CSV data files
-│   ├── themes/                 # Theme system files
-│   └── templates/              # Template engine
-├── docs/                       # Documentation and demos
-├── readme/                     # Technical documentation
-└── package.json
+│   ├── xdiagrams.js            # Lógica principal
+│   ├── xdiagrams.css           # Estilos
+│   ├── xloader.js              # Cargador
+│   ├── xthemes.json            # Configuración de temas
+│   ├── data/                   # Archivos CSV de datos
+│   ├── img/                    # Imágenes e iconos
+│   └── plugins/                # Plugins
+│     └── xdragdrop.js          # Plugin de drag & drop
+├── docs/                       # Documentación
+├── README.md                   # Este archivo
+└── package.json                # Dependencias
 ```
 
-## 🏷️ Auto Logo Detection
+## 🔄 Actualizaciones Recientes
 
-### How It Works
+### v0.4.5 - Múltiples Fuentes de Datos
+- ✅ **NUEVA FUNCIÓN**: Carga combinada de múltiples hojas de Google Sheets
+- ✅ Carga paralela de múltiples archivos locales CSV/JSON
+- ✅ Combinación automática de datos con metadatos de origen
+- ✅ Identificación por fuente en cada registro
+- ✅ Manejo robusto de errores
+- ✅ Compatibilidad con configuración existente
+- ✅ Plugin XDragDrop independiente para drag & drop (modular)
+- ✅ Plugin XPerformance para optimizaciones de zoom y rendimiento
 
-Swanix Diagrams now includes automatic logo detection that works without any configuration:
+## ⚠️ Limitaciones
 
-1. **Place your logo file** in the `img/` folder with one of these names:
-   - `logo.svg` (recommended)
-   - `logo.png`
-   - `logo.jpg`
-   - `logo.jpeg`
+- **CORS**: Google Sheets debe ser público
+- **Estructura**: Todas las hojas deben tener columnas similares
+- **Tamaño**: Hojas muy grandes pueden afectar rendimiento
+- **Orden**: El procesamiento es secuencial para mantener el orden
 
-2. **The system will automatically detect it** and display it in the topbar
+## 📞 Soporte
 
-### Priority System
+Para problemas o preguntas:
 
-The logo detection follows this priority order:
+1. Revisa la documentación
+2. Verifica los logs de consola para debugging
+3. Confirma que las URLs de Google Sheets sean accesibles
+4. Prueba con datos de ejemplo antes de usar datos reales
 
-1. **Manual Configuration**: If `logo` is specified in `window.$xDiagrams`
-2. **HTML Attribute**: If `data-logo` is set on the container
-3. **Auto Detection**: Automatically finds files in `img/` folder
+## 📄 Licencia
 
-### Example
-
-```javascript
-// Before (manual configuration required)
-window.$xDiagrams = {
-  title: "My Diagram",
-  logo: "img/logo.svg",  // ← Manual configuration
-  // ... rest of config
-};
-
-// After (automatic detection)
-window.$xDiagrams = {
-  title: "My Diagram",
-  // ← No logo configuration needed if img/logo.svg exists
-  // ... rest of config
-};
-```
-
-## 🎨 Theme System
-
-### Built-in Themes
-
-| Theme | Type | Description |
-|-------|------|-------------|
-| **Snow** | Light | Clean, professional light theme |
-| **Onyx** | Dark | Modern dark theme with blue accents |
-| **Vintage** | Light | Warm, retro-inspired theme |
-| **Pastel** | Light | Soft, gentle color palette |
-| **Neon** | Dark | High contrast with neon green |
-| **Forest** | Dark | Nature-inspired green theme |
-
-### Custom Themes
-
-Create custom themes by adding new entries to `themes.json`:
-
-```json
-{
-  "my-theme": {
-    "--bg-color": "#ffffff",
-    "--text-color": "#333333",
-    "--node-fill": "#f8f9fa",
-    "--link-color": "#6c757d"
-  }
-}
-```
-
-## 📊 Data Format
-
-### Multiple Data Sources
-
-Swanix Diagrams automatically detects and handles different data sources:
-
-#### CSV Files
-```csv
-ID,Parent,Name,Role,Department
-1,,CEO,Chief Executive Officer,Executive
-2,1,CTO,Chief Technology Officer,Technology
-3,1,CFO,Chief Financial Officer,Finance
-4,2,Lead Dev,Lead Developer,Engineering
-```
-
-#### REST APIs (JSON)
-```json
-[
-  {
-    "ID": "1",
-    "Parent": "",
-    "Name": "CEO",
-    "Role": "Chief Executive Officer",
-    "Department": "Executive"
-  },
-  {
-    "ID": "2", 
-    "Parent": "1",
-    "Name": "CTO",
-    "Role": "Chief Technology Officer",
-    "Department": "Technology"
-  }
-]
-```
-
-### CSV Structure
-
-```csv
-ID,Parent,Name,Role,Department
-1,,CEO,Chief Executive Officer,Executive
-2,1,CTO,Chief Technology Officer,Technology
-3,1,CFO,Chief Financial Officer,Finance
-4,2,Lead Dev,Lead Developer,Engineering
-```
-
-### Column Mapping
-
-Customize column names for different diagram types:
-
-```javascript
-{
-  "id": "ID",
-  "parent": "Parent", 
-  "name": "Name",
-  "role": "Role",
-  "department": "Department"
-}
-```
-
-## 🔧 Configuration Options
-
-### Container Attributes
-
-| Attribute | Description | Default |
-|-----------|-------------|---------|
-| `data-themes` | Theme configuration object | `{"light": "snow", "dark": "onyx"}` |
-| `data-title` | Diagram title | Page title |
-| `data-columns` | Column mapping object | Auto-detected |
-
-### Required Dependencies
-
-```html
-<!-- Theme loader for FOUC prevention -->
-<script src="theme-loader.js"></script>
-
-<!-- Core library styles -->
-<link rel="stylesheet" href="sw-diagrams.css">
-
-<!-- D3.js for SVG manipulation -->
-<script src="https://d3js.org/d3.v7.min.js"></script>
-
-<!-- PapaParse for CSV parsing -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
-
-<!-- Main library -->
-<script src="sw-diagrams.js"></script>
-```
-
-### URL Parameters
-
-- `?diagram=index` - Load specific diagram
-- `?theme=snow` - Set initial theme
-- `?zoom=auto` - Enable auto zoom
-
-## 🎯 Advanced Features
-
-### Keyboard Navigation
-
-The library provides comprehensive keyboard navigation for accessibility and efficient diagram exploration:
-
-#### Hierarchical Navigation
-- **↑** - Navigate to parent node
-- **↓** - Navigate to first child node
-- **←→** - Navigate between nodes at the same level (siblings, cousins)
-- **Home** - Jump to first node
-- **End** - Jump to last node
-- **Escape** - Clear selection
-
-#### Sequential Navigation (Form-like)
-- **Tab** - Navigate to next node sequentially
-- **Shift + Tab** - Navigate to previous node sequentially
-- Automatically jumps between levels when reaching the end of current level
-
-#### Visual Indicators
-- Selected nodes show keyboard icon (⌨) indicator
-- Smooth scrolling to keep selected nodes visible
-- Side panel automatically opens with node details
-
-### Fallback URLs
-
-Configure multiple data sources for reliability:
-
-```javascript
-{
-  "url": "primary-data.csv",
-  "fallbacks": [
-    "backup-data.csv",
-    "legacy-data.csv"
-  ]
-}
-```
-
-### Custom Styling
-
-Override theme variables with CSS:
-
-```css
-:root {
-  --node-fill: #custom-color;
-  --link-color: #custom-link;
-}
-```
-
-### Event Handling
-
-Listen to diagram events:
-
-```javascript
-// Diagram loaded
-document.addEventListener('diagramLoaded', (e) => {
-  console.log('Diagram loaded:', e.detail);
-});
-
-// Theme changed
-document.addEventListener('themeChanged', (e) => {
-  console.log('Theme changed to:', e.detail.theme);
-});
-```
-
-## 🌐 REST API Support
-
-Swanix Diagrams now supports REST APIs for enhanced privacy and flexibility. This is perfect for users who want to use services like **SheetDB** or **Sheetson** to convert Google Sheets into private APIs.
-
-### Supported Services
-
-- **SheetDB.io** - Easy Google Sheets to API conversion
-- **Sheetson.com** - Full-featured spreadsheet API
-- **Airtable** - Database with API access
-- **Custom APIs** - Any JSON API with proper format
-
-### Quick Setup
-
-```javascript
-window.$xDiagrams = {
-  diagrams: [
-    {
-      name: "SheetDB Example",
-      url: "https://sheetdb.io/api/v1/YOUR_SHEET_ID"
-    },
-    {
-      name: "Sheetson Example", 
-      url: "https://api.sheetson.com/v2/sheets/YOUR_SHEET_ID"
-    }
-  ]
-};
-```
-
-### Benefits
-
-- **🔐 Privacy**: Data not publicly exposed
-- **🔑 Authentication**: Support for API keys and tokens
-- **📊 Real-time**: Automatic data updates
-- **🔄 Scalability**: Handle large datasets efficiently
-- **📦 Intelligent Cache**: Reduces API calls by 90%+ automatically
-
-📖 **Complete Guide**: See [REST-API-GUIDE.md](./REST-API-GUIDE.md) for detailed instructions and examples.
-
-## 📚 Documentation
-
-### Core Documentation
-- [Base Usage Guide](./readme/README-CLEAN.md) - Getting started
-- [Custom Columns](./readme/CUSTOM_COLUMNS_README.md) - Data mapping
-- [Theme System](./readme/THEMES_JSON_README.md) - Theme customization
-- [Theme Creator](./readme/THEME_CREATOR_README.md) - Visual theme editor
-
-### Advanced Features
-- [REST API Guide](./REST-API-GUIDE.md) - API integration guide
-- [Fallback System](./readme/FALLBACKS_README.md) - URL fallbacks
-- [CSS Variables](./readme/SWITCHER_CSS_VARIABLES_README.md) - Style control
-- [FOUC Prevention](./readme/FOUC_FIX_README.md) - Smooth transitions
-- [Theme Loader](./readme/THEME_LOADER_README.md) - Early loading
-
-## 🛠 Development
-
-### Building
-
-```bash
-# Install dependencies
-npm install
-
-# Run development server
-npm run dev
-
-# Build for production
-npm run build
-```
-
-
-## Color System (HSL)
-
-H (hue): degree on the color wheel (0 to 360, where 0 and 360 are red, 120 is green, 240 is blue, etc.)
-S (saturation): percentage (0% is gray, 100% is fully saturated)
-L (lightness): percentage (0% black, 50% pure color, 100% white)
-A (alpha): opacity, from 0 (fully transparent) to 1 (fully opaque)
-
-### Examples in CSS
-
-```css
-
-/* Valid Syntax */
-
-color: hsla(300, 100%, 25%, 1);
-/* CSS Level 4 */
-color: hsl(300 100% 25% / 1);
-
-
-```
-
-
-```css
-
-/* Base color variables in HSL */
-
-/* Main Color */
---color-main: 300 100% 25%;
---color-main-h: 300;
---color-main-s: 100%;
---color-main-l: 25%;
-
-/* Accent Color */
---color-accent: 300 100% 25%;
---color-accent-h: 300;
---color-accent-s: 100%;
---color-accent-l: 25%;
-
-/* Neutral Dark Color */
---color-dark: 300 100% 25%;
---color-dark-h: 300;
---color-dark-s: 100%;
---color-dark-l: 25%;
-
-/* Neutral Light Color */
---color-light: 300 100% 25%;
---color-light-h: 300;
---color-light-s: 100%;
---color-light-l: 25%;
-
-/* Basic use - we can only edit the opacity */
-
-.element {
-  background: hsl(var(--color-main) / 1); 
-}
-
-/* Granular use */
-
-.element {
-  background: hsl(var(--color-main-h) 100% 25% / 1); 
-}
-
-.element {
-  background: hsl(var(--color-main-h) var(--color-main-s) 25% / 1); 
-}
-
-.element {
-  background: hsl(var(--color-main-h) 100% var(--color-main-l) / 1); 
-}
-
-```
-
-
-
-
-### Saturation and lightness control
-
-s = 0% → no color, completely gray
-s = 100% → pure color
-
-l = 0% → absolute black
-l = 50% → pure color (no lightening or darkening)
-l = 100% → absolute white
-
-
-### Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests if applicable
-5. Submit a pull request
-
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 🤝 Support
-
-- **Issues**: Report bugs and request features on GitHub
-- **Documentation**: Check the `readme/` folder for detailed guides
-- **Examples**: See `docs/demo/` for working examples
+Este proyecto está bajo la licencia MIT. Ver el archivo LICENSE para más detalles.
 
 ---
 
-**Ready to start?** Check out the [Base Usage Guide](./readme/README-CLEAN.md) for your first diagram!
+**Swanix Diagrams v0.4.5** - Librería de diagramas interactivos con soporte para múltiples fuentes de datos

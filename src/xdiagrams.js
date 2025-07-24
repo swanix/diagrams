@@ -468,8 +468,47 @@ function buildHierarchies(data, diagramConfig = null) {
     if (parent && nodeMap.has(parent)) {
       nodeMap.get(parent).children.push(node);
     } else if (!parent) {
-      roots.push(node);
+      // Solo agregar a roots si el nodo tiene type "Group"
+      if (type === "Group") {
+        roots.push(node);
+      }
     }
+  });
+
+  // Segunda pasada: crear cluster de almacenaje temporal para nodos sin Type
+  const orphanedNodesWithoutType = [];
+  const orphanedNodesWithType = [];
+  
+  nodeMap.forEach((node, id) => {
+    // Verificar si el nodo no tiene padre y no está ya en roots
+    if (!node.parent && !roots.includes(node)) {
+      if (!node.type || node.type === "") {
+        // Nodos sin Type van al cluster de almacenaje temporal
+        orphanedNodesWithoutType.push(node);
+      } else {
+        // Nodos con Type pero sin padre van como nodos individuales
+        orphanedNodesWithType.push(node);
+      }
+    }
+  });
+
+  // Crear cluster de almacenaje temporal si hay nodos sin Type
+  if (orphanedNodesWithoutType.length > 0) {
+    const storageCluster = {
+      id: "storage-cluster",
+      name: "Nodos sin Type",
+      subtitle: `Cluster de almacenaje temporal (${orphanedNodesWithoutType.length} nodos)`,
+      type: "Group",
+      children: orphanedNodesWithoutType,
+      parent: "",
+      originalData: { ID: "storage-cluster", Name: "Nodos sin Type", Type: "Group" }
+    };
+    roots.push(storageCluster);
+  }
+
+  // Agregar nodos con Type como nodos individuales
+  orphanedNodesWithType.forEach(node => {
+    roots.push(node);
   });
 
   return roots;

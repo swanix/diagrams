@@ -1,0 +1,12 @@
+ID,Parent,Name,Type,Subtitle,URL,Img
+GRP1,,Departamento de Ventas,Group,Equipo de ventas,,,
+EMP1,GRP1,Juan Pérez,Employee,Vendedor senior,,,
+EMP2,GRP1,María García,Employee,Vendedora junior,,,
+GRP2,,Departamento de IT,Group,Equipo de tecnología,,,
+EMP3,GRP2,Carlos López,Developer,Desarrollador frontend,,,
+EMP4,GRP2,Ana Martínez,Developer,Desarrolladora backend,,,
+IND1,,Consultor Externo,Consultant,Consultor independiente,,,
+IND2,,Freelancer,Contractor,Trabajador por proyecto,,,
+NODE1,,Nodo sin Type 1,,Nodo sin tipo definido,,,
+NODE2,,Nodo sin Type 2,,Otro nodo sin tipo,,,
+NODE3,,Nodo sin Type 3,,Tercer nodo sin tipo,,, 

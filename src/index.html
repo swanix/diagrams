@@ -16,6 +16,16 @@
     title: "Diagrams",
     diagrams: [ 
       {
+        name: "All", 
+        url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vRGUjJOtNJAx-_fuiXrbKJ9S84oINN4q5XRnNW3mFNd5FJew0mD8eD7JxVi3kfbT85PNMFj3YJU7gwn/pub?output=csv&gid=68069862",
+        layout: {
+          clustersPerRow: "6 3 7 6",
+          clustersTooltip: 'top-corner-right',
+          spacingX: 90,
+          spacingY: 90
+        }
+      },
+      {
         name: "Google Sheets", 
         url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vT1F3LXPwnGlnF_uOlhoR-5kK1DrWLwlCAKH8Ag6hPrNLzwqWYWU8ofE19xSv4cH1-Cq7ZYm7lPys7V/pub?output=csv",
         edit: "https://docs.google.com/spreadsheets/d/12XSWGm6CAkv7SVSeBU0dtS3dhqc1dLasoxWqsW2AX40/edit?gid=0#gid=0"
@@ -75,6 +85,42 @@
           spacingX: 60,
           spacingY: 60,
           fullRowThreshold: 70
+        }
+      },
+      {
+        name: "Tooltip Top Example",
+        url: "data/multi-clusters.csv",
+        layout: {
+          clustersPerRow: 4,
+          clustersTooltip: 'top',
+          marginX: 40,
+          marginY: 40,
+          spacingX: 80,
+          spacingY: 80
+        }
+      },
+      {
+        name: "Tooltip Bottom Example",
+        url: "data/multi-clusters.csv",
+        layout: {
+          clustersPerRow: 4,
+          clustersTooltip: 'bottom',
+          marginX: 40,
+          marginY: 40,
+          spacingX: 80,
+          spacingY: 80
+        }
+      },
+      {
+        name: "Tooltip Corner Example",
+        url: "data/multi-clusters.csv",
+        layout: {
+          clustersPerRow: 4,
+          clustersTooltip: 'top-corner-right',
+          marginX: 40,
+          marginY: 40,
+          spacingX: 80,
+          spacingY: 80
         }
       },
       {
@@ -167,6 +213,9 @@
       },
       onFileDrop: function(file) {
         console.log('XDiagrams - File dropped:', file.name);
+      },
+      onClusterZoom: function(clusterData) {
+        console.log('XDiagrams - Cluster zoomed to:', clusterData.clusterName);
       }
     }
   };

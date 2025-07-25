@@ -37,6 +37,12 @@
     --cluster-bg: rgba(0,0,0,0.05);
     --cluster-stroke: rgba(0,0,0,0.1);
     --cluster-title-color: #222;
+    --cluster-hover-bg: rgba(25, 118, 210, 0.15);
+    --cluster-hover-stroke: #1976d2;
+    --cluster-hover-title-color: #1976d2;
+    --cluster-selected-bg: rgba(255, 152, 0, 0.25);
+    --cluster-selected-stroke: #ff9800;
+    --cluster-selected-title-color: #ff9800;
 
     /* ===== Loading ===== */
     --loading-color: #dadada;
@@ -185,6 +191,9 @@
       --cluster-bg: rgba(255,255,255,0.02);
       --cluster-stroke: rgba(255,255,255,0.1);
       --cluster-title-color: #00eaff;
+    --cluster-selected-bg: rgba(0, 234, 255, 0.25);
+    --cluster-selected-stroke: #00eaff;
+    --cluster-selected-title-color: #00eaff;
 
       /* ===== Loading ===== */
       --loading-color: #ffffff;
@@ -1256,7 +1265,10 @@ svg .node.node-selected {
   --control-shadow-focus: rgba(139, 69, 19, 0.4);
   --cluster-bg: rgba(0,0,0,0.05);
   --cluster-stroke: rgba(0,0,0,0.1);
-  --cluster-title-color: #7c4f20;
+      --cluster-title-color: #7c4f20;
+    --cluster-selected-bg: rgba(124, 79, 32, 0.25);
+    --cluster-selected-stroke: #7c4f20;
+    --cluster-selected-title-color: #7c4f20;
   --label-max-width: 68px;
 }
 .theme-pastel {
@@ -1293,7 +1305,10 @@ svg .node.node-selected {
   --control-shadow-focus: rgba(182, 182, 247, 0.4);
   --cluster-bg: rgba(0,0,0,0.05);
   --cluster-stroke: rgba(0,0,0,0.1);
-  --cluster-title-color: #b6b6f7;
+      --cluster-title-color: #b6b6f7;
+    --cluster-selected-bg: rgba(182, 182, 247, 0.25);
+    --cluster-selected-stroke: #b6b6f7;
+    --cluster-selected-title-color: #b6b6f7;
   --label-max-width: 68px;
 }
 .theme-neon {
@@ -1330,7 +1345,10 @@ svg .node.node-selected {
   --control-shadow-focus: rgba(0, 255, 231, 0.4);
   --cluster-bg: rgba(255,255,255,0.02);
   --cluster-stroke: rgba(255,255,255,0.1);
-  --cluster-title-color: #00ffe7;
+      --cluster-title-color: #00ffe7;
+    --cluster-selected-bg: rgba(0, 255, 231, 0.25);
+    --cluster-selected-stroke: #00ffe7;
+    --cluster-selected-title-color: #00ffe7;
   --label-max-width: 68px;
 }
 
@@ -2741,3 +2759,230 @@ body.theme-neon .theme-toggle .moon-icon {
 .data-refresh-btn:hover svg {
     opacity: 1;
 }
+
+/* ============================================================================
+   CLUSTER CLICK MODE STYLES
+   ============================================================================ */
+
+/* Cluster title container styles */
+.cluster-title-container {
+  transition: all 0.3s ease;
+  transform-origin: 0 0;
+}
+
+/* Cluster title background styles */
+.cluster-title-bg {
+  transition: all 0.3s ease;
+}
+
+/* Enhanced cluster title styles for hover effects */
+.cluster-title {
+  transition: all 0.3s ease;
+  font-weight: normal;
+  text-shadow: none;
+}
+
+/* Cluster click mode active styles */
+body.cluster-click-mode-active .cluster-rect {
+  transition: all 0.3s ease;
+  fill: var(--cluster-bg, rgba(0,0,0,0.02));
+  stroke: var(--cluster-stroke, #222);
+  stroke-width: 2px;
+  stroke-dasharray: 6,4;
+}
+
+body.cluster-click-mode-active .cluster-rect:hover {
+  /* Only change colors, no size modification */
+  filter: brightness(1.05);
+}
+
+/* Ensure hover styles are always applied correctly */
+body.cluster-click-mode-active .cluster-rect:not([data-selected="true"]):hover {
+  fill: var(--cluster-hover-bg, rgba(25, 118, 210, 0.15)) !important;
+  stroke: var(--cluster-hover-stroke, #1976d2) !important;
+  stroke-width: 3px !important;
+  stroke-dasharray: none !important;
+}
+
+/* Disable node interactions when cluster click mode is active */
+body.cluster-click-mode-active .node-clickable {
+  pointer-events: none !important;
+}
+
+body.cluster-click-mode-active .node-clickable rect {
+  opacity: 1;
+}
+
+/* Cluster title styles in click mode */
+body.cluster-click-mode-active .cluster-title {
+  transition: all 0.3s ease;
+  font-weight: normal;
+  text-shadow: none;
+}
+
+/* Selected cluster styles - high specificity to override hover */
+body.cluster-click-mode-active .cluster-rect[data-selected="true"] {
+  fill: var(--cluster-selected-bg, rgba(255, 152, 0, 0.25)) !important;
+  stroke: var(--cluster-selected-stroke, #ff9800) !important;
+  stroke-width: 4px !important;
+  stroke-dasharray: none !important;
+  /* Ensure selected state is very prominent and persistent */
+  filter: brightness(1.1) !important;
+  box-shadow: 0 0 8px rgba(255, 152, 0, 0.3) !important;
+}
+
+/* Ensure nodes in selected cluster are clickable */
+body.cluster-click-mode-active .cluster-rect[data-selected="true"] ~ * .node-clickable {
+  pointer-events: auto !important;
+  cursor: pointer !important;
+}
+
+/* Reset cluster styles when not selected */
+body.cluster-click-mode-active .cluster-rect[data-selected="false"] {
+  fill: var(--cluster-bg, rgba(0,0,0,0.02)) !important;
+  stroke: var(--cluster-stroke, #222) !important;
+  stroke-width: 2px !important;
+  stroke-dasharray: 6,4 !important;
+}
+
+/* Force reset when cluster-click-mode-active class is removed */
+body:not(.cluster-click-mode-active) .cluster-rect {
+  fill: var(--cluster-bg, rgba(0,0,0,0.02)) !important;
+  stroke: var(--cluster-stroke, #222) !important;
+  stroke-width: 2px !important;
+  stroke-dasharray: 6,4 !important;
+  filter: none !important;
+  box-shadow: none !important;
+}
+
+/* Ensure no selected styles when cluster-click-mode-active is removed */
+body:not(.cluster-click-mode-active) .cluster-rect[data-selected="true"] {
+  fill: var(--cluster-bg, rgba(0,0,0,0.02)) !important;
+  stroke: var(--cluster-stroke, #222) !important;
+  stroke-width: 2px !important;
+  stroke-dasharray: 6,4 !important;
+  filter: none !important;
+  box-shadow: none !important;
+}
+
+/* Ensure default styles are applied to all cluster rects */
+.cluster-rect {
+  fill: var(--cluster-bg, rgba(0,0,0,0.02));
+  stroke: var(--cluster-stroke, #222);
+  stroke-width: 2px;
+  stroke-dasharray: 6,4;
+}
+
+
+
+/* Theme-specific cluster title styles */
+body.theme-onyx .cluster-title-bg {
+  fill: rgba(30, 30, 30, 0.95) !important;
+  stroke: var(--cluster-hover-stroke, #00eaff) !important;
+}
+
+body.theme-onyx .cluster-title {
+  fill: var(--cluster-hover-title-color, #00eaff) !important;
+}
+
+body.theme-vintage .cluster-title-bg {
+  fill: rgba(245, 235, 224, 0.95) !important;
+  stroke: var(--cluster-hover-stroke, #7c4f20) !important;
+}
+
+body.theme-vintage .cluster-title {
+  fill: var(--cluster-hover-title-color, #7c4f20) !important;
+}
+
+body.theme-pastel .cluster-title-bg {
+  fill: rgba(255, 255, 255, 0.95) !important;
+  stroke: var(--cluster-hover-stroke, #b6b6f7) !important;
+}
+
+body.theme-pastel .cluster-title {
+  fill: var(--cluster-hover-title-color, #b6b6f7) !important;
+}
+
+body.theme-neon .cluster-title-bg {
+  fill: rgba(0, 0, 0, 0.95) !important;
+  stroke: var(--cluster-hover-stroke, #00ffe7) !important;
+  filter: drop-shadow(0 0 20px rgba(0, 255, 231, 0.5)) !important;
+}
+
+body.theme-neon .cluster-title {
+  fill: var(--cluster-hover-title-color, #00ffe7) !important;
+}
+
+
+
+/* Theme-specific cluster selected colors */
+body.theme-onyx {
+  --cluster-selected-bg: rgba(255, 64, 129, 0.25);
+  --cluster-selected-stroke: #ff4081;
+  --cluster-selected-title-color: #ff4081;
+}
+
+body.theme-vintage {
+  --cluster-selected-bg: rgba(156, 39, 176, 0.25);
+  --cluster-selected-stroke: #9c27b0;
+  --cluster-selected-title-color: #9c27b0;
+}
+
+body.theme-pastel {
+  --cluster-selected-bg: rgba(255, 87, 34, 0.25);
+  --cluster-selected-stroke: #ff5722;
+  --cluster-selected-title-color: #ff5722;
+}
+
+body.theme-neon {
+  --cluster-selected-bg: rgba(255, 193, 7, 0.25);
+  --cluster-selected-stroke: #ffc107;
+  --cluster-selected-title-color: #ffc107;
+}
+
+/* Cluster Tooltip Styles */
+#cluster-tooltip {
+  position: fixed;
+  z-index: 10000;
+  pointer-events: none;
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: bold;
+  white-space: nowrap;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+/* Theme-specific tooltip colors */
+body.theme-onyx #cluster-tooltip {
+  background: rgba(0, 0, 0, 0.9);
+  color: #00eaff;
+  border: 1px solid #00eaff;
+}
+
+body.theme-vintage #cluster-tooltip {
+  background: rgba(245, 235, 224, 0.95);
+  color: #7c4f20;
+  border: 1px solid #7c4f20;
+}
+
+body.theme-pastel #cluster-tooltip {
+  background: rgba(255, 255, 255, 0.95);
+  color: #b6b6f7;
+  border: 1px solid #b6b6f7;
+}
+
+body.theme-neon #cluster-tooltip {
+  background: rgba(0, 0, 0, 0.9);
+  color: #00ffe7;
+  border: 1px solid #00ffe7;
+  box-shadow: 0 2px 8px rgba(0, 255, 231, 0.3);
+}
+
+
+

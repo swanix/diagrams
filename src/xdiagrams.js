@@ -11,6 +11,28 @@ const zoom = d3.zoom()
       // Apply transform with better precision
       const transform = event.transform;
       svgGroup.attr("transform", `translate(${transform.x},${transform.y}) scale(${transform.k})`);
+      
+      // Check if we should activate cluster click mode
+      checkAndActivateClusterClickMode(transform.k);
+      
+      // Force deselect cluster if zooming out significantly (but not during cluster zoom transitions)
+      const threshold = window.$xDiagrams.clusterClickMode.threshold || 0.4;
+      const deselectionThreshold = window.$xDiagrams.clusterClickMode.deselectionThreshold || 0.25;
+      const isZoomingOutSignificantly = transform.k <= deselectionThreshold;
+      const hasSelectedCluster = window.$xDiagrams.clusterClickMode.selectedCluster;
+      
+      // Only deselect if we're zooming out significantly AND we have a selected cluster AND we're not in the middle of a cluster zoom transition
+      if (isZoomingOutSignificantly && hasSelectedCluster && !window.$xDiagrams.clusterClickMode.isZoomingToCluster) {
+        console.log('[ClusterClickMode] Significant zoom out detected - deselecting cluster', {
+          currentScale: transform.k,
+          deselectionThreshold: deselectionThreshold,
+          threshold: threshold
+        });
+        forceDeselectOnZoomOut();
+      }
+      
+      // Update tooltip position if one is activ
+      updateTooltipPositionDuringZoom();
     }
   });
 
@@ -192,6 +214,7 @@ function getLayoutConfiguration(diagramConfig = null) {
   // Define default values for layout options
   const defaultLayout = {
     clustersPerRow: 7,        // Default: 7 clusters per row
+    clustersTooltip: 'top',   // Default: tooltip position above cluster
     marginX: 50,              // Default: 50px left margin
     marginY: 50,              // Default: 50px top margin
     spacingX: 60,             // Default: 60px horizontal gap
@@ -226,6 +249,7 @@ function getLayoutConfiguration(diagramConfig = null) {
     
     return {
       clustersPerRow: processedClustersPerRow,
+      clustersTooltip: diagramConfig.layout.clustersTooltip || defaultLayout.clustersTooltip,
       marginX: diagramConfig.layout.marginX || defaultLayout.marginX,
       marginY: diagramConfig.layout.marginY || defaultLayout.marginY,
       spacingX: diagramConfig.layout.spacingX || defaultLayout.spacingX,
@@ -244,6 +268,7 @@ function getLayoutConfiguration(diagramConfig = null) {
     
     return {
       clustersPerRow: processedClustersPerRow,
+      clustersTooltip: options.layout.clustersTooltip || defaultLayout.clustersTooltip,
       marginX: options.layout.marginX || defaultLayout.marginX,
       marginY: options.layout.marginY || defaultLayout.marginY,
       spacingX: options.layout.spacingX || defaultLayout.spacingX,
@@ -258,6 +283,7 @@ function getLayoutConfiguration(diagramConfig = null) {
   // Return default layout with processed clustersPerRow
   return {
     clustersPerRow: [defaultLayout.clustersPerRow], // Convert to array for consistency
+    clustersTooltip: defaultLayout.clustersTooltip,
     marginX: defaultLayout.marginX,
     marginY: defaultLayout.marginY,
     spacingX: defaultLayout.spacingX,
@@ -1466,9 +1492,34 @@ function addClusterBackground(cluster, isFlat = false) {
     .style("stroke-width", 2)
     .style("stroke-dasharray", "6,4");
   
-  // Título del cluster - usar name para diagramas planos, id para jerárquicos
+  // Crear título del cluster con contenedor
+  createClusterTitle(cluster, minX, minY, isFlat);
+    
+  // Add data-root-id attribute to cluster group for cluster click mode
+  if (cluster.id) {
+    cluster.group.attr("data-root-id", cluster.id);
+  }
+}
+
+// Función auxiliar para crear el título del cluster con contenedor
+function createClusterTitle(cluster, minX, minY, isFlat = false) {
   const clusterTitle = isFlat ? (cluster.name || cluster.id) : cluster.id;
-  cluster.group.append("text")
+  
+  // Crear contenedor para el título con fondo
+  const titleGroup = cluster.group.append("g")
+    .attr("class", "cluster-title-container");
+  
+  // Agregar rectángulo de fondo con estilo por defecto
+  titleGroup.append("rect")
+    .attr("class", "cluster-title-bg")
+    .attr("rx", 6)
+    .attr("ry", 6)
+    .style("fill", "rgba(255, 255, 255, 0.9)")
+    .style("stroke", "var(--cluster-stroke, #222)")
+    .style("stroke-width", 1);
+  
+  // Agregar texto del título
+  titleGroup.append("text")
     .attr("class", "cluster-title")
     .attr("x", minX + 32)
     .attr("y", minY + 40)
@@ -1477,6 +1528,19 @@ function addClusterBackground(cluster, isFlat = false) {
     .style("font-weight", "bold")
     .style("fill", "var(--cluster-title-color, #222)")
     .text(clusterTitle);
+    
+  // Ajustar el fondo al tamaño del texto
+  const textElement = titleGroup.select('.cluster-title');
+  const textBounds = textElement.node().getBBox();
+  const padding = 8;
+  
+  titleGroup.select('.cluster-title-bg')
+    .attr("x", textBounds.x - padding)
+    .attr("y", textBounds.y - padding)
+    .attr("width", textBounds.width + (padding * 2))
+    .attr("height", textBounds.height + (padding * 2));
+    
+  return titleGroup;
 }
 
 // Función auxiliar para agregar fondo con altura uniforme
@@ -1505,17 +1569,13 @@ function addClusterBackgroundWithUniformHeight(cluster, uniformHeight, isFlat = 
     .style("stroke-width", 2)
     .style("stroke-dasharray", "6,4");
   
-  // Título del cluster - usar name para diagramas planos, id para jerárquicos
-  const clusterTitle = isFlat ? (cluster.name || cluster.id) : cluster.id;
-  cluster.group.append("text")
-    .attr("class", "cluster-title")
-    .attr("x", minX + 32)
-    .attr("y", minY + 40)
-    .attr("text-anchor", "start")
-    .style("font-size", "1.5em")
-    .style("font-weight", "bold")
-    .style("fill", "var(--cluster-title-color, #222)")
-    .text(clusterTitle);
+  // Crear título del cluster con contenedor
+  createClusterTitle(cluster, minX, minY, isFlat);
+    
+  // Add data-root-id attribute to cluster group for cluster click mode
+  if (cluster.id) {
+    cluster.group.attr("data-root-id", cluster.id);
+  }
 }
 
 // Draw simplified trees
@@ -2184,6 +2244,14 @@ function ensureZoomBehavior() {
     svg.call(zoom);
     svg.style('pointer-events', 'auto');
     
+    // Disable double-click zoom by preventing the default behavior
+    svg.on("dblclick.zoom", null);
+    svg.on("dblclick", function(event) {
+      event.preventDefault();
+      event.stopPropagation();
+      return false;
+    });
+    
     // Store reference to current zoom for external access
     window.$xDiagrams.currentZoom = zoom;
     
@@ -2728,6 +2796,14 @@ function setupClosePanelOnSvgClick() {
         !event.target.closest('.cluster') && 
         !event.target.closest('.link')) {
       closeSidePanel();
+      
+      // Also deselect cluster if cluster click mode is active and there's a selected cluster
+      if (window.$xDiagrams.clusterClickMode.active && window.$xDiagrams.clusterClickMode.selectedCluster) {
+        console.log('[ClusterClickMode] Deselecting cluster due to canvas click');
+        deselectCurrentCluster('canvas-click');
+      } else {
+        console.log('[ClusterClickMode] No cluster to deselect - mode active:', window.$xDiagrams.clusterClickMode.active, 'selected cluster:', !!window.$xDiagrams.clusterClickMode.selectedCluster);
+      }
     }
   }
 }
@@ -6980,3 +7056,1368 @@ function createSidePanelThumbnailHtml(nodeType) {
   // Fallback final: elemento img vacío (muy improbable que llegue aquí)
   return `<div class="side-panel-title-thumbnail" style="width: 24px; height: 24px; background: transparent;"></div>`;
 }
+
+// ============================================================================
+// CLUSTER CLICK MODE FUNCTIONALITY
+// ============================================================================
+
+// Global state for cluster click mode
+window.$xDiagrams.clusterClickMode = {
+  active: false,
+  threshold: 0.4, // Zoom level threshold to activate cluster click mode (higher value for earlier activation)
+  deselectionThreshold: 0.25, // Zoom level threshold to deselect cluster (lower value for later deselection)
+  clusters: [],
+  originalNodeClickHandlers: new Map(),
+  isMultiCluster: false, // Track if current diagram has multiple clusters
+  selectedCluster: null, // Track the currently selected cluster
+  isZoomingToCluster: false // Flag to prevent deselection during cluster zoom transitions
+};
+
+// Function to detect if current diagram has multiple clusters
+function detectMultiClusterDiagram() {
+  const clusterRects = d3.selectAll(".cluster-rect");
+  const clusterCount = clusterRects.size();
+  
+  // Consider it multi-cluster if there are more than 1 cluster rectangles
+  const isMultiCluster = clusterCount > 1;
+  
+  console.log('[ClusterClickMode] Detected cluster count:', clusterCount, 'isMultiCluster:', isMultiCluster);
+  
+  window.$xDiagrams.clusterClickMode.isMultiCluster = isMultiCluster;
+  return isMultiCluster;
+}
+
+// Function to check if zoom level should activate cluster click mode
+function checkAndActivateClusterClickMode(scale) {
+  // First, detect if this is a multi-cluster diagram
+  const isMultiCluster = detectMultiClusterDiagram();
+  
+  // Check if we have a selected cluster
+  const hasSelectedCluster = window.$xDiagrams.clusterClickMode.selectedCluster;
+  
+  // Determine if we should activate cluster click mode
+  // - Always activate for multi-cluster diagrams when zoomed out (scale <= threshold)
+  // - Keep active if there's a selected cluster (regardless of zoom level)
+  const shouldActivate = isMultiCluster && (scale <= window.$xDiagrams.clusterClickMode.threshold || hasSelectedCluster);
+  
+  if (shouldActivate && !window.$xDiagrams.clusterClickMode.active) {
+    console.log('[ClusterClickMode] Activating cluster click mode - scale:', scale, 'threshold:', window.$xDiagrams.clusterClickMode.threshold, 'hasSelectedCluster:', hasSelectedCluster);
+    activateClusterClickMode();
+  } else if (!shouldActivate && window.$xDiagrams.clusterClickMode.active) {
+    console.log('[ClusterClickMode] Deactivating cluster click mode - scale:', scale, 'threshold:', window.$xDiagrams.clusterClickMode.threshold, 'hasSelectedCluster:', hasSelectedCluster);
+    
+    // Only deselect cluster if we're actually zooming out significantly
+    const deselectionThreshold = window.$xDiagrams.clusterClickMode.deselectionThreshold || 0.25;
+    const isZoomingOutSignificantly = scale <= deselectionThreshold;
+    
+    if (isZoomingOutSignificantly && hasSelectedCluster) {
+      console.log('[ClusterClickMode] Deselecting cluster due to significant zoom out - cluster:', hasSelectedCluster.id, 'scale:', scale, 'deselectionThreshold:', deselectionThreshold);
+      deselectCurrentCluster('zoom-out');
+      
+      // Verify deselection was successful
+      if (window.$xDiagrams.clusterClickMode.selectedCluster) {
+        console.warn('[ClusterClickMode] Warning: Cluster was not properly deselected');
+      } else {
+        console.log('[ClusterClickMode] Cluster deselection successful');
+      }
+    } else if (hasSelectedCluster) {
+      console.log('[ClusterClickMode] Keeping cluster selected during zoom in - cluster:', hasSelectedCluster.id, 'scale:', scale, 'deselectionThreshold:', deselectionThreshold);
+    } else {
+      console.log('[ClusterClickMode] No cluster to deselect');
+    }
+    
+    deactivateClusterClickMode();
+  }
+  
+  // Also check if we need to deselect cluster when zooming out significantly (even if cluster click mode is not active)
+  const deselectionThreshold = window.$xDiagrams.clusterClickMode.deselectionThreshold || 0.25;
+  if (scale <= deselectionThreshold && hasSelectedCluster) {
+    console.log('[ClusterClickMode] Significant zoom out detected with selected cluster - deselecting', 'scale:', scale, 'deselectionThreshold:', deselectionThreshold);
+    deselectCurrentCluster('zoom-out');
+  }
+  
+  // Always setup tooltips for multi-cluster diagrams regardless of zoom level
+  if (isMultiCluster && !window.$xDiagrams.clusterTooltip.initialized) {
+    // Only initialize tooltips if not already initialized
+    setupClusterTooltips();
+  }
+}
+
+// Function to activate cluster click mode
+function activateClusterClickMode() {
+  console.log('[ClusterClickMode] Activating cluster click mode');
+  
+  // Preserve selected cluster if it exists (don't reset on reactivation)
+  const currentSelectedCluster = window.$xDiagrams.clusterClickMode.selectedCluster;
+  if (currentSelectedCluster) {
+    console.log('[ClusterClickMode] Preserving selected cluster during reactivation:', currentSelectedCluster.id);
+  } else {
+    console.log('[ClusterClickMode] No selected cluster to preserve');
+  }
+  
+  window.$xDiagrams.clusterClickMode.active = true;
+  
+  // Find all cluster rectangles and make them clickable
+  const clusterRects = d3.selectAll(".cluster-rect");
+  const clusterTitles = d3.selectAll(".cluster-title");
+  
+  if (!clusterRects.empty()) {
+    // Store original clusters data
+    window.$xDiagrams.clusterClickMode.clusters = [];
+    
+    clusterRects.each(function(d, i) {
+      const rect = d3.select(this);
+      const clusterGroup = rect.node().parentNode;
+      const clusterId = clusterGroup.getAttribute('data-root-id') || 
+                       clusterGroup.querySelector('.cluster-title')?.textContent || 
+                       `cluster-${i}`;
+      
+      // Store cluster information
+      const clusterInfo = {
+        id: clusterId,
+        rect: rect,
+        group: d3.select(clusterGroup),
+        bounds: null // We'll get bounds dynamically when needed
+      };
+      window.$xDiagrams.clusterClickMode.clusters.push(clusterInfo);
+      
+      // Disable individual node clicks
+      const nodes = clusterGroup.querySelectorAll('.node-clickable');
+      console.log(`[ClusterClickMode] Disabling ${nodes.length} nodes in cluster:`, clusterInfo.id);
+      nodes.forEach(node => {
+        const nodeId = node.getAttribute('data-id');
+        if (nodeId && !window.$xDiagrams.clusterClickMode.originalNodeClickHandlers.has(nodeId)) {
+          // Store original click handler
+          const originalClick = node.onclick;
+          window.$xDiagrams.clusterClickMode.originalNodeClickHandlers.set(nodeId, originalClick);
+          // Disable click
+          node.style.pointerEvents = 'none';
+        }
+      });
+      
+      // Make cluster rect clickable (respect existing selection state)
+      const isSelected = currentSelectedCluster && currentSelectedCluster.id === clusterInfo.id;
+      rect
+        .attr("data-selected", isSelected ? "true" : "false")
+        .style("cursor", "pointer")
+        .style("pointer-events", "all")
+        .on("click", function(event) {
+          event.stopPropagation();
+          const currentlySelectedCluster = window.$xDiagrams.clusterClickMode.selectedCluster;
+          const isCurrentlySelected = currentlySelectedCluster && currentlySelectedCluster.id === clusterInfo.id;
+      
+          if (isCurrentlySelected) {
+              return; // Ya está seleccionado, no hacer nada.
+          }
+      
+          // Si hay otro clúster seleccionado, deselecciónalo.
+          if (currentlySelectedCluster) {
+              deselectCurrentCluster('new_selection');
+          }
+      
+          // Establece el nuevo clúster como seleccionado y haz zoom.
+          window.$xDiagrams.clusterClickMode.selectedCluster = clusterInfo;
+          zoomToCluster(clusterInfo);
+      })
+      .on("mouseenter", isSelected ? null : function() {
+          // Add hover effect
+          rect
+              .style("fill", "var(--cluster-hover-bg, rgba(25, 118, 210, 0.15))")
+              .style("stroke", "var(--cluster-hover-stroke, #1976d2)")
+              .style("stroke-width", "3")
+              .style("stroke-dasharray", "none");
+          
+          // Show cluster hover tooltip (only if not selected)
+          if (!window.$xDiagrams.clusterClickMode.selectedCluster || 
+              window.$xDiagrams.clusterClickMode.selectedCluster.id !== clusterInfo.id) {
+              showClusterTooltip(clusterInfo);
+          }
+      })
+      .on("mouseleave", function() {
+          // **AQUÍ ESTÁ LA CORRECCIÓN IMPORTANTE**
+          // Solo elimina los estilos si este clúster NO está seleccionado.
+          const selectedCluster = window.$xDiagrams.clusterClickMode.selectedCluster;
+          if (selectedCluster && selectedCluster.id === clusterInfo.id) {
+              return; // Es el seleccionado, no quitar el resaltado.
+          }
+      
+          // Quitar el efecto hover para clústeres no seleccionados.
+          rect
+              .style("fill", null)
+              .style("stroke", null)
+              .style("stroke-width", null)
+              .style("stroke-dasharray", null);
+          
+          // Ocultar el tooltip del hover.
+          hideClusterTooltip();
+      });
+    });
+    
+    // Add CSS class to body for styling
+    document.body.classList.add('cluster-click-mode-active');
+    
+    if (currentSelectedCluster) {
+      console.log('[ClusterClickMode] Cluster click mode activated with selected cluster:', currentSelectedCluster.id);
+    } else {
+      console.log('[ClusterClickMode] All clusters are now in normal state, ready for clicks');
+    }
+  }
+}
+
+// Function to deactivate cluster click mode
+function deactivateClusterClickMode() {
+  console.log('[ClusterClickMode] Deactivating cluster click mode');
+  window.$xDiagrams.clusterClickMode.active = false;
+  
+  // Restore original node click handlers
+  window.$xDiagrams.clusterClickMode.originalNodeClickHandlers.forEach((handler, nodeId) => {
+    const node = document.querySelector(`[data-id="${nodeId}"]`);
+    if (node) {
+      node.style.pointerEvents = 'auto';
+      if (handler) {
+        node.onclick = handler;
+      }
+    }
+  });
+  window.$xDiagrams.clusterClickMode.originalNodeClickHandlers.clear();
+  
+  // Note: Selected cluster state is now handled by deselectCurrentCluster() before this function is called
+  console.log('[ClusterClickMode] Deactivating cluster click mode - selected cluster already deselected');
+  
+  // Reset all cluster rectangles to default state (but preserve selected cluster styling)
+  const clusterRects = d3.selectAll(".cluster-rect");
+  const selectedCluster = window.$xDiagrams.clusterClickMode.selectedCluster;
+  
+  console.log('[ClusterClickMode] Resetting', clusterRects.size(), 'cluster rectangles to default state');
+  
+  clusterRects.each(function() {
+    const rect = d3.select(this);
+    const clusterGroup = rect.node().parentNode;
+    const clusterId = clusterGroup.getAttribute('data-root-id') || 
+                     clusterGroup.querySelector('.cluster-title')?.textContent || 
+                     'unknown';
+    
+    // Check if this is the selected cluster that should be preserved
+    const isSelectedCluster = selectedCluster && selectedCluster.id === clusterId;
+    
+    if (isSelectedCluster) {
+      console.log('[ClusterClickMode] Preserving visual state for selected cluster:', clusterId);
+      // Keep the selected styling for the selected cluster
+      rect
+        .attr("data-selected", "true")
+        .style("cursor", "default")
+        .style("pointer-events", "auto")
+        .on("click", null);
+      // Don't reset the visual styles (fill, stroke, etc.) for selected cluster
+    } else {
+      // Reset to default state for non-selected clusters
+      rect
+        .attr("data-selected", "false")
+        .style("cursor", "default")
+        .style("pointer-events", "auto")
+        .on("click", null)
+        .style("fill", null)
+        .style("stroke", null)
+        .style("stroke-width", null)
+        .style("stroke-dasharray", null)
+        .style("filter", null)
+        .style("box-shadow", null);
+    }
+  });
+  
+  // Re-setup tooltips after deactivating cluster click mode
+  window.$xDiagrams.clusterTooltip.initialized = false;
+  setupClusterTooltips();
+  
+  // Hide any visible hover title
+  hideClusterHoverTitle();
+  
+  // Remove CSS class
+  document.body.classList.remove('cluster-click-mode-active');
+  
+  // Clear clusters data but preserve selected cluster state if it should be preserved
+  window.$xDiagrams.clusterClickMode.clusters = [];
+  
+  // Only reset selected cluster if it was already deselected by deselectCurrentCluster()
+  // This prevents interference with cluster preservation during zoom in
+  if (!window.$xDiagrams.clusterClickMode.selectedCluster) {
+    console.log('[ClusterClickMode] All clusters reset to normal state');
+  } else {
+    console.log('[ClusterClickMode] Preserving selected cluster during deactivation:', window.$xDiagrams.clusterClickMode.selectedCluster.id);
+  }
+  
+  // Force a small delay to ensure CSS is applied, but preserve selected cluster
+  setTimeout(() => {
+    const remainingSelected = d3.selectAll(".cluster-rect[data-selected='true']");
+    if (!remainingSelected.empty()) {
+      const selectedCluster = window.$xDiagrams.clusterClickMode.selectedCluster;
+      
+      remainingSelected.each(function() {
+        const rect = d3.select(this);
+        const clusterGroup = rect.node().parentNode;
+        const clusterId = clusterGroup.getAttribute('data-root-id') || 
+                         clusterGroup.querySelector('.cluster-title')?.textContent || 
+                         'unknown';
+        
+        // Only reset if this is not the selected cluster that should be preserved
+        const isSelectedCluster = selectedCluster && selectedCluster.id === clusterId;
+        
+        if (!isSelectedCluster) {
+          console.warn('[ClusterClickMode] Found unexpected selected cluster, forcing reset:', clusterId);
+          rect
+            .attr("data-selected", "false")
+            .style("fill", null)
+            .style("stroke", null)
+            .style("stroke-width", null)
+            .style("stroke-dasharray", null)
+            .style("filter", null)
+            .style("box-shadow", null);
+        } else {
+          console.log('[ClusterClickMode] Preserving expected selected cluster:', clusterId);
+        }
+      });
+    }
+  }, 100);
+}
+
+// Function to zoom to a specific cluster
+function zoomToCluster(clusterInfo) {
+  console.log('[ClusterClickMode] Zooming to cluster:', clusterInfo.id);
+  
+  // Set flag to prevent deselection during zoom transition
+  window.$xDiagrams.clusterClickMode.isZoomingToCluster = true;
+  
+  // Hide any visible cluster tooltip
+  hideClusterTooltip();
+  
+  // Close side panel if it's open to avoid interference with cluster view
+  const sidePanel = document.getElementById('side-panel');
+  if (sidePanel && sidePanel.classList.contains('open')) {
+    console.log('[ClusterClickMode] Closing side panel before zooming to cluster');
+    closeSidePanel();
+  }
+  
+  // Apply selected cluster styles immediately for instant visual feedback
+  disableHoverOnSelectedCluster(clusterInfo);
+  
+  // Apply highlight immediately to ensure visual feedback
+  highlightSelectedCluster(clusterInfo);
+  
+  const svg = d3.select("#main-diagram-svg");
+  if (svg.empty()) return;
+  
+  // Get the cluster group element to understand its transform
+  const clusterGroup = clusterInfo.group.node();
+  if (!clusterGroup) {
+    console.error('[ClusterClickMode] Cluster group not found');
+    return;
+  }
+  
+  // Get the cluster rectangle element
+  const clusterRect = clusterInfo.rect.node();
+  if (!clusterRect) {
+    console.error('[ClusterClickMode] Cluster rect not found');
+    return;
+  }
+  
+  // Get the bounds of the cluster rectangle relative to its group
+  const relativeBounds = clusterRect.getBBox();
+  console.log('[ClusterClickMode] Relative cluster bounds:', relativeBounds);
+  
+  // Get the transform of the cluster group
+  const groupTransform = clusterGroup.getAttribute('transform');
+  console.log('[ClusterClickMode] Group transform:', groupTransform);
+  
+  // Parse the group transform to get the translation
+  let groupTranslateX = 0;
+  let groupTranslateY = 0;
+  if (groupTransform) {
+    const match = /translate\(([-\d.]+), ?([-\d.]+)\)/.exec(groupTransform);
+    if (match) {
+      groupTranslateX = parseFloat(match[1]) || 0;
+      groupTranslateY = parseFloat(match[2]) || 0;
+    }
+  }
+  
+  console.log('[ClusterClickMode] Group translation:', groupTranslateX, groupTranslateY);
+  
+  // Calculate absolute position of the cluster
+  const absoluteClusterX = groupTranslateX + relativeBounds.x;
+  const absoluteClusterY = groupTranslateY + relativeBounds.y;
+  const absoluteClusterWidth = relativeBounds.width;
+  const absoluteClusterHeight = relativeBounds.height;
+  
+  console.log('[ClusterClickMode] Absolute cluster position:', {
+    x: absoluteClusterX,
+    y: absoluteClusterY,
+    width: absoluteClusterWidth,
+    height: absoluteClusterHeight
+  });
+  
+  const svgElement = document.getElementById('main-diagram-svg');
+  const svgWidth = svgElement ? svgElement.clientWidth || svgElement.offsetWidth : window.innerWidth;
+  const svgHeight = svgElement ? svgElement.clientHeight || svgElement.offsetHeight : window.innerHeight;
+  
+  // Get current transform to understand the current zoom state
+  const currentTransform = d3.zoomTransform(svg.node());
+  console.log('[ClusterClickMode] Current transform:', currentTransform);
+  
+  // Calculate zoom to fit cluster with some padding
+  const padding = 150; // Increased padding for better visibility
+  const scaleX = (svgWidth - padding * 2) / absoluteClusterWidth;
+  const scaleY = (svgHeight - padding * 2) / absoluteClusterHeight;
+  const scale = Math.min(scaleX, scaleY, 1.5); // Increased max zoom to 150%
+  
+  console.log('[ClusterClickMode] Calculated scale:', scale, 'scaleX:', scaleX, 'scaleY:', scaleY);
+  
+  // Calculate center of cluster in absolute coordinates
+  const clusterCenterX = absoluteClusterX + absoluteClusterWidth / 2;
+  const clusterCenterY = absoluteClusterY + absoluteClusterHeight / 2;
+  
+  console.log('[ClusterClickMode] Cluster center:', clusterCenterX, clusterCenterY);
+  
+  // Calculate translation to center cluster in viewport
+  const translateX = svgWidth / 2 - clusterCenterX * scale;
+  const translateY = svgHeight / 2 - clusterCenterY * scale;
+  
+  console.log('[ClusterClickMode] Final transform:', { translateX, translateY, scale });
+  
+  // Apply smooth transition
+  svg.transition()
+    .duration(1000) // Increased duration for smoother animation
+    .ease(d3.easeCubicOut)
+    .call(zoom.transform, d3.zoomIdentity
+      .translate(translateX, translateY)
+      .scale(scale)
+    )
+    .on("end", function() {
+      // Zoom completed - cluster is already styled as selected
+      console.log('[ClusterClickMode] Zoom completed for cluster:', clusterInfo.id);
+      
+      // Reset the zooming flag after transition completes
+      window.$xDiagrams.clusterClickMode.isZoomingToCluster = false;
+    });
+  
+  // Trigger hook
+  triggerHook('onClusterZoom', {
+    clusterId: clusterInfo.id,
+    clusterName: clusterInfo.id,
+    scale: scale
+  });
+}
+
+
+
+// Function to highlight the selected cluster with a temporary effect
+function highlightSelectedCluster(clusterInfo) {
+  console.log('[ClusterClickMode] Highlighting selected cluster:', clusterInfo.id);
+  
+  const rect = clusterInfo.rect;
+  if (!rect || !rect.node()) {
+    console.error('[ClusterClickMode] Cluster rect not found for highlighting');
+    return;
+  }
+  
+  // Apply selected cluster highlight effect with orange color
+  rect
+    .style("fill", "var(--cluster-selected-bg, rgba(255, 152, 0, 0.25))")
+    .style("stroke", "var(--cluster-selected-stroke, #ff9800)")
+    .style("stroke-width", "3")
+    .style("stroke-dasharray", "none")
+    .style("transition", "all 0.3s ease");
+  
+  // Mark this cluster as having persistent highlight
+  clusterInfo.hasPersistentHighlight = true;
+}
+
+// Function to remove highlight from cluster
+function removeClusterHighlight(clusterInfo) {
+  console.log('[ClusterClickMode] Removing highlight from cluster:', clusterInfo.id);
+  
+  const rect = clusterInfo.rect;
+  if (!rect || !rect.node()) {
+    console.error('[ClusterClickMode] Cluster rect not found for removing highlight');
+    return;
+  }
+  
+  // Fade back to original cluster style (only border, background is already original)
+  rect
+    .style("stroke", "var(--cluster-stroke, #222)") // Default cluster border
+    .style("stroke-width", "2") // Default border width
+    .style("stroke-dasharray", "6,4") // Default dashed border
+    .style("transition", "all 0.8s ease"); // Smooth fade back
+  
+  clusterInfo.hasPersistentHighlight = false;
+}
+
+// Function to disable hover on selected cluster and enable it on others
+function disableHoverOnSelectedCluster(selectedClusterInfo) {
+  console.log('[ClusterClickMode] Disabling hover on selected cluster:', selectedClusterInfo.id);
+  console.log('[ClusterClickMode] Selected state will persist until zoom out');
+  
+  // If there was a previously selected cluster, restore it to default state
+  const previousSelectedCluster = window.$xDiagrams.clusterClickMode.selectedCluster;
+  if (previousSelectedCluster && previousSelectedCluster.id !== selectedClusterInfo.id) {
+    console.log('[ClusterClickMode] Restoring previous cluster to default state:', previousSelectedCluster.id);
+    const previousRect = previousSelectedCluster.rect;
+    if (previousRect && previousRect.node()) {
+      previousRect
+        .attr("data-selected", "false")
+        .style("cursor", "pointer")
+        .style("pointer-events", "all")
+        .style("fill", null) // Remove inline styles to let CSS take over
+        .style("stroke", null)
+        .style("stroke-width", null)
+        .style("stroke-dasharray", null)
+        .style("transition", "all 0.1s ease");
+      
+      // Re-enable hover and click functionality on the previous cluster
+      previousRect
+        .on("click", function(event) {
+          event.stopPropagation();
+          zoomToCluster(previousSelectedCluster);
+        })
+        .on("mouseenter", function() {
+          // Add hover effect
+          previousRect
+            .style("fill", "var(--cluster-hover-bg, rgba(25, 118, 210, 0.15))")
+            .style("stroke", "var(--cluster-hover-stroke, #1976d2)")
+            .style("stroke-width", "3")
+            .style("stroke-dasharray", "none");
+          
+          // Show large hover title above the cluster
+          showClusterHoverTitle(previousSelectedCluster);
+        })
+        .on("mouseleave", function() {
+          // Remove hover effect
+          previousRect
+            .style("fill", null)
+            .style("stroke", null)
+            .style("stroke-width", null)
+            .style("stroke-dasharray", null);
+          
+          // Hide hover title
+          hideClusterHoverTitle();
+        });
+    }
+    
+    // Disable node interactions in the previous cluster
+    const previousClusterGroup = previousSelectedCluster.group.node();
+    if (previousClusterGroup) {
+      const nodes = previousClusterGroup.querySelectorAll('.node-clickable');
+      console.log(`[ClusterClickMode] Disabling ${nodes.length} nodes in previous cluster:`, previousSelectedCluster.id);
+      nodes.forEach(node => {
+        const nodeId = node.getAttribute('data-id');
+        if (nodeId) {
+          node.style.pointerEvents = 'none';
+          node.onclick = null;
+        }
+      });
+    }
+  }
+  
+  // Note: We don't remove highlight here anymore - it persists until zoom out
+  // removeClusterHighlight(selectedClusterInfo);
+  
+  // Apply selected cluster styles but keep click functionality
+  const selectedRect = selectedClusterInfo.rect;
+  if (selectedRect && selectedRect.node()) {
+    selectedRect
+      .attr("data-selected", "true")
+      .style("cursor", "pointer")
+      .style("pointer-events", "all")
+      .style("transition", "all 0.1s ease")
+      .on("click", function(event) {
+        event.stopPropagation();
+        // Check if this cluster is already selected at the time of click
+        const currentlySelectedCluster = window.$xDiagrams.clusterClickMode.selectedCluster;
+        const isCurrentlySelected = currentlySelectedCluster && currentlySelectedCluster.id === selectedClusterInfo.id;
+        
+        if (isCurrentlySelected) {
+          console.log('[ClusterClickMode] Cluster already selected, keeping selection:', selectedClusterInfo.id);
+          return;
+        }
+        // Otherwise, select this cluster
+        zoomToCluster(selectedClusterInfo);
+      })
+      .on("mouseenter", null)
+      .on("mouseleave", null);
+  }
+  
+  // Re-enable node interactions in the selected cluster
+  const selectedClusterGroup = selectedClusterInfo.group.node();
+  if (selectedClusterGroup) {
+    const nodes = selectedClusterGroup.querySelectorAll('.node-clickable');
+    console.log(`[ClusterClickMode] Enabling ${nodes.length} nodes in selected cluster:`, selectedClusterInfo.id);
+    nodes.forEach(node => {
+      const nodeId = node.getAttribute('data-id');
+      if (nodeId) {
+        // Always enable pointer events for nodes in selected cluster
+        node.style.pointerEvents = 'auto';
+        
+        // Restore original click handler if available
+        if (window.$xDiagrams.clusterClickMode.originalNodeClickHandlers.has(nodeId)) {
+          const originalClick = window.$xDiagrams.clusterClickMode.originalNodeClickHandlers.get(nodeId);
+          if (originalClick) {
+            node.onclick = originalClick;
+          }
+        } else {
+          // If no original handler was stored, create a default one that opens side panel
+          const nodeData = node.getAttribute('data-node-data');
+          if (nodeData) {
+            try {
+              const parsedData = JSON.parse(nodeData);
+              node.onclick = function(event) {
+                event.stopPropagation();
+                openSidePanel(parsedData);
+              };
+            } catch (e) {
+              console.warn('Could not parse node data for side panel:', e);
+            }
+          }
+        }
+      }
+    });
+  }
+  
+  // Enable hover and click on all other clusters
+  window.$xDiagrams.clusterClickMode.clusters.forEach(clusterInfo => {
+    if (clusterInfo.id !== selectedClusterInfo.id) {
+      const rect = clusterInfo.rect;
+      if (rect && rect.node()) {
+        // Re-enable hover and click functionality
+        rect
+          .style("cursor", "pointer")
+          .style("pointer-events", "all")
+          .on("click", function(event) {
+            event.stopPropagation();
+            zoomToCluster(clusterInfo);
+          })
+          .on("mouseenter", function() {
+            // Add hover effect
+            rect
+              .style("fill", "var(--cluster-hover-bg, rgba(25, 118, 210, 0.15))")
+              .style("stroke", "var(--cluster-hover-stroke, #1976d2)")
+              .style("stroke-width", "3")
+              .style("stroke-dasharray", "none");
+            
+            // Show large hover title above the cluster
+            showClusterHoverTitle(clusterInfo);
+          })
+          .on("mouseleave", function() {
+            // Remove hover effect
+            rect
+              .style("fill", "var(--cluster-bg, rgba(0,0,0,0.02))")
+              .style("stroke", "var(--cluster-stroke, #222)")
+              .style("stroke-width", "2")
+              .style("stroke-dasharray", "6,4");
+            
+            // Hide hover title
+            hideClusterHoverTitle();
+          });
+      }
+    }
+  });
+  
+  // Store the selected cluster info for reference
+  window.$xDiagrams.clusterClickMode.selectedCluster = selectedClusterInfo;
+}
+
+// Function to deselect the currently selected cluster
+function deselectCurrentCluster(reason = 'manual') {
+  console.log('[ClusterClickMode] Deselecting current cluster - reason:', reason);
+  
+  // Remove any floating hover label
+  const floatingLabel = d3.select('#floating-cluster-label');
+  if (!floatingLabel.empty()) {
+    floatingLabel.remove();
+  }
+  
+  if (window.$xDiagrams.clusterClickMode.selectedCluster) {
+    // Store reference before clearing
+    const clusterToDeselect = window.$xDiagrams.clusterClickMode.selectedCluster;
+    const selectedRect = clusterToDeselect.rect;
+    
+    console.log('[ClusterClickMode] Processing deselection for cluster:', clusterToDeselect.id, 'rect exists:', !!selectedRect);
+    
+    if (selectedRect && selectedRect.node()) {
+      // Reset visual state
+      selectedRect
+        .attr("data-selected", "false")
+        .style("fill", null)
+        .style("stroke", null)
+        .style("stroke-width", null)
+        .style("stroke-dasharray", null)
+        .style("filter", null)
+        .style("box-shadow", null)
+        .style("transition", "all 0.1s ease");
+      
+      // Re-enable hover and click functionality
+      selectedRect
+        .style("cursor", "pointer")
+        .style("pointer-events", "all")
+        .on("click", function(event) {
+          event.stopPropagation();
+          zoomToCluster(clusterToDeselect);
+        })
+        .on("mouseenter", function() {
+          // Add hover effect
+          selectedRect
+            .style("fill", "var(--cluster-hover-bg, rgba(25, 118, 210, 0.15))")
+            .style("stroke", "var(--cluster-hover-stroke, #1976d2)")
+            .style("stroke-width", "3")
+            .style("stroke-dasharray", "none");
+          
+          // Create floating hover label positioned over the cluster
+          const titleContainer = clusterToDeselect.group.select('.cluster-title-container');
+          
+          if (titleContainer.node()) {
+            // Get current zoom level for dynamic scaling
+            const svg = d3.select("#main-diagram-svg");
+            const currentTransform = d3.zoomTransform(svg.node());
+            const zoomFactor = Math.max(0.1, Math.min(2.0, 1 / currentTransform.k));
+            
+            // Get cluster bounds and transform in real-time
+            const clusterGroup = clusterToDeselect.group.node();
+            const clusterBounds = clusterGroup.getBBox();
+            
+            // Get the current transform of the cluster group
+            const groupTransform = clusterGroup.getAttribute('transform');
+            let groupTranslateX = 0;
+            let groupTranslateY = 0;
+            
+            if (groupTransform) {
+              const match = /translate\(([-\d.]+), ?([-\d.]+)\)/.exec(groupTransform);
+              if (match) {
+                groupTranslateX = parseFloat(match[1]) || 0;
+                groupTranslateY = parseFloat(match[2]) || 0;
+              }
+            }
+            
+            // Calculate absolute position of cluster center
+            const absoluteClusterX = groupTranslateX + clusterBounds.x;
+            const absoluteClusterY = groupTranslateY + clusterBounds.y;
+            const clusterCenterX = absoluteClusterX + clusterBounds.width / 2;
+            const clusterCenterY = absoluteClusterY + clusterBounds.height / 2;
+            
+            // Calculate scale factor based on zoom
+            const scaleFactor = Math.max(1.5, Math.min(3.0, 2.0 * zoomFactor));
+            
+            // Create or update floating label
+            let floatingLabel = d3.select('#floating-cluster-label');
+            if (floatingLabel.empty()) {
+              floatingLabel = d3.select('#main-diagram-svg')
+                .append('g')
+                .attr('id', 'floating-cluster-label')
+                .style('pointer-events', 'none')
+                .style('z-index', '1000');
+            }
+            
+            // Clear previous content
+            floatingLabel.selectAll('*').remove();
+            
+            // Create background rectangle
+            const labelBg = floatingLabel.append('rect')
+              .attr('class', 'floating-label-bg')
+              .style('fill', 'rgba(255, 255, 255, 0.95)')
+              .style('stroke', 'var(--cluster-hover-stroke, #1976d2)')
+              .style('stroke-width', '2')
+              .style('rx', '8')
+              .style('ry', '8')
+              .style('filter', 'drop-shadow(0 2px 4px rgba(0,0,0,0.2))');
+            
+            // Create text element
+            const labelText = floatingLabel.append('text')
+              .attr('class', 'floating-label-text')
+              .text(clusterToDeselect.id)
+              .style('font-size', `${14 * scaleFactor}px`)
+              .style('font-weight', 'bold')
+              .style('fill', 'var(--cluster-hover-stroke, #1976d2)')
+              .style('text-anchor', 'middle')
+              .style('dominant-baseline', 'middle');
+            
+            // Get text bounds and position elements
+            const textBounds = labelText.node().getBBox();
+            const padding = 12 * scaleFactor;
+            
+            // Position background
+            labelBg
+              .attr('x', clusterCenterX - textBounds.width / 2 - padding)
+              .attr('y', clusterCenterY - textBounds.height / 2 - padding)
+              .attr('width', textBounds.width + padding * 2)
+              .attr('height', textBounds.height + padding * 2);
+            
+            // Position text
+            labelText
+              .attr('x', clusterCenterX)
+              .attr('y', clusterCenterY);
+            
+            // Add transition
+            floatingLabel
+              .style('opacity', '0')
+              .transition()
+              .duration(200)
+              .style('opacity', '1');
+          }
+        })
+        .on("mouseleave", function() {
+          // Remove hover effect
+          selectedRect
+            .style("fill", null)
+            .style("stroke", null)
+            .style("stroke-width", null)
+            .style("stroke-dasharray", null);
+          
+          // Hide cluster hover tooltip
+          hideClusterTooltip();
+        });
+      
+      // Disable node interactions in the deselected cluster
+      const selectedClusterGroup = clusterToDeselect.group.node();
+      if (selectedClusterGroup) {
+        const nodes = selectedClusterGroup.querySelectorAll('.node-clickable');
+        console.log(`[ClusterClickMode] Disabling ${nodes.length} nodes in deselected cluster:`, clusterToDeselect.id);
+        nodes.forEach(node => {
+          const nodeId = node.getAttribute('data-id');
+          if (nodeId) {
+            node.style.pointerEvents = 'none';
+            node.onclick = null;
+          }
+        });
+      }
+      
+      console.log('[ClusterClickMode] Deselected cluster:', clusterToDeselect.id);
+    } else {
+      console.warn('[ClusterClickMode] Warning: Selected rect or node not found for cluster:', clusterToDeselect.id);
+    }
+  } else {
+    console.log('[ClusterClickMode] No cluster to deselect');
+  }
+  
+  // Clear the selected cluster reference
+  window.$xDiagrams.clusterClickMode.selectedCluster = null;
+  console.log('[ClusterClickMode] Deselection process completed');
+  
+  // Re-initialize tooltips to ensure they work after deselection
+  if (detectMultiClusterDiagram()) {
+    console.log('[ClusterClickMode] Re-initializing tooltips after deselection');
+    forceReinitializeTooltips();
+    
+    // Check if tooltips should be active now that cluster is deselected
+    if (shouldShowTooltips()) {
+      console.log('[ClusterClickMode] Tooltips are now active after deselection');
+    } else {
+      console.log('[ClusterClickMode] Tooltips remain inactive due to zoom level');
+    }
+  }
+}
+
+// Function to reset selected cluster state (only called when completely resetting)
+function resetSelectedClusterState() {
+  console.log('[ClusterClickMode] Completely resetting selected cluster state');
+  
+  if (window.$xDiagrams.clusterClickMode.selectedCluster) {
+    const selectedRect = window.$xDiagrams.clusterClickMode.selectedCluster.rect;
+    if (selectedRect && selectedRect.node()) {
+      selectedRect
+        .attr("data-selected", "false")
+        .style("fill", null) // Remove inline styles to let CSS take over
+        .style("stroke", null)
+        .style("stroke-width", null)
+        .style("stroke-dasharray", null)
+        .style("transition", "all 0.1s ease");
+      
+      console.log('[ClusterClickMode] Reset cluster:', window.$xDiagrams.clusterClickMode.selectedCluster.id);
+    }
+  }
+  
+  // Clear the selected cluster reference
+  window.$xDiagrams.clusterClickMode.selectedCluster = null;
+  
+  // Re-initialize tooltips to ensure they work after reset
+  if (detectMultiClusterDiagram()) {
+    console.log('[ClusterClickMode] Re-initializing tooltips after reset');
+    forceReinitializeTooltips();
+  }
+}
+
+// CLUSTER TOOLTIP SYSTEM
+// ============================================================================
+
+// Global tooltip state
+window.$xDiagrams.clusterTooltip = {
+  active: false,
+  currentCluster: null,
+  element: null,
+  initialized: false,
+  position: 'top', // Default position
+  lastVisibilityState: null // Track last visibility state to avoid spam logging
+};
+
+// Tooltip position configuration
+window.$xDiagrams.tooltipPositions = {
+  // Centered positions
+  'top': { x: 'center', y: 'above', offset: { x: 0, y: -10 } },
+  'bottom': { x: 'center', y: 'below', offset: { x: 0, y: 10 } },
+  'left': { x: 'left', y: 'center', offset: { x: -10, y: 0 } },
+  'right': { x: 'right', y: 'center', offset: { x: 10, y: 0 } },
+  
+  // Corner positions
+  'top-corner-left': { x: 'left', y: 'above', offset: { x: -10, y: -10 } },
+  'top-corner-right': { x: 'right', y: 'above', offset: { x: 10, y: -10 } },
+  'bottom-corner-left': { x: 'left', y: 'below', offset: { x: -10, y: 10 } },
+  'bottom-corner-right': { x: 'right', y: 'below', offset: { x: 10, y: 10 } }
+};
+
+// Function to check if tooltips should be active based on zoom level and cluster state
+function shouldShowTooltips() {
+  // Get current zoom level
+  const svg = d3.select("#main-diagram-svg");
+  if (svg.empty()) return false;
+  
+  const currentTransform = d3.zoomTransform(svg.node());
+  const currentScale = currentTransform.k;
+  
+  // Get cluster click mode threshold and deselection threshold
+  const threshold = window.$xDiagrams.clusterClickMode.threshold || 0.4;
+  const deselectionThreshold = window.$xDiagrams.clusterClickMode.deselectionThreshold || 0.25;
+  
+  // Tooltips should only be active when:
+  // 1. We're in zoom out (scale <= deselectionThreshold) - seeing multiple clusters clearly
+  // 2. No cluster is currently selected
+  const isZoomedOut = currentScale <= deselectionThreshold;
+  const noClusterSelected = !window.$xDiagrams.clusterClickMode.selectedCluster;
+  
+  const shouldShow = isZoomedOut && noClusterSelected;
+  
+  // Only log when there's a change in state to avoid spam
+  if (window.$xDiagrams.clusterTooltip.lastVisibilityState !== shouldShow) {
+    console.log('[ClusterTooltip] Tooltip visibility changed:', {
+      currentScale,
+      threshold,
+      deselectionThreshold,
+      isZoomedOut,
+      noClusterSelected,
+      shouldShow,
+      reason: !isZoomedOut ? 'zoom-in' : (noClusterSelected ? 'no-cluster-selected' : 'cluster-selected')
+    });
+    window.$xDiagrams.clusterTooltip.lastVisibilityState = shouldShow;
+  }
+  
+  return shouldShow;
+}
+
+// Function to get tooltip position configuration from layout
+function getTooltipPositionConfig() {
+  // Get layout configuration
+  const layoutConfig = getLayoutConfiguration();
+  const position = layoutConfig.clustersTooltip || 'top';
+  
+  // Validate position
+  if (window.$xDiagrams.tooltipPositions[position]) {
+    return position;
+  }
+  
+  console.warn('[ClusterTooltip] Invalid tooltip position:', position, 'using default: top');
+  return 'top';
+}
+
+// Function to calculate tooltip position based on configuration
+function calculateTooltipPosition(clusterRect, tooltipWidth, tooltipHeight, positionConfig) {
+  const rectBounds = clusterRect.getBoundingClientRect();
+  const viewportWidth = window.innerWidth;
+  const viewportHeight = window.innerHeight;
+  
+  let left, top;
+  
+  // Calculate base position based on configuration
+  switch (positionConfig.x) {
+    case 'center':
+      left = rectBounds.left + (rectBounds.width / 2) - (tooltipWidth / 2);
+      break;
+    case 'left':
+      left = rectBounds.left;
+      break;
+    case 'right':
+      left = rectBounds.right - tooltipWidth;
+      break;
+    default:
+      left = rectBounds.left + (rectBounds.width / 2) - (tooltipWidth / 2);
+  }
+  
+  switch (positionConfig.y) {
+    case 'above':
+      top = rectBounds.top - tooltipHeight;
+      break;
+    case 'below':
+      top = rectBounds.bottom;
+      break;
+    case 'center':
+      top = rectBounds.top + (rectBounds.height / 2) - (tooltipHeight / 2);
+      break;
+    default:
+      top = rectBounds.top - tooltipHeight;
+  }
+  
+  // Apply offset
+  left += positionConfig.offset.x;
+  top += positionConfig.offset.y;
+  
+  // Ensure tooltip stays within viewport
+  if (left < 10) left = 10;
+  if (left + tooltipWidth > viewportWidth - 10) left = viewportWidth - tooltipWidth - 10;
+  if (top < 10) top = 10;
+  if (top + tooltipHeight > viewportHeight - 10) top = viewportHeight - tooltipHeight - 10;
+  
+  return { left, top };
+}
+
+// Function to setup cluster tooltips (works independently of cluster click mode)
+function setupClusterTooltips() {
+  console.log('[ClusterTooltip] Setting up cluster tooltips');
+  
+  // Find all cluster rectangles
+  const clusterRects = d3.selectAll(".cluster-rect");
+  
+  if (!clusterRects.empty()) {
+    clusterRects.each(function(d, i) {
+      const rect = d3.select(this);
+      const clusterGroup = rect.node().parentNode;
+      const clusterId = clusterGroup.getAttribute('data-root-id') || 
+                       clusterGroup.querySelector('.cluster-title')?.textContent || 
+                       `cluster-${i}`;
+      
+      // Create cluster info object
+      const clusterInfo = {
+        id: clusterId,
+        rect: rect,
+        group: d3.select(clusterGroup)
+      };
+      
+      // Remove any existing event handlers to prevent duplicates
+      rect.on("mouseenter", null).on("mouseleave", null);
+      
+      // Add tooltip functionality to cluster rect
+      rect
+        .on("mouseenter", function() {
+          console.log('[ClusterTooltip] Mouse enter on cluster:', clusterInfo.id);
+          
+          // Check if tooltips should be shown based on zoom level and cluster state
+          if (shouldShowTooltips()) {
+            showClusterTooltip(clusterInfo);
+          } else {
+            console.log('[ClusterTooltip] Tooltips disabled - zoom level or cluster state not suitable');
+          }
+        })
+        .on("mouseleave", function() {
+          console.log('[ClusterTooltip] Mouse leave on cluster:', clusterInfo.id);
+          hideClusterTooltip();
+        });
+    });
+    
+    window.$xDiagrams.clusterTooltip.initialized = true;
+    console.log('[ClusterTooltip] Cluster tooltips initialized for', clusterRects.size(), 'clusters');
+  } else {
+    console.warn('[ClusterTooltip] No cluster rectangles found');
+  }
+}
+
+// Function to show cluster tooltip
+function showClusterTooltip(clusterInfo) {
+  try {
+    console.log('[ClusterTooltip] Showing tooltip for cluster:', clusterInfo.id);
+    
+    // Get cluster bounds
+    const clusterRect = clusterInfo.rect.node();
+    if (!clusterRect) {
+      console.warn('[ClusterTooltip] Cluster rect not found');
+      return;
+    }
+    
+    const rectBounds = clusterRect.getBoundingClientRect();
+    if (!rectBounds || rectBounds.width === 0 || rectBounds.height === 0) {
+      console.warn('[ClusterTooltip] Invalid cluster bounds');
+      return;
+    }
+    
+    // Get or create tooltip element
+    let tooltip = d3.select('#cluster-tooltip');
+    if (tooltip.empty()) {
+      tooltip = d3.select('body')
+        .append('div')
+        .attr('id', 'cluster-tooltip')
+        .style('position', 'fixed')
+        .style('z-index', '10000')
+        .style('pointer-events', 'none')
+        .style('background', 'rgba(0, 0, 0, 0.8)')
+        .style('color', 'white')
+        .style('padding', '8px 12px')
+        .style('border-radius', '6px')
+        .style('font-size', '14px')
+        .style('font-weight', 'bold')
+        .style('white-space', 'nowrap')
+        .style('box-shadow', '0 2px 8px rgba(0, 0, 0, 0.3)')
+        .style('opacity', '0')
+        .style('transition', 'opacity 0.2s ease');
+      
+      window.$xDiagrams.clusterTooltip.element = tooltip;
+    }
+    
+    // Update tooltip content
+    tooltip.text(clusterInfo.id);
+    
+    // Get tooltip dimensions
+    const tooltipWidth = tooltip.node().offsetWidth || 100;
+    const tooltipHeight = tooltip.node().offsetHeight || 30;
+    
+    // Get position configuration
+    const positionName = getTooltipPositionConfig();
+    const positionConfig = window.$xDiagrams.tooltipPositions[positionName];
+    
+    // Calculate position based on configuration
+    const position = calculateTooltipPosition(clusterRect, tooltipWidth, tooltipHeight, positionConfig);
+    
+    // Position tooltip
+    tooltip
+      .style('left', position.left + 'px')
+      .style('top', position.top + 'px')
+      .style('opacity', '1');
+    
+    // Store current position configuration
+    window.$xDiagrams.clusterTooltip.position = positionName;
+    
+    // Update state
+    window.$xDiagrams.clusterTooltip.active = true;
+    window.$xDiagrams.clusterTooltip.currentCluster = clusterInfo;
+    
+    console.log('[ClusterTooltip] Tooltip positioned at:', { left: position.left, top: position.top, clusterId: clusterInfo.id });
+    
+  } catch (error) {
+    console.error('[ClusterTooltip] Error showing tooltip:', error);
+  }
+}
+
+// Function to hide cluster tooltip
+function hideClusterTooltip() {
+  try {
+    // Clear any pending tooltip position updates
+    if (tooltipUpdateTimeout) {
+      clearTimeout(tooltipUpdateTimeout);
+      tooltipUpdateTimeout = null;
+    }
+    
+    const tooltip = d3.select('#cluster-tooltip');
+    if (!tooltip.empty()) {
+      tooltip
+        .style('opacity', '0')
+        .on('transitionend', function() {
+          if (tooltip.style('opacity') === '0') {
+            tooltip.remove();
+            // Clear tooltip state
+            window.$xDiagrams.clusterTooltip.active = false;
+            window.$xDiagrams.clusterTooltip.currentCluster = null;
+          }
+        });
+    }
+    
+    // Clear tooltip state immediately
+    window.$xDiagrams.clusterTooltip.active = false;
+    window.$xDiagrams.clusterTooltip.currentCluster = null;
+    
+    console.log('[ClusterTooltip] Tooltip hidden');
+    
+  } catch (error) {
+    console.error('[ClusterTooltip] Error hiding tooltip:', error);
+    // Force removal if transition fails
+    d3.select('#cluster-tooltip').remove();
+  }
+}
+
+// Make functions globally available
+window.activateClusterClickMode = activateClusterClickMode;
+window.deactivateClusterClickMode = deactivateClusterClickMode;
+window.zoomToCluster = zoomToCluster;
+window.detectMultiClusterDiagram = detectMultiClusterDiagram;
+window.disableHoverOnSelectedCluster = disableHoverOnSelectedCluster;
+window.deselectCurrentCluster = deselectCurrentCluster;
+window.resetSelectedClusterState = resetSelectedClusterState;
+window.showClusterTooltip = showClusterTooltip;
+window.hideClusterTooltip = hideClusterTooltip;
+window.setupClusterTooltips = setupClusterTooltips;
+
+// Function to force re-initialization of tooltips
+function forceReinitializeTooltips() {
+  console.log('[ClusterTooltip] Force re-initializing tooltips');
+  window.$xDiagrams.clusterTooltip.initialized = false;
+  setupClusterTooltips();
+}
+
+window.forceReinitializeTooltips = forceReinitializeTooltips;
+
+// Debug function to check tooltip status
+function debugTooltipStatus() {
+  console.log('=== TOOLTIP DEBUG INFO ===');
+  console.log('Tooltip initialized:', window.$xDiagrams.clusterTooltip.initialized);
+  console.log('Tooltip active:', window.$xDiagrams.clusterTooltip.active);
+  console.log('Current cluster:', window.$xDiagrams.clusterTooltip.currentCluster);
+  console.log('Tooltip element exists:', !!window.$xDiagrams.clusterTooltip.element);
+  console.log('Current position:', window.$xDiagrams.clusterTooltip.position);
+  console.log('Available positions:', getAvailableTooltipPositions());
+  
+  // Show layout configuration
+  const layoutConfig = getLayoutConfiguration();
+  console.log('Layout clustersTooltip config:', layoutConfig.clustersTooltip);
+  console.log('Full layout config:', layoutConfig);
+  
+  // Show tooltip visibility status
+  console.log('Tooltip visibility check:', shouldShowTooltips());
+  
+  // Show zoom and cluster state
+  const svg = d3.select("#main-diagram-svg");
+  if (!svg.empty()) {
+    const currentTransform = d3.zoomTransform(svg.node());
+    const threshold = window.$xDiagrams.clusterClickMode.threshold || 0.4;
+    const deselectionThreshold = window.$xDiagrams.clusterClickMode.deselectionThreshold || 0.25;
+    console.log('Zoom state:', {
+      currentScale: currentTransform.k,
+      threshold: threshold,
+      deselectionThreshold: deselectionThreshold,
+      isZoomedOut: currentTransform.k <= deselectionThreshold,
+      noClusterSelected: !window.$xDiagrams.clusterClickMode.selectedCluster,
+      shouldDeselect: currentTransform.k <= deselectionThreshold && !!window.$xDiagrams.clusterClickMode.selectedCluster
+    });
+  }
+  
+  const clusterRects = d3.selectAll(".cluster-rect");
+  console.log('Total cluster rectangles found:', clusterRects.size());
+  
+  clusterRects.each(function(d, i) {
+    const rect = d3.select(this);
+    const hasMouseEnter = rect.on("mouseenter") !== null;
+    const hasMouseLeave = rect.on("mouseleave") !== null;
+    console.log(`Cluster ${i}: mouseenter=${hasMouseEnter}, mouseleave=${hasMouseLeave}`);
+  });
+  
+  console.log('Cluster click mode active:', window.$xDiagrams.clusterClickMode.active);
+  console.log('Selected cluster:', window.$xDiagrams.clusterClickMode.selectedCluster?.id || 'none');
+  console.log('========================');
+}
+
+window.debugTooltipStatus = debugTooltipStatus;
+
+// Throttled tooltip position update during zoom
+let tooltipUpdateTimeout = null;
+
+// Function to update tooltip position during zoom
+function updateTooltipPositionDuringZoom() {
+  // Check if tooltips should still be active
+  if (!shouldShowTooltips()) {
+    // Hide tooltip if conditions are no longer met
+    if (window.$xDiagrams.clusterTooltip.active) {
+      console.log('[ClusterTooltip] Hiding tooltip due to zoom level or cluster state change');
+      hideClusterTooltip();
+    }
+    return;
+  }
+  
+  // Only update if there's an active tooltip
+  if (!window.$xDiagrams.clusterTooltip.active || !window.$xDiagrams.clusterTooltip.currentCluster) {
+    return;
+  }
+  
+  // Throttle updates to avoid excessive calculations during zoom
+  if (tooltipUpdateTimeout) {
+    clearTimeout(tooltipUpdateTimeout);
+  }
+  
+  tooltipUpdateTimeout = setTimeout(() => {
+    const clusterInfo = window.$xDiagrams.clusterTooltip.currentCluster;
+    const tooltip = d3.select('#cluster-tooltip');
+    
+    if (tooltip.empty()) {
+      return;
+    }
+    
+    try {
+      // Get current cluster bounds (recalculated after zoom)
+      const clusterRect = clusterInfo.rect.node();
+      if (!clusterRect) {
+        return;
+      }
+      
+      const rectBounds = clusterRect.getBoundingClientRect();
+      if (!rectBounds || rectBounds.width === 0 || rectBounds.height === 0) {
+        return;
+      }
+      
+      // Get tooltip dimensions
+      const tooltipWidth = tooltip.node().offsetWidth || 100;
+      const tooltipHeight = tooltip.node().offsetHeight || 30;
+      
+      // Get current position configuration
+      const positionName = window.$xDiagrams.clusterTooltip.position || getTooltipPositionConfig();
+      const positionConfig = window.$xDiagrams.tooltipPositions[positionName];
+      
+      // Calculate new position based on configuration
+      const position = calculateTooltipPosition(clusterRect, tooltipWidth, tooltipHeight, positionConfig);
+      
+      // Update tooltip position smoothly
+      tooltip
+        .style('left', position.left + 'px')
+        .style('top', position.top + 'px');
+      
+      console.log('[ClusterTooltip] Updated tooltip position during zoom:', { left: position.left, top: position.top, clusterId: clusterInfo.id });
+      
+    } catch (error) {
+      console.error('[ClusterTooltip] Error updating tooltip position during zoom:', error);
+    }
+  }, 16); // ~60fps throttling
+}
+
+window.updateTooltipPositionDuringZoom = updateTooltipPositionDuringZoom;
+
+// Function to set tooltip position dynamically
+function setTooltipPosition(position) {
+  if (window.$xDiagrams.tooltipPositions[position]) {
+    window.$xDiagrams.clusterTooltip.position = position;
+    console.log('[ClusterTooltip] Tooltip position set to:', position);
+    
+    // Update current tooltip if active
+    if (window.$xDiagrams.clusterTooltip.active && window.$xDiagrams.clusterTooltip.currentCluster) {
+      updateTooltipPositionDuringZoom();
+    }
+  } else {
+    console.warn('[ClusterTooltip] Invalid tooltip position:', position);
+    console.log('[ClusterTooltip] Available positions:', Object.keys(window.$xDiagrams.tooltipPositions));
+  }
+}
+
+// Function to get available tooltip positions
+function getAvailableTooltipPositions() {
+  return Object.keys(window.$xDiagrams.tooltipPositions);
+}
+
+// Function to get current tooltip position
+function getCurrentTooltipPosition() {
+  return window.$xDiagrams.clusterTooltip.position;
+}
+
+window.setTooltipPosition = setTooltipPosition;
+window.getAvailableTooltipPositions = getAvailableTooltipPositions;
+window.getCurrentTooltipPosition = getCurrentTooltipPosition;
+window.shouldShowTooltips = shouldShowTooltips;
+
+// Function to force deselect cluster on zoom out
+function forceDeselectOnZoomOut() {
+  if (window.$xDiagrams.clusterClickMode.selectedCluster) {
+    console.log('[ClusterClickMode] Force deselecting cluster on zoom out');
+    deselectCurrentCluster('zoom-out');
+    
+    // Re-initialize tooltips to ensure they work
+    if (detectMultiClusterDiagram()) {
+      forceReinitializeTooltips();
+    }
+  }
+}
+
+window.forceDeselectOnZoomOut = forceDeselectOnZoomOut;

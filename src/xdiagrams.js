@@ -1617,6 +1617,50 @@ function applyMasonryLayout(clusterGroups, container, originalTrees, preCalculat
     }
     const maxWidth = Math.max(...rowWidths);
 
+    // Calcular la altura total del contenido para centrado vertical
+    let totalContentHeight = 0;
+    for (let r = 0; r < recalculatedRows.length; r++) {
+      if (rowHeights[r]) {
+        totalContentHeight += rowHeights[r];
+        if (r < recalculatedRows.length - 1) {
+          totalContentHeight += spacingY;
+        }
+      }
+    }
+    
+    // Calcular el offset vertical para centrar el contenido
+    const windowHeight = window.innerHeight;
+    const topbarHeight = 60; // Altura real del topbar según CSS
+    const availableHeight = windowHeight - topbarHeight;
+    
+    // Calcular el offset vertical para centrar el contenido
+    let verticalOffset;
+    console.log(`[Layout] DEBUG: Iniciando cálculo de centrado vertical`);
+    console.log(`[Layout]   - totalContentHeight: ${totalContentHeight}px`);
+    console.log(`[Layout]   - availableHeight: ${availableHeight}px`);
+    console.log(`[Layout]   - diferencia: ${totalContentHeight - availableHeight}px`);
+    
+    if (totalContentHeight > availableHeight) {
+      // Contenido más alto que la ventana: posicionar desde arriba con margen mínimo
+      const topMargin = 80; // Margen aumentado para más espacio debajo del topbar
+      verticalOffset = topMargin; // Comenzar desde arriba con margen
+      console.log(`[Layout] Contenido más alto que ventana: posicionando desde arriba con margen`);
+      console.log(`[Layout]   - topMargin: ${topMargin}px`);
+      console.log(`[Layout]   - verticalOffset final: ${verticalOffset.toFixed(1)}px`);
+    } else {
+      // Contenido más pequeño que la ventana: centrar verticalmente
+      verticalOffset = (availableHeight - totalContentHeight) / 2;
+      console.log(`[Layout] Contenido centrado verticalmente: offset=${verticalOffset.toFixed(1)}px`);
+    }
+    
+    console.log(`[Layout] DEBUG: cálculo detallado:`);
+    console.log(`[Layout]   - availableHeight: ${availableHeight}px`);
+    console.log(`[Layout]   - totalContentHeight: ${totalContentHeight}px`);
+    console.log(`[Layout]   - diferencia: ${availableHeight - totalContentHeight}px`);
+    console.log(`[Layout]   - verticalOffset calculado: ${verticalOffset}px`);
+    console.log(`[Layout] Centrado vertical: altura total=${totalContentHeight.toFixed(1)}px, ventana=${windowHeight}px, disponible=${availableHeight.toFixed(1)}px, offset=${verticalOffset.toFixed(1)}px`);
+    console.log(`[Layout] VERIFICACIÓN: verticalOffset es ${verticalOffset} (tipo: ${typeof verticalOffset})`);
+
     for (let row = 0; row < recalculatedRows.length; row++) {
       const clustersInRow = recalculatedRows[row];
       if (clustersInRow.length === 0) continue;
@@ -1679,7 +1723,8 @@ function applyMasonryLayout(clusterGroups, container, originalTrees, preCalculat
 
         const tx = currentX - rectBounds.x;
         
-        let rowTopY = marginY;
+        // Calcular posición Y con centrado vertical
+        let rowTopY = verticalOffset + marginY;
         for (let r = 0; r < row; r++) {
           rowTopY += rowHeights[r] + spacingY;
         }
@@ -2593,8 +2638,13 @@ function applyAutoZoom() {
     // Comportamiento original para un solo cluster
     translateY = svgCenterY - contentCenterY * scale - 50;
   } else {
-    // Para múltiples clusters: centrar verticalmente también
-    translateY = svgCenterY - contentCenterY * scale - 50;
+    // Para múltiples clusters: NO aplicar centrado vertical automático
+    // Dejar que el layout de masonry maneje completamente el posicionamiento vertical
+    // Solo aplicar el zoom horizontal y mantener la posición Y actual
+    const currentTransform = d3.zoomTransform(svg.node());
+    translateY = currentTransform.y; // Mantener la posición Y actual sin cambios
+    console.log('[AutoZoom] Deshabilitando centrado vertical automático para múltiples clusters');
+    console.log('[AutoZoom] Manteniendo posición Y actual:', translateY.toFixed(1));
   }
 
   // Apply transformation immediately without transition

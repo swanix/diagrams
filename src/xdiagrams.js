@@ -3,7 +3,7 @@
 
 // Global zoom behavior - defined at the beginning to avoid scope issues
 const zoom = d3.zoom()
-  .scaleExtent([0.09, 2.5]) // Limit zoom out to 9% of original size (more reasonable)
+  .scaleExtent([0.1, 3.0]) // Max zoom to 3x and min to 10% for better visibility
   .wheelDelta(event => -event.deltaY * 0.002) // Smoother wheel zoom
   .on("zoom", event => {
     const svgGroup = d3.select("#main-diagram-svg g");
@@ -12,27 +12,38 @@ const zoom = d3.zoom()
       const transform = event.transform;
       svgGroup.attr("transform", `translate(${transform.x},${transform.y}) scale(${transform.k})`);
       
+      // Store current zoom state for event handling
+      window.$xDiagrams.currentZoom = transform;
+      
+      // Check if zoom is problematic and clean up hover states
+      if (transform.k <= 0.1 || transform.k > 2.5) {
+        cleanupPersistentHoverStates();
+      }
+      
+      // Disable hover on non-selected clusters at high zoom levels
+      if (transform.k >= 2.0 && window.$xDiagrams.clusterClickMode.active) {
+        disableHoverOnNonSelectedClusters();
+      } else if (transform.k < 2.0 && window.$xDiagrams.clusterClickMode.active) {
+        // Restore hover on clusters when zoom level drops
+        restoreHoverOnClusters();
+      }
+      
       // Check if we should activate cluster click mode
       checkAndActivateClusterClickMode(transform.k);
       
-      // Force deselect cluster if zooming out significantly (but not during cluster zoom transitions)
-      const threshold = window.$xDiagrams.clusterClickMode.threshold || 0.4;
-      const deselectionThreshold = window.$xDiagrams.clusterClickMode.deselectionThreshold || 0.45;
-      const isZoomingOutSignificantly = transform.k <= deselectionThreshold;
-      const hasSelectedCluster = window.$xDiagrams.clusterClickMode.selectedCluster;
+
       
-      // Only deselect if we're zooming out significantly AND we have a selected cluster AND we're not in the middle of a cluster zoom transition
-      if (isZoomingOutSignificantly && hasSelectedCluster && !window.$xDiagrams.clusterClickMode.isZoomingToCluster) {
-        console.log('[ClusterClickMode] Significant zoom out detected - deselecting cluster', {
-          currentScale: transform.k,
-          deselectionThreshold: deselectionThreshold,
-          threshold: threshold
-        });
-        forceDeselectOnZoomOut();
-      }
+      // Note: Cluster deselection is now only done via manual interaction (click on another cluster or click outside)
       
-      // Update tooltip position if one is activ
+      // Update tooltip position if one is active
       updateTooltipPositionDuringZoom();
+      
+      // Force re-evaluation of node interactions after zoom
+      if (window.$xDiagrams.clusterClickMode.active) {
+        setTimeout(() => {
+          updateNodeInteractionsForClusterSelection();
+        }, 10);
+      }
     }
   });
 
@@ -214,7 +225,7 @@ function getLayoutConfiguration(diagramConfig = null) {
   // Define default values for layout options
   const defaultLayout = {
     clustersPerRow: 7,        // Default: 7 clusters per row
-    clustersTooltip: 'top',   // Default: tooltip position above cluster
+    clustersTooltip: 'internal-top-left',   // Default: tooltip position inside top-left corner of cluster
     marginX: 50,              // Default: 50px left margin
     marginY: 50,              // Default: 50px top margin
     spacingX: 60,             // Default: 60px horizontal gap
@@ -615,11 +626,34 @@ function drawGridLayout(nodes, svg) {
       // Prevent zoom behavior interference
       event.preventDefault();
       
-      // Check if zoom level allows node selection (prevent selection when zoom <= 0.35)
+      // Get current zoom state with better error handling
       const currentZoom = window.$xDiagrams.currentZoom ? window.$xDiagrams.currentZoom.k : 1;
-      if (currentZoom <= 0.35) {
+      
+      // Check if zoom level allows node selection (prevent selection when zoom <= 0.1)
+      if (currentZoom <= 0.1) {
         console.log('[NodeClick] Node selection blocked - zoom level too low:', currentZoom);
         return; // Exit early without processing the click
+      }
+      
+      // Check if zoom level is too high and might cause coordinate issues
+      if (currentZoom > 4.0) {
+        console.log('[NodeClick] Warning - very high zoom level:', currentZoom);
+        // Continue processing but log the warning
+      }
+      
+      // Check if cluster click mode is active and block clicks on nodes not in selected cluster
+      if (window.$xDiagrams.clusterClickMode.active) {
+        const nodeElement = this;
+        const clusterInfo = findClusterForNode(nodeElement);
+        if (clusterInfo) {
+          const currentSelectedCluster = window.$xDiagrams.clusterClickMode.selectedCluster;
+          const isCurrentlySelected = currentSelectedCluster && currentSelectedCluster.id === clusterInfo.id;
+          
+          if (!isCurrentlySelected) {
+            console.log('[NodeClick] Node click blocked - node not in selected cluster:', clusterInfo.id, 'selected cluster:', currentSelectedCluster ? currentSelectedCluster.id : 'none');
+            return; // Exit early without processing the click
+          }
+        }
       }
       
       // Check if cluster click mode is active and auto-select cluster if needed
@@ -671,17 +705,17 @@ function drawGridLayout(nodes, svg) {
         }
       }
       
-      // Enable keyboard navigation when a node is clicked (only if enabled)
-      if (isOptionEnabled('keyboardNavigation') && window.$xDiagrams.keyboardNavigation) {
-        window.$xDiagrams.keyboardNavigation.enable();
-        
-        // Find the index of this node in the global data
-        const nodeIndex = window.$xDiagrams.currentData.findIndex(item => item.id === d.id);
-        if (nodeIndex !== -1) {
-          window.$xDiagrams.keyboardNavigation.currentNodeIndex = nodeIndex;
-          window.$xDiagrams.keyboardNavigation.selectNode(nodeIndex);
-        }
-      }
+      // Node keyboard navigation disabled - only cluster navigation is active
+      // if (isOptionEnabled('keyboardNavigation') && window.$xDiagrams.keyboardNavigation) {
+      //   window.$xDiagrams.keyboardNavigation.enable();
+      //   
+      //   // Find the index of this node in the global data
+      //   const nodeIndex = window.$xDiagrams.currentData.findIndex(item => item.id === d.id);
+      //   if (nodeIndex !== -1) {
+      //     window.$xDiagrams.keyboardNavigation.currentNodeIndex = nodeIndex;
+      //     window.$xDiagrams.keyboardNavigation.selectNode(nodeIndex);
+      //   }
+      // }
       
       // Open side panel only if enabled
       if (isOptionEnabled('sidePanel') !== false && window.openSidePanel) {
@@ -870,6 +904,21 @@ function drawGridLayout(nodes, svg) {
             return; // Exit early without processing the click
           }
           
+          // Check if cluster click mode is active and block clicks on nodes not in selected cluster
+          if (window.$xDiagrams.clusterClickMode.active) {
+            const nodeElement = this;
+            const clusterInfo = findClusterForNode(nodeElement);
+            if (clusterInfo) {
+              const currentSelectedCluster = window.$xDiagrams.clusterClickMode.selectedCluster;
+              const isCurrentlySelected = currentSelectedCluster && currentSelectedCluster.id === clusterInfo.id;
+              
+              if (!isCurrentlySelected) {
+                console.log('[NodeClick] Node click blocked - node not in selected cluster:', clusterInfo.id, 'selected cluster:', currentSelectedCluster ? currentSelectedCluster.id : 'none');
+                return; // Exit early without processing the click
+              }
+            }
+          }
+          
           // Check if cluster click mode is active and auto-select cluster if needed
           if (window.$xDiagrams.clusterClickMode.active) {
             const nodeElement = this;
@@ -910,14 +959,15 @@ function drawGridLayout(nodes, svg) {
             }
           }
           
-          if (isOptionEnabled('keyboardNavigation') && window.$xDiagrams.keyboardNavigation) {
-            window.$xDiagrams.keyboardNavigation.enable();
-            const nodeIndex = window.$xDiagrams.currentData.findIndex(item => item.id === d.data.id);
-            if (nodeIndex !== -1) {
-              window.$xDiagrams.keyboardNavigation.currentNodeIndex = nodeIndex;
-              window.$xDiagrams.keyboardNavigation.selectNode(nodeIndex);
-            }
-          }
+          // Node keyboard navigation disabled - only cluster navigation is active
+          // if (isOptionEnabled('keyboardNavigation') && window.$xDiagrams.keyboardNavigation) {
+          //   window.$xDiagrams.keyboardNavigation.enable();
+          //   const nodeIndex = window.$xDiagrams.currentData.findIndex(item => item.id === d.data.id);
+          //   if (nodeIndex !== -1) {
+          //     window.$xDiagrams.keyboardNavigation.currentNodeIndex = nodeIndex;
+          //     window.$xDiagrams.keyboardNavigation.selectNode(nodeIndex);
+          //   }
+          // }
           if (isOptionEnabled('sidePanel') !== false && window.openSidePanel) {
             window.openSidePanel(d.data);
           }
@@ -1616,7 +1666,10 @@ function createClusterTitle(cluster, minX, minY, isFlat = false) {
   titleGroup.append("rect")
     .attr("class", "cluster-title-bg")
     .attr("rx", 12)
-    .attr("ry", 12);
+    .attr("ry", 12)
+    .style("fill", "var(--cluster-title-bg, rgba(255, 255, 255, 0.9))")
+    .style("stroke", "var(--cluster-stroke, #222)")
+    .style("stroke-width", "1px");
   
   // Agregar texto del título
   titleGroup.append("text")
@@ -1831,6 +1884,21 @@ function drawTrees(trees, diagramConfig = null) {
               return; // Exit early without processing the click
             }
             
+            // Check if cluster click mode is active and block clicks on nodes not in selected cluster
+            if (window.$xDiagrams.clusterClickMode.active) {
+              const nodeElement = this;
+              const clusterInfo = findClusterForNode(nodeElement);
+              if (clusterInfo) {
+                const currentSelectedCluster = window.$xDiagrams.clusterClickMode.selectedCluster;
+                const isCurrentlySelected = currentSelectedCluster && currentSelectedCluster.id === clusterInfo.id;
+                
+                if (!isCurrentlySelected) {
+                  console.log('[NodeClick] Node click blocked - node not in selected cluster:', clusterInfo.id, 'selected cluster:', currentSelectedCluster ? currentSelectedCluster.id : 'none');
+                  return; // Exit early without processing the click
+                }
+              }
+            }
+            
             // Check if cluster click mode is active and auto-select cluster if needed
             if (window.$xDiagrams.clusterClickMode.active) {
               const nodeElement = this;
@@ -1871,17 +1939,17 @@ function drawTrees(trees, diagramConfig = null) {
               }
             }
             
-            // Enable keyboard navigation when a node is clicked (only if enabled)
-            if (isOptionEnabled('keyboardNavigation') && window.$xDiagrams.keyboardNavigation) {
-              window.$xDiagrams.keyboardNavigation.enable();
-              
-              // Find the index of this node in the global data
-              const nodeIndex = window.$xDiagrams.currentData.findIndex(item => item.id === d.data.id);
-              if (nodeIndex !== -1) {
-                window.$xDiagrams.keyboardNavigation.currentNodeIndex = nodeIndex;
-                window.$xDiagrams.keyboardNavigation.selectNode(nodeIndex);
-              }
-            }
+            // Node keyboard navigation disabled - only cluster navigation is active
+            // if (isOptionEnabled('keyboardNavigation') && window.$xDiagrams.keyboardNavigation) {
+            //   window.$xDiagrams.keyboardNavigation.enable();
+            //   
+            //   // Find the index of this node in the global data
+            //   const nodeIndex = window.$xDiagrams.currentData.findIndex(item => item.id === d.data.id);
+            //   if (nodeIndex !== -1) {
+            //     window.$xDiagrams.keyboardNavigation.currentNodeIndex = nodeIndex;
+            //     window.$xDiagrams.keyboardNavigation.selectNode(nodeIndex);
+            //   }
+            // }
             
             // Open side panel only if enabled
             if (isOptionEnabled('sidePanel') !== false && window.openSidePanel) {
@@ -2098,22 +2166,48 @@ function drawTrees(trees, diagramConfig = null) {
                 return truncated;
               }
 
-              // Obtener estilos para el título
-              const clusterFontSize = getComputedStyle(document.documentElement).getPropertyValue('--cluster-title-font-size') || '1.5em';
-              const clusterFontWeight = 'bold';
-              const clusterFontFamily = 'inherit';
-              // Truncar el texto si es necesario
-              const clusterTitleText = truncateClusterTitle(root.data.name, width - 40, clusterFontSize, clusterFontWeight, clusterFontFamily);
-
-              treeGroup.append("text")
+              // Crear título del cluster con contenedor (igual que en multiclusters)
+              const clusterTitle = root.data.name;
+              
+              // Detectar si es un solo cluster para ajustar el tamaño del título
+              const isSingleCluster = trees.length === 1;
+              const titleFontSize = isSingleCluster ? "1.575em" : "2.25em"; // 70% del tamaño para un solo cluster
+              const titlePaddingVertical = isSingleCluster ? 12 : 12;
+              const titlePaddingHorizontal = isSingleCluster ? 14 : 20;
+              
+              // Crear contenedor para el título con fondo
+              const titleGroup = treeGroup.append("g")
+                .attr("class", "cluster-title-container");
+              
+              // Agregar rectángulo de fondo con estilo por defecto
+              titleGroup.append("rect")
+                .attr("class", "cluster-title-bg")
+                .attr("rx", 12)
+                .attr("ry", 12)
+                .style("fill", "var(--cluster-title-bg, rgba(255, 255, 255, 0.9))")
+                .style("stroke", "var(--cluster-stroke, #222)")
+                .style("stroke-width", "1px");
+              
+              // Agregar texto del título
+              titleGroup.append("text")
                 .attr("class", "cluster-title")
-                .attr("x", minX + 32)
-                .attr("y", minY + 40)
+                .attr("x", minX + 45)
+                .attr("y", minY + 70)
                 .attr("text-anchor", "start")
-                .style("font-size", clusterFontSize)
-                .style("font-weight", clusterFontWeight)
-                .style("fill", "var(--cluster-title-color, #fff)")
-                .text(clusterTitleText);
+                .style("font-size", titleFontSize)
+                .style("font-weight", "bold")
+                .style("fill", "var(--cluster-title-color, #222)")
+                .text(clusterTitle);
+                
+              // Ajustar el fondo al tamaño del texto
+              const textElement = titleGroup.select('.cluster-title');
+              const textBounds = textElement.node().getBBox();
+              
+              titleGroup.select('.cluster-title-bg')
+                .attr("x", textBounds.x - titlePaddingHorizontal)
+                .attr("y", textBounds.y - titlePaddingVertical)
+                .attr("width", textBounds.width + (titlePaddingHorizontal * 2))
+                .attr("height", textBounds.height + (titlePaddingVertical * 2));
             }
           }, 0);
         }
@@ -2415,6 +2509,14 @@ function ensureZoomBehavior() {
     
     // Add touch-action to prevent conflicts on mobile
     svg.style('touch-action', 'none');
+    
+    // Add mouse move listener to track mouse position for auto-selection
+    svg.on("mousemove", function(event) {
+      window.$xDiagrams.lastMouseEvent = event;
+    });
+    
+    // Initialize mouse event tracking
+    window.$xDiagrams.lastMouseEvent = null;
   }
 }
 
@@ -2438,16 +2540,45 @@ function isZoomProblematic() {
       const scaleMatch = transform.match(/scale\(([^)]+)\)/);
       if (scaleMatch) {
         const scale = parseFloat(scaleMatch[1]);
-        return scale > 2.5 || scale < 0.01 || isNaN(scale); // Updated to allow zoom out to 0.01
+        return scale > 3.0 || scale < 0.1 || isNaN(scale); // Updated to match new zoom limits
       }
     }
   }
   return false;
 }
 
+// Function to clean up persistent hover states during extreme zoom
+function cleanupPersistentHoverStates() {
+  // Remove all cluster-hover classes
+  d3.selectAll('.cluster-rect.cluster-hover').classed('cluster-hover', false);
+  
+  // Clear any persistent hover styles
+  d3.selectAll('.cluster-rect').each(function() {
+    const rect = d3.select(this);
+    const isSelected = rect.attr('data-selected') === 'true';
+    
+    if (!isSelected) {
+      // Reset to default state if not selected
+      rect
+        .style("fill", null)
+        .style("stroke", null)
+        .style("stroke-width", null)
+        .style("stroke-dasharray", null);
+    }
+  });
+  
+  // Hide any visible tooltips
+  hideClusterTooltip();
+  
+  console.log('[ZoomCleanup] Cleaned up persistent hover states');
+}
+
 // Make functions globally available for debugging
 window.resetZoom = resetZoom;
 window.isZoomProblematic = isZoomProblematic;
+window.cleanupPersistentHoverStates = cleanupPersistentHoverStates;
+window.findClusterUnderMouse = findClusterUnderMouse;
+
 
 // Function to handle zoom reset button click
 
@@ -2457,7 +2588,7 @@ window.applyCustomZoom = function(scaleFactor = 0.5) {
   const svg = d3.select("#main-diagram-svg");
   if (!svg.empty() && window.$xDiagrams.lastAutoZoom) {
     const lastZoom = window.$xDiagrams.lastAutoZoom;
-    const newScale = Math.max(0.01, lastZoom.scale * scaleFactor); // Ensure minimum zoom of 0.01
+    const newScale = Math.max(0.1, lastZoom.scale * scaleFactor); // Ensure minimum zoom of 0.1
     
     const transform = d3.zoomIdentity
       .translate(lastZoom.translateX, lastZoom.translateY)
@@ -2475,7 +2606,7 @@ window.applyExtremeZoomOut = function() {
   const svg = d3.select("#main-diagram-svg");
   if (!svg.empty() && window.$xDiagrams.lastAutoZoom) {
     const lastZoom = window.$xDiagrams.lastAutoZoom;
-    const newScale = 0.01; // Extreme zoom out (1% of original size)
+    const newScale = 0.1; // Extreme zoom out (10% of original size)
     
     const transform = d3.zoomIdentity
       .translate(lastZoom.translateX, lastZoom.translateY)
@@ -2600,7 +2731,7 @@ function createSidePanel() {
   sidePanel.innerHTML = `
     <div class="side-panel-header">
       <h3 class="side-panel-title" id="side-panel-title">Detalles del Nodo</h3>
-      <button class="side-panel-close" onclick="closeSidePanel()">×</button>
+              <span class="side-panel-close" onclick="closeSidePanel()" role="button">×</span>
     </div>
     <div class="side-panel-content" id="side-panel-content">
     </div>
@@ -2608,13 +2739,6 @@ function createSidePanel() {
   
   document.body.appendChild(sidePanel);
   console.log('[Side Panel] Created new panel');
-
-  // Event for Escape key
-  document.addEventListener('keydown', function(event) {
-    if (event.key === 'Escape') {
-      closeSidePanel();
-    }
-  });
 }
 
 // Open side panel
@@ -3425,34 +3549,7 @@ window.$xDiagrams.keyboardNavigation = {
       
       // Cluster navigation commands (when cluster mode is active)
       if (isClusterModeActive && hasClusters) {
-        if (e.ctrlKey || e.metaKey) {
-          switch(e.key) {
-            case 'ArrowLeft':
-              e.preventDefault();
-              this.navigateToPreviousCluster();
-              return;
-            case 'ArrowRight':
-              e.preventDefault();
-              this.navigateToNextCluster();
-              return;
-            case 'ArrowUp':
-              e.preventDefault();
-              this.navigateToFirstCluster();
-              return;
-            case 'ArrowDown':
-              e.preventDefault();
-              this.navigateToLastCluster();
-              return;
-            case 'Home':
-              e.preventDefault();
-              this.navigateToFirstCluster();
-              return;
-            case 'End':
-              e.preventDefault();
-              this.navigateToLastCluster();
-              return;
-          }
-        }
+
       }
       
       // Regular node navigation commands
@@ -3461,12 +3558,35 @@ window.$xDiagrams.keyboardNavigation = {
       switch(e.key) {
         case 'Escape':
           e.preventDefault();
-          this.clearSelection();
+          // Check if dropdown is open and close it first
+          const dropdown = document.getElementById('diagram-dropdown');
+          if (dropdown && dropdown.classList.contains('open')) {
+            dropdown.classList.remove('open');
+          }
+          // Check if side panel is open and close it
+          else {
+            const sidePanel = document.querySelector('.side-panel');
+            if (sidePanel && sidePanel.style.display !== 'none') {
+              closeSidePanel();
+            }
+            // If a cluster is selected, deselect it to exit cluster navigation mode
+            else if (window.$xDiagrams.clusterClickMode.selectedCluster) {
+              deselectCurrentCluster('escape-key');
+              console.log('[Keyboard] Exited cluster navigation mode');
+            } else {
+              this.clearSelection();
+            }
+          }
           break;
         case ' ':
         case 'Enter':
           e.preventDefault();
-          this.openCurrentNodeLink();
+          // Only open node link if no cluster is selected (to avoid conflicts with cluster navigation)
+          if (!window.$xDiagrams.clusterClickMode.selectedCluster) {
+            this.openCurrentNodeLink();
+          } else {
+            console.log('[Keyboard] Space/Enter ignored - cluster navigation mode active');
+          }
           break;
         case '0':
           if (e.ctrlKey || e.metaKey) {
@@ -4091,89 +4211,7 @@ window.$xDiagrams.keyboardNavigation = {
     }
   },
   
-  // Cluster navigation functions
-  navigateToPreviousCluster: function() {
-    if (!window.$xDiagrams.clusterClickMode.clusters || window.$xDiagrams.clusterClickMode.clusters.length === 0) {
-      console.log('[Keyboard] No clusters available for navigation');
-      return;
-    }
-    
-    const clusters = window.$xDiagrams.clusterClickMode.clusters;
-    const currentCluster = window.$xDiagrams.clusterClickMode.selectedCluster;
-    
-    if (!currentCluster) {
-      // If no cluster is selected, select the first one
-      console.log('[Keyboard] No cluster selected, selecting first cluster');
-      this.selectCluster(clusters[0]);
-      return;
-    }
-    
-    // Find current cluster index
-    const currentIndex = clusters.findIndex(cluster => cluster.id === currentCluster.id);
-    if (currentIndex === -1) {
-      console.log('[Keyboard] Current cluster not found in list, selecting first cluster');
-      this.selectCluster(clusters[0]);
-      return;
-    }
-    
-    // Navigate to previous cluster (with wrap-around)
-    const previousIndex = currentIndex === 0 ? clusters.length - 1 : currentIndex - 1;
-    console.log('[Keyboard] Navigating to previous cluster:', clusters[previousIndex].id);
-    this.selectCluster(clusters[previousIndex]);
-  },
-  
-  navigateToNextCluster: function() {
-    if (!window.$xDiagrams.clusterClickMode.clusters || window.$xDiagrams.clusterClickMode.clusters.length === 0) {
-      console.log('[Keyboard] No clusters available for navigation');
-      return;
-    }
-    
-    const clusters = window.$xDiagrams.clusterClickMode.clusters;
-    const currentCluster = window.$xDiagrams.clusterClickMode.selectedCluster;
-    
-    if (!currentCluster) {
-      // If no cluster is selected, select the first one
-      console.log('[Keyboard] No cluster selected, selecting first cluster');
-      this.selectCluster(clusters[0]);
-      return;
-    }
-    
-    // Find current cluster index
-    const currentIndex = clusters.findIndex(cluster => cluster.id === currentCluster.id);
-    if (currentIndex === -1) {
-      console.log('[Keyboard] Current cluster not found in list, selecting first cluster');
-      this.selectCluster(clusters[0]);
-      return;
-    }
-    
-    // Navigate to next cluster (with wrap-around)
-    const nextIndex = currentIndex === clusters.length - 1 ? 0 : currentIndex + 1;
-    console.log('[Keyboard] Navigating to next cluster:', clusters[nextIndex].id);
-    this.selectCluster(clusters[nextIndex]);
-  },
-  
-  navigateToFirstCluster: function() {
-    if (!window.$xDiagrams.clusterClickMode.clusters || window.$xDiagrams.clusterClickMode.clusters.length === 0) {
-      console.log('[Keyboard] No clusters available for navigation');
-      return;
-    }
-    
-    const clusters = window.$xDiagrams.clusterClickMode.clusters;
-    console.log('[Keyboard] Navigating to first cluster:', clusters[0].id);
-    this.selectCluster(clusters[0]);
-  },
-  
-  navigateToLastCluster: function() {
-    if (!window.$xDiagrams.clusterClickMode.clusters || window.$xDiagrams.clusterClickMode.clusters.length === 0) {
-      console.log('[Keyboard] No clusters available for navigation');
-      return;
-    }
-    
-    const clusters = window.$xDiagrams.clusterClickMode.clusters;
-    const lastCluster = clusters[clusters.length - 1];
-    console.log('[Keyboard] Navigating to last cluster:', lastCluster.id);
-    this.selectCluster(lastCluster);
-  },
+
   
   // Helper function to select a cluster
   selectCluster: function(clusterInfo) {
@@ -4202,13 +4240,21 @@ window.$xDiagrams.keyboardNavigation = {
         .style("stroke-dasharray", "none")
         .style("box-shadow", "0 0 8px rgba(255, 152, 0, 0.3)");
       
+
+      
       // Disable hover on selected cluster
       rect.on("mouseenter", null).on("mouseleave", null);
+      
+
     }
     
     // Zoom to the cluster
     zoomToCluster(clusterInfo);
-  }
+  },
+  
+
+  
+
 };
 // DO NOT define default diagrams here
 window.$xDiagrams.getDiagramIndexFromURL = function() {
@@ -4369,6 +4415,7 @@ window.$xDiagrams.renderDiagramButtons = function() {
         link.className = 'switcher-btn' + (idx === window.$xDiagrams.currentDiagramIdx ? ' active' : '');
         link.textContent = formatDiagramName(d.name);
         link.style.textDecoration = 'none';
+  
         
         if (window.$xDiagrams.isLoading) {
             link.style.pointerEvents = 'none';
@@ -4425,6 +4472,7 @@ window.$xDiagrams.renderDiagramButtons = function() {
         // Create Google Sheets button
         sheetsButton = document.createElement('button');
         sheetsButton.className = 'sheets-btn';
+
         sheetsButton.innerHTML = `
             <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/>
@@ -4466,6 +4514,7 @@ window.$xDiagrams.renderDiagramButtons = function() {
         if (isRestApiEndpoint(diagramUrl) && !isLocalResource) {
             const cacheButton = document.createElement('button');
             cacheButton.className = 'cache-refresh-btn';
+    
             cacheButton.innerHTML = `
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M17.65,6.35C16.2,4.9 14.21,4 12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20C15.73,20 18.84,17.45 19.73,14H17.65C16.83,16.33 14.61,18 12,18A6,6 0 0,1 6,12A6,6 0 0,1 12,6C13.66,6 15.14,6.69 16.22,7.78L13,11H20V4L17.65,6.35Z"/>
@@ -5170,8 +5219,7 @@ function createKeyboardInstructionsPanel() {
       <span class="description">Nodo anterior del mismo nivel (circular)</span>
       <span class="key">→</span>
       <span class="description">Nodo siguiente del mismo nivel (circular)</span>
-      <span class="key">Tab</span>
-      <span class="description">Navegación secuencial (circular)</span>
+
       <span class="key">Home</span>
       <span class="description">Primer nodo</span>
       <span class="key">End</span>
@@ -5189,23 +5237,7 @@ function createKeyboardInstructionsPanel() {
       <span class="key">Ctrl+9</span>
       <span class="description">Zoom alejado</span>
     </div>
-    <div class="cluster-navigation-section" style="margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--control-border, #d1d5db);">
-      <h4 style="margin: 0 0 8px 0; font-size: 0.85em; font-weight: 600; color: var(--side-panel-label, #666);">Navegación entre clusters (modo cluster activo)</h4>
-      <div class="instructions-grid">
-        <span class="key">Ctrl+←</span>
-        <span class="description">Cluster anterior (circular)</span>
-        <span class="key">Ctrl+→</span>
-        <span class="description">Cluster siguiente (circular)</span>
-        <span class="key">Ctrl+↑</span>
-        <span class="description">Primer cluster</span>
-        <span class="key">Ctrl+↓</span>
-        <span class="description">Último cluster</span>
-        <span class="key">Ctrl+Home</span>
-        <span class="description">Primer cluster</span>
-        <span class="key">Ctrl+End</span>
-        <span class="description">Último cluster</span>
-      </div>
-    </div>
+
   `;
   
   document.body.appendChild(instructionsPanel);
@@ -5383,13 +5415,6 @@ document.addEventListener("DOMContentLoaded", () => {
     // Close dropdown when clicking outside
     document.addEventListener('click', (e) => {
       if (!dropdown.contains(e.target)) {
-        dropdown.classList.remove('open');
-      }
-    });
-    
-    // Close dropdown on escape key
-    document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape') {
         dropdown.classList.remove('open');
       }
     });
@@ -7396,6 +7421,7 @@ function checkAndActivateClusterClickMode(scale) {
   const hasSelectedCluster = window.$xDiagrams.clusterClickMode.selectedCluster;
   
   // Determine if we should activate cluster click mode
+  // - Only activate for multi-cluster diagrams (more than 1 cluster)
   // - Always activate for multi-cluster diagrams when zoomed out (scale <= threshold)
   // - Keep active if there's a selected cluster (regardless of zoom level)
   const shouldActivate = isMultiCluster && (scale <= window.$xDiagrams.clusterClickMode.threshold || hasSelectedCluster);
@@ -7406,22 +7432,9 @@ function checkAndActivateClusterClickMode(scale) {
   } else if (!shouldActivate && window.$xDiagrams.clusterClickMode.active) {
     console.log('[ClusterClickMode] Deactivating cluster click mode - scale:', scale, 'threshold:', window.$xDiagrams.clusterClickMode.threshold, 'hasSelectedCluster:', hasSelectedCluster);
     
-    // Only deselect cluster if we're actually zooming out significantly
-    const deselectionThreshold = window.$xDiagrams.clusterClickMode.deselectionThreshold || 0.45;
-    const isZoomingOutSignificantly = scale <= deselectionThreshold;
-    
-    if (isZoomingOutSignificantly && hasSelectedCluster) {
-      console.log('[ClusterClickMode] Deselecting cluster due to significant zoom out - cluster:', hasSelectedCluster.id, 'scale:', scale, 'deselectionThreshold:', deselectionThreshold);
-      deselectCurrentCluster('zoom-out');
-      
-      // Verify deselection was successful
-      if (window.$xDiagrams.clusterClickMode.selectedCluster) {
-        console.warn('[ClusterClickMode] Warning: Cluster was not properly deselected');
-      } else {
-        console.log('[ClusterClickMode] Cluster deselection successful');
-      }
-    } else if (hasSelectedCluster) {
-      console.log('[ClusterClickMode] Keeping cluster selected during zoom in - cluster:', hasSelectedCluster.id, 'scale:', scale, 'deselectionThreshold:', deselectionThreshold);
+    // Keep cluster selected even when zooming out - only deselect via manual interaction
+    if (hasSelectedCluster) {
+      console.log('[ClusterClickMode] Keeping cluster selected during zoom out - cluster:', hasSelectedCluster.id, 'scale:', scale);
     } else {
       console.log('[ClusterClickMode] No cluster to deselect');
     }
@@ -7429,22 +7442,29 @@ function checkAndActivateClusterClickMode(scale) {
     deactivateClusterClickMode();
   }
   
-  // Also check if we need to deselect cluster when zooming out significantly (even if cluster click mode is not active)
-  const deselectionThreshold = window.$xDiagrams.clusterClickMode.deselectionThreshold || 0.45;
-  if (scale <= deselectionThreshold && hasSelectedCluster && !window.$xDiagrams.clusterClickMode.isZoomingToCluster) {
-    console.log('[ClusterClickMode] Significant zoom out detected with selected cluster - deselecting', 'scale:', scale, 'deselectionThreshold:', deselectionThreshold);
-    deselectCurrentCluster('zoom-out');
-  }
+  // Note: Cluster deselection is now only done via manual interaction (click on another cluster or click outside)
   
-  // Always setup tooltips for multi-cluster diagrams regardless of zoom level
+  // Only setup tooltips for multi-cluster diagrams (not needed for single cluster)
   if (isMultiCluster && !window.$xDiagrams.clusterTooltip.initialized) {
     // Only initialize tooltips if not already initialized
     setupClusterTooltips();
+  } else if (!isMultiCluster && window.$xDiagrams.clusterTooltip.initialized) {
+    // Clean up tooltips if switching from multi-cluster to single cluster
+    console.log('[ClusterClickMode] Single cluster detected - cleaning up tooltips');
+    hideClusterTooltip();
+    window.$xDiagrams.clusterTooltip.initialized = false;
   }
 }
 
 // Function to activate cluster click mode
 function activateClusterClickMode() {
+  // Don't activate for single cluster diagrams
+  const isMultiCluster = detectMultiClusterDiagram();
+  if (!isMultiCluster) {
+    console.log('[ClusterClickMode] Skipping activation - single cluster diagram detected');
+    return;
+  }
+  
   console.log('[ClusterClickMode] Activating cluster click mode');
   
   // Preserve selected cluster if it exists (don't reset on reactivation)
@@ -7481,17 +7501,15 @@ function activateClusterClickMode() {
       };
       window.$xDiagrams.clusterClickMode.clusters.push(clusterInfo);
       
-      // Keep node interactions enabled by default
+      // Store cluster information for node interaction management
       const nodes = clusterGroup.querySelectorAll('.node-clickable');
-      console.log(`[ClusterClickMode] Keeping ${nodes.length} nodes interactive in cluster:`, clusterInfo.id);
+      console.log(`[ClusterClickMode] Found ${nodes.length} nodes in cluster:`, clusterInfo.id);
       nodes.forEach(node => {
         const nodeId = node.getAttribute('data-id');
         if (nodeId && !window.$xDiagrams.clusterClickMode.originalNodeClickHandlers.has(nodeId)) {
           // Store original click handler
           const originalClick = node.onclick;
           window.$xDiagrams.clusterClickMode.originalNodeClickHandlers.set(nodeId, originalClick);
-          // Keep interactions enabled
-          node.style.pointerEvents = 'auto';
         }
       });
       
@@ -7523,6 +7541,20 @@ function activateClusterClickMode() {
         .style("pointer-events", "all")
         .on("click", function(event) {
           event.stopPropagation();
+          
+          // Get current zoom state for validation
+          const currentZoom = window.$xDiagrams.currentZoom ? window.$xDiagrams.currentZoom.k : 1;
+          
+          // Allow cluster clicks even at minimum zoom for zoom-in functionality
+          if (currentZoom <= 0.1) {
+            console.log('[ClusterClick] Cluster click at minimum zoom - allowing for zoom-in:', currentZoom);
+            // Continue processing - don't block cluster clicks at minimum zoom
+          }
+          
+          if (currentZoom > 2.5) {
+            console.log('[ClusterClick] Warning - very high zoom level for cluster interaction:', currentZoom);
+          }
+          
           const currentlySelectedCluster = window.$xDiagrams.clusterClickMode.selectedCluster;
           const isCurrentlySelected = currentlySelectedCluster && currentlySelectedCluster.id === clusterInfo.id;
       
@@ -7547,29 +7579,17 @@ function activateClusterClickMode() {
             .style("stroke-dasharray", "none")
             .style("box-shadow", "0 0 8px rgba(255, 152, 0, 0.3)");
           
+
+          
           // Deshabilitar hover en el cluster seleccionado
           rect.on("mouseenter", null).on("mouseleave", null);
           
-          // Habilitar interacciones de nodos en el cluster seleccionado
-          const selectedClusterGroup = clusterInfo.group.node();
-          if (selectedClusterGroup) {
-            const nodes = selectedClusterGroup.querySelectorAll('.node-clickable');
-            console.log(`[ClusterClickMode] Enabling ${nodes.length} nodes in selected cluster:`, clusterInfo.id);
-            nodes.forEach(node => {
-              const nodeId = node.getAttribute('data-id');
-              if (nodeId) {
-                node.style.pointerEvents = 'auto';
-                
-                // Restore original click handler if available
-                if (window.$xDiagrams.clusterClickMode.originalNodeClickHandlers.has(nodeId)) {
-                  const originalClick = window.$xDiagrams.clusterClickMode.originalNodeClickHandlers.get(nodeId);
-                  if (originalClick) {
-                    node.onclick = originalClick;
-                  }
-                }
-              }
-            });
-          }
+
+          
+
+          
+          // Update node interactions after selection
+          updateNodeInteractionsForClusterSelection();
           
           zoomToCluster(clusterInfo);
       })
@@ -7580,6 +7600,9 @@ function activateClusterClickMode() {
               .style("stroke", "var(--cluster-hover-stroke, #1976d2)")
               .style("stroke-width", "3")
               .style("stroke-dasharray", "none");
+          
+          // Add cluster-hover class to prevent node interference
+          rect.classed("cluster-hover", true);
           
           // Show cluster hover tooltip (only if not selected)
           if (!window.$xDiagrams.clusterClickMode.selectedCluster || 
@@ -7594,6 +7617,9 @@ function activateClusterClickMode() {
           if (selectedCluster && selectedCluster.id === clusterInfo.id) {
               return; // Es el seleccionado, no quitar el resaltado.
           }
+      
+          // Remove cluster-hover class
+          rect.classed("cluster-hover", false);
       
           // Quitar el efecto hover para clústeres no seleccionados.
           rect
@@ -7610,12 +7636,78 @@ function activateClusterClickMode() {
     // Add CSS class to body for styling
     document.body.classList.add('cluster-click-mode-active');
     
+    // Update node interactions based on current selection state
+    updateNodeInteractionsForClusterSelection();
+    
     if (currentSelectedCluster) {
       console.log('[ClusterClickMode] Cluster click mode activated with selected cluster:', currentSelectedCluster.id);
     } else {
       console.log('[ClusterClickMode] All clusters are now in normal state, ready for clicks');
     }
   }
+}
+
+// Function to update node interactions based on cluster selection state
+function updateNodeInteractionsForClusterSelection() {
+  if (!window.$xDiagrams.clusterClickMode.active) {
+    return; // Only apply when cluster click mode is active
+  }
+  
+  // Get current zoom state for validation
+  const currentZoom = window.$xDiagrams.currentZoom ? window.$xDiagrams.currentZoom.k : 1;
+  
+        // Check if zoom level is too extreme for reliable interaction
+      if (currentZoom <= 0.1) {
+        console.log('[ClusterClickMode] Skipping node interaction update - zoom level too low:', currentZoom);
+        return;
+      }
+  
+  const selectedCluster = window.$xDiagrams.clusterClickMode.selectedCluster;
+  const allClusters = window.$xDiagrams.clusterClickMode.clusters || [];
+  
+  console.log('[ClusterClickMode] Updating node interactions - selected cluster:', selectedCluster ? selectedCluster.id : 'none', 'zoom level:', currentZoom);
+  
+  allClusters.forEach(clusterInfo => {
+    const clusterGroup = clusterInfo.group.node();
+    if (!clusterGroup) return;
+    
+    const nodes = clusterGroup.querySelectorAll('.node-clickable');
+    const isSelectedCluster = selectedCluster && selectedCluster.id === clusterInfo.id;
+    
+    console.log(`[ClusterClickMode] Cluster ${clusterInfo.id}: ${nodes.length} nodes, selected: ${isSelectedCluster}`);
+    
+    nodes.forEach(node => {
+      const nodeId = node.getAttribute('data-id');
+      if (!nodeId) return;
+      
+      if (isSelectedCluster) {
+        // Enable interactions for nodes in selected cluster, but disable keyboard activation
+        node.style.pointerEvents = 'auto';
+        
+        // Restore original click handler if available
+        if (window.$xDiagrams.clusterClickMode.originalNodeClickHandlers.has(nodeId)) {
+          const originalClick = window.$xDiagrams.clusterClickMode.originalNodeClickHandlers.get(nodeId);
+          if (originalClick) {
+            node.onclick = originalClick;
+          }
+        }
+        
+
+      } else {
+        // Disable interactions for nodes in non-selected clusters (or when no cluster is selected)
+        node.style.pointerEvents = 'none';
+        
+        // Store original click handler if not already stored
+        if (!window.$xDiagrams.clusterClickMode.originalNodeClickHandlers.has(nodeId)) {
+          const originalClick = node.onclick;
+          window.$xDiagrams.clusterClickMode.originalNodeClickHandlers.set(nodeId, originalClick);
+        }
+        
+        // Remove click handler
+        node.onclick = null;
+      }
+    });
+  });
 }
 
 // Function to deactivate cluster click mode
@@ -7731,6 +7823,12 @@ function deactivateClusterClickMode() {
         }
       });
     }
+    
+    // Clear the original node click handlers map when deactivating
+    if (window.$xDiagrams.clusterClickMode.originalNodeClickHandlers.size > 0) {
+      console.log('[ClusterClickMode] Clearing', window.$xDiagrams.clusterClickMode.originalNodeClickHandlers.size, 'stored node click handlers');
+      window.$xDiagrams.clusterClickMode.originalNodeClickHandlers.clear();
+    }
   }, 100);
 }
 
@@ -7756,6 +7854,9 @@ function zoomToCluster(clusterInfo) {
   
   // Apply highlight immediately to ensure visual feedback
   highlightSelectedCluster(clusterInfo);
+  
+  // Update node interactions after cluster selection
+  updateNodeInteractionsForClusterSelection();
   
   const svg = d3.select("#main-diagram-svg");
   if (svg.empty()) return;
@@ -7939,25 +8040,8 @@ function disableHoverOnSelectedCluster(selectedClusterInfo) {
         });
     }
     
-    // Keep node interactions enabled in the previous cluster
-    const previousClusterGroup = previousSelectedCluster.group.node();
-    if (previousClusterGroup) {
-      const nodes = previousClusterGroup.querySelectorAll('.node-clickable');
-      console.log(`[ClusterClickMode] Keeping ${nodes.length} nodes interactive in previous cluster:`, previousSelectedCluster.id);
-      nodes.forEach(node => {
-        const nodeId = node.getAttribute('data-id');
-        if (nodeId) {
-          node.style.pointerEvents = 'auto';
-          // Restore original click handler if available
-          if (window.$xDiagrams.clusterClickMode.originalNodeClickHandlers.has(nodeId)) {
-            const originalClick = window.$xDiagrams.clusterClickMode.originalNodeClickHandlers.get(nodeId);
-            if (originalClick) {
-              node.onclick = originalClick;
-            }
-          }
-        }
-      });
-    }
+    // Update node interactions after deselection
+    updateNodeInteractionsForClusterSelection();
   }
   
   // Note: We don't remove highlight here anymore - it persists until zoom out
@@ -7988,41 +8072,8 @@ function disableHoverOnSelectedCluster(selectedClusterInfo) {
       .on("mouseleave", null);
   }
   
-  // Re-enable node interactions in the selected cluster
-  const selectedClusterGroup = selectedClusterInfo.group.node();
-  if (selectedClusterGroup) {
-    const nodes = selectedClusterGroup.querySelectorAll('.node-clickable');
-    console.log(`[ClusterClickMode] Enabling ${nodes.length} nodes in selected cluster:`, selectedClusterInfo.id);
-    nodes.forEach(node => {
-      const nodeId = node.getAttribute('data-id');
-      if (nodeId) {
-        // Always enable pointer events for nodes in selected cluster
-        node.style.pointerEvents = 'auto';
-        
-        // Restore original click handler if available
-        if (window.$xDiagrams.clusterClickMode.originalNodeClickHandlers.has(nodeId)) {
-          const originalClick = window.$xDiagrams.clusterClickMode.originalNodeClickHandlers.get(nodeId);
-          if (originalClick) {
-            node.onclick = originalClick;
-          }
-        } else {
-          // If no original handler was stored, create a default one that opens side panel
-          const nodeData = node.getAttribute('data-node-data');
-          if (nodeData) {
-            try {
-              const parsedData = JSON.parse(nodeData);
-              node.onclick = function(event) {
-                event.stopPropagation();
-                openSidePanel(parsedData);
-              };
-            } catch (e) {
-              console.warn('Could not parse node data for side panel:', e);
-            }
-          }
-        }
-      }
-    });
-  }
+  // Update node interactions after selection
+  updateNodeInteractionsForClusterSelection();
   
   // Enable hover and click on all other clusters
   window.$xDiagrams.clusterClickMode.clusters.forEach(clusterInfo => {
@@ -8057,6 +8108,104 @@ function disableHoverOnSelectedCluster(selectedClusterInfo) {
   
   // Store the selected cluster info for reference
   window.$xDiagrams.clusterClickMode.selectedCluster = selectedClusterInfo;
+  
+  // Update node interactions after all changes
+  updateNodeInteractionsForClusterSelection();
+}
+
+// Function to disable hover on non-selected clusters at high zoom levels
+function disableHoverOnNonSelectedClusters() {
+  const currentZoom = window.$xDiagrams.currentZoom ? window.$xDiagrams.currentZoom.k : 1;
+  const selectedCluster = window.$xDiagrams.clusterClickMode.selectedCluster;
+  
+  if (currentZoom < 2.0) return; // Only apply at high zoom levels
+  
+  console.log('[ClusterClickMode] Disabling hover on non-selected clusters at high zoom:', currentZoom);
+  
+  window.$xDiagrams.clusterClickMode.clusters.forEach(clusterInfo => {
+    const rect = clusterInfo.rect;
+    if (!rect || !rect.node()) return;
+    
+    const isSelected = selectedCluster && selectedCluster.id === clusterInfo.id;
+    
+    if (!isSelected) {
+      // Disable hover effects on non-selected clusters
+      rect
+        .classed("cluster-hover", false)
+        .style("fill", null)
+        .style("stroke", null)
+        .style("stroke-width", null)
+        .style("stroke-dasharray", null)
+        .style("cursor", "default")
+        .style("pointer-events", "none"); // Disable pointer events to prevent hover
+      
+      // Remove hover event listeners
+      rect.on("mouseenter", null).on("mouseleave", null);
+      
+      console.log('[ClusterClickMode] Disabled hover on cluster:', clusterInfo.id);
+    } else {
+      // Keep selected cluster interactive
+      rect
+        .style("cursor", "pointer")
+        .style("pointer-events", "all");
+    }
+  });
+  
+  // Hide any active tooltips
+  hideClusterTooltip();
+}
+
+// Function to restore hover on clusters when zoom level drops
+function restoreHoverOnClusters() {
+  const currentZoom = window.$xDiagrams.currentZoom ? window.$xDiagrams.currentZoom.k : 1;
+  const selectedCluster = window.$xDiagrams.clusterClickMode.selectedCluster;
+  
+  if (currentZoom >= 2.0) return; // Only restore when zoom is below threshold
+  
+  console.log('[ClusterClickMode] Restoring hover on clusters at zoom level:', currentZoom);
+  
+  window.$xDiagrams.clusterClickMode.clusters.forEach(clusterInfo => {
+    const rect = clusterInfo.rect;
+    if (!rect || !rect.node()) return;
+    
+    const isSelected = selectedCluster && selectedCluster.id === clusterInfo.id;
+    
+    if (!isSelected) {
+      // Restore hover functionality on non-selected clusters
+      rect
+        .style("cursor", "pointer")
+        .style("pointer-events", "all")
+        .on("mouseenter", function() {
+          // Add hover effect
+          rect
+            .style("fill", "var(--cluster-hover-bg, rgba(25, 118, 210, 0.15))")
+            .style("stroke", "var(--cluster-hover-stroke, #1976d2)")
+            .style("stroke-width", "3")
+            .style("stroke-dasharray", "none");
+          
+          // Add cluster-hover class to prevent node interference
+          rect.classed("cluster-hover", true);
+          
+          // Show cluster hover tooltip
+          showClusterTooltip(clusterInfo);
+        })
+        .on("mouseleave", function() {
+          // Remove hover effect
+          rect.classed("cluster-hover", false);
+          
+          rect
+            .style("fill", null)
+            .style("stroke", null)
+            .style("stroke-width", null)
+            .style("stroke-dasharray", null);
+          
+          // Hide tooltip
+          hideClusterTooltip();
+        });
+      
+      console.log('[ClusterClickMode] Restored hover on cluster:', clusterInfo.id);
+    }
+  });
 }
 
 // Function to deselect the currently selected cluster
@@ -8081,6 +8230,13 @@ function deselectCurrentCluster(reason = 'manual') {
       selectedRect
         .attr("data-selected", "false")
         .classed("cluster-selected", false);
+      
+      // Remove focusable attributes and event listeners
+      selectedRect
+        .attr("role", null)
+        .attr("aria-label", null)
+        .style("cursor", null)
+        .on("focus", null);
       
       // Re-enable hover and click functionality
       selectedRect
@@ -8192,25 +8348,8 @@ function deselectCurrentCluster(reason = 'manual') {
           hideClusterTooltip();
         });
       
-      // Keep node interactions enabled in the deselected cluster
-      const selectedClusterGroup = clusterToDeselect.group.node();
-      if (selectedClusterGroup) {
-        const nodes = selectedClusterGroup.querySelectorAll('.node-clickable');
-        console.log(`[ClusterClickMode] Keeping ${nodes.length} nodes interactive in deselected cluster:`, clusterToDeselect.id);
-        nodes.forEach(node => {
-          const nodeId = node.getAttribute('data-id');
-          if (nodeId) {
-            node.style.pointerEvents = 'auto';
-            // Restore original click handler if available
-            if (window.$xDiagrams.clusterClickMode.originalNodeClickHandlers.has(nodeId)) {
-              const originalClick = window.$xDiagrams.clusterClickMode.originalNodeClickHandlers.get(nodeId);
-              if (originalClick) {
-                node.onclick = originalClick;
-              }
-            }
-          }
-        });
-      }
+      // Update node interactions after deselection
+      updateNodeInteractionsForClusterSelection();
       
       console.log('[ClusterClickMode] Deselected cluster:', clusterToDeselect.id);
     } else {
@@ -8234,6 +8373,11 @@ function deselectCurrentCluster(reason = 'manual') {
       console.log('[ClusterClickMode] Tooltips are now active after deselection');
     } else {
       console.log('[ClusterClickMode] Tooltips remain inactive due to zoom level');
+    }
+    
+    // Re-enable hover if it was disabled during navigation
+    if (window.$xDiagrams.keyboardNavigation && window.$xDiagrams.keyboardNavigation.enableHoverAfterNavigation) {
+      window.$xDiagrams.keyboardNavigation.enableHoverAfterNavigation();
     }
   }
 }
@@ -8259,6 +8403,15 @@ function resetSelectedClusterState() {
   
   // Clear the selected cluster reference
   window.$xDiagrams.clusterClickMode.selectedCluster = null;
+  
+  // Clear the original node click handlers map
+  if (window.$xDiagrams.clusterClickMode.originalNodeClickHandlers.size > 0) {
+    console.log('[ClusterClickMode] Clearing', window.$xDiagrams.clusterClickMode.originalNodeClickHandlers.size, 'stored node click handlers during reset');
+    window.$xDiagrams.clusterClickMode.originalNodeClickHandlers.clear();
+  }
+  
+  // Update node interactions after reset
+  updateNodeInteractionsForClusterSelection();
   
   // Re-initialize tooltips to ensure they work after reset
   if (detectMultiClusterDiagram()) {
@@ -8292,7 +8445,13 @@ window.$xDiagrams.tooltipPositions = {
   'top-corner-left': { x: 'left', y: 'above', offset: { x: -10, y: -10 } },
   'top-corner-right': { x: 'right', y: 'above', offset: { x: 10, y: -10 } },
   'bottom-corner-left': { x: 'left', y: 'below', offset: { x: -10, y: 10 } },
-  'bottom-corner-right': { x: 'right', y: 'below', offset: { x: 10, y: 10 } }
+  'bottom-corner-right': { x: 'right', y: 'below', offset: { x: 10, y: 10 } },
+  
+  // Internal positions (inside the cluster)
+  'internal-top-left': { x: 'left', y: 'top', offset: { x: 0, y: 0 } },
+  'internal-top-right': { x: 'right', y: 'top', offset: { x: 0, y: 0 } },
+  'internal-bottom-left': { x: 'left', y: 'bottom', offset: { x: 0, y: 0 } },
+  'internal-bottom-right': { x: 'right', y: 'bottom', offset: { x: 0, y: 0 } }
 };
 
 // Function to check if tooltips should be active based on zoom level and cluster state
@@ -8337,15 +8496,15 @@ function shouldShowTooltips() {
 function getTooltipPositionConfig() {
   // Get layout configuration
   const layoutConfig = getLayoutConfiguration();
-  const position = layoutConfig.clustersTooltip || 'top';
+  const position = layoutConfig.clustersTooltip || 'internal-top-left';
   
   // Validate position
   if (window.$xDiagrams.tooltipPositions[position]) {
     return position;
   }
   
-  console.warn('[ClusterTooltip] Invalid tooltip position:', position, 'using default: top');
-  return 'top';
+  console.warn('[ClusterTooltip] Invalid tooltip position:', position, 'using default: internal-top-left');
+  return 'internal-top-left';
 }
 
 // Function to calculate tooltip position based on configuration
@@ -8356,38 +8515,64 @@ function calculateTooltipPosition(clusterRect, tooltipWidth, tooltipHeight, posi
   
   let left, top;
   
-  // Calculate base position based on configuration
-  switch (positionConfig.x) {
-    case 'center':
-      left = rectBounds.left + (rectBounds.width / 2) - (tooltipWidth / 2);
-      break;
-    case 'left':
+  // Check if this is an internal position (starts with 'internal-')
+  const isInternalPosition = positionConfig.x === 'left' && (positionConfig.y === 'top' || positionConfig.y === 'bottom') && 
+                            positionConfig.offset.x === 0 && positionConfig.offset.y === 0;
+  
+  if (isInternalPosition) {
+    // For internal positions, position at the corner but keep natural size
+    // Position at the corner
+    if (positionConfig.y === 'top') {
+      top = rectBounds.top;
+    } else { // bottom
+      top = rectBounds.bottom - tooltipHeight;
+    }
+    
+    if (positionConfig.x === 'left') {
       left = rectBounds.left;
-      break;
-    case 'right':
+    } else { // right
       left = rectBounds.right - tooltipWidth;
-      break;
-    default:
-      left = rectBounds.left + (rectBounds.width / 2) - (tooltipWidth / 2);
+    }
+  } else {
+    // Original logic for external positions
+    switch (positionConfig.x) {
+      case 'center':
+        left = rectBounds.left + (rectBounds.width / 2) - (tooltipWidth / 2);
+        break;
+      case 'left':
+        left = rectBounds.left;
+        break;
+      case 'right':
+        left = rectBounds.right - tooltipWidth;
+        break;
+      default:
+        left = rectBounds.left + (rectBounds.width / 2) - (tooltipWidth / 2);
+    }
+    
+    switch (positionConfig.y) {
+      case 'above':
+        top = rectBounds.top - tooltipHeight;
+        break;
+      case 'below':
+        top = rectBounds.bottom;
+        break;
+      case 'center':
+        top = rectBounds.top + (rectBounds.height / 2) - (tooltipHeight / 2);
+        break;
+      case 'top':
+        top = rectBounds.top;
+        break;
+      case 'bottom':
+        top = rectBounds.bottom - tooltipHeight;
+        break;
+      default:
+        top = rectBounds.top - tooltipHeight;
+    }
+    
+    // Apply offset
+    left += positionConfig.offset.x;
+    top += positionConfig.offset.y;
   }
-  
-  switch (positionConfig.y) {
-    case 'above':
-      top = rectBounds.top - tooltipHeight;
-      break;
-    case 'below':
-      top = rectBounds.bottom;
-      break;
-    case 'center':
-      top = rectBounds.top + (rectBounds.height / 2) - (tooltipHeight / 2);
-      break;
-    default:
-      top = rectBounds.top - tooltipHeight;
-  }
-  
-  // Apply offset
-  left += positionConfig.offset.x;
-  top += positionConfig.offset.y;
   
   // Ensure tooltip stays within viewport
   if (left < 10) left = 10;
@@ -8544,7 +8729,13 @@ function hideClusterTooltip() {
     
     const tooltip = d3.select('#cluster-tooltip');
     if (!tooltip.empty()) {
+      // Reset tooltip styles to original state
       tooltip
+        .style('width', null)
+        .style('height', null)
+        .style('display', null)
+        .style('align-items', null)
+        .style('justify-content', null)
         .style('opacity', '0')
         .on('transitionend', function() {
           if (tooltip.style('opacity') === '0') {
@@ -8785,17 +8976,46 @@ function findClusterForNode(nodeElement) {
   return clusterInfo;
 }
 
-// Function to force deselect cluster on zoom out
-function forceDeselectOnZoomOut() {
-  if (window.$xDiagrams.clusterClickMode.selectedCluster) {
-    console.log('[ClusterClickMode] Force deselecting cluster on zoom out');
-    deselectCurrentCluster('zoom-out');
+// Function to find cluster under mouse pointer
+function findClusterUnderMouse(event) {
+  const svg = document.getElementById("main-diagram-svg");
+  if (!svg) return null;
+  
+  // Get mouse position relative to SVG
+  const pt = svg.createSVGPoint();
+  pt.x = event.clientX;
+  pt.y = event.clientY;
+  
+  // Transform point to account for current zoom/pan
+  const currentTransform = d3.zoomTransform(svg);
+  const transformedPt = pt.matrixTransform(currentTransform.inverse());
+  
+  // Find all cluster rectangles
+  const clusterRects = d3.selectAll(".cluster-rect");
+  
+  for (let i = 0; i < clusterRects.size(); i++) {
+    const rect = clusterRects.nodes()[i];
+    const bbox = rect.getBBox();
     
-    // Re-initialize tooltips to ensure they work
-    if (detectMultiClusterDiagram()) {
-      forceReinitializeTooltips();
+    // Check if mouse is within this cluster rectangle
+    if (transformedPt.x >= bbox.x && transformedPt.x <= bbox.x + bbox.width &&
+        transformedPt.y >= bbox.y && transformedPt.y <= bbox.y + bbox.height) {
+      
+      // Get cluster info
+      const clusterGroup = rect.parentNode;
+      const clusterId = clusterGroup.getAttribute('data-root-id') || 
+                       clusterGroup.querySelector('.cluster-title')?.textContent || 
+                       `cluster-${i}`;
+      
+      // Find matching cluster info
+      const clusterInfo = window.$xDiagrams.clusterClickMode.clusters.find(c => c.id === clusterId);
+      return clusterInfo || null;
     }
   }
+  
+  return null;
 }
 
-window.forceDeselectOnZoomOut = forceDeselectOnZoomOut;
+
+
+// Note: Cluster deselection is now only done via manual interaction (click on another cluster or click outside)

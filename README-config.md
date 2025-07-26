@@ -120,13 +120,12 @@ When `keyboardNavigation` is enabled, the following keys are available:
 
 ### Navigation Keys:
 - **Arrow Keys**: Navigate between nodes (Up/Down/Left/Right)
-- **Tab**: Sequential navigation (Shift+Tab for reverse)
+
 - **Home/End**: Go to first/last node
 - **Escape**: Clear selection
 
 ### Action Keys:
-- **Spacebar**: Open link of selected node in new tab
-- **Enter**: Open link of selected node in new tab
+
 
 ### Security Features:
 - All external links open with `rel="noreferrer noopener"` for security

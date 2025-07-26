@@ -1,5 +1,5 @@
 // Swanix Diagrams - JS
-// v0.5.
+// v0.6.0
 
 // Global zoom behavior - defined at the beginning to avoid scope issues
 const zoom = d3.zoom()
@@ -2512,6 +2512,13 @@ function applyAutoZoom() {
     return;
   }
 
+  // Get current diagram configuration to respect marginY setting
+  const currentDiagramIdx = window.$xDiagrams.currentDiagramIdx || 0;
+  const diagrams = getDiagrams();
+  const currentDiagram = diagrams[currentDiagramIdx];
+  const layoutConfig = getLayoutConfiguration(currentDiagram);
+  const marginY = layoutConfig.marginY || 50; // Default to 50 if not specified
+
   const bounds = g.node().getBBox();
   const svgElement = document.getElementById('main-diagram-svg');
   const svgWidth = svgElement ? svgElement.clientWidth || svgElement.offsetWidth : window.innerWidth;
@@ -2636,15 +2643,10 @@ function applyAutoZoom() {
   let translateY;
   if (isSingleGroup) {
     // Comportamiento original para un solo cluster
-    translateY = svgCenterY - contentCenterY * scale - 50;
+    translateY = svgCenterY - contentCenterY * scale - marginY;
   } else {
-    // Para múltiples clusters: NO aplicar centrado vertical automático
-    // Dejar que el layout de masonry maneje completamente el posicionamiento vertical
-    // Solo aplicar el zoom horizontal y mantener la posición Y actual
-    const currentTransform = d3.zoomTransform(svg.node());
-    translateY = currentTransform.y; // Mantener la posición Y actual sin cambios
-    console.log('[AutoZoom] Deshabilitando centrado vertical automático para múltiples clusters');
-    console.log('[AutoZoom] Manteniendo posición Y actual:', translateY.toFixed(1));
+    // Para múltiples clusters: centrar verticalmente también (consistente con resetZoom)
+    translateY = svgCenterY - contentCenterY * scale - marginY;
   }
 
   // Apply transformation immediately without transition
@@ -2748,6 +2750,13 @@ function resetZoom() {
   if (!svg.empty()) {
     // Disable hover and tooltips during zoom out animation
     disableHoverAndTooltipsDuringZoom();
+    
+    // Get current diagram configuration to respect marginY setting
+    const currentDiagramIdx = window.$xDiagrams.currentDiagramIdx || 0;
+    const diagrams = getDiagrams();
+    const currentDiagram = diagrams[currentDiagramIdx];
+    const layoutConfig = getLayoutConfiguration(currentDiagram);
+    const marginY = layoutConfig.marginY || 50; // Default to 50 if not specified
     
     // Calculate the target zoom transformation for showing entire diagram
     const g = svg.select("g");
@@ -2885,10 +2894,10 @@ function resetZoom() {
     
     let translateY;
     if (isSingleGroup) {
-      translateY = svgCenterY - contentCenterY * scale - 50;
+      translateY = svgCenterY - contentCenterY * scale - marginY;
     } else {
       // Para múltiples clusters: centrar verticalmente también
-      translateY = svgCenterY - contentCenterY * scale - 50;
+      translateY = svgCenterY - contentCenterY * scale - marginY;
     }
 
     // Create target transformation
@@ -5161,6 +5170,13 @@ window.$xDiagrams.loadDiagram = function(input) {
 
     if (window.initDiagram) {
         window.initDiagram(toInit, function() {
+            // Reset zoom state completely before applying auto zoom
+            const svgD3 = d3.select("#main-diagram-svg");
+            if (!svgD3.empty()) {
+                // Reset to identity transform to clear any previous zoom state
+                svgD3.call(zoom.transform, d3.zoomIdentity);
+            }
+            
             // Apply auto zoom immediately for all diagrams
             // For multiple clusters, it will be overridden by the masonry layout completion
             if (isOptionEnabled('autoZoom') !== false && window.applyAutoZoom) {

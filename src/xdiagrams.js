@@ -664,9 +664,17 @@ function drawGridLayout(nodes, svg, diagramConfig = null) {
       const currentZoom = window.$xDiagrams.currentZoom ? window.$xDiagrams.currentZoom.k : 1;
       
       // Check if zoom level allows node selection (prevent selection when zoom <= 0.1)
-      if (currentZoom <= 0.1) {
+      // UNLESS a cluster is selected - then allow interactions regardless of zoom
+      const selectedCluster = window.$xDiagrams.clusterClickMode.selectedCluster;
+      const forceNodeInteractions = selectedCluster !== null;
+      
+      if (currentZoom <= 0.1 && !forceNodeInteractions) {
         console.log('[NodeClick] Node selection blocked - zoom level too low:', currentZoom);
         return; // Exit early without processing the click
+      }
+      
+      if (forceNodeInteractions) {
+        console.log('[NodeClick] Node interaction allowed - cluster is selected, zoom level:', currentZoom);
       }
       
       // Check if zoom level is too high and might cause coordinate issues
@@ -686,6 +694,8 @@ function drawGridLayout(nodes, svg, diagramConfig = null) {
           if (!isCurrentlySelected) {
             console.log('[NodeClick] Node click blocked - node not in selected cluster:', clusterInfo.id, 'selected cluster:', currentSelectedCluster ? currentSelectedCluster.id : 'none');
             return; // Exit early without processing the click
+          } else {
+            console.log('[NodeClick] Node click allowed - node is in selected cluster:', clusterInfo.id);
           }
         }
       }
@@ -939,10 +949,18 @@ function drawGridLayout(nodes, svg, diagramConfig = null) {
           event.preventDefault();
           
           // Check if zoom level allows node selection (prevent selection when zoom <= 0.35)
+          // UNLESS a cluster is selected - then allow interactions regardless of zoom
           const currentZoom = window.$xDiagrams.currentZoom ? window.$xDiagrams.currentZoom.k : 1;
-          if (currentZoom <= 0.35) {
+          const selectedCluster = window.$xDiagrams.clusterClickMode.selectedCluster;
+          const forceNodeInteractions = selectedCluster !== null;
+          
+          if (currentZoom <= 0.35 && !forceNodeInteractions) {
             console.log('[NodeClick] Node selection blocked - zoom level too low:', currentZoom);
             return; // Exit early without processing the click
+          }
+          
+          if (forceNodeInteractions) {
+            console.log('[NodeClick] Node interaction allowed - cluster is selected, zoom level:', currentZoom);
           }
           
           // Check if cluster click mode is active and block clicks on nodes not in selected cluster
@@ -956,6 +974,8 @@ function drawGridLayout(nodes, svg, diagramConfig = null) {
               if (!isCurrentlySelected) {
                 console.log('[NodeClick] Node click blocked - node not in selected cluster:', clusterInfo.id, 'selected cluster:', currentSelectedCluster ? currentSelectedCluster.id : 'none');
                 return; // Exit early without processing the click
+              } else {
+                console.log('[NodeClick] Node click allowed - node is in selected cluster:', clusterInfo.id);
               }
             }
           }
@@ -1946,10 +1966,18 @@ function drawTrees(trees, diagramConfig = null) {
             event.preventDefault();
             
             // Check if zoom level allows node selection (prevent selection when zoom <= 0.35)
+            // UNLESS a cluster is selected - then allow interactions regardless of zoom
             const currentZoom = window.$xDiagrams.currentZoom ? window.$xDiagrams.currentZoom.k : 1;
-            if (currentZoom <= 0.35) {
+            const selectedCluster = window.$xDiagrams.clusterClickMode.selectedCluster;
+            const forceNodeInteractions = selectedCluster !== null;
+            
+            if (currentZoom <= 0.35 && !forceNodeInteractions) {
               console.log('[NodeClick] Node selection blocked - zoom level too low:', currentZoom);
               return; // Exit early without processing the click
+            }
+            
+            if (forceNodeInteractions) {
+              console.log('[NodeClick] Node interaction allowed - cluster is selected, zoom level:', currentZoom);
             }
             
             // Check if cluster click mode is active and block clicks on nodes not in selected cluster
@@ -1963,6 +1991,8 @@ function drawTrees(trees, diagramConfig = null) {
                 if (!isCurrentlySelected) {
                   console.log('[NodeClick] Node click blocked - node not in selected cluster:', clusterInfo.id, 'selected cluster:', currentSelectedCluster ? currentSelectedCluster.id : 'none');
                   return; // Exit early without processing the click
+                } else {
+                  console.log('[NodeClick] Node click allowed - node is in selected cluster:', clusterInfo.id);
                 }
               }
             }
@@ -2614,6 +2644,9 @@ function ensureZoomBehavior() {
 function resetZoom() {
   const svg = d3.select("#main-diagram-svg");
   if (!svg.empty()) {
+    // Disable hover and tooltips during zoom out animation
+    disableHoverAndTooltipsDuringZoom();
+    
     // Calculate the target zoom transformation for showing entire diagram
     const g = svg.select("g");
     
@@ -2773,7 +2806,14 @@ function resetZoom() {
     svg.transition()
       .duration(800) // Slightly longer duration for smoother animation
       .ease(d3.easeCubicOut) // Smooth easing function
-      .call(zoom.transform, targetTransform);
+      .call(zoom.transform, targetTransform)
+      .on("end", function() {
+        // Re-enable hover and tooltips after zoom out animation completes
+        // Add a small delay to ensure the animation is fully complete
+        setTimeout(() => {
+          reEnableHoverAndTooltipsAfterZoom();
+        }, 100);
+      });
     
     console.log('[ResetZoom] Applied animated zoom out to show entire diagram');
   }
@@ -3360,9 +3400,7 @@ function setupClosePanelOnSvgClick() {
     // Check if clicking on any interactive or content elements
     const isInteractiveElement = 
       target.closest('.node') ||           // Nodes
-      target.closest('.cluster') ||        // Clusters
       target.closest('.link') ||           // Links
-      target.closest('.cluster-rect') ||   // Cluster backgrounds
       target.closest('.cluster-title') ||  // Cluster titles
       target.closest('.node-text') ||      // Node text
       target.closest('.node-image') ||     // Node images
@@ -3371,17 +3409,54 @@ function setupClosePanelOnSvgClick() {
       target.closest('.side-panel') ||     // Side panel
       target.closest('text') ||            // Any text elements
       target.closest('image') ||           // Any image elements
-      target.closest('rect') ||            // Any rectangle elements (cluster backgrounds)
       target.closest('circle') ||          // Any circle elements
       target.closest('path');              // Any path elements (links)
     
-    // Only proceed if clicking on empty space (not on interactive elements)
-    if (!isInteractiveElement) {
+    // Check if double-clicking on a cluster (for zoom out)
+    const clickedCluster = target.closest('.cluster-rect') || target.closest('.cluster');
+    
+    if (clickedCluster) {
+      // Double-click on cluster - zoom out
+      event.preventDefault();
+      event.stopPropagation();
+      
+      console.log('[DoubleClick] Double-click on cluster - zooming out');
+      
+      // Close side panel if it's open
+      const sidePanel = document.getElementById('side-panel');
+      if (sidePanel && sidePanel.classList.contains('open')) {
+        console.log('[DoubleClick] Closing side panel due to double-click zoom reset');
+        closeSidePanel();
+      }
+      
+      // Reset zoom to original state (disableHoverAndTooltipsDuringZoom is called inside resetZoom)
+      resetZoom();
+      
+      // Also deselect any selected cluster if cluster click mode is active
+      if (window.$xDiagrams.clusterClickMode.active && window.$xDiagrams.clusterClickMode.selectedCluster) {
+        console.log('[DoubleClick] Deselecting cluster due to double-click zoom reset');
+        deselectCurrentCluster('double-click-zoom-reset');
+      }
+      
+      // Re-enable hover and tooltips after a delay to allow zoom animation to complete
+      setTimeout(() => {
+        reEnableHoverAndTooltipsAfterZoom();
+      }, 1100); // Slightly longer than zoom animation duration
+    }
+    // Only proceed if clicking on empty space (not on other interactive elements)
+    else if (!isInteractiveElement) {
       // Prevent default double-click behavior
       event.preventDefault();
       event.stopPropagation();
       
-      // Reset zoom to original state
+      // Close side panel if it's open
+      const sidePanel = document.getElementById('side-panel');
+      if (sidePanel && sidePanel.classList.contains('open')) {
+        console.log('[DoubleClick] Closing side panel due to double-click zoom reset');
+        closeSidePanel();
+      }
+      
+      // Reset zoom to original state (disableHoverAndTooltipsDuringZoom is called inside resetZoom)
       resetZoom();
       console.log('[DoubleClick] Zoom reset to original state due to double-click on empty space');
       
@@ -3390,6 +3465,11 @@ function setupClosePanelOnSvgClick() {
         console.log('[DoubleClick] Deselecting cluster due to double-click zoom reset');
         deselectCurrentCluster('double-click-zoom-reset');
       }
+      
+      // Re-enable hover and tooltips after a delay to allow zoom animation to complete
+      setTimeout(() => {
+        reEnableHoverAndTooltipsAfterZoom();
+      }, 1100); // Slightly longer than zoom animation duration
     } else {
       // Log when double-click is ignored for debugging
       console.log('[DoubleClick] Ignored double-click on interactive element:', {
@@ -3895,9 +3975,15 @@ window.$xDiagrams.keyboardNavigation = {
               console.log('[Keyboard] Exited cluster navigation mode');
             } else {
               // If no panels are open and no cluster is selected, reset zoom to show entire diagram
+              // Reset zoom to original state (disableHoverAndTooltipsDuringZoom is called inside resetZoom)
               resetZoom();
               console.log('[Keyboard] ESC - Zoom reset to show entire diagram');
               this.clearSelection();
+              
+              // Re-enable hover and tooltips after a delay to allow zoom animation to complete
+              setTimeout(() => {
+                reEnableHoverAndTooltipsAfterZoom();
+              }, 1100); // Slightly longer than zoom animation duration
             }
           }
           break;
@@ -8009,6 +8095,33 @@ function activateClusterClickMode() {
           
           zoomToCluster(clusterInfo);
       })
+      .on("dblclick", function(event) {
+        event.preventDefault();
+        event.stopPropagation();
+        
+        console.log('[ClusterDoubleClick] Double-click on cluster - zooming out');
+        
+        // Close side panel if it's open
+        const sidePanel = document.getElementById('side-panel');
+        if (sidePanel && sidePanel.classList.contains('open')) {
+          console.log('[ClusterDoubleClick] Closing side panel due to double-click zoom reset');
+          closeSidePanel();
+        }
+        
+        // Reset zoom to original state
+        resetZoom();
+        
+        // Also deselect any selected cluster if cluster click mode is active
+        if (window.$xDiagrams.clusterClickMode.active && window.$xDiagrams.clusterClickMode.selectedCluster) {
+          console.log('[ClusterDoubleClick] Deselecting cluster due to double-click zoom reset');
+          deselectCurrentCluster('double-click-zoom-reset');
+        }
+        
+        // Re-enable hover and tooltips after a delay to allow zoom animation to complete
+        setTimeout(() => {
+          reEnableHoverAndTooltipsAfterZoom();
+        }, 1100); // Slightly longer than zoom animation duration
+      })
       .on("mouseenter", isSelected ? null : function() {
           // Check if this is a single cluster diagram - if so, disable hover effects
           const isMultiCluster = detectMultiClusterDiagram();
@@ -8086,16 +8199,20 @@ function updateNodeInteractionsForClusterSelection() {
   // Get current zoom state for validation
   const currentZoom = window.$xDiagrams.currentZoom ? window.$xDiagrams.currentZoom.k : 1;
   
-        // Check if zoom level is too extreme for reliable interaction
-      if (currentZoom <= 0.1) {
-        console.log('[ClusterClickMode] Skipping node interaction update - zoom level too low:', currentZoom);
-        return;
-      }
-  
   const selectedCluster = window.$xDiagrams.clusterClickMode.selectedCluster;
   const allClusters = window.$xDiagrams.clusterClickMode.clusters || [];
   
   console.log('[ClusterClickMode] Updating node interactions - selected cluster:', selectedCluster ? selectedCluster.id : 'none', 'zoom level:', currentZoom);
+  
+  // If there's a selected cluster, always allow node interactions regardless of zoom level
+  const forceNodeInteractions = selectedCluster !== null;
+  
+  if (forceNodeInteractions) {
+    console.log('[ClusterClickMode] Cluster is selected - forcing node interactions regardless of zoom level');
+  } else if (currentZoom <= 0.1) {
+    console.log('[ClusterClickMode] Skipping node interaction update - zoom level too low and no cluster selected:', currentZoom);
+    return;
+  }
   
   allClusters.forEach(clusterInfo => {
     const clusterGroup = clusterInfo.group.node();
@@ -8111,8 +8228,9 @@ function updateNodeInteractionsForClusterSelection() {
       if (!nodeId) return;
       
       if (isSelectedCluster) {
-        // Enable interactions for nodes in selected cluster, but disable keyboard activation
+        // Enable interactions for nodes in selected cluster - MANDATORY regardless of zoom
         node.style.pointerEvents = 'auto';
+        node.style.cursor = 'pointer';
         
         // Restore original click handler if available
         if (window.$xDiagrams.clusterClickMode.originalNodeClickHandlers.has(nodeId)) {
@@ -8122,10 +8240,11 @@ function updateNodeInteractionsForClusterSelection() {
           }
         }
         
-
+        console.log(`[ClusterClickMode] Node ${nodeId} in selected cluster ${clusterInfo.id} - interactions ENABLED`);
       } else {
         // Disable interactions for nodes in non-selected clusters (or when no cluster is selected)
         node.style.pointerEvents = 'none';
+        node.style.cursor = 'default';
         
         // Store original click handler if not already stored
         if (!window.$xDiagrams.clusterClickMode.originalNodeClickHandlers.has(nodeId)) {
@@ -8135,6 +8254,8 @@ function updateNodeInteractionsForClusterSelection() {
         
         // Remove click handler
         node.onclick = null;
+        
+        console.log(`[ClusterClickMode] Node ${nodeId} in non-selected cluster ${clusterInfo.id} - interactions DISABLED`);
       }
     });
   });
@@ -8288,6 +8409,9 @@ function zoomToCluster(clusterInfo) {
   // Update node interactions after cluster selection
   updateNodeInteractionsForClusterSelection();
   
+  // Disable hover and tooltips during zoom animation
+  disableHoverAndTooltipsDuringZoom();
+  
   const svg = d3.select("#main-diagram-svg");
   if (svg.empty()) return;
   
@@ -8347,11 +8471,26 @@ function zoomToCluster(clusterInfo) {
   const currentTransform = d3.zoomTransform(svg.node());
   console.log('[ClusterClickMode] Current transform:', currentTransform);
   
-  // Calculate zoom to fit cluster with some padding
-  const padding = 150; // Increased padding for better visibility
+  // Calculate zoom to fit cluster with adaptive padding based on cluster size
+  const clusterArea = absoluteClusterWidth * absoluteClusterHeight;
+  const svgArea = svgWidth * svgHeight;
+  const clusterSizeRatio = clusterArea / svgArea;
+  
+  // Use smaller padding for smaller clusters to allow closer zoom
+  let padding;
+  if (clusterSizeRatio < 0.1) {
+    padding = 50; // Very small clusters - minimal padding for maximum zoom
+  } else if (clusterSizeRatio < 0.25) {
+    padding = 100; // Small clusters - reduced padding
+  } else {
+    padding = 150; // Large clusters - standard padding
+  }
+  
+  console.log('[ClusterClickMode] Cluster size ratio:', clusterSizeRatio.toFixed(3), 'using padding:', padding);
+  
   const scaleX = (svgWidth - padding * 2) / absoluteClusterWidth;
   const scaleY = (svgHeight - padding * 2) / absoluteClusterHeight;
-  const scale = Math.min(scaleX, scaleY, 1.5); // Increased max zoom to 150%
+  const scale = Math.min(scaleX, scaleY, 1.8); // Increased max zoom to 180%
   
   console.log('[ClusterClickMode] Calculated scale:', scale, 'scaleX:', scaleX, 'scaleY:', scaleY);
   
@@ -8379,6 +8518,9 @@ function zoomToCluster(clusterInfo) {
       // Zoom completed - cluster is already styled as selected
       console.log('[ClusterClickMode] Zoom completed for cluster:', clusterInfo.id);
       
+      // Re-enable hover and tooltips after zoom animation completes
+      reEnableHoverAndTooltipsAfterZoom();
+      
       // Add a delay before resetting the zooming flag to prevent immediate deselection
       setTimeout(() => {
         window.$xDiagrams.clusterClickMode.isZoomingToCluster = false;
@@ -8395,6 +8537,82 @@ function zoomToCluster(clusterInfo) {
 }
 
 
+
+// Function to disable hover and tooltips during zoom animation
+function disableHoverAndTooltipsDuringZoom() {
+  console.log('[ZoomAnimation] Disabling hover and tooltips during zoom animation');
+  
+  // Initialize zoom animation state if not exists
+  if (!window.$xDiagrams.zoomAnimation) {
+    window.$xDiagrams.zoomAnimation = {};
+  }
+  
+  // Hide any visible tooltip
+  hideClusterTooltip();
+  
+  // Remove all hover events from cluster rectangles
+  const clusterRects = d3.selectAll(".cluster-rect");
+  console.log('[ZoomAnimation] Found', clusterRects.size(), 'cluster rectangles to disable hover');
+  
+  clusterRects.each(function() {
+    const rect = d3.select(this);
+    
+    // Remove hover events during animation
+    rect.on("mouseenter", null).on("mouseleave", null);
+    
+    // Also remove any hover classes that might be active
+    rect.classed("cluster-hover", false);
+  });
+  
+  // Set flag to indicate zoom animation is active
+  window.$xDiagrams.zoomAnimation.isActive = true;
+  
+  console.log('[ZoomAnimation] Hover and tooltips disabled for zoom animation');
+}
+
+// Function to re-enable hover and tooltips after zoom animation
+function reEnableHoverAndTooltipsAfterZoom() {
+  console.log('[ZoomAnimation] Re-enabling hover and tooltips after zoom animation');
+  
+  if (!window.$xDiagrams.zoomAnimation || !window.$xDiagrams.zoomAnimation.isActive) {
+    console.log('[ZoomAnimation] No active zoom animation to re-enable');
+    return;
+  }
+  
+  // Clear the animation flag first
+  window.$xDiagrams.zoomAnimation.isActive = false;
+  
+  // Force reinitialize tooltips for all clusters
+  console.log('[ZoomAnimation] Force reinitializing tooltips for all clusters');
+  
+  // Reset tooltip initialization flag to force re-initialization
+  window.$xDiagrams.clusterTooltip.initialized = false;
+  
+  // Call setupClusterTooltips to re-enable all hover events
+  setupClusterTooltips();
+  
+  // Verify that hover events are working
+  const clusterRects = d3.selectAll(".cluster-rect");
+  let hoverEventsCount = 0;
+  clusterRects.each(function() {
+    const rect = d3.select(this);
+    if (rect.on("mouseenter") !== null) {
+      hoverEventsCount++;
+    }
+  });
+  
+  console.log('[ZoomAnimation] Hover and tooltips re-enabled after zoom animation. Found', hoverEventsCount, 'clusters with hover events');
+}
+
+// Function to clean up zoom animation state (for error recovery)
+function cleanupZoomAnimationState() {
+  if (window.$xDiagrams.zoomAnimation) {
+    window.$xDiagrams.zoomAnimation.isActive = false;
+    if (window.$xDiagrams.zoomAnimation.originalHandlers) {
+      window.$xDiagrams.zoomAnimation.originalHandlers.clear();
+    }
+  }
+}
 
 // Function to highlight the selected cluster with a temporary effect
 function highlightSelectedCluster(clusterInfo) {
@@ -8942,6 +9160,12 @@ window.$xDiagrams.tooltipPositions = {
 
 // Function to check if tooltips should be active based on zoom level and cluster state
 function shouldShowTooltips() {
+  // Check if zoom animation is active - if so, don't show tooltips
+  if (window.$xDiagrams.zoomAnimation && window.$xDiagrams.zoomAnimation.isActive) {
+    console.log('[ClusterTooltip] Tooltips disabled - zoom animation active');
+    return false;
+  }
+  
   // Get current zoom level
   const svg = d3.select("#main-diagram-svg");
   if (svg.empty()) return false;
@@ -8956,10 +9180,12 @@ function shouldShowTooltips() {
   // Tooltips should only be active when:
   // 1. We're in zoom out (scale <= deselectionThreshold) - seeing multiple clusters clearly
   // 2. No cluster is currently selected
+  // 3. No zoom animation is active
   const isZoomedOut = currentScale <= deselectionThreshold;
   const noClusterSelected = !window.$xDiagrams.clusterClickMode.selectedCluster;
+  const noZoomAnimation = !window.$xDiagrams.zoomAnimation || !window.$xDiagrams.zoomAnimation.isActive;
   
-  const shouldShow = isZoomedOut && noClusterSelected;
+  const shouldShow = isZoomedOut && noClusterSelected && noZoomAnimation;
   
   // Only log when there's a change in state to avoid spam
   if (window.$xDiagrams.clusterTooltip.lastVisibilityState !== shouldShow) {
@@ -8969,8 +9195,9 @@ function shouldShowTooltips() {
       deselectionThreshold,
       isZoomedOut,
       noClusterSelected,
+      noZoomAnimation,
       shouldShow,
-      reason: !isZoomedOut ? 'zoom-in' : (noClusterSelected ? 'no-cluster-selected' : 'cluster-selected')
+      reason: !isZoomedOut ? 'zoom-in' : (!noClusterSelected ? 'cluster-selected' : (!noZoomAnimation ? 'zoom-animation-active' : 'no-cluster-selected'))
     });
     window.$xDiagrams.clusterTooltip.lastVisibilityState = shouldShow;
   }
@@ -9073,6 +9300,12 @@ function calculateTooltipPosition(clusterRect, tooltipWidth, tooltipHeight, posi
 function setupClusterTooltips() {
   console.log('[ClusterTooltip] Setting up cluster tooltips');
   
+  // Check if zoom animation is active - if so, don't setup tooltips
+  if (window.$xDiagrams.zoomAnimation && window.$xDiagrams.zoomAnimation.isActive) {
+    console.log('[ClusterTooltip] Skipping tooltip setup - zoom animation active');
+    return;
+  }
+  
   // Find all cluster rectangles
   const clusterRects = d3.selectAll(".cluster-rect");
   
@@ -9132,6 +9365,12 @@ function setupClusterTooltips() {
 function showClusterTooltip(clusterInfo) {
   try {
     console.log('[ClusterTooltip] Showing tooltip for cluster:', clusterInfo.id);
+    
+    // Check if zoom animation is active - if so, don't show tooltip
+    if (window.$xDiagrams.zoomAnimation && window.$xDiagrams.zoomAnimation.isActive) {
+      console.log('[ClusterTooltip] Zoom animation active, not showing tooltip');
+      return;
+    }
     
     // Check zoom level - don't show tooltip if zoom is greater than 0.25 (too close)
     const svg = document.getElementById("main-diagram-svg");
@@ -9266,6 +9505,17 @@ window.resetSelectedClusterState = resetSelectedClusterState;
 window.showClusterTooltip = showClusterTooltip;
 window.hideClusterTooltip = hideClusterTooltip;
 window.setupClusterTooltips = setupClusterTooltips;
+window.disableHoverAndTooltipsDuringZoom = disableHoverAndTooltipsDuringZoom;
+window.reEnableHoverAndTooltipsAfterZoom = reEnableHoverAndTooltipsAfterZoom;
+window.cleanupZoomAnimationState = cleanupZoomAnimationState;
+
+// Global function to force re-enable tooltips (for debugging)
+window.forceReenableTooltips = function() {
+  console.log('[Global] Force re-enabling tooltips');
+  window.$xDiagrams.zoomAnimation.isActive = false;
+  window.$xDiagrams.clusterTooltip.initialized = false;
+  setupClusterTooltips();
+};
 
 // Function to force re-initialization of tooltips
 function forceReinitializeTooltips() {
@@ -9322,6 +9572,13 @@ function debugTooltipStatus() {
   
   console.log('Cluster click mode active:', window.$xDiagrams.clusterClickMode.active);
   console.log('Selected cluster:', window.$xDiagrams.clusterClickMode.selectedCluster?.id || 'none');
+  
+  // Show zoom animation state
+  console.log('Zoom animation state:', {
+    exists: !!window.$xDiagrams.zoomAnimation,
+    isActive: window.$xDiagrams.zoomAnimation ? window.$xDiagrams.zoomAnimation.isActive : false
+  });
+  
   console.log('========================');
 }
 

@@ -25,7 +25,7 @@
 
     "--node-connector": "hsl(var(--color-base) 60% / 1)",
 
-    "--cluster-bg": "hsl(var(--color-base) 92% / 1)",
+    "--cluster-bg": "hsl(var(--color-base) 90% / 1)",
     "--cluster-stroke": "rgba(0,0,0,0.1)",
     "--cluster-title-color": "#222",
     "--cluster-title-bg": "rgba(255, 255, 255, 0.9)",

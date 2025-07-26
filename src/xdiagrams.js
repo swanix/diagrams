@@ -2859,37 +2859,13 @@ function resetZoom() {
     
     let translateX = svgCenterX - contentCenterX * scale;
     
+    // Use the same centering logic as applyAutoZoom for consistency
     if (isSingleGroup) {
+      // Perfect centering for single groups, without margin adjustments
       translateX = svgCenterX - contentCenterX * scale;
     } else {
-      const firstCluster = diagramGroups.nodes()[0];
-      if (firstCluster) {
-        const firstClusterBounds = firstCluster.getBBox();
-        const firstClusterTransform = firstCluster.getAttribute("transform");
-        let firstClusterOffsetX = 0;
-        
-        if (firstClusterTransform) {
-          const match = /translate\(([-\d.]+), ?([-\d.]+)\)/.exec(firstClusterTransform);
-          if (match) {
-            firstClusterOffsetX = parseFloat(match[1]) || 0;
-          }
-        }
-        
-        const firstClusterLeftEdge = firstClusterBounds.x + firstClusterOffsetX;
-        const zoomVarsLeft = getComputedStyle(document.documentElement);
-        if (isFlatListDiagram) {
-          const flatLeftMargin = parseFloat(zoomVarsLeft.getPropertyValue('--flatlist-left-margin')) || 40;
-          translateX = flatLeftMargin - firstClusterLeftEdge * scale;
-        } else {
-          const clusterLeftMargin = parseFloat(zoomVarsLeft.getPropertyValue('--cluster-left-margin')) || 50;
-          translateX = clusterLeftMargin - firstClusterLeftEdge * scale;
-        }
-      } else {
-        const leftEdge = totalBounds.x * scale + translateX;
-        if (leftEdge > 300) {
-          translateX -= (leftEdge - 300);
-        }
-      }
+      // For multiple clusters: center the entire diagram horizontally (same as applyAutoZoom)
+      translateX = svgCenterX - contentCenterX * scale;
     }
     
     let translateY;

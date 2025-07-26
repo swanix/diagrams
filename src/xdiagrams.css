@@ -128,8 +128,10 @@
     /* Node dimensions */
     --node-bg-width: 80px;
     --node-bg-height: 100px;
+    --node-bg-height-no-image: 50px;
     --node-bg-x: -42px;
     --node-bg-y: -62px;
+    --node-bg-y-no-image: -25px;
     --node-bg-stroke: 1px;
 
     /* Image dimensions and position */
@@ -145,6 +147,7 @@
     --label-id-x: -6px;
     --label-id-y: -67px;
     --label-id-anchor: end;
+    --label-id-y-no-image: -30px;
    
     /* Label text */
     --label-font-size: 6px;
@@ -152,6 +155,7 @@
     --label-dy-single: .85em;
     --label-x: -2px;  
     --label-y: 20px;
+    --label-y-no-image: 0px;
 
     /* Subtitle text */
     --text-subtitle-color: #888888;

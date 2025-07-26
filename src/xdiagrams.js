@@ -1,5 +1,5 @@
 // Swanix Diagrams - JS
-// v0.5.0
+// v0.5.
 
 // Global zoom behavior - defined at the beginning to avoid scope issues
 const zoom = d3.zoom()
@@ -216,6 +216,36 @@ function isOptionEnabled(optionName) {
   
   // Otherwise, use the default value
   return defaultOptions[optionName] === true;
+}
+
+// Get thumbnail mode configuration
+function getThumbnailMode(diagramConfig = null) {
+  // Try diagram-specific configuration first
+  if (diagramConfig && diagramConfig.options && diagramConfig.options.thumbnailMode) {
+    const mode = diagramConfig.options.thumbnailMode;
+    if (['default', 'custom', 'none', 'simple'].includes(mode)) {
+      console.log(`[getThumbnailMode] Using diagram-specific mode: ${mode}`);
+      return mode;
+    }
+  }
+  
+  const options = getDiagramOptions();
+  
+  // Define default thumbnail mode
+  const defaultThumbnailMode = 'default'; // 'default', 'custom', 'none', 'simple'
+  
+  // If thumbnailMode is explicitly set in the configuration, use that value
+  if (options.hasOwnProperty('thumbnailMode')) {
+    const mode = options.thumbnailMode;
+    if (['default', 'custom', 'none', 'simple'].includes(mode)) {
+      console.log(`[getThumbnailMode] Using global mode: ${mode}`);
+      return mode;
+    }
+  }
+  
+  // Otherwise, use the default value
+  console.log(`[getThumbnailMode] Using default mode: ${defaultThumbnailMode}`);
+  return defaultThumbnailMode;
 }
 
 // Get layout configuration with sensible defaults
@@ -577,7 +607,7 @@ function shouldUseClusterGrid(trees) {
 }
 
 // Draw grid layout for flat lists
-function drawGridLayout(nodes, svg) {
+function drawGridLayout(nodes, svg, diagramConfig = null) {
   const g = d3.select(svg).append("g");
   
   // Get viewport dimensions
@@ -591,6 +621,10 @@ function drawGridLayout(nodes, svg) {
   const nodeSpacingY = 40; // Vertical spacing between nodes
   const marginX = 50;     // Left/right margin
   const marginY = 50;     // Top/bottom margin
+  
+  // Check if we're in 'none' mode to adjust node dimensions
+  const thumbnailMode = getThumbnailMode();
+  const hasImages = thumbnailMode !== 'none';
   
   // Calculate how many nodes fit per row
   const availableWidth = viewportWidth - (2 * marginX);
@@ -727,14 +761,20 @@ function drawGridLayout(nodes, svg) {
   nodeGroups.append("rect")
     .style("stroke-width", "var(--node-bg-stroke, 2)")
     .attr("x", -nodeWidth/2)
-    .attr("y", -nodeHeight/2)
+    .attr("y", hasImages ? -nodeHeight/2 : -25) // Adjust Y position for no-image mode
     .attr("width", nodeWidth)
-    .attr("height", nodeHeight);
+    .attr("height", hasImages ? nodeHeight : 50); // Adjust height for no-image mode
 
   // Node image with enhanced loading
   nodeGroups.each(function(d) {
     const nodeGroup = d3.select(this);
-    const imageUrl = resolveNodeImage(d);
+    const imageUrl = resolveNodeImage(d, diagramConfig);
+    
+    // Si imageUrl es null (thumbnailMode 'none'), no crear imagen
+    if (imageUrl === null) {
+      console.log(`[Node Image] Thumbnail mode 'none' - skipping image for node: ${d.name}`);
+      return;
+    }
     
     // Usar la función apropiada según el tipo de imagen
     if (isEmbeddedThumbnailUrl(imageUrl)) {
@@ -812,13 +852,14 @@ function drawGridLayout(nodes, svg) {
   const nameText = textGroup.append("text")
     .attr("class", "label-text")
     .attr("x", 0)
-    .attr("y", 15)
-    .attr("text-anchor", "middle")
-    .style("font-size", "12px")
+    .attr("y", hasImages ? 15 : -5) // Move text up in no-image mode for better positioning
+    .style("text-anchor", "middle") // Override CSS with inline style
+    .attr("dominant-baseline", "middle") // Perfect vertical centering
+    .style("font-size", hasImages ? "12px" : "14px") // Slightly larger font for no-image mode
     .text(d => d.name);
 
   // Apply text wrapping for grid layout
-  wrap(nameText, nodeWidth - 10);
+  wrap(nameText, nodeWidth - 10, hasImages);
   
     }
 
@@ -973,17 +1014,31 @@ function drawGridLayout(nodes, svg) {
           }
         });
       
+      // Check if we're in 'none' mode to adjust node dimensions
+      const thumbnailMode = getThumbnailMode(diagramConfig);
+      const hasImages = thumbnailMode !== 'none';
+      
       node.append("rect")
         .style("stroke-width", "var(--node-bg-stroke, 2)")
         .attr("x", parseFloat(themeVars.getPropertyValue('--node-bg-x')) || -30)
-        .attr("y", parseFloat(themeVars.getPropertyValue('--node-bg-y')) || -20)
+        .attr("y", hasImages ? 
+          (parseFloat(themeVars.getPropertyValue('--node-bg-y')) || -20) : 
+          (parseFloat(themeVars.getPropertyValue('--node-bg-y-no-image')) || -25))
         .attr("width", parseFloat(themeVars.getPropertyValue('--node-bg-width')) || 60)
-        .attr("height", parseFloat(themeVars.getPropertyValue('--node-bg-height')) || 40);
+        .attr("height", hasImages ? 
+          (parseFloat(themeVars.getPropertyValue('--node-bg-height')) || 40) : 
+          (parseFloat(themeVars.getPropertyValue('--node-bg-height-no-image')) || 50));
       
       // Node image with enhanced loading
       node.each(function(d) {
         const nodeSel = d3.select(this);
-        const imageUrl = resolveNodeImage(d);
+        const imageUrl = resolveNodeImage(d, diagramConfig);
+        
+        // Si imageUrl es null (thumbnailMode 'none'), no crear imagen
+        if (imageUrl === null) {
+          console.log(`[Node Image] Thumbnail mode 'none' - skipping image for node: ${d.name}`);
+          return;
+        }
         
         // Usar la función apropiada según el tipo de imagen
         if (isEmbeddedThumbnailUrl(imageUrl)) {
@@ -1065,7 +1120,9 @@ function drawGridLayout(nodes, svg) {
           }
           return baseX;
         })
-        .attr("y", parseFloat(themeVars.getPropertyValue('--label-id-y')))
+        .attr("y", hasImages ? 
+          parseFloat(themeVars.getPropertyValue('--label-id-y')) : 
+          parseFloat(themeVars.getPropertyValue('--label-id-y-no-image')))
         .attr("dy", themeVars.getPropertyValue('--label-id-dy'))
         .attr("text-anchor", d => {
           const baseAnchor = themeVars.getPropertyValue('--label-id-anchor');
@@ -1079,18 +1136,29 @@ function drawGridLayout(nodes, svg) {
       const nameText = textGroup.append("text")
         .attr("class", "label-text")
         .attr("x", parseFloat(themeVars.getPropertyValue('--label-x')))
-        .attr("y", parseFloat(themeVars.getPropertyValue('--label-y')))
-        .attr("dy", parseFloat(themeVars.getPropertyValue('--label-dy')))
-        .style("font-size", themeVars.getPropertyValue('--label-font-size'))
+        .attr("y", hasImages ? 
+          parseFloat(themeVars.getPropertyValue('--label-y')) : 
+          parseFloat(themeVars.getPropertyValue('--label-y-no-image')) - 5) // Move text up in no-image mode
+        .attr("dy", hasImages ? parseFloat(themeVars.getPropertyValue('--label-dy')) : "0") // No dy when using dominant-baseline middle
+        .attr("dominant-baseline", hasImages ? "auto" : "middle") // Perfect vertical centering for no-image mode
+        .style("text-anchor", "middle") // Override CSS with inline style
+        .style("font-size", hasImages ? 
+          themeVars.getPropertyValue('--label-font-size') : 
+          '8px') // Slightly larger font for no-image mode
         .text(d => d.data.name);
       
       const maxWidth = parseFloat(themeVars.getPropertyValue('--label-max-width')) || 68;
-      wrap(nameText, maxWidth);
+      wrap(nameText, maxWidth, hasImages);
+      
+      // Get thumbnail mode to adjust subtitle position
+      const currentThumbnailMode = getThumbnailMode(diagramConfig);
+      const baseSubtitleX = parseFloat(themeVars.getPropertyValue('--subtitle-x'));
+      const adjustedSubtitleX = currentThumbnailMode === 'none' ? -20 : baseSubtitleX;
       
       textGroup.append("text")
         .attr("class", "subtitle-text")
         .attr("transform", "rotate(270)")
-        .attr("x", parseFloat(themeVars.getPropertyValue('--subtitle-x')))
+        .attr("x", adjustedSubtitleX)
         .attr("y", parseFloat(themeVars.getPropertyValue('--subtitle-y')))
         .attr("text-anchor", themeVars.getPropertyValue('--subtitle-anchor'))
         .style("font-size", themeVars.getPropertyValue('--subtitle-font-size'))
@@ -1765,7 +1833,7 @@ function drawTrees(trees, diagramConfig = null) {
     
   // Check layout type and choose appropriate rendering method
   if (isFlatList(trees)) {
-    drawClusterGrid(trees, svg, diagramConfig);
+    drawGridLayout(trees, svg, diagramConfig);
   } else if (shouldUseClusterGrid(trees)) {
     drawClusterGrid(trees, svg, diagramConfig);
   } else {
@@ -1957,18 +2025,32 @@ function drawTrees(trees, diagramConfig = null) {
             }
           });
 
+        // Check if we're in 'none' mode to adjust node dimensions
+        const thumbnailMode = getThumbnailMode(diagramConfig);
+        const hasImages = thumbnailMode !== 'none';
+        
         // Node rectangle
         node.append("rect")
           .style("stroke-width", "var(--node-bg-stroke, 2)")
           .attr("x", parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--node-bg-x')) || -30)
-          .attr("y", parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--node-bg-y')) || -20)
+          .attr("y", hasImages ? 
+            (parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--node-bg-y')) || -20) : 
+            (parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--node-bg-y-no-image')) || -25))
           .attr("width", parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--node-bg-width')) || 60)
-          .attr("height", parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--node-bg-height')) || 40);
+          .attr("height", hasImages ? 
+            (parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--node-bg-height')) || 40) : 
+            (parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--node-bg-height-no-image')) || 50));
 
         // Node image with enhanced loading
         node.each(function(d) {
           const nodeSel = d3.select(this);
-          const imageUrl = resolveNodeImage(d);
+          const imageUrl = resolveNodeImage(d, diagramConfig);
+          
+          // Si imageUrl es null (thumbnailMode 'none'), no crear imagen
+          if (imageUrl === null) {
+            console.log(`[Node Image] Thumbnail mode 'none' - skipping image for node: ${d.name}`);
+            return;
+          }
           
           // Usar la función apropiada según el tipo de imagen
           if (isEmbeddedThumbnailUrl(imageUrl)) {
@@ -2060,7 +2142,9 @@ function drawTrees(trees, diagramConfig = null) {
             }
             return baseX;
           })
-          .attr("y", parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--label-id-y')))
+          .attr("y", hasImages ? 
+            parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--label-id-y')) : 
+            parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--label-id-y-no-image')))
           .attr("dy", getComputedStyle(document.documentElement).getPropertyValue('--label-id-dy'))
           .attr("text-anchor", d => {
             const baseAnchor = getComputedStyle(document.documentElement).getPropertyValue('--label-id-anchor');
@@ -2075,20 +2159,31 @@ function drawTrees(trees, diagramConfig = null) {
         const nameText = textGroup.append("text")
           .attr("class", "label-text")
           .attr("x", parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--label-x')))
-          .attr("y", parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--label-y')))
-          .attr("dy", getComputedStyle(document.documentElement).getPropertyValue('--label-dy'))
-          .style("font-size", getComputedStyle(document.documentElement).getPropertyValue('--label-font-size'))
+          .attr("y", hasImages ? 
+            parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--label-y')) : 
+            parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--label-y-no-image')) - 5) // Move text up in no-image mode
+          .attr("dy", hasImages ? getComputedStyle(document.documentElement).getPropertyValue('--label-dy') : "0") // No dy when using dominant-baseline middle
+          .attr("dominant-baseline", hasImages ? "auto" : "middle") // Perfect vertical centering for no-image mode
+          .style("text-anchor", "middle") // Override CSS with inline style
+          .style("font-size", hasImages ? 
+            getComputedStyle(document.documentElement).getPropertyValue('--label-font-size') : 
+            '8px') // Slightly larger font for no-image mode
           .text(d => d.data.name);
 
         // Apply text wrapping
         const maxWidth = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--label-max-width')) || 68;
-        wrap(nameText, maxWidth);
+        wrap(nameText, maxWidth, hasImages);
 
+        // Get thumbnail mode to adjust subtitle position
+        const currentThumbnailMode = getThumbnailMode(diagramConfig);
+        const baseSubtitleX = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--subtitle-x'));
+        const adjustedSubtitleX = currentThumbnailMode === 'none' ? -20 : baseSubtitleX;
+        
         // Node subtitle with truncation for vertical text - individual per node
         textGroup.append("text")
           .attr("class", "subtitle-text")
           .attr("transform", "rotate(270)") // Rotate text 90 degrees for vertical position
-          .attr("x", parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--subtitle-x')))
+          .attr("x", adjustedSubtitleX)
           .attr("y", parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--subtitle-y')))
           .attr("text-anchor", getComputedStyle(document.documentElement).getPropertyValue('--subtitle-anchor'))
           .style("font-size", getComputedStyle(document.documentElement).getPropertyValue('--subtitle-font-size'))
@@ -2634,13 +2729,11 @@ window.getZoomInfo = function() {
 };
 
 // Function to wrap text
-function wrap(text, width) {
+function wrap(text, width, hasImages = true) {
   const lineHeight = 1.5;
   text.each(function() {
     const textElement = d3.select(this);
     let originalText = textElement.text();
-
-
 
     // Si hay saltos de línea, solo se consideran los dos primeros segmentos
     let lines = originalText.split('\n');
@@ -2649,15 +2742,26 @@ function wrap(text, width) {
 
     textElement.text(null);
 
+    // Get coordinates based on thumbnail mode
+    const x = getComputedStyle(document.documentElement).getPropertyValue('--label-x');
+    const y = hasImages ? 
+      getComputedStyle(document.documentElement).getPropertyValue('--label-y') : 
+      (parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--label-y-no-image')) - 5);
+    const dy = hasImages ? 
+      (parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--label-dy')) || 0) + 'em' : 
+      '0em';
+    const fontSize = hasImages ? 
+      getComputedStyle(document.documentElement).getPropertyValue('--label-font-size') : 
+      '8px';
+
     // --- Word wrap para la primera línea ---
     const words = firstLine.split(/\s+/);
     let currentLine = '';
     let tspan1 = textElement.append('tspan')
-      .attr('x', getComputedStyle(document.documentElement).getPropertyValue('--label-x'))
-      .attr('y', getComputedStyle(document.documentElement).getPropertyValue('--label-y'))
-      .attr('dy', (parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--label-dy')) || 0) + 'em')
+      .attr('x', x)
+      .attr('y', y)
       .attr('text-anchor', 'middle')
-      .style('font-size', getComputedStyle(document.documentElement).getPropertyValue('--label-font-size'))
+      .style('font-size', fontSize)
       .text('');
     let usedWords = 0;
     
@@ -2687,14 +2791,19 @@ function wrap(text, width) {
       secondLineText = words.slice(usedWords).join(' ');
     }
 
+    // Determine if we have single or multiple lines
+    const hasMultipleLines = secondLineText.length > 0;
 
-    if (secondLineText) {
+    if (hasMultipleLines) {
+      // Multiple lines: use dy for proper spacing
+      tspan1.attr('dy', dy);
+      
       let tspan2 = textElement.append('tspan')
-        .attr('x', getComputedStyle(document.documentElement).getPropertyValue('--label-x'))
-        .attr('y', getComputedStyle(document.documentElement).getPropertyValue('--label-y'))
+        .attr('x', x)
+        .attr('y', y)
         .attr('dy', lineHeight + 'em')
         .attr('text-anchor', 'middle')
-        .style('font-size', getComputedStyle(document.documentElement).getPropertyValue('--label-font-size'))
+        .style('font-size', fontSize)
         .text('');
       const words2 = secondLineText.split(/\s+/);
       let currentLine2 = '';
@@ -2710,6 +2819,9 @@ function wrap(text, width) {
           tspan2.text(currentLine2);
         }
       }
+    } else {
+      // Single line: use dominant-baseline for perfect centering
+      tspan1.attr('dominant-baseline', hasImages ? 'auto' : 'middle');
     }
   });
 }
@@ -6650,61 +6762,114 @@ function createImageElement(baseUrl, fallbackUrl, className = "image-base") {
   return img;
 }
 
-// Helper function to resolve node image URL - COLUMNA IMG TIENE PRIORIDAD ABSOLUTA
-function resolveNodeImage(node) {
+// Helper function to resolve node image URL - RESPETA thumbnailMode
+function resolveNodeImage(node, diagramConfig = null) {
+  const thumbnailMode = getThumbnailMode(diagramConfig);
+  
+  // Si thumbnailMode es 'none', no mostrar ninguna imagen
+  if (thumbnailMode === 'none') {
+    console.log(`[resolveNodeImage] Thumbnail mode 'none' - no image for node: ${node.name || node.data?.name || 'unknown'}`);
+    return null;
+  }
+  
   // Obtener valor de la columna img directamente del nodo
   const imgVal = node.img || (node.data && node.data.img) || "";
   const typeVal = node.type || (node.data && node.data.type) || "";
 
   console.log(`[resolveNodeImage] Processing node: ${node.name || node.data?.name || 'unknown'}`);
+  console.log(`[resolveNodeImage] Thumbnail mode: ${thumbnailMode}`);
   console.log(`[resolveNodeImage] Img value: "${imgVal}"`);
   console.log(`[resolveNodeImage] Type value: "${typeVal}"`);
 
-  // COLUMNA IMG TIENE PRIORIDAD ABSOLUTA - SIEMPRE usar img si tiene valor
-  if (imgVal && imgVal.trim() !== "") {
-    // Si es una URL absoluta, data URI o ruta con barra, úsala directamente
-    if (/^(https?:\/\/|data:|\/)/i.test(imgVal) || imgVal.includes('/')) {
-      console.log(`[resolveNodeImage] Img "${imgVal}" -> imagen externa/local (prioridad absoluta)`);
-      return imgVal;
+                // Si thumbnailMode es 'simple', usar siempre el thumbnail 'detail' para todos los nodos
+              if (thumbnailMode === 'simple') {
+                const detailThumbnail = getEmbeddedThumbnail('detail');
+                if (detailThumbnail) {
+                  console.log(`[resolveNodeImage] Simple mode - usando thumbnail 'detail' para todos los nodos`);
+                  return detailThumbnail;
+                }
+                
+                // Fallback: archivo externo detail.svg
+                console.log(`[resolveNodeImage] Simple mode - thumbnail 'detail' embebido no encontrado, usando archivo externo`);
+                return `img/detail.svg`;
+              }
+
+              // Si thumbnailMode es 'default', solo usar thumbnails embebidos por defecto
+              if (thumbnailMode === 'default') {
+                const typeName = (typeVal || 'detail').toLowerCase().replace(/\s+/g, '-');
+
+                // Verificar si el type existe como thumbnail embebido
+                const embeddedThumbnail = getEmbeddedThumbnail(typeName);
+                if (embeddedThumbnail) {
+                  console.log(`[resolveNodeImage] Default mode - Type "${typeName}" -> thumbnail embebido encontrado`);
+                  return embeddedThumbnail;
+                }
+
+                // Si no existe el thumbnail embebido, usar detail como fallback final
+                const detailThumbnail = getEmbeddedThumbnail('detail');
+                if (detailThumbnail) {
+                  console.log(`[resolveNodeImage] Default mode - Type "${typeName}" no encontrado, usando detail embebido`);
+                  return detailThumbnail;
+                }
+
+                // Último recurso: archivo externo (el sistema de error handling se encargará del fallback)
+                return `img/${typeName}.svg`;
+              }
+
+  // Si thumbnailMode es 'custom', usar el comportamiento actual (COLUMNA IMG TIENE PRIORIDAD ABSOLUTA)
+  if (thumbnailMode === 'custom') {
+    // COLUMNA IMG TIENE PRIORIDAD ABSOLUTA - SIEMPRE usar img si tiene valor
+    if (imgVal && imgVal.trim() !== "") {
+      // Si es una URL absoluta, data URI o ruta con barra, úsala directamente
+      if (/^(https?:\/\/|data:|\/)/i.test(imgVal) || imgVal.includes('/')) {
+        console.log(`[resolveNodeImage] Custom mode - Img "${imgVal}" -> imagen externa/local (prioridad absoluta)`);
+        return imgVal;
+      }
+      
+      // Si es un nombre simple sin ruta, verificar si existe como thumbnail embebido
+      let fileName = imgVal.toLowerCase().replace(/\s+/g, '-');
+      if (!fileName.match(/\.[a-z0-9]+$/i)) {
+        fileName += '.svg';
+      }
+      
+      // Verificar si existe como thumbnail embebido
+      const embeddedThumbnail = getEmbeddedThumbnail(fileName.replace('.svg', ''));
+      if (embeddedThumbnail) {
+        console.log(`[resolveNodeImage] Custom mode - Img "${fileName}" -> thumbnail embebido encontrado`);
+        return embeddedThumbnail;
+      }
+      
+      // Si no es embebido, usar como archivo externo (el sistema de error handling se encargará del fallback)
+      console.log(`[resolveNodeImage] Custom mode - Img "${fileName}" -> archivo externo (prioridad absoluta)`);
+      return `img/${fileName}`;
     }
+
+    // SOLO si img está completamente vacío, usar type como fallback
+    const typeName = (typeVal || 'detail').toLowerCase().replace(/\s+/g, '-');
     
-    // Si es un nombre simple sin ruta, verificar si existe como thumbnail embebido
-    let fileName = imgVal.toLowerCase().replace(/\s+/g, '-');
-    if (!fileName.match(/\.[a-z0-9]+$/i)) {
-      fileName += '.svg';
-    }
-    
-    // Verificar si existe como thumbnail embebido
-    const embeddedThumbnail = getEmbeddedThumbnail(fileName.replace('.svg', ''));
+    // Verificar si el type existe como thumbnail embebido
+    const embeddedThumbnail = getEmbeddedThumbnail(typeName);
     if (embeddedThumbnail) {
-      console.log(`[resolveNodeImage] Img "${fileName}" -> thumbnail embebido encontrado`);
+      console.log(`[resolveNodeImage] Custom mode - Type "${typeName}" -> thumbnail embebido encontrado`);
       return embeddedThumbnail;
     }
     
-    // Si no es embebido, usar como archivo externo (el sistema de error handling se encargará del fallback)
-    console.log(`[resolveNodeImage] Img "${fileName}" -> archivo externo (prioridad absoluta)`);
-    return `img/${fileName}`;
+    // Si no existe el thumbnail embebido, usar detail como fallback final
+    const detailThumbnail = getEmbeddedThumbnail('detail');
+    if (detailThumbnail) {
+      console.log(`[resolveNodeImage] Custom mode - Type "${typeName}" no encontrado, usando detail embebido`);
+      return detailThumbnail;
+    }
+    
+    // Último recurso: archivo externo (el sistema de error handling se encargará del fallback)
+    return `img/${typeName}.svg`;
   }
 
-  // SOLO si img está completamente vacío, usar type como fallback
+  // Fallback: si thumbnailMode no es reconocido, usar 'default'
+  console.log(`[resolveNodeImage] Unknown thumbnail mode "${thumbnailMode}", falling back to 'default'`);
   const typeName = (typeVal || 'detail').toLowerCase().replace(/\s+/g, '-');
-  
-  // Verificar si el type existe como thumbnail embebido
-  const embeddedThumbnail = getEmbeddedThumbnail(typeName);
-  if (embeddedThumbnail) {
-    console.log(`[resolveNodeImage] Type "${typeName}" -> thumbnail embebido encontrado`);
-    return embeddedThumbnail;
-  }
-  
-  // Si no existe el thumbnail embebido, usar detail como fallback final
   const detailThumbnail = getEmbeddedThumbnail('detail');
-  if (detailThumbnail) {
-    console.log(`[resolveNodeImage] Type "${typeName}" no encontrado, usando detail embebido`);
-    return detailThumbnail;
-  }
-  
-  // Último recurso: archivo externo (el sistema de error handling se encargará del fallback)
-  return `img/${typeName}.svg`;
+  return detailThumbnail || `img/${typeName}.svg`;
 }
 
 // Helper: determine if CSS filter should be applied (para archivos SVG)
@@ -7594,6 +7759,13 @@ function activateClusterClickMode() {
           zoomToCluster(clusterInfo);
       })
       .on("mouseenter", isSelected ? null : function() {
+          // Check if this is a single cluster diagram - if so, disable hover effects
+          const isMultiCluster = detectMultiClusterDiagram();
+          if (!isMultiCluster) {
+              console.log('[ClusterClickMode] Single cluster detected - hover effects disabled');
+              return;
+          }
+          
           // Add hover effect
           rect
               .style("fill", "var(--cluster-hover-bg, rgba(25, 118, 210, 0.15))")
@@ -7611,6 +7783,13 @@ function activateClusterClickMode() {
           }
       })
       .on("mouseleave", function() {
+          // Check if this is a single cluster diagram - if so, disable hover effects
+          const isMultiCluster = detectMultiClusterDiagram();
+          if (!isMultiCluster) {
+              console.log('[ClusterClickMode] Single cluster detected - hover effects disabled');
+              return;
+          }
+          
           // **AQUÍ ESTÁ LA CORRECCIÓN IMPORTANTE**
           // Solo elimina los estilos si este clúster NO está seleccionado.
           const selectedCluster = window.$xDiagrams.clusterClickMode.selectedCluster;
@@ -8025,6 +8204,13 @@ function disableHoverOnSelectedCluster(selectedClusterInfo) {
           zoomToCluster(previousSelectedCluster);
         })
         .on("mouseenter", function() {
+          // Check if this is a single cluster diagram - if so, disable hover effects
+          const isMultiCluster = detectMultiClusterDiagram();
+          if (!isMultiCluster) {
+              console.log('[ClusterClickMode] Single cluster detected - hover effects disabled');
+              return;
+          }
+          
           // Add hover effect using CSS classes only
           previousRect.classed("cluster-hover", true);
           
@@ -8032,6 +8218,13 @@ function disableHoverOnSelectedCluster(selectedClusterInfo) {
           showClusterHoverTitle(previousSelectedCluster);
         })
         .on("mouseleave", function() {
+          // Check if this is a single cluster diagram - if so, disable hover effects
+          const isMultiCluster = detectMultiClusterDiagram();
+          if (!isMultiCluster) {
+              console.log('[ClusterClickMode] Single cluster detected - hover effects disabled');
+              return;
+          }
+          
           // Remove hover effect using CSS classes only
           previousRect.classed("cluster-hover", false);
           
@@ -8089,6 +8282,13 @@ function disableHoverOnSelectedCluster(selectedClusterInfo) {
             zoomToCluster(clusterInfo);
           })
           .on("mouseenter", function() {
+            // Check if this is a single cluster diagram - if so, disable hover effects
+            const isMultiCluster = detectMultiClusterDiagram();
+            if (!isMultiCluster) {
+                console.log('[ClusterClickMode] Single cluster detected - hover effects disabled');
+                return;
+            }
+            
             // Add hover effect using CSS classes only
             rect.classed("cluster-hover", true);
             
@@ -8096,6 +8296,13 @@ function disableHoverOnSelectedCluster(selectedClusterInfo) {
             showClusterHoverTitle(clusterInfo);
           })
           .on("mouseleave", function() {
+            // Check if this is a single cluster diagram - if so, disable hover effects
+            const isMultiCluster = detectMultiClusterDiagram();
+            if (!isMultiCluster) {
+                console.log('[ClusterClickMode] Single cluster detected - hover effects disabled');
+                return;
+            }
+            
             // Remove hover effect using CSS classes only
             rect.classed("cluster-hover", false);
             
@@ -8176,6 +8383,13 @@ function restoreHoverOnClusters() {
         .style("cursor", "pointer")
         .style("pointer-events", "all")
         .on("mouseenter", function() {
+          // Check if this is a single cluster diagram - if so, disable hover effects
+          const isMultiCluster = detectMultiClusterDiagram();
+          if (!isMultiCluster) {
+              console.log('[ClusterClickMode] Single cluster detected - hover effects disabled');
+              return;
+          }
+          
           // Add hover effect
           rect
             .style("fill", "var(--cluster-hover-bg, rgba(25, 118, 210, 0.15))")
@@ -8190,6 +8404,13 @@ function restoreHoverOnClusters() {
           showClusterTooltip(clusterInfo);
         })
         .on("mouseleave", function() {
+          // Check if this is a single cluster diagram - if so, disable hover effects
+          const isMultiCluster = detectMultiClusterDiagram();
+          if (!isMultiCluster) {
+              console.log('[ClusterClickMode] Single cluster detected - hover effects disabled');
+              return;
+          }
+          
           // Remove hover effect
           rect.classed("cluster-hover", false);
           
@@ -8245,6 +8466,13 @@ function deselectCurrentCluster(reason = 'manual') {
           zoomToCluster(clusterToDeselect);
         })
         .on("mouseenter", function() {
+          // Check if this is a single cluster diagram - if so, disable hover effects
+          const isMultiCluster = detectMultiClusterDiagram();
+          if (!isMultiCluster) {
+              console.log('[ClusterClickMode] Single cluster detected - hover effects disabled');
+              return;
+          }
+          
           // Add hover effect using CSS classes only
           selectedRect.classed("cluster-hover", true);
           
@@ -8337,6 +8565,13 @@ function deselectCurrentCluster(reason = 'manual') {
           }
         })
         .on("mouseleave", function() {
+          // Check if this is a single cluster diagram - if so, disable hover effects
+          const isMultiCluster = detectMultiClusterDiagram();
+          if (!isMultiCluster) {
+              console.log('[ClusterClickMode] Single cluster detected - hover effects disabled');
+              return;
+          }
+          
           // Remove hover effect
           selectedRect
             .style("fill", null)
@@ -8608,22 +8843,31 @@ function setupClusterTooltips() {
       // Remove any existing event handlers to prevent duplicates
       rect.on("mouseenter", null).on("mouseleave", null);
       
-      // Add tooltip functionality to cluster rect
-      rect
-        .on("mouseenter", function() {
-          console.log('[ClusterTooltip] Mouse enter on cluster:', clusterInfo.id);
-          
-          // Check if tooltips should be shown based on zoom level and cluster state
-          if (shouldShowTooltips()) {
-            showClusterTooltip(clusterInfo);
-          } else {
-            console.log('[ClusterTooltip] Tooltips disabled - zoom level or cluster state not suitable');
-          }
-        })
-        .on("mouseleave", function() {
-          console.log('[ClusterTooltip] Mouse leave on cluster:', clusterInfo.id);
-          hideClusterTooltip();
-        });
+      // Check if this is a single cluster diagram - if so, disable hover effects
+      const isMultiCluster = detectMultiClusterDiagram();
+      
+      // Add tooltip functionality to cluster rect (only for multi-cluster diagrams)
+      if (isMultiCluster) {
+        rect
+          .on("mouseenter", function() {
+            console.log('[ClusterTooltip] Mouse enter on cluster:', clusterInfo.id);
+            
+            // Check if tooltips should be shown based on zoom level and cluster state
+            if (shouldShowTooltips()) {
+              showClusterTooltip(clusterInfo);
+            } else {
+              console.log('[ClusterTooltip] Tooltips disabled - zoom level or cluster state not suitable');
+            }
+          })
+          .on("mouseleave", function() {
+            console.log('[ClusterTooltip] Mouse leave on cluster:', clusterInfo.id);
+            hideClusterTooltip();
+          });
+      } else {
+        console.log('[ClusterTooltip] Single cluster detected - hover effects disabled for cluster:', clusterInfo.id);
+        // For single cluster diagrams, ensure no hover events are attached
+        rect.on("mouseenter", null).on("mouseleave", null);
+      }
     });
     
     window.$xDiagrams.clusterTooltip.initialized = true;

@@ -2581,13 +2581,8 @@ function ensureZoomBehavior() {
     svg.call(zoom);
     svg.style('pointer-events', 'auto');
     
-    // Disable double-click zoom by preventing the default behavior
+    // Disable default D3 double-click zoom behavior but allow our custom handler
     svg.on("dblclick.zoom", null);
-    svg.on("dblclick", function(event) {
-      event.preventDefault();
-      event.stopPropagation();
-      return false;
-    });
     
     // Store reference to current zoom for external access
     window.$xDiagrams.currentZoom = zoom;
@@ -2615,14 +2610,172 @@ function ensureZoomBehavior() {
   }
 }
 
-// Function to reset zoom to default state
+// Function to reset zoom to default state (showing entire diagram)
 function resetZoom() {
   const svg = d3.select("#main-diagram-svg");
-  if (!svg.empty() && window.$xDiagrams.currentZoom) {
-    svg.transition().duration(300).call(
-      window.$xDiagrams.currentZoom.transform,
-      d3.zoomIdentity
-    );
+  if (!svg.empty()) {
+    // Calculate the target zoom transformation for showing entire diagram
+    const g = svg.select("g");
+    
+    if (g.empty() || g.node().getBBox().width === 0) {
+      return;
+    }
+
+    const bounds = g.node().getBBox();
+    const svgElement = document.getElementById('main-diagram-svg');
+    const svgWidth = svgElement ? svgElement.clientWidth || svgElement.offsetWidth : window.innerWidth;
+    const svgHeight = svgElement ? svgElement.clientHeight || svgElement.offsetHeight : window.innerHeight;
+
+    if (!bounds.width || !bounds.height) {
+      return;
+    }
+
+    // Calculate total bounds (same logic as applyAutoZoom)
+    let totalBounds = bounds;
+    const diagramGroups = g.selectAll(".diagram-group");
+    
+    if (!diagramGroups.empty()) {
+      let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+      diagramGroups.each(function() {
+        const groupBounds = this.getBBox();
+        const transform = this.getAttribute("transform");
+        let groupOffsetX = 0;
+        if (transform) {
+          const match = /translate\(([-\d.]+), ?([-\d.]+)\)/.exec(transform);
+          if (match) {
+            groupOffsetX = parseFloat(match[1]) || 0;
+          }
+        }
+        const absX = groupBounds.x + groupOffsetX;
+        minX = Math.min(minX, absX);
+        minY = Math.min(minY, groupBounds.y);
+        maxX = Math.max(maxX, absX + groupBounds.width);
+        maxY = Math.max(maxY, groupBounds.y + groupBounds.height);
+      });
+      
+      if (minX < Infinity && minY < Infinity && maxX > -Infinity && maxY > -Infinity) {
+        totalBounds = {
+          x: minX,
+          y: minY,
+          width: maxX - minX,
+          height: maxY - minY
+        };
+      }
+    }
+
+    // Calculate transformation (same logic as applyAutoZoom)
+    const contentCenterX = totalBounds.x + totalBounds.width / 2;
+    const contentCenterY = totalBounds.y + totalBounds.height / 2;
+    const svgCenterX = svgWidth / 2;
+    const svgCenterY = svgHeight / 2;
+    
+    const nodeCount = g.selectAll(".node").size();
+    const diagramGroupCount = diagramGroups.size();
+    const isSmallDiagram = nodeCount <= 4;
+    const isSingleGroup = diagramGroupCount === 1;
+    const isFlatListDiagram = !isSingleGroup && nodeCount === diagramGroupCount;
+    
+    let scaleX = (svgWidth - 100) / totalBounds.width;
+    let scaleY = (svgHeight - 100) / totalBounds.height;
+    let scale = Math.min(scaleX, scaleY, 1);
+    
+    // Apply specific zoom based on diagram type (same logic as applyAutoZoom)
+    if (isSingleGroup) {
+      scale = Math.min(scale * 0.6, 0.6);
+    } else {
+      const totalArea = totalBounds.width * totalBounds.height;
+      const nodeDensity = nodeCount / Math.max(1, diagramGroupCount);
+      
+      let maxZoomOut = 0.18;
+      
+      if (nodeCount > 50) {
+        maxZoomOut = 0.10;
+      } else if (nodeCount > 30) {
+        maxZoomOut = 0.12;
+      } else if (nodeCount > 20) {
+        maxZoomOut = 0.15;
+      } else if (nodeCount > 10) {
+        maxZoomOut = 0.18;
+      } else if (diagramGroupCount > 10) {
+        maxZoomOut = 0.12;
+      } else if (diagramGroupCount > 5) {
+        maxZoomOut = 0.15;
+      }
+      
+      if (totalArea > 1000000) {
+        maxZoomOut = Math.min(maxZoomOut, 0.10);
+      } else if (totalArea > 500000) {
+        maxZoomOut = Math.min(maxZoomOut, 0.12);
+      } else if (totalArea > 200000) {
+        maxZoomOut = Math.min(maxZoomOut, 0.15);
+      }
+      
+      scale = Math.min(scale * 0.7, maxZoomOut);
+    }
+    
+    let translateX = svgCenterX - contentCenterX * scale;
+    
+    if (isSingleGroup) {
+      translateX = svgCenterX - contentCenterX * scale;
+    } else {
+      const firstCluster = diagramGroups.nodes()[0];
+      if (firstCluster) {
+        const firstClusterBounds = firstCluster.getBBox();
+        const firstClusterTransform = firstCluster.getAttribute("transform");
+        let firstClusterOffsetX = 0;
+        
+        if (firstClusterTransform) {
+          const match = /translate\(([-\d.]+), ?([-\d.]+)\)/.exec(firstClusterTransform);
+          if (match) {
+            firstClusterOffsetX = parseFloat(match[1]) || 0;
+          }
+        }
+        
+        const firstClusterLeftEdge = firstClusterBounds.x + firstClusterOffsetX;
+        const zoomVarsLeft = getComputedStyle(document.documentElement);
+        if (isFlatListDiagram) {
+          const flatLeftMargin = parseFloat(zoomVarsLeft.getPropertyValue('--flatlist-left-margin')) || 40;
+          translateX = flatLeftMargin - firstClusterLeftEdge * scale;
+        } else {
+          const clusterLeftMargin = parseFloat(zoomVarsLeft.getPropertyValue('--cluster-left-margin')) || 50;
+          translateX = clusterLeftMargin - firstClusterLeftEdge * scale;
+        }
+      } else {
+        const leftEdge = totalBounds.x * scale + translateX;
+        if (leftEdge > 300) {
+          translateX -= (leftEdge - 300);
+        }
+      }
+    }
+    
+    let translateY;
+    if (isSingleGroup) {
+      translateY = svgCenterY - contentCenterY * scale - 50;
+    } else {
+      const diagramWidth = totalBounds.width;
+      const diagramHeight = totalBounds.height;
+      
+      const baseLeftMargin = 30;
+      const dynamicLeftMargin = Math.max(20, baseLeftMargin - (diagramWidth * scale * 0.03));
+      translateX = dynamicLeftMargin - totalBounds.x * scale;
+      
+      const baseTopMargin = 60;
+      const dynamicTopMargin = Math.max(30, baseTopMargin - (diagramHeight * scale * 0.02));
+      translateY = dynamicTopMargin - totalBounds.y * scale;
+    }
+
+    // Create target transformation
+    const targetTransform = d3.zoomIdentity
+      .translate(translateX, translateY)
+      .scale(scale);
+
+    // Apply transformation with smooth animation
+    svg.transition()
+      .duration(800) // Slightly longer duration for smoother animation
+      .ease(d3.easeCubicOut) // Smooth easing function
+      .call(zoom.transform, targetTransform);
+    
+    console.log('[ResetZoom] Applied animated zoom out to show entire diagram');
   }
 }
 
@@ -3169,13 +3322,17 @@ function generateSidePanelContent(nodeData) {
   return html;
 }
 
-// Configure panel close on outside click
+// Configure panel close on outside click and double-click zoom reset
 function setupClosePanelOnSvgClick() {
   const svg = document.querySelector('#main-diagram-svg');
   if (!svg) return;
   
   svg.removeEventListener('click', handleSvgClick);
   svg.addEventListener('click', handleSvgClick);
+  
+  // Add double-click event listener for zoom reset
+  svg.removeEventListener('dblclick', handleSvgDoubleClick);
+  svg.addEventListener('dblclick', handleSvgDoubleClick);
   
   function handleSvgClick(event) {
     // Only close panel if clicking on empty space, not on nodes or other interactive elements
@@ -3191,6 +3348,57 @@ function setupClosePanelOnSvgClick() {
       } else {
         console.log('[ClusterClickMode] No cluster to deselect - mode active:', window.$xDiagrams.clusterClickMode.active, 'selected cluster:', !!window.$xDiagrams.clusterClickMode.selectedCluster);
       }
+    }
+  }
+  
+  function handleSvgDoubleClick(event) {
+    // Enhanced detection to ensure double-click only works on truly empty space
+    const target = event.target;
+    const targetTagName = target.tagName ? target.tagName.toLowerCase() : '';
+    const targetClassList = target.classList ? Array.from(target.classList) : [];
+    
+    // Check if clicking on any interactive or content elements
+    const isInteractiveElement = 
+      target.closest('.node') ||           // Nodes
+      target.closest('.cluster') ||        // Clusters
+      target.closest('.link') ||           // Links
+      target.closest('.cluster-rect') ||   // Cluster backgrounds
+      target.closest('.cluster-title') ||  // Cluster titles
+      target.closest('.node-text') ||      // Node text
+      target.closest('.node-image') ||     // Node images
+      target.closest('.node-icon') ||      // Node icons
+      target.closest('.tooltip') ||        // Tooltips
+      target.closest('.side-panel') ||     // Side panel
+      target.closest('text') ||            // Any text elements
+      target.closest('image') ||           // Any image elements
+      target.closest('rect') ||            // Any rectangle elements (cluster backgrounds)
+      target.closest('circle') ||          // Any circle elements
+      target.closest('path');              // Any path elements (links)
+    
+    // Only proceed if clicking on empty space (not on interactive elements)
+    if (!isInteractiveElement) {
+      // Prevent default double-click behavior
+      event.preventDefault();
+      event.stopPropagation();
+      
+      // Reset zoom to original state
+      resetZoom();
+      console.log('[DoubleClick] Zoom reset to original state due to double-click on empty space');
+      
+      // Also deselect any selected cluster if cluster click mode is active
+      if (window.$xDiagrams.clusterClickMode.active && window.$xDiagrams.clusterClickMode.selectedCluster) {
+        console.log('[DoubleClick] Deselecting cluster due to double-click zoom reset');
+        deselectCurrentCluster('double-click-zoom-reset');
+      }
+    } else {
+      // Log when double-click is ignored for debugging
+      console.log('[DoubleClick] Ignored double-click on interactive element:', {
+        tagName: targetTagName,
+        classList: targetClassList,
+        closestNode: target.closest('.node') ? 'node' : null,
+        closestCluster: target.closest('.cluster') ? 'cluster' : null,
+        closestLink: target.closest('.link') ? 'link' : null
+      });
     }
   }
 }
@@ -3686,6 +3894,9 @@ window.$xDiagrams.keyboardNavigation = {
               deselectCurrentCluster('escape-key');
               console.log('[Keyboard] Exited cluster navigation mode');
             } else {
+              // If no panels are open and no cluster is selected, reset zoom to show entire diagram
+              resetZoom();
+              console.log('[Keyboard] ESC - Zoom reset to show entire diagram');
               this.clearSelection();
             }
           }
@@ -5504,6 +5715,46 @@ document.addEventListener("DOMContentLoaded", () => {
   if (isOptionEnabled('keyboardNavigation') && window.$xDiagrams.keyboardNavigation) {
     window.$xDiagrams.keyboardNavigation.init();
   }
+  
+  // Add direct keyboard event listener for ESC key as backup
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      console.log('[ESC] Key detected!');
+      e.preventDefault();
+      e.stopPropagation();
+      
+      // Check if dropdown is open and close it first
+      const dropdown = document.getElementById('diagram-dropdown');
+      if (dropdown && dropdown.classList.contains('open')) {
+        console.log('[ESC] Closing dropdown');
+        dropdown.classList.remove('open');
+        return;
+      }
+      
+      // Check if side panel is open and close it
+      const sidePanel = document.querySelector('.side-panel');
+      if (sidePanel && sidePanel.classList.contains('open')) {
+        console.log('[ESC] Closing side panel');
+        closeSidePanel();
+        return;
+      }
+      
+      // Execute cluster deselection and zoom reset in one ESC press
+      console.log('[ESC] Executing cluster deselection and zoom reset');
+      
+      // Deselect cluster if one is selected
+      if (window.$xDiagrams.clusterClickMode && window.$xDiagrams.clusterClickMode.selectedCluster) {
+        console.log('[ESC] Deselecting cluster');
+        deselectCurrentCluster('escape-key');
+        console.log('[ESC] Exited cluster navigation mode');
+      }
+      
+      // Always reset zoom to show entire diagram
+      console.log('[ESC] Resetting zoom');
+      resetZoom();
+      console.log('[ESC] Zoom reset to show entire diagram');
+    }
+  });
   
   // Initialize custom tooltips only if enabled
   if (isOptionEnabled('tooltips') !== false) {

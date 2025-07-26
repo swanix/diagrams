@@ -283,6 +283,14 @@ function getLayoutConfiguration(diagramConfig = null) {
     return [defaultLayout.clustersPerRow];
   }
   
+  // Helper function to get grid value as alias for clustersPerRow
+  function getGridValue(diagramConfig) {
+    if (diagramConfig && typeof diagramConfig.grid === 'number') {
+      return diagramConfig.grid;
+    }
+    return null;
+  }
+  
   // Try diagram-specific configuration first
   if (diagramConfig && diagramConfig.layout) {
     const rawClustersPerRow = diagramConfig.layout.clustersPerRow || defaultLayout.clustersPerRow;
@@ -299,6 +307,24 @@ function getLayoutConfiguration(diagramConfig = null) {
       fullRowThreshold: diagramConfig.layout.fullRowThreshold || defaultLayout.fullRowThreshold,
       lastRowThreshold: diagramConfig.layout.lastRowThreshold || defaultLayout.lastRowThreshold,
       lastRowAlignment: diagramConfig.layout.lastRowAlignment || defaultLayout.lastRowAlignment
+    };
+  }
+  
+  // Check for grid alias in diagram-specific configuration
+  const gridValue = getGridValue(diagramConfig);
+  if (gridValue) {
+    console.log(`[Layout] Usando parámetro 'grid: ${gridValue}' como alias de clustersPerRow`);
+    return {
+      clustersPerRow: [gridValue],
+      clustersTooltip: defaultLayout.clustersTooltip,
+      marginX: defaultLayout.marginX,
+      marginY: defaultLayout.marginY,
+      spacingX: defaultLayout.spacingX,
+      spacingY: defaultLayout.spacingY,
+      wideClusterThreshold: defaultLayout.wideClusterThreshold,
+      fullRowThreshold: defaultLayout.fullRowThreshold,
+      lastRowThreshold: defaultLayout.lastRowThreshold,
+      lastRowAlignment: defaultLayout.lastRowAlignment
     };
   }
   
@@ -321,6 +347,24 @@ function getLayoutConfiguration(diagramConfig = null) {
     };
   }
   
+  // Check for grid alias in global configuration
+  const globalGridValue = getGridValue(options);
+  if (globalGridValue) {
+    console.log(`[Layout] Usando parámetro global 'grid: ${globalGridValue}' como alias de clustersPerRow`);
+    return {
+      clustersPerRow: [globalGridValue],
+      clustersTooltip: defaultLayout.clustersTooltip,
+      marginX: defaultLayout.marginX,
+      marginY: defaultLayout.marginY,
+      spacingX: defaultLayout.spacingX,
+      spacingY: defaultLayout.spacingY,
+      wideClusterThreshold: defaultLayout.wideClusterThreshold,
+      fullRowThreshold: defaultLayout.fullRowThreshold,
+      lastRowThreshold: defaultLayout.lastRowThreshold,
+      lastRowAlignment: defaultLayout.lastRowAlignment
+    };
+  }
+  
   // Return default layout with processed clustersPerRow
   return {
     clustersPerRow: [defaultLayout.clustersPerRow], // Convert to array for consistency
@@ -334,6 +378,12 @@ function getLayoutConfiguration(diagramConfig = null) {
     lastRowThreshold: defaultLayout.lastRowThreshold,
     lastRowAlignment: defaultLayout.lastRowAlignment
   };
+}
+
+// Get maxRecords configuration for performance optimization
+function getMaxRecordsConfiguration(diagramConfig = null) {
+  const config = diagramConfig || getXDiagramsConfiguration();
+  return config.maxRecords ? parseInt(config.maxRecords) : null;
 }
 
 // Get diagrams from modern configuration
@@ -484,8 +534,18 @@ function buildHierarchies(data, diagramConfig = null) {
   
   // Get column configuration (with diagram-specific config if available)
   const columnConfig = getColumnConfiguration(diagramConfig);
+  
+  // Get maxRecords configuration for performance optimization
+  const maxRecords = getMaxRecordsConfiguration(diagramConfig);
+  let processedRecords = 0;
 
   data.forEach(d => {
+    // Check if we've reached the maximum number of records to process
+    if (maxRecords && processedRecords >= maxRecords) {
+      return; // Skip this record
+    }
+    
+    processedRecords++;
     // Skip completely empty rows
     const isEmptyRow = Object.values(d).every(value => 
       value === undefined || value === null || value === "" || value.toString().trim() === ""
@@ -577,6 +637,11 @@ function buildHierarchies(data, diagramConfig = null) {
   orphanedNodesWithType.forEach(node => {
     roots.push(node);
   });
+  
+  // Log performance optimization info if maxRecords was applied
+  if (maxRecords && data.length > maxRecords) {
+    console.log(`[Performance] Limited rendering to ${maxRecords} records out of ${data.length} total records (${Math.round((maxRecords/data.length)*100)}%)`);
+  }
 
   return roots;
 }
@@ -1703,6 +1768,14 @@ function applyMasonryLayout(clusterGroups, container, originalTrees, preCalculat
     if (window.$xDiagrams && window.$xDiagrams.hooks && window.$xDiagrams.hooks.onLayoutComplete) {
       window.$xDiagrams.hooks.onLayoutComplete();
     }
+    
+    // Apply auto zoom after layout is complete (only for multiple clusters)
+    if (clusterGroups.length > 1 && isOptionEnabled('autoZoom') !== false && window.applyAutoZoom) {
+      console.log('[Layout] Multiple clusters layout complete, applying auto zoom...');
+      setTimeout(() => {
+        window.applyAutoZoom();
+      }, 100); // Small delay to ensure DOM is updated
+    }
   };
   
   // Iniciar el proceso de espera
@@ -2442,6 +2515,16 @@ function applyAutoZoom() {
   const svgCenterX = svgWidth / 2;
   const svgCenterY = svgHeight / 2;
   
+  // Debug logging for centering calculation
+  console.log('[AutoZoom Debug] SVG dimensions:', { svgWidth, svgHeight });
+  console.log('[AutoZoom Debug] Total bounds:', totalBounds);
+  console.log('[AutoZoom Debug] Centers:', { 
+    contentCenterX: contentCenterX.toFixed(1), 
+    contentCenterY: contentCenterY.toFixed(1),
+    svgCenterX: svgCenterX.toFixed(1), 
+    svgCenterY: svgCenterY.toFixed(1)
+  });
+  
   const nodeCount = g.selectAll(".node").size();
   const diagramGroupCount = diagramGroups.size();
   const isSmallDiagram = nodeCount <= 4;
@@ -2500,39 +2583,9 @@ function applyAutoZoom() {
   if (isSingleGroup) {
     // Perfect centering for single groups, without margin adjustments
     translateX = svgCenterX - contentCenterX * scale;
-        } else {
-      // For multiple clusters: start from the left
-    const firstCluster = diagramGroups.nodes()[0];
-    if (firstCluster) {
-      const firstClusterBounds = firstCluster.getBBox();
-      const firstClusterTransform = firstCluster.getAttribute("transform");
-      let firstClusterOffsetX = 0;
-      
-      if (firstClusterTransform) {
-        const match = /translate\(([-\d.]+), ?([-\d.]+)\)/.exec(firstClusterTransform);
-        if (match) {
-          firstClusterOffsetX = parseFloat(match[1]) || 0;
-        }
-      }
-      
-      // Position first cluster from the left with margin configurable
-      const firstClusterLeftEdge = firstClusterBounds.x + firstClusterOffsetX;
-      const zoomVarsLeft = getComputedStyle(document.documentElement);
-      if (isFlatListDiagram) {
-        const flatLeftMargin = parseFloat(zoomVarsLeft.getPropertyValue('--flatlist-left-margin')) || 40; // Reduced from 60 to 40
-        translateX = flatLeftMargin - firstClusterLeftEdge * scale;
-      } else {
-        // Usar el mismo marginX que se usa en el layout para consistencia
-        const clusterLeftMargin = parseFloat(zoomVarsLeft.getPropertyValue('--cluster-left-margin')) || 50; // Reduced from 80 to 50
-        translateX = clusterLeftMargin - firstClusterLeftEdge * scale; // margen consistente con el layout
-      }
-          } else {
-        // Fallback to original logic
-      const leftEdge = totalBounds.x * scale + translateX;
-      if (leftEdge > 300) {
-        translateX -= (leftEdge - 300);
-      }
-    }
+  } else {
+    // For multiple clusters: center the entire diagram horizontally
+    translateX = svgCenterX - contentCenterX * scale;
   }
   
   let translateY;
@@ -2540,27 +2593,23 @@ function applyAutoZoom() {
     // Comportamiento original para un solo cluster
     translateY = svgCenterY - contentCenterY * scale - 50;
   } else {
-    // Cálculo dinámico del translate para múltiples clusters basado en el tamaño total
-    const diagramWidth = totalBounds.width;
-    const diagramHeight = totalBounds.height;
-    
-    // Calcular translateX dinámicamente basado en el ancho del diagrama
-    // Para diagramas pequeños: más margen izquierdo, para grandes: menos margen
-    const baseLeftMargin = 30; // Reduced margin for better balance
-    const dynamicLeftMargin = Math.max(20, baseLeftMargin - (diagramWidth * scale * 0.03));
-    translateX = dynamicLeftMargin - totalBounds.x * scale;
-    
-    // Calcular translateY dinámicamente basado en la altura del diagrama
-    // Para diagramas pequeños: más margen superior, para grandes: menos margen
-    const baseTopMargin = 60; // Reduced top margin for better balance
-    const dynamicTopMargin = Math.max(30, baseTopMargin - (diagramHeight * scale * 0.02));
-    translateY = dynamicTopMargin - totalBounds.y * scale;
+    // Para múltiples clusters: centrar verticalmente también
+    translateY = svgCenterY - contentCenterY * scale - 50;
   }
 
   // Apply transformation immediately without transition
   const transform = d3.zoomIdentity
     .translate(translateX, translateY)
     .scale(scale);
+
+  // Debug logging for final transform
+  console.log('[AutoZoom Debug] Final transform:', {
+    translateX: translateX.toFixed(1),
+    translateY: translateY.toFixed(1),
+    scale: scale.toFixed(3),
+    isSingleGroup,
+    diagramGroupCount
+  });
 
   // Apply immediately to prevent any movement
   svg.call(zoom.transform, transform);
@@ -2788,16 +2837,8 @@ function resetZoom() {
     if (isSingleGroup) {
       translateY = svgCenterY - contentCenterY * scale - 50;
     } else {
-      const diagramWidth = totalBounds.width;
-      const diagramHeight = totalBounds.height;
-      
-      const baseLeftMargin = 30;
-      const dynamicLeftMargin = Math.max(20, baseLeftMargin - (diagramWidth * scale * 0.03));
-      translateX = dynamicLeftMargin - totalBounds.x * scale;
-      
-      const baseTopMargin = 60;
-      const dynamicTopMargin = Math.max(30, baseTopMargin - (diagramHeight * scale * 0.02));
-      translateY = dynamicTopMargin - totalBounds.y * scale;
+      // Para múltiples clusters: centrar verticalmente también
+      translateY = svgCenterY - contentCenterY * scale - 50;
     }
 
     // Create target transformation
@@ -5070,6 +5111,8 @@ window.$xDiagrams.loadDiagram = function(input) {
 
     if (window.initDiagram) {
         window.initDiagram(toInit, function() {
+            // Apply auto zoom immediately for all diagrams
+            // For multiple clusters, it will be overridden by the masonry layout completion
             if (isOptionEnabled('autoZoom') !== false && window.applyAutoZoom) {
                 window.applyAutoZoom();
             }

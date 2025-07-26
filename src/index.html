@@ -16,11 +16,13 @@
   window.$xDiagrams = {
     title: "Diagrams",
     diagrams: [
-    {
+          {
         name: "Multiclusters",
         url: "data/companies-board.csv",
+        maxRecords: 350,
         layout: {
-          clustersPerRow: "4 5 7 5",
+          clustersPerRow: "3 3 4",
+          // clustersPerRow: "4 5 7 5", Backup
           marginX: 40,
           marginY: 40,
           spacingX: 90,
@@ -171,6 +173,35 @@
       {
         name: "Thumbnail Modes Demo",
         url: "data/test-thumbnail-modes.csv",
+        layout: {
+          clustersPerRow: 3,
+          marginX: 30,
+          marginY: 30,
+          spacingX: 60,
+          spacingY: 60
+        }
+      },
+      {
+        name: "Performance Test - Limited Records",
+        url: "data/flat-1000-nodes.json",
+        grid: 30,
+        maxRecords: 100, // Solo renderizar las primeras 100 filas
+        cols: {
+          name: "name",
+          type: "type",
+          subtitle: "description",
+          department: "department",
+          email: "email",
+          phone: "phone",
+          location: "location",
+          status: "status",
+          joinDate: "joinDate"
+        }
+      },
+      {
+        name: "Clusters with Record Limit",
+        url: "data/multi-clusters-20.csv",
+        maxRecords: 50, // Solo procesar las primeras 50 filas
         layout: {
           clustersPerRow: 3,
           marginX: 30,

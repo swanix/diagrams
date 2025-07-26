@@ -15,7 +15,21 @@
 <script>
   window.$xDiagrams = {
     title: "Diagrams",
-    diagrams: [    
+    diagrams: [
+    {
+        name: "Multiclusters",
+        url: "data/companies-board.csv",
+        layout: {
+          clustersPerRow: "4 5 7 5",
+          marginX: 40,
+          marginY: 40,
+          spacingX: 90,
+          spacingY: 90
+        },
+        options: {
+          thumbnailMode: "custom"
+        }
+      },
       {
         name: "Google Sheets", 
         url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vT1F3LXPwnGlnF_uOlhoR-5kK1DrWLwlCAKH8Ag6hPrNLzwqWYWU8ofE19xSv4cH1-Cq7ZYm7lPys7V/pub?output=csv",

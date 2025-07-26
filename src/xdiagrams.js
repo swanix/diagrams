@@ -1850,6 +1850,9 @@ function drawTrees(trees, diagramConfig = null) {
     };
     collectNodes(tree);
   });
+  
+  // Update node counter
+  updateNodeCounter();
     
   // Check layout type and choose appropriate rendering method
   if (isFlatList(trees)) {
@@ -5248,7 +5251,9 @@ function renderSwDiagramBase() {
           </div>
         </div>
         <div class="topbar-center">
-          <!-- Área central vacía -->
+          <div class="node-counter" id="node-counter">
+            <span class="node-counter-text"><span id="node-count">0</span> nodes</span>
+          </div>
         </div>
         <div class="topbar-right">
           <div class="theme-controls">
@@ -9768,6 +9773,24 @@ function findClusterUnderMouse(event) {
   return null;
 }
 
+// Function to update the node counter in the topbar
+function updateNodeCounter() {
+  const nodeCountElement = document.getElementById('node-count');
+  if (nodeCountElement && window.$xDiagrams.currentData) {
+    const nodeCount = window.$xDiagrams.currentData.length;
+    nodeCountElement.textContent = nodeCount.toLocaleString();
+    
+    // Add a subtle animation to highlight the update
+    nodeCountElement.style.transition = 'color 0.3s ease';
+    nodeCountElement.style.color = '#1976d2';
+    
+    setTimeout(() => {
+      nodeCountElement.style.color = '';
+    }, 300);
+  }
+}
 
+// Make the function globally available
+window.updateNodeCounter = updateNodeCounter;
 
 // Note: Cluster deselection is now only done via manual interaction (click on another cluster or click outside)

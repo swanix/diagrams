@@ -1457,6 +1457,56 @@ body.cluster-click-mode-active .cluster-rect[data-selected="true"] ~ * .node-cli
   line-height: 1;
 }
 
+/* Node Counter Styles */
+.node-counter {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: var(--control-bg);
+  border: 1px solid var(--control-border);
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--control-text);
+  box-shadow: 0 1px 3px var(--control-shadow);
+  transition: all 0.2s ease;
+}
+
+.node-counter:hover {
+  border-color: var(--control-border-hover);
+  box-shadow: 0 2px 6px var(--control-shadow);
+}
+
+.node-counter-icon {
+  font-size: 16px;
+  opacity: 0.8;
+}
+
+.node-counter-text {
+  white-space: nowrap;
+}
+
+#node-count {
+  font-weight: 600;
+  color: var(--control-border-focus);
+}
+
+/* Dark theme adjustments for node counter */
+body.theme-onyx .node-counter {
+  background: var(--control-bg);
+  border-color: var(--control-border);
+  color: var(--control-text);
+}
+
+body.theme-onyx .node-counter:hover {
+  border-color: var(--control-border-hover);
+}
+
+body.theme-onyx #node-count {
+  color: var(--control-border-focus);
+}
+
 .diagram-title {
   margin: 0;
   font-size: 16px;
@@ -2468,6 +2518,17 @@ body.theme-neon .theme-toggle .moon-icon {
     height: 16px;
   }
   
+  /* Node counter responsive */
+  .node-counter {
+    padding: 6px 12px;
+    font-size: 12px;
+    gap: 6px;
+  }
+  
+  .node-counter-icon {
+    font-size: 14px;
+  }
+  
   /* Side panel ocupa todo el ancho */
   .side-panel {
     width: 100vw;
@@ -2556,6 +2617,17 @@ body.theme-neon .theme-toggle .moon-icon {
   .theme-icon {
     width: 14px;
     height: 14px;
+  }
+  
+  /* Node counter más compacto en móviles */
+  .node-counter {
+    padding: 4px 8px;
+    font-size: 11px;
+    gap: 4px;
+  }
+  
+  .node-counter-icon {
+    font-size: 12px;
   }
   
   /* Side panel ajustado para móviles */
@@ -2685,6 +2757,17 @@ body.theme-neon .theme-toggle .moon-icon {
   .theme-icon {
     width: 12px;
     height: 12px;
+  }
+  
+  /* Node counter muy compacto en pantallas pequeñas */
+  .node-counter {
+    padding: 3px 6px;
+    font-size: 10px;
+    gap: 3px;
+  }
+  
+  .node-counter-icon {
+    font-size: 11px;
   }
   
   .side-panel {

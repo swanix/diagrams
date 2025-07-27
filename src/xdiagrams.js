@@ -4,7 +4,28 @@
 // Global zoom behavior - defined at the beginning to avoid scope issues
 const zoom = d3.zoom()
   .scaleExtent([0.1, 3.0]) // Max zoom to 3x and min to 10% for better visibility
-  .wheelDelta(event => -event.deltaY * 0.002) // Smoother wheel zoom
+  .wheelDelta(event => {
+    // Improved trackpad compatibility for macOS
+    // Detect if this is likely a trackpad event (smooth scrolling)
+    const isTrackpad = Math.abs(event.deltaY) < 100 && event.deltaMode === 0;
+    
+    // Prevent excessive zoom events that can cause blocking
+    const now = Date.now();
+    if (!window.$xDiagrams.lastWheelEvent) {
+      window.$xDiagrams.lastWheelEvent = now;
+    } else if (now - window.$xDiagrams.lastWheelEvent < 16) { // ~60fps limit
+      return 0; // Skip this event to prevent blocking
+    }
+    window.$xDiagrams.lastWheelEvent = now;
+    
+    if (isTrackpad) {
+      // Use a more responsive multiplier for trackpad
+      return -event.deltaY * 0.001;
+    } else {
+      // Use standard multiplier for mouse wheel
+      return -event.deltaY * 0.002;
+    }
+  })
   .on("zoom", event => {
     const svgGroup = d3.select("#main-diagram-svg g");
     if (!svgGroup.empty()) {
@@ -14,6 +35,11 @@ const zoom = d3.zoom()
       
       // Store current zoom state for event handling
       window.$xDiagrams.currentZoom = transform;
+      
+      // Clean up zoom state if it gets problematic
+      if (transform.k <= 0.05 || transform.k > 3.5) {
+        cleanupZoomState();
+      }
       
       // Check if zoom is problematic and clean up hover states
       if (transform.k <= 0.1 || transform.k > 2.5) {
@@ -2731,8 +2757,14 @@ function ensureZoomBehavior() {
       body.style.overflow = 'hidden';
     }
     
-    // Add touch-action to prevent conflicts on mobile
+    // Add touch-action to prevent conflicts on mobile and improve trackpad behavior
     svg.style('touch-action', 'none');
+    
+    // Add specific trackpad improvements for macOS
+    if (navigator.platform.indexOf('Mac') !== -1) {
+      svg.style('-webkit-overflow-scrolling', 'touch');
+      svg.style('overscroll-behavior', 'none');
+    }
     
     // Add mouse move listener to track mouse position for auto-selection
     svg.on("mousemove", function(event) {
@@ -2741,7 +2773,23 @@ function ensureZoomBehavior() {
     
     // Initialize mouse event tracking
     window.$xDiagrams.lastMouseEvent = null;
+    
+    // Initialize wheel event tracking for trackpad compatibility
+    window.$xDiagrams.lastWheelEvent = null;
   }
+}
+
+// Function to clean up zoom state and prevent blocking
+function cleanupZoomState() {
+  // Reset wheel event tracking to prevent blocking
+  window.$xDiagrams.lastWheelEvent = null;
+  
+  // Clear any pending zoom animations
+  if (window.$xDiagrams.zoomAnimation && window.$xDiagrams.zoomAnimation.isActive) {
+    window.$xDiagrams.zoomAnimation.isActive = false;
+  }
+  
+  console.log('[ZoomCleanup] Zoom state cleaned up');
 }
 
 // Function to reset zoom to default state (showing entire diagram)
@@ -2945,6 +2993,7 @@ window.resetZoom = resetZoom;
 window.isZoomProblematic = isZoomProblematic;
 window.cleanupPersistentHoverStates = cleanupPersistentHoverStates;
 window.findClusterUnderMouse = findClusterUnderMouse;
+window.cleanupZoomState = cleanupZoomState;
 
 
 // Function to handle zoom reset button click
@@ -5064,6 +5113,34 @@ window.$xDiagrams.loadDiagram = function(input) {
         return;
     }
     if (window.$xDiagrams.isLoading) return;
+
+    // Reset cluster click mode state completely when changing diagrams
+    // Simple reset without dependencies
+    if (window.$xDiagrams.clusterClickMode) {
+      window.$xDiagrams.clusterClickMode.active = false;
+      window.$xDiagrams.clusterClickMode.clusters = [];
+      window.$xDiagrams.clusterClickMode.selectedCluster = null;
+      window.$xDiagrams.clusterClickMode.isMultiCluster = false;
+      window.$xDiagrams.clusterClickMode.isZoomingToCluster = false;
+      window.$xDiagrams.clusterClickMode.originalNodeClickHandlers = new Map();
+    }
+    
+    // Remove any cluster tooltips
+    if (window.$xDiagrams.clusterTooltip) {
+      window.$xDiagrams.clusterTooltip.initialized = false;
+    }
+    
+    // Remove any CSS classes
+    document.body.classList.remove('cluster-click-mode-active');
+    
+    // Remove any cluster hover states
+    d3.selectAll('.cluster-rect').classed('cluster-hover', false);
+    
+    // Hide any visible tooltips
+    const tooltip = d3.select('#cluster-tooltip');
+    if (!tooltip.empty()) {
+      tooltip.remove();
+    }
 
     // Cierra el panel lateral si está abierto
     if (window.closeSidePanel) {
@@ -9585,10 +9662,45 @@ function hideClusterTooltip() {
 }
 
 // Make functions globally available
+// Function to completely reset cluster click mode state
+function resetClusterClickModeState() {
+  console.log('[ClusterClickMode] Resetting cluster click mode state for diagram change');
+  
+  // Simple reset without calling other functions that might not be available yet
+  if (window.$xDiagrams.clusterClickMode) {
+    window.$xDiagrams.clusterClickMode.active = false;
+    window.$xDiagrams.clusterClickMode.clusters = [];
+    window.$xDiagrams.clusterClickMode.selectedCluster = null;
+    window.$xDiagrams.clusterClickMode.isMultiCluster = false;
+    window.$xDiagrams.clusterClickMode.isZoomingToCluster = false;
+    window.$xDiagrams.clusterClickMode.originalNodeClickHandlers = new Map();
+  }
+  
+  // Remove any cluster tooltips
+  if (window.$xDiagrams.clusterTooltip) {
+    window.$xDiagrams.clusterTooltip.initialized = false;
+  }
+  
+  // Remove any CSS classes
+  document.body.classList.remove('cluster-click-mode-active');
+  
+  // Remove any cluster hover states
+  d3.selectAll('.cluster-rect').classed('cluster-hover', false);
+  
+  // Hide any visible tooltips
+  const tooltip = d3.select('#cluster-tooltip');
+  if (!tooltip.empty()) {
+    tooltip.remove();
+  }
+  
+  console.log('[ClusterClickMode] Cluster click mode state reset completed');
+}
+
 window.activateClusterClickMode = activateClusterClickMode;
 window.deactivateClusterClickMode = deactivateClusterClickMode;
 window.zoomToCluster = zoomToCluster;
 window.detectMultiClusterDiagram = detectMultiClusterDiagram;
+window.resetClusterClickModeState = resetClusterClickModeState;
 window.disableHoverOnSelectedCluster = disableHoverOnSelectedCluster;
 window.deselectCurrentCluster = deselectCurrentCluster;
 window.resetSelectedClusterState = resetSelectedClusterState;

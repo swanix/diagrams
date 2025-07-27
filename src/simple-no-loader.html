@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Swanix Diagrams - Simple (Sin Loader)</title>
+  
+  <!-- Cargar el Loading Manager PRIMERO -->
+  <script src="js/loadingManager.js"></script>
+  
+  <!-- Cargar el Theme Manager -->
+  <script src="js/themeManager.js"></script>
+  
+  <!-- CSS principal -->
+  <link href="xdiagrams.css" rel="stylesheet">
+  
+  <!-- Dependencias -->
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <script src="https://unpkg.com/papaparse@5.3.0/papaparse.min.js"></script>
+</head>
+<body>
+<div class="xcanvas"></div>
+
+<script>
+// Configuración del diagrama
+window.$xDiagrams = {
+  title: "My Diagram",
+  // logo: "img/logo.svg",
+  diagrams: [
+    {
+      name: "Diagram",
+      url: "data/one-cluster.csv"
+    }
+  ]
+};
+</script>
+
+<!-- Cargar la librería principal al final -->
+<script src="xdiagrams.js"></script>
+
+</body>
+</html> 

@@ -2714,6 +2714,15 @@ function applyAutoZoom() {
     diagramArea: (totalBounds.width * totalBounds.height).toFixed(0)
   });
   
+  // Dispatch diagram ready event
+  window.dispatchEvent(new CustomEvent('xdiagrams-diagram-ready', {
+    detail: {
+      nodeCount: nodeCount,
+      diagramGroupCount: diagramGroupCount,
+      timestamp: new Date().toISOString()
+    }
+  }));
+  
   // Auto-apply extreme zoom for very large diagrams - disabled to prevent jumps
   // if (!isSingleGroup && (nodeCount > 100 || diagramGroupCount > 20 || (totalBounds.width * totalBounds.height) > 2000000)) {
   //   setTimeout(() => {
@@ -3611,442 +3620,12 @@ function setupClosePanelOnSvgClick() {
   }
 }
 
-// Simplified theme system
-async function setTheme(themeId, forceReload = false) {
-  // Clear previous classes
-  document.body.classList.remove('theme-snow', 'theme-onyx', 'theme-vintage', 'theme-pastel', 'theme-neon', 'theme-forest');
-  
-  // Apply new class
-  document.body.classList.add('theme-' + themeId);
-  
-  // Save theme with unique key per file
-  const storageKey = getStorageKey();
-  localStorage.setItem(storageKey, themeId);
-  
-  // Also save to global theme preference for better persistence
-  localStorage.setItem('selectedTheme', themeId);
-  localStorage.setItem('themeMode', isLightTheme(themeId) ? 'light' : 'dark');
-  
-  console.log('[Theme System] Tema guardado:', themeId, 'en clave:', storageKey, 'y global');
-  
-  // Clear cache before applying theme
-  if (window.$xDiagrams && window.$xDiagrams.clearCache) {
-    window.$xDiagrams.clearCache();
-  }
-  
-  // Apply theme CSS variables (with force reload if requested)
-  const themeVariables = await getThemeVariables(themeId, forceReload);
-  const targetElement = document.querySelector('.xcanvas') || document.documentElement;
-  
-  Object.keys(themeVariables).forEach(varName => {
-    targetElement.style.setProperty(varName, themeVariables[varName]);
-    document.body.style.setProperty(varName, themeVariables[varName]);
-    document.documentElement.style.setProperty(varName, themeVariables[varName]);
-  });
-  
-  // Update SVG colors
-  updateSVGColors();
-  
-  // Update switcher colors
-  updateSwitcherColors();
-  
-  // Trigger onThemeChange hook
-  triggerHook('onThemeChange', { 
-    theme: themeId, 
-    timestamp: new Date().toISOString() 
-  });
-}
-
-// Cache for themes to avoid repeated fetches
-let themesCache = null;
-let lastThemeFileTimestamp = null;
-
-// Function to clear theme cache
-function clearThemeCache() {
-  themesCache = null;
-  lastThemeFileTimestamp = null;
-  console.log('[Theme System] Cache de temas limpiado');
-}
-
-// Get theme variables from external JSON file
-async function getThemeVariables(themeId, forceReload = false) {
-  // Check if we need to reload themes (force reload or no cache)
-  if (forceReload || !themesCache) {
-    try {
-      // Load themes from external JSON file (try xthemes.json first, then themes.json as fallback)
-      let response = await fetch('xthemes.json');
-      if (!response.ok) {
-        console.log('[Theme System] xthemes.json no encontrado, intentando themes.json...');
-        response = await fetch('themes.json');
-        if (!response.ok) {
-          throw new Error(`Failed to load themes: ${response.status}`);
-        }
-      }
-      
-      // Check if file has changed (using Last-Modified header)
-      const lastModified = response.headers.get('Last-Modified');
-      if (lastModified && lastThemeFileTimestamp && lastModified !== lastThemeFileTimestamp) {
-        console.log('[Theme System] Archivo de temas modificado, recargando...');
-        forceReload = true;
-      }
-      
-      if (forceReload || !themesCache) {
-        themesCache = await response.json();
-        lastThemeFileTimestamp = lastModified;
-        console.log('[Theme System] Temas cargados desde archivo:', forceReload ? 'recarga forzada' : 'carga inicial');
-      }
-    } catch (error) {
-      console.warn('Error loading themes from JSON, using fallback:', error);
-      
-      // Fallback to basic theme if JSON loading fails
-      const fallbackThemes = {
-        snow: {
-          '--canvas-bg': '#f6f7f9',
-          '--text-color': '#222',
-          '--node-fill': '#fff',
-          '--control-bg': '#ffffff',
-          '--control-text': '#333333',
-          '--control-focus': '#1976d2'
-        },
-        onyx: {
-          '--canvas-bg': '#181c24',
-          '--text-color': '#f6f7f9',
-          '--node-fill': '#23272f',
-          '--control-bg': '#23272f',
-          '--control-text': '#f6f7f9',
-          '--control-focus': '#00eaff'
-        }
-      };
-      
-      return fallbackThemes[themeId] || fallbackThemes.snow;
-    }
-  }
-  
-  return themesCache[themeId] || themesCache.snow;
-}
-
-// Update SVG colors
-function updateSVGColors() {
-  const computedStyle = getComputedStyle(document.documentElement);
-  
-  const variables = {
-    textColor: computedStyle.getPropertyValue('--text-color'),
-    nodeFill: computedStyle.getPropertyValue('--node-fill'),
-                    labelBorder: computedStyle.getPropertyValue('--node-stroke'),
-        linkColor: computedStyle.getPropertyValue('--node-connector'),
-    clusterBg: computedStyle.getPropertyValue('--cluster-bg'),
-    clusterStroke: computedStyle.getPropertyValue('--cluster-stroke'),
-    clusterTitleColor: computedStyle.getPropertyValue('--cluster-title-color'),
-    subtitleColor: computedStyle.getPropertyValue('--text-subtitle-color'),
-    imageFilter: computedStyle.getPropertyValue('--image-filter')
-  };
-
-  // Apply colors to SVG elements
-  d3.selectAll('.link').style('stroke', variables.linkColor);
-  d3.selectAll('.node rect').style('fill', variables.nodeFill).style('stroke', variables.labelBorder);
-  d3.selectAll('.label-text').style('fill', variables.textColor);
-  d3.selectAll('.subtitle-text').style('fill', variables.subtitleColor);
-  d3.selectAll('.cluster-rect').style('fill', variables.clusterBg).style('stroke', variables.clusterStroke);
-  d3.selectAll('.cluster-title').style('fill', variables.clusterTitleColor);
-  
-  // Update image filters
-  updateImageFilters(variables.imageFilter);
-}
-
-// Update image filters for all images with image-filter class
-function updateImageFilters(filterValue) {
-  console.log('[Image Filter] Aplicando filtro:', filterValue);
-  
-  // Verificar que el filtro no esté vacío
-  if (!filterValue || filterValue.trim() === '') {
-    console.warn('[Image Filter] Filtro vacío, no se aplicará');
-    return;
-  }
-  
-  // En lugar de aplicar estilos inline, usar variables CSS
-  // Esto permite que el filtro se actualice automáticamente cuando cambie el tema
-  const imagesWithFilter = document.querySelectorAll('.image-filter');
-  console.log('[Image Filter] Encontradas', imagesWithFilter.length, 'imágenes con clase image-filter');
-  
-  // Remover cualquier estilo inline previo y limpiar clases incorrectas
-  imagesWithFilter.forEach((img, index) => {
-    img.style.removeProperty('filter');
-    const imgSrc = img.src || img.href || 'unknown';
-    console.log(`[Image Filter] Estilo inline removido de imagen ${index + 1} (${imgSrc})`);
-    
-    // Verificar si es una imagen externa que no debería tener filtro
-    if (imgSrc.match(/^https?:\/\//i)) {
-      console.log(`[Image Filter] ⚠️  ADVERTENCIA: Imagen externa con clase image-filter: ${imgSrc}`);
-      console.log(`[Image Filter] Removiendo clase image-filter de imagen externa: ${imgSrc}`);
-      img.classList.remove('image-filter');
-    }
-  });
-  
-  // También remover estilos inline del side panel
-  const sidePanelImages = document.querySelectorAll('.side-panel-title-thumbnail');
-  sidePanelImages.forEach((img, index) => {
-    img.style.removeProperty('filter');
-    console.log(`[Image Filter] Estilo inline removido de side panel imagen ${index + 1}`);
-  });
-  
-  // Agregar regla CSS que use la variable --image-filter
-  const styleId = 'image-filter-css-rule';
-  let existingStyle = document.getElementById(styleId);
-  if (existingStyle) {
-    existingStyle.remove();
-  }
-  
-  const style = document.createElement('style');
-  style.id = styleId;
-  style.textContent = `
-    .image-filter {
-      filter: var(--image-filter) !important;
-    }
-    .side-panel-title-thumbnail {
-      filter: var(--image-filter) !important;
-    }
-  `;
-  document.head.appendChild(style);
-  
-  console.log('[Image Filter] Regla CSS agregada usando variable --image-filter');
-  console.log('[Image Filter] Valor actual de --image-filter:', filterValue);
-}
-
-// Update switcher colors
-function updateSwitcherColors() {
-  // This function is no longer needed as CSS handles all styling
-  // The diagram buttons now use CSS variables for consistent theming
-  console.log('[Theme] Switcher colors are now handled by CSS variables');
-}
-
-// Generate unique key for localStorage based on file URL
-function getStorageKey() {
-  const path = window.location.pathname;
-  const filename = path.split('/').pop() || 'index.html';
-  const key = `selectedTheme_${filename}`;
-  console.log('[Storage Key] Generada clave:', key, 'para archivo:', filename);
-  return key;
-}
-
-// Get theme configuration with modern style fallback
-function getThemeConfiguration() {
-  const config = getXDiagramsConfiguration();
-  
-  // Try modern configuration first
-  if (config.themes) {
-    return {
-      lightTheme: config.themes.light || 'snow',
-      darkTheme: config.themes.dark || 'onyx'
-    };
-  }
-  
-  // Fallback to legacy configuration
-  return getThemeConfigurationLegacy();
-}
-
-// Legacy theme configuration (for backward compatibility)
-function getThemeConfigurationLegacy() {
-  const container = document.querySelector('.xcanvas');
-  if (!container) {
-    return { lightTheme: 'snow', darkTheme: 'onyx' };
-  }
-
-  // Try to get JSON configuration first
-  const jsonConfig = container.getAttribute('data-themes');
-  if (jsonConfig) {
-    try {
-      const customConfig = JSON.parse(jsonConfig);
-      return {
-        lightTheme: customConfig.light || 'snow',
-        darkTheme: customConfig.dark || 'onyx'
-      };
-    } catch (error) {
-      console.warn('Error parsing data-themes JSON:', error);
-    }
-  }
-
-  // Fallback to individual attributes
-  return {
-    lightTheme: container.getAttribute('data-light-theme') || 'snow',
-    darkTheme: container.getAttribute('data-dark-theme') || 'onyx'
-  };
-}
-
-// Determine if a theme is light or dark
-function isLightTheme(themeId) {
-  const lightThemes = ['snow', 'vintage', 'pastel'];
-  const darkThemes = ['onyx', 'neon', 'forest'];
-  
-  // If explicitly defined as dark, return false
-  if (darkThemes.includes(themeId)) {
-    return false;
-  }
-  
-  // If explicitly defined as light, return true
-  if (lightThemes.includes(themeId)) {
-    return true;
-  }
-  
-  // Default: assume light theme
-  return true;
-}
-
-// Get opposite theme based on configuration
-function getOppositeTheme(currentTheme, config) {
-  const isLight = isLightTheme(currentTheme);
-  return isLight ? config.darkTheme : config.lightTheme;
-}
-
 // ============================================================================
-// NUEVO SISTEMA DE TEMAS SIMPLIFICADO PARA XDIAGRAMS
+// THEME MANAGER MODULE INTEGRATION
 // ============================================================================
-
-// Global theme state
-window.$xDiagrams.themeState = {
-  current: 'snow',
-  lightTheme: 'snow',
-  darkTheme: 'onyx',
-  isInitialized: false
-};
-
-// Simple theme toggle function
-async function toggleTheme() {
-  const state = window.$xDiagrams.themeState;
-  const currentTheme = state.current;
-  const isCurrentLight = isLightTheme(currentTheme);
-  const newTheme = isCurrentLight ? state.darkTheme : state.lightTheme;
-  
-  // Update state
-  state.current = newTheme;
-  
-  // Save to localStorage FIRST (before applying theme)
-  const storageKey = getStorageKey();
-  localStorage.setItem(storageKey, newTheme);
-  localStorage.setItem('selectedTheme', newTheme);
-  localStorage.setItem('themeMode', isLightTheme(newTheme) ? 'light' : 'dark');
-  
-  // Apply theme
-  await setTheme(newTheme);
-  
-  // Trigger hook
-  triggerHook('onThemeChange', { 
-    theme: newTheme, 
-    timestamp: new Date().toISOString() 
-  });
-}
-
-// Initialize theme system (SIMPLIFIED - NO INTERFERENCE WITH LOADER)
-async function initializeThemeSystem() {
-  const config = getThemeConfiguration();
-  const storageKey = getStorageKey();
-  
-  // Initialize global state
-  window.$xDiagrams.themeState.lightTheme = config.lightTheme;
-  window.$xDiagrams.themeState.darkTheme = config.darkTheme;
-  
-  // Get current theme from localStorage (loader already applied it)
-  const savedTheme = localStorage.getItem(storageKey);
-  const currentTheme = savedTheme || config.lightTheme;
-  
-  // Update state
-  window.$xDiagrams.themeState.current = currentTheme;
-  
-  // Setup theme toggle
-  setupThemeToggle();
-  
-  // Setup theme file watcher for automatic reloading
-  setupThemeFileWatcher();
-  
-  window.$xDiagrams.themeState.isInitialized = true;
-}
-
-// Setup theme toggle button
-function setupThemeToggle() {
-  const themeToggle = document.getElementById('theme-toggle');
-  if (!themeToggle) {
-    console.warn('[XTheme] Botón de tema no encontrado');
-    return;
-  }
-  
-  // Remove existing listeners by cloning
-  const newToggle = themeToggle.cloneNode(true);
-  themeToggle.parentNode.replaceChild(newToggle, themeToggle);
-  
-  // Add new listener
-  newToggle.addEventListener('click', async function(e) {
-    e.preventDefault();
-    e.stopPropagation();
-    await toggleTheme();
-  });
-}
-
-// Function to force default light theme
-async function forceDefaultLightTheme() {
-  const config = getThemeConfiguration();
-  const storageKey = getStorageKey();
-  localStorage.removeItem(storageKey);
-  localStorage.setItem(`themeSystemInitialized_${storageKey}`, 'true');
-  console.log('[Theme System] Forzando tema claro por defecto:', config.lightTheme);
-  await setTheme(config.lightTheme);
-}
-
-// Function to preserve current theme
-async function preserveCurrentTheme() {
-  const storageKey = getStorageKey();
-  const currentTheme = localStorage.getItem(storageKey);
-  if (currentTheme) {
-    console.log('[Theme System] Preservando tema actual:', currentTheme);
-    // Apply current theme without changing localStorage
-    const themeVariables = await getThemeVariables(currentTheme);
-    const targetElement = document.querySelector('.xcanvas') || document.documentElement;
-    
-    Object.keys(themeVariables).forEach(varName => {
-      targetElement.style.setProperty(varName, themeVariables[varName]);
-      document.body.style.setProperty(varName, themeVariables[varName]);
-      document.documentElement.style.setProperty(varName, themeVariables[varName]);
-    });
-    
-    // Update SVG colors
-    updateSVGColors();
-    
-    // Update switcher colors
-    updateSwitcherColors();
-  }
-}
-
-// Global function to reload themes (for external use)
-window.reloadThemes = async function() {
-  console.log('[Theme System] Recargando temas...');
-  clearThemeCache();
-  
-  const storageKey = getStorageKey();
-  const currentTheme = localStorage.getItem(storageKey) || 'snow';
-  
-  // Reapply current theme with fresh data
-  await setTheme(currentTheme, true);
-  
-  console.log('[Theme System] Temas recargados exitosamente');
-  return true;
-};
-
-// Function to check for theme file changes periodically
-function setupThemeFileWatcher() {
-  // Check for changes every 5 seconds
-  setInterval(async () => {
-    try {
-      const response = await fetch('xthemes.json', { method: 'HEAD' });
-      if (response.ok) {
-        const lastModified = response.headers.get('Last-Modified');
-        if (lastModified && lastThemeFileTimestamp && lastModified !== lastThemeFileTimestamp) {
-          console.log('[Theme System] Cambios detectados en xthemes.json, recargando...');
-          await window.reloadThemes();
-        }
-      }
-    } catch (error) {
-      // Silently ignore errors in file watching
-    }
-  }, 5000);
-}
+// All theme functionality has been moved to js/themeManager.js
+// The theme manager is loaded before this file and provides all theme functions
+// through window.ThemeManager
 
 // --- Diagram management and switcher (no default diagrams) ---
 window.$xDiagrams = window.$xDiagrams || {};
@@ -5105,7 +4684,7 @@ window.$xDiagrams.renderDiagramButtons = function() {
     }
     
     // Apply current theme colors to the switcher buttons
-    updateSwitcherColors();
+          window.ThemeManager.updateSwitcherColors();
 };
 window.$xDiagrams.loadDiagram = function(input) {
     const diagrams = getDiagrams();
@@ -5478,7 +5057,7 @@ function renderSwDiagramBase() {
     }
   }
   // Initialize theme system after base structure is rendered
-  initializeThemeSystem().then(() => {
+      window.ThemeManager.initializeThemeSystem().then(() => {
     // Check theme state after initialization
     setTimeout(() => {
       checkThemeOnLoad();
@@ -5529,7 +5108,7 @@ function initializeWhenReady() {
     
     // Initialize theme system after base structure is rendered
     if (window.$xDiagrams.themeState && !window.$xDiagrams.themeState.isInitialized) {
-      initializeThemeSystem();
+      window.ThemeManager.initializeThemeSystem();
     }
     
     // Drag & Drop functionality moved to XDragDrop plugin
@@ -5672,12 +5251,12 @@ window.reloadDiagramSystem = function() {
 window.setCurrentFileTheme = function(theme) {
   console.log('[XTheme Set] Estableciendo tema para archivo actual:', theme);
   
-  const storageKey = getStorageKey();
+  const storageKey = window.ThemeManager.getStorageKey();
   localStorage.setItem(storageKey, theme);
   
   // Also save to global theme preference
   localStorage.setItem('selectedTheme', theme);
-  localStorage.setItem('themeMode', isLightTheme(theme) ? 'light' : 'dark');
+  localStorage.setItem('themeMode', window.ThemeManager.isLightTheme(theme) ? 'light' : 'dark');
   
   // Update global state
   if (window.$xDiagrams.themeState) {
@@ -5691,14 +5270,14 @@ window.setCurrentFileTheme = function(theme) {
 window.syncThemeState = function() {
   console.log('[XTheme Sync] Sincronizando estado del tema...');
   
-  const storageKey = getStorageKey();
+  const storageKey = window.ThemeManager.getStorageKey();
   const specificTheme = localStorage.getItem(storageKey);
   const globalTheme = localStorage.getItem('selectedTheme');
   
   if (specificTheme && globalTheme && specificTheme !== globalTheme) {
     console.log('[XTheme Sync] Inconsistencia detectada, sincronizando...');
     localStorage.setItem('selectedTheme', specificTheme);
-    localStorage.setItem('themeMode', isLightTheme(specificTheme) ? 'light' : 'dark');
+    localStorage.setItem('themeMode', window.ThemeManager.isLightTheme(specificTheme) ? 'light' : 'dark');
     console.log('[XTheme Sync] Tema sincronizado:', specificTheme);
   } else if (globalTheme && !specificTheme) {
     console.log('[XTheme Sync] Usando tema global como específico:', globalTheme);
@@ -5706,7 +5285,7 @@ window.syncThemeState = function() {
   } else if (specificTheme && !globalTheme) {
     console.log('[XTheme Sync] Usando tema específico como global:', specificTheme);
     localStorage.setItem('selectedTheme', specificTheme);
-    localStorage.setItem('themeMode', isLightTheme(specificTheme) ? 'light' : 'dark');
+    localStorage.setItem('themeMode', window.ThemeManager.isLightTheme(specificTheme) ? 'light' : 'dark');
   }
   
   console.log('[XTheme Sync] Sincronización completada');
@@ -5716,7 +5295,7 @@ window.syncThemeState = function() {
 window.forceDarkTheme = function() {
   console.log('[XTheme Force] Forzando tema oscuro...');
   
-  const storageKey = getStorageKey();
+  const storageKey = window.ThemeManager.getStorageKey();
   localStorage.setItem(storageKey, 'onyx');
   localStorage.setItem('selectedTheme', 'onyx');
   localStorage.setItem('themeMode', 'dark');
@@ -5727,7 +5306,7 @@ window.forceDarkTheme = function() {
   }
   
   // Apply theme
-  setTheme('onyx');
+  window.ThemeManager.setTheme('onyx');
   
   console.log('[XTheme Force] Tema oscuro forzado');
 };
@@ -5736,7 +5315,7 @@ window.forceDarkTheme = function() {
 window.checkThemeOnLoad = function() {
   console.log('[XTheme Load Check] === VERIFICACIÓN DE CARGA ===');
   
-  const storageKey = getStorageKey();
+  const storageKey = window.ThemeManager.getStorageKey();
   const specificTheme = localStorage.getItem(storageKey);
   const globalTheme = localStorage.getItem('selectedTheme');
   const themeMode = localStorage.getItem('themeMode');

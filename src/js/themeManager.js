@@ -10,50 +10,62 @@ let themesCache = null;
 let lastThemeFileTimestamp = null;
 
 // Simplified theme system
-async function setTheme(themeId, forceReload = false) {
-  // Clear previous classes
-  document.body.classList.remove('theme-snow', 'theme-onyx', 'theme-vintage', 'theme-pastel', 'theme-neon', 'theme-forest');
+async function setTheme(themeId, forceReload = false, disableTransitions = true) {
+  // Only disable transitions if explicitly requested (for theme toggle)
+  const originalTransitions = disableTransitions ? disableAllTransitions() : null;
   
-  // Apply new class
-  document.body.classList.add('theme-' + themeId);
-  
-  // Save theme with unique key per file
-  const storageKey = getStorageKey();
-  localStorage.setItem(storageKey, themeId);
-  
-  // Also save to global theme preference for better persistence
-  localStorage.setItem('selectedTheme', themeId);
-  localStorage.setItem('themeMode', isLightTheme(themeId) ? 'light' : 'dark');
-  
-  console.log('[Theme System] Tema guardado:', themeId, 'en clave:', storageKey, 'y global');
-  
-  // Clear cache before applying theme
-  if (window.$xDiagrams && window.$xDiagrams.clearCache) {
-    window.$xDiagrams.clearCache();
-  }
-  
-  // Apply theme CSS variables (with force reload if requested)
-  const themeVariables = await getThemeVariables(themeId, forceReload);
-  const targetElement = document.querySelector('.xcanvas') || document.documentElement;
-  
-  Object.keys(themeVariables).forEach(varName => {
-    targetElement.style.setProperty(varName, themeVariables[varName]);
-    document.body.style.setProperty(varName, themeVariables[varName]);
-    document.documentElement.style.setProperty(varName, themeVariables[varName]);
-  });
-  
-  // Update SVG colors
-  updateSVGColors();
-  
-  // Update switcher colors
-  updateSwitcherColors();
-  
-  // Trigger onThemeChange hook
-  if (window.triggerHook) {
-    window.triggerHook('onThemeChange', { 
-      theme: themeId, 
-      timestamp: new Date().toISOString() 
+  try {
+      // Clear previous classes
+  document.body.classList.remove('theme-snow', 'theme-onyx');
+    
+    // Apply new class
+    document.body.classList.add('theme-' + themeId);
+    
+    // Save theme with unique key per file
+    const storageKey = getStorageKey();
+    localStorage.setItem(storageKey, themeId);
+    
+    // Also save to global theme preference for better persistence
+    localStorage.setItem('selectedTheme', themeId);
+    localStorage.setItem('themeMode', isLightTheme(themeId) ? 'light' : 'dark');
+    
+    console.log('[Theme System] Tema guardado:', themeId, 'en clave:', storageKey, 'y global');
+    
+    // Clear cache before applying theme
+    if (window.$xDiagrams && window.$xDiagrams.clearCache) {
+      window.$xDiagrams.clearCache();
+    }
+    
+    // Apply theme CSS variables (with force reload if requested)
+    const themeVariables = await getThemeVariables(themeId, forceReload);
+    const targetElement = document.querySelector('.xcanvas') || document.documentElement;
+    
+    Object.keys(themeVariables).forEach(varName => {
+      targetElement.style.setProperty(varName, themeVariables[varName]);
+      document.body.style.setProperty(varName, themeVariables[varName]);
+      document.documentElement.style.setProperty(varName, themeVariables[varName]);
     });
+    
+    // Update SVG colors
+    updateSVGColors();
+    
+    // Update switcher colors
+    updateSwitcherColors();
+    
+    // Trigger onThemeChange hook
+    if (window.triggerHook) {
+      window.triggerHook('onThemeChange', { 
+        theme: themeId, 
+        timestamp: new Date().toISOString() 
+      });
+    }
+  } finally {
+    // Re-enable transitions only if they were disabled
+    if (originalTransitions) {
+      setTimeout(() => {
+        restoreTransitions(originalTransitions);
+      }, 50);
+    }
   }
 }
 
@@ -62,6 +74,34 @@ function clearThemeCache() {
   themesCache = null;
   lastThemeFileTimestamp = null;
   console.log('[Theme System] Cache de temas limpiado');
+}
+
+// Disable all transitions temporarily for instant theme changes
+function disableAllTransitions() {
+  const elements = document.querySelectorAll('*');
+  const originalTransitions = new Map();
+  
+  elements.forEach(element => {
+    const computedStyle = window.getComputedStyle(element);
+    const transition = computedStyle.transition;
+    
+    if (transition && transition !== 'none' && transition !== 'all 0s ease 0s') {
+      originalTransitions.set(element, transition);
+      element.style.transition = 'none';
+    }
+  });
+  
+  console.log('[Theme System] Transiciones deshabilitadas temporalmente para cambio de tema');
+  return originalTransitions;
+}
+
+// Restore original transitions
+function restoreTransitions(originalTransitions) {
+  originalTransitions.forEach((transition, element) => {
+    element.style.transition = transition;
+  });
+  
+  console.log('[Theme System] Transiciones restauradas');
 }
 
 // Get theme variables from external JSON file
@@ -139,11 +179,11 @@ function updateSVGColors() {
 
   // Apply colors to SVG elements
   d3.selectAll('.link').style('stroke', variables.linkColor);
-  d3.selectAll('.node rect').style('fill', variables.nodeFill).style('stroke', variables.labelBorder);
+  // Node styles are now handled by CSS variables, no need for inline styles
   d3.selectAll('.label-text').style('fill', variables.textColor);
   d3.selectAll('.subtitle-text').style('fill', variables.subtitleColor);
   d3.selectAll('.cluster-rect').style('fill', variables.clusterBg).style('stroke', variables.clusterStroke);
-  d3.selectAll('.cluster-title').style('fill', variables.clusterTitleColor);
+  // Cluster titles are now handled by CSS variables, no need for inline styles
   
   // Update image filters
   updateImageFilters(variables.imageFilter);
@@ -273,8 +313,8 @@ function getThemeConfigurationLegacy() {
 
 // Determine if a theme is light or dark
 function isLightTheme(themeId) {
-  const lightThemes = ['snow', 'vintage', 'pastel'];
-  const darkThemes = ['onyx', 'neon', 'forest'];
+  const lightThemes = ['snow'];
+  const darkThemes = ['onyx'];
   
   // If explicitly defined as dark, return false
   if (darkThemes.includes(themeId)) {
@@ -312,8 +352,8 @@ async function toggleTheme() {
   localStorage.setItem('selectedTheme', newTheme);
   localStorage.setItem('themeMode', isLightTheme(newTheme) ? 'light' : 'dark');
   
-  // Apply theme
-  await setTheme(newTheme);
+  // Apply theme with transitions disabled for instant change
+  await setTheme(newTheme, false, true);
   
   // Trigger hook
   if (window.triggerHook) {
@@ -386,7 +426,7 @@ async function forceDefaultLightTheme() {
   localStorage.removeItem(storageKey);
   localStorage.setItem(`themeSystemInitialized_${storageKey}`, 'true');
   console.log('[Theme System] Forzando tema claro por defecto:', config.lightTheme);
-  await setTheme(config.lightTheme);
+  await setTheme(config.lightTheme, false, false);
 }
 
 // Function to preserve current theme
@@ -395,21 +435,8 @@ async function preserveCurrentTheme() {
   const currentTheme = localStorage.getItem(storageKey);
   if (currentTheme) {
     console.log('[Theme System] Preservando tema actual:', currentTheme);
-    // Apply current theme without changing localStorage
-    const themeVariables = await getThemeVariables(currentTheme);
-    const targetElement = document.querySelector('.xcanvas') || document.documentElement;
-    
-    Object.keys(themeVariables).forEach(varName => {
-      targetElement.style.setProperty(varName, themeVariables[varName]);
-      document.body.style.setProperty(varName, themeVariables[varName]);
-      document.documentElement.style.setProperty(varName, themeVariables[varName]);
-    });
-    
-    // Update SVG colors
-    updateSVGColors();
-    
-    // Update switcher colors
-    updateSwitcherColors();
+    // Apply current theme without changing localStorage and without disabling transitions
+    await setTheme(currentTheme, false, false);
   }
 }
 
@@ -421,8 +448,8 @@ window.reloadThemes = async function() {
   const storageKey = getStorageKey();
   const currentTheme = localStorage.getItem(storageKey) || 'snow';
   
-  // Reapply current theme with fresh data
-  await setTheme(currentTheme, true);
+  // Reapply current theme with fresh data, without disabling transitions
+  await setTheme(currentTheme, true, false);
   
   console.log('[Theme System] Temas recargados exitosamente');
   return true;
@@ -467,10 +494,10 @@ const LoadingState = {
     // Record start time for minimum display duration
     this.startTime = Date.now();
     
-    // Create loading overlay if it doesn't exist
+    // NO crear overlay propio, usar solo el spinner inicial del HTML
     this.createLoadingOverlay();
     
-    // Hide main content initially
+    // Hide main content initially (pero preservar spinner inicial)
     this.hideMainContent();
     
     // Start theme initialization
@@ -480,71 +507,15 @@ const LoadingState = {
     this.listenForAppReady();
   },
   
-  // Create loading overlay
+  // Create loading overlay - MODIFICADO para usar spinner inicial
   createLoadingOverlay() {
-    // Check if loading overlay already exists
-    if (document.getElementById('xdiagrams-loading')) {
-      this.loadingElement = document.getElementById('xdiagrams-loading');
-      return;
-    }
+    // No crear overlay propio, usar el spinner inicial del HTML
+    console.log('[Theme Manager] Usando spinner inicial del HTML');
     
-    // Create loading overlay
-    const loadingOverlay = document.createElement('div');
-    loadingOverlay.id = 'xdiagrams-loading';
-    loadingOverlay.className = 'xdiagrams-loading-overlay';
-    loadingOverlay.innerHTML = `
-      <div class="xdiagrams-loading-content">
-        <div class="xdiagrams-loading-spinner"></div>
-        <div class="xdiagrams-loading-text">Cargando diagrama...</div>
-      </div>
-    `;
-    
-    // Add styles
+    // Solo agregar estilos para ocultar elementos de UI durante la carga
     const style = document.createElement('style');
     style.textContent = `
-      .xdiagrams-loading-overlay {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: var(--canvas-bg, #f6f7f9);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        z-index: 9999;
-        transition: opacity 0.15s ease-out;
-        backdrop-filter: blur(1px);
-      }
-      
-      .xdiagrams-loading-content {
-        text-align: center;
-        color: var(--text-color, #222);
-        opacity: 0.8;
-      }
-      
-      .xdiagrams-loading-spinner {
-        width: 24px;
-        height: 24px;
-        border: 2px solid var(--node-stroke, #ccc);
-        border-top: 2px solid var(--control-focus, #1976d2);
-        border-radius: 50%;
-        animation: xdiagrams-spin 0.8s linear infinite;
-        margin: 0 auto 12px;
-      }
-      
-      .xdiagrams-loading-text {
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-        font-size: 14px;
-        font-weight: 400;
-        opacity: 0.7;
-      }
-      
-      @keyframes xdiagrams-spin {
-        0% { transform: rotate(0deg); }
-        100% { transform: rotate(360deg); }
-      }
-      
+      /* Ocultar elementos de UI durante la carga con fondo transparente */
       .xdiagrams-content-hidden {
         opacity: 0;
         visibility: hidden;
@@ -557,24 +528,14 @@ const LoadingState = {
         transition: opacity 0.15s ease-out, visibility 0.15s ease-out;
       }
       
-      /* Ocultar elementos de UI durante la carga */
-      .xdiagrams-loading-overlay ~ * {
-        opacity: 0;
-        transition: opacity 0.15s ease-out;
-      }
-      
-      .xdiagrams-loading-overlay ~ .xdiagrams-content-visible {
-        opacity: 1;
-      }
-      
-      /* Ocultar específicamente elementos de UI durante carga */
-      .xdiagrams-loading-overlay ~ .topbar,
-      .xdiagrams-loading-overlay ~ .xdiagrams-topbar,
-      .xdiagrams-loading-overlay ~ .xdiagrams-controls,
-      .xdiagrams-loading-overlay ~ .theme-toggle,
-      .xdiagrams-loading-overlay ~ .diagram-dropdown,
-      .xdiagrams-loading-overlay ~ .side-panel,
-      .xdiagrams-loading-overlay ~ .keyboard-instructions {
+      /* Ocultar específicamente elementos de UI durante carga con fondo transparente */
+      .xdiagrams-content-hidden .topbar,
+      .xdiagrams-content-hidden .xdiagrams-topbar,
+      .xdiagrams-content-hidden .xdiagrams-controls,
+      .xdiagrams-content-hidden .theme-toggle,
+      .xdiagrams-content-hidden .diagram-dropdown,
+      .xdiagrams-content-hidden .side-panel,
+      .xdiagrams-content-hidden .keyboard-instructions {
         opacity: 0 !important;
         visibility: hidden !important;
         transition: opacity 0.15s ease-out, visibility 0.15s ease-out !important;
@@ -588,13 +549,12 @@ const LoadingState = {
     `;
     
     document.head.appendChild(style);
-    document.body.appendChild(loadingOverlay);
-    this.loadingElement = loadingOverlay;
     
-    console.log('[Theme Manager] Overlay de carga creado');
+    // No crear elemento de loading, usar el spinner inicial
+    this.loadingElement = null;
   },
   
-  // Hide main content initially
+  // Hide main content initially - MODIFICADO para permitir spinner inicial
   hideMainContent() {
     // Find main content container
     this.mainContent = document.querySelector('.xcanvas') || document.body;
@@ -602,7 +562,7 @@ const LoadingState = {
     // Add hidden class immediately
     this.mainContent.classList.add('xdiagrams-content-hidden');
     
-    // Hide ALL UI elements that might be visible during load
+    // Solo ocultar elementos de UI específicos, NO el spinner inicial
     const uiSelectors = [
       '.topbar', '.side-panel', '.theme-toggle', '.diagram-dropdown',
       '.xdiagrams-topbar', '.xdiagrams-controls', '.xdiagrams-switcher',
@@ -613,23 +573,27 @@ const LoadingState = {
     uiSelectors.forEach(selector => {
       const elements = document.querySelectorAll(selector);
       elements.forEach(element => {
-        element.style.opacity = '0';
-        element.style.visibility = 'hidden';
-        element.style.transition = 'opacity 0.15s ease-out, visibility 0.15s ease-out';
+        // NO ocultar el spinner inicial
+        if (!element.id || !element.id.includes('initial-loading')) {
+          element.style.opacity = '0';
+          element.style.visibility = 'hidden';
+          element.style.transition = 'opacity 0.15s ease-out, visibility 0.15s ease-out';
+        }
       });
     });
     
-    // Also hide any elements with specific classes that might be created by xdiagrams
+    // Solo ocultar elementos xdiagrams específicos, NO el spinner inicial
     const xdiagramsElements = document.querySelectorAll('[class*="xdiagrams"], [class*="topbar"], [class*="control"]');
     xdiagramsElements.forEach(element => {
-      if (!element.classList.contains('xdiagrams-loading-overlay')) {
+      // NO ocultar el spinner inicial
+      if (!element.id || !element.id.includes('initial-loading')) {
         element.style.opacity = '0';
         element.style.visibility = 'hidden';
         element.style.transition = 'opacity 0.15s ease-out, visibility 0.15s ease-out';
       }
     });
     
-    console.log('[Theme Manager] Contenido principal y UI ocultos');
+    console.log('[Theme Manager] Contenido principal y UI ocultos (spinner inicial preservado)');
   },
   
   // Initialize theme system
@@ -637,18 +601,21 @@ const LoadingState = {
     try {
       console.log('[Theme Manager] Inicializando tema...');
       
-      // Apply essential theme variables immediately
-      this.applyEssentialTheme();
-      
-      // Initialize theme system
+      // Initialize theme system first
       await initializeThemeSystem();
+      
+      // Apply complete theme styles from xthemes.json immediately (skip essential)
+      await this.applyCompleteThemeStyles();
+      
       this.isThemeReady = true;
-      console.log('[Theme Manager] Tema inicializado');
+      console.log('[Theme Manager] Tema completamente inicializado');
       
       this.checkReadyState();
     } catch (error) {
       console.warn('[Theme Manager] Error inicializando tema:', error);
-      this.isThemeReady = true; // Continue anyway
+      // Fallback to essential theme if complete theme fails
+      this.applyEssentialTheme();
+      this.isThemeReady = true;
       this.checkReadyState();
     }
   },
@@ -656,25 +623,11 @@ const LoadingState = {
   // Apply essential theme variables immediately
   applyEssentialTheme() {
     const currentTheme = this.getCurrentTheme();
-    const essentialVariables = this.getEssentialThemeVariables(currentTheme);
     
-    // Apply theme class
+    // Only apply theme class - all variables come from CSS base and xthemes.json
     document.body.classList.add('theme-' + currentTheme);
     
-    // Apply essential variables
-    Object.keys(essentialVariables).forEach(varName => {
-      document.documentElement.style.setProperty(varName, essentialVariables[varName]);
-      document.body.style.setProperty(varName, essentialVariables[varName]);
-    });
-    
-    // Apply background color to body immediately to prevent flash
-    const canvasBg = essentialVariables['--canvas-bg'];
-    if (canvasBg) {
-      document.body.style.backgroundColor = canvasBg;
-      document.body.style.transition = 'background-color 0.15s ease-out';
-    }
-    
-    console.log('[Theme Manager] Variables esenciales aplicadas para:', currentTheme);
+    console.log('[Theme Manager] Clase de tema aplicada:', currentTheme);
   },
   
   // Get current theme from localStorage
@@ -701,30 +654,119 @@ const LoadingState = {
     return currentTheme || 'snow';
   },
   
-  // Get essential theme variables
+  // Get essential theme variables - now returns empty object since we rely on CSS base
   getEssentialThemeVariables(themeId) {
-    const variables = {
-      snow: {
-        '--canvas-bg': '#f6f7f9',
-        '--text-color': '#222',
-        '--node-fill': '#fff',
-        '--node-stroke': '#ccc',
-        '--control-bg': '#ffffff',
-        '--control-text': '#333333',
-        '--control-focus': '#1976d2'
-      },
-      onyx: {
-        '--canvas-bg': '#181c24',
-        '--text-color': '#f6f7f9',
-        '--node-fill': '#23272f',
-        '--node-stroke': '#333',
-        '--control-bg': '#23272f',
-        '--control-text': '#f6f7f9',
-        '--control-focus': '#00eaff'
-      }
-    };
-    
-    return variables[themeId] || variables.snow;
+    // Return empty object - all variables come from CSS base and xthemes.json
+    return {};
+  },
+  
+  // Apply complete theme styles from xthemes.json
+  async applyCompleteThemeStyles() {
+    try {
+      const currentTheme = this.getCurrentTheme();
+      console.log('[Theme Manager] Aplicando estilos completos para:', currentTheme);
+      
+      // Apply theme without disabling transitions during initial load
+      await setTheme(currentTheme, false, false);
+      
+      console.log('[Theme Manager] Estilos completos aplicados exitosamente');
+    } catch (error) {
+      console.warn('[Theme Manager] Error aplicando estilos completos:', error);
+    }
+  },
+  
+  // Wait for SVG elements to be fully styled
+  async waitForSVGStyles() {
+    return new Promise((resolve) => {
+      const maxAttempts = 50; // 5 seconds max
+      let attempts = 0;
+      
+      const checkSVGStyles = () => {
+        attempts++;
+        
+        // Check if SVG exists and has content
+        const svg = document.getElementById('main-diagram-svg');
+        if (!svg || svg.children.length === 0) {
+          if (attempts < maxAttempts) {
+            setTimeout(checkSVGStyles, 100);
+          } else {
+            console.log('[Theme Manager] SVG no encontrado, continuando...');
+            resolve();
+          }
+          return;
+        }
+        
+        // Check if cluster elements have been styled
+        const clusterRects = svg.querySelectorAll('.cluster-rect');
+        const clusterTitles = svg.querySelectorAll('.cluster-title');
+        const labelTexts = svg.querySelectorAll('.label-text');
+        
+        if (clusterRects.length > 0 || clusterTitles.length > 0 || labelTexts.length > 0) {
+          // Force a reflow to ensure styles are applied
+          svg.offsetHeight;
+          
+          // Apply SVG colors one more time to ensure they're applied
+          updateSVGColors();
+          
+          // Small delay to ensure all styles are rendered
+          setTimeout(() => {
+            console.log('[Theme Manager] Estilos SVG aplicados y verificados');
+            resolve();
+          }, 100);
+        } else {
+          if (attempts < maxAttempts) {
+            setTimeout(checkSVGStyles, 100);
+          } else {
+            console.log('[Theme Manager] Timeout esperando estilos SVG, continuando...');
+            resolve();
+          }
+        }
+      };
+      
+      checkSVGStyles();
+    });
+  },
+  
+  // Wait for diagram to be fully loaded and styled
+  async waitForDiagramComplete() {
+    return new Promise((resolve) => {
+      const maxAttempts = 100; // 10 seconds max
+      let attempts = 0;
+      
+      const checkDiagramComplete = () => {
+        attempts++;
+        
+        // Check if diagram is still loading
+        if (window.$xDiagrams && window.$xDiagrams.isLoading) {
+          if (attempts < maxAttempts) {
+            setTimeout(checkDiagramComplete, 100);
+          } else {
+            console.log('[Theme Manager] Timeout esperando carga del diagrama, continuando...');
+            resolve();
+          }
+          return;
+        }
+        
+        // Check if SVG is visible and has content
+        const svg = document.getElementById('main-diagram-svg');
+        if (svg && svg.classList.contains('loaded') && svg.children.length > 0) {
+          // Wait a bit more for final styling
+          setTimeout(() => {
+            console.log('[Theme Manager] Diagrama completamente cargado y estilizado');
+            resolve();
+          }, 200);
+        } else {
+          if (attempts < maxAttempts) {
+            setTimeout(checkDiagramComplete, 100);
+          } else {
+            console.log('[Theme Manager] Timeout esperando SVG cargado, continuando...');
+            resolve();
+          }
+        }
+      };
+      
+      checkDiagramComplete();
+    });
   },
   
   // Listen for main app ready signal
@@ -797,9 +839,18 @@ const LoadingState = {
     }
   },
   
-  // Show content and hide loading
-  showContent() {
+  // Show content and hide loading - MODIFICADO para manejar spinner inicial
+  async showContent() {
     console.log('[Theme Manager] Mostrando contenido...');
+    
+    // Ensure complete theme styles are applied before showing content
+    if (!this.themeStylesApplied) {
+      await this.applyCompleteThemeStyles();
+      this.themeStylesApplied = true;
+    }
+    
+    // Wait for diagram to be fully loaded and styled
+    await this.waitForDiagramComplete();
     
     // Show main content
     if (this.mainContent) {
@@ -807,41 +858,24 @@ const LoadingState = {
       this.mainContent.classList.add('xdiagrams-content-visible');
     }
     
-    // Restore ALL UI elements visibility
-    const uiSelectors = [
-      '.topbar', '.side-panel', '.theme-toggle', '.diagram-dropdown',
-      '.xdiagrams-topbar', '.xdiagrams-controls', '.xdiagrams-switcher',
-      '.keyboard-instructions', '.tooltip', '.cluster-tooltip',
-      '.side-panel', '.side-panel-content', '.side-panel-header'
-    ];
+    // Mostrar el topbar cuando se complete la carga
+    const topbar = document.querySelector('.topbar');
+    if (topbar) {
+      topbar.classList.add('loaded');
+    }
     
-    uiSelectors.forEach(selector => {
-      const elements = document.querySelectorAll(selector);
-      elements.forEach(element => {
-        element.style.opacity = '1';
-        element.style.visibility = 'visible';
-        element.style.transition = 'opacity 0.15s ease-out, visibility 0.15s ease-out';
-      });
-    });
+    // Content visibility is now handled by CSS when theme class is applied
+    // No need to manually set opacity/visibility
     
-    // Restore xdiagrams elements
-    const xdiagramsElements = document.querySelectorAll('[class*="xdiagrams"], [class*="topbar"], [class*="control"]');
-    xdiagramsElements.forEach(element => {
-      if (!element.classList.contains('xdiagrams-loading-overlay')) {
-        element.style.opacity = '1';
-        element.style.visibility = 'visible';
-        element.style.transition = 'opacity 0.15s ease-out, visibility 0.15s ease-out';
-      }
-    });
-    
-    // Hide loading overlay quickly
+    // El spinner inicial se maneja desde xdiagrams.js, no aquí
+    // Solo ocultar el overlay propio si existe
     if (this.loadingElement) {
       this.loadingElement.style.opacity = '0';
       setTimeout(() => {
         if (this.loadingElement && this.loadingElement.parentNode) {
           this.loadingElement.parentNode.removeChild(this.loadingElement);
         }
-      }, 150); // Reduced from 300ms to 150ms
+      }, 150);
     }
     
     this.isInitialized = true;

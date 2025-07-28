@@ -3,6 +3,8 @@
   v0.6.0
 */
 
+
+
 :root {
 
     /* ===== Color Base Variables ===== */
@@ -17,9 +19,19 @@
     --bg-opacity: 1; /* Background color opacity (1 = opaque, 0 = transparent) */
     --image-filter: none; /* No filter by default */
 
+    /* ===== Thumbnails ===== */
+    --thumb-fill: #666666;
+    --thumb-fill-hover: #888888;
+    --thumb-fill-focus: #999999;
+    --thumb-stroke: transparent;
+    --thumb-opacity: 1;
+    --thumb-filter: none;
+
     /* ===== Text and Nodes ===== */
     --text-color: #222;
     --node-fill: #fff;
+    --node-fill-hover: #f8f9fa;
+    --node-fill-focus: #f0f0f0;
     --node-stroke-focus: #000;
     --node-selection-border: #e0e0e0;
     --node-selection-focus: #1976d2;
@@ -32,6 +44,7 @@
     /* ===== Links and Labels ===== */
     --node-connector: #999;
     --node-stroke: #bdbdbd;
+    --node-stroke-hover: #999999;
 
     /* ===== Clusters ===== */
     --cluster-bg: rgba(0,0,0,0.05);
@@ -50,67 +63,47 @@
     --loading-color: #dadada;
     --loading-bg: var(--app-bg);
 
+    /* ===== UI Panel Variables ===== */
+    --ui-panel-bg: #fff;
+    --ui-panel-border: #e0e0e0;
+    --ui-panel-text: #222;
+    --ui-panel-text-muted: #666;
+    
     /* ===== Side Panel ===== */
     --side-panel-width: 350px;
-    --side-panel-bg: #fff;
-    --side-panel-text: #222;
-    --side-panel-header-bg: #f8f9fa;
-    --side-panel-header-border: #dee2e6;
-    --side-panel-border: #e0e0e0;
-    --side-panel-label: #666;
-    --side-panel-value: #222;
-    --side-panel-close-bg: #dc3545;
-    --side-panel-close-hover: #c82333;
     --side-panel-shadow: rgba(0, 0, 0, 0.1);
     
-    /* ===== Controls ===== */
-    --control-bg: #ffffff;
-    --control-text: #333333;
-    --control-border: #d1d5db;
-    --control-border-hover: #9ca3af;
-    --control-border-focus: #1976d2;
-    --control-border-focus-rgb: 25, 118, 210;
-    --control-placeholder: #9ca3af;
-    --control-shadow: rgba(0, 0, 0, 0.1);
-    --control-shadow-focus: rgba(25, 118, 210, 0.2);
+    /* ===== UI Controls ===== */
+    --ui-control-bg: #ffffff;
+    --ui-control-bg-hover: rgba(0, 0, 0, 0.02);
+    --ui-control-text: #333333;
+    --ui-control-border: #d1d5db;
+    --ui-control-border-hover: #9ca3af;
+    --ui-control-border-focus: #1976d2;
+    --ui-control-border-focus-rgb: 25, 118, 210;
+    --ui-control-bg-active: #1976d2;
+    --ui-control-placeholder: #9ca3af;
+    --ui-control-shadow: rgba(0, 0, 0, 0.1);
+    --ui-control-shadow-focus: rgba(25, 118, 210, 0.2);
     
     /* ===== Topbar ===== */
     --topbar-bg: #ffffff;
     --topbar-text: #333333;
 
-    /* ===== Diagram Switcher ===== */
-    --switcher-bg: #ffffff;
-    --switcher-border: #d1d5db;
-    --switcher-text: #333333;
-    --switcher-shadow: none;
-    --switcher-padding: 15px;
-    --switcher-border-radius: 12px;
-    --switcher-gap: 10px;
-    --switcher-header-margin: 10px;
+    /* ===== UI Control Layout ===== */
+    --ui-control-padding: 15px;
+    --ui-control-border-radius: 12px;
+    --ui-control-gap: 10px;
+    --ui-control-header-margin: 10px;
+    --ui-control-btn-padding: 10px 20px;
+    --ui-control-btn-min-width: 437px;
+    --ui-control-btn-border-radius: 8px;
+    --ui-control-btn-opacity-disabled: 0.5;
 
-    /* Diagram Buttons */
-    --switcher-btn-bg: #ffffff;
-    --switcher-btn-text: #333333;
-    --switcher-btn-border: #d1d5db;
-    --switcher-btn-border-hover: #9ca3af;
-    --switcher-btn-border-active: #1976d2;
-    --switcher-btn-bg-active: #1976d2;
-    --switcher-btn-text-active: #ffffff;
-    --switcher-btn-bg-disabled: #f5f5f5;
-    --switcher-btn-text-disabled: #9ca3af;
-    --switcher-btn-border-disabled: #d1d5db;
-    --switcher-btn-shadow: none;
-    --switcher-btn-shadow-hover: none;
-    --switcher-btn-border-radius: 8px;
-    --switcher-btn-padding: 10px 20px;
-    --switcher-btn-min-width: 437px;
+    /* Node Clickable Area */
+    --node-clickable-padding: 8px;
 
     /* Theme Toggle Button */
-    --theme-toggle-bg: #ffffff;
-    --theme-toggle-border: #d1d5db;
-    --theme-toggle-border-hover: #9ca3af;
-    --theme-toggle-text: #333333;
-    --theme-toggle-shadow: rgba(0, 0, 0, 0.1);
     --theme-toggle-size: 40px;
     --theme-toggle-border-radius: 50%;
     --theme-icon-size: 18px;
@@ -184,14 +177,25 @@
       --canvas-bg: #121212;
       --image-filter: invert(100%) grayscale(100%);
 
+      /* ===== Thumbnails ===== */
+      --thumb-fill: #cccccc;
+      --thumb-fill-hover: #dddddd;
+      --thumb-fill-focus: #eeeeee;
+      --thumb-stroke: transparent;
+      --thumb-opacity: 1;
+      --thumb-filter: none;
+
       /* ===== Text and Nodes ===== */
       --text-color: #fff;
       --node-fill: #333;
+      --node-fill-hover: #404040;
+      --node-fill-focus: #505050;
       --node-stroke-focus: #fff;
 
       /* ===== Links and Labels ===== */
       --node-connector: #666;
       --node-stroke: #787878;
+      --node-stroke-hover: #999999;
 
       /* ===== Clusters ===== */
       --cluster-bg: rgba(255,255,255,0.02);
@@ -208,13 +212,10 @@
       --loading-bg: var(--app-bg);
 
       /* ===== Side Panel ===== */
-      --side-panel-bg: #2d2d2d;
-      --side-panel-text: #ffffff;
-      --side-panel-header-bg: #404040;
-      --side-panel-header-border: #505050;
-      --side-panel-border: #404040;
-      --side-panel-label: #cccccc;
-      --side-panel-value: #ffffff;
+      --ui-panel-bg: #2d2d2d;
+      --ui-panel-border: #404040;
+      --ui-panel-text: #ffffff;
+      --ui-panel-text-muted: #cccccc;
 
       /* ===== Controls ===== */
       --btn-bg: #000;
@@ -321,6 +322,12 @@
     fill: var(--node-fill);
     rx: 6px;
     ry: 6px;
+    transition: fill 0.2s ease, stroke 0.2s ease;
+  }
+
+  /* Hover de nodos desactivado por defecto */
+  .node:hover rect {
+    /* No hay cambios por defecto */
   }
 
   /* Transición suave para filtros */
@@ -411,7 +418,7 @@
   box-shadow: none !important;
     
     /* Prevenir herencia de estilos del nodo */
-    pointer-events: none;
+    pointer-events: auto; /* Habilitado para permitir hover y focus */
   }
   
   .embedded-thumbnail.loaded {
@@ -423,11 +430,31 @@
   }
   
   /* Asegurar que los thumbnails embebidos usen las variables CSS para colores */
-  .embedded-thumbnail * {
-      fill: var(--thumb-fill, var(--text-color)) !important;
-  stroke: var(--thumb-stroke, transparent) !important;
-  stroke-width: 0px !important;
-  }
+.embedded-thumbnail * {
+    fill: var(--thumb-fill, var(--text-color)) !important;
+    stroke: var(--thumb-stroke, transparent) !important;
+    stroke-width: 0px !important;
+    transition: fill 0.2s ease, stroke 0.2s ease;
+}
+
+/* Estados focus para thumbnails embebidos */
+/* Focus del nodo padre afecta al thumbnail - SOLO cuando el cluster esté seleccionado */
+body.cluster-click-mode-active .cluster-rect[data-selected="true"] ~ * .node:focus .embedded-thumbnail *,
+body.cluster-click-mode-active .cluster-rect[data-selected="true"] ~ * .node-clickable:focus .embedded-thumbnail *,
+body.cluster-click-mode-active .cluster-rect[data-selected="true"] ~ * .node.node-selected .embedded-thumbnail * {
+    fill: var(--thumb-fill-focus, var(--thumb-fill-hover, var(--thumb-fill, var(--text-color)))) !important;
+}
+
+/* Focus del nodo padre afecta al thumbnail - cuando hay un solo cluster (auto-seleccionado) */
+body:not(.cluster-click-mode-active) .cluster-rect[data-selected="true"] ~ * .node:focus .embedded-thumbnail *,
+body:not(.cluster-click-mode-active) .cluster-rect[data-selected="true"] ~ * .node-clickable:focus .embedded-thumbnail *,
+body:not(.cluster-click-mode-active) .cluster-rect[data-selected="true"] ~ * .node.node-selected .embedded-thumbnail * {
+    fill: var(--thumb-fill-focus, var(--thumb-fill-hover, var(--thumb-fill, var(--text-color)))) !important;
+}
+
+
+
+
   
   /* Aplicar filtro a thumbnails embebidos si es necesario */
   .embedded-thumbnail.image-filter {
@@ -556,18 +583,46 @@
     transform: scale(1.0) rotate(0deg) !important;
   }
   
-  /* Efectos hover para thumbnails embebidos */
-  .embedded-thumbnail:hover {
-    transform: scale(1.05) rotate(0deg);
-    filter: var(--thumb-filter, none);
-    
-    /* Mantener independencia de estilos del nodo padre */
-    stroke: var(--thumb-stroke, transparent) !important;
-    stroke-width: 0px !important;
-    outline: none !important;
-    box-shadow: none !important;
-    
-  }
+
+
+
+
+/* Deshabilitar completamente el hover de thumbnails */
+.embedded-thumbnail:hover,
+.embedded-thumbnail:hover * {
+  /* No aplicar ningún efecto de hover */
+}
+
+/* Deshabilitar cursor pointer para thumbnails cuando no hay cluster seleccionado */
+.embedded-thumbnail {
+  cursor: default !important;
+}
+
+/* Cursor pointer para thumbnails cuando el cluster esté seleccionado */
+body.cluster-click-mode-active .cluster-rect[data-selected="true"] ~ * .embedded-thumbnail {
+  cursor: pointer !important;
+}
+
+/* Cursor pointer para thumbnails cuando hay un solo cluster (auto-seleccionado) */
+body:not(.cluster-click-mode-active) .cluster-rect[data-selected="true"] ~ * .embedded-thumbnail {
+  cursor: pointer !important;
+}
+
+/* Prevenir que los thumbnails interfieran con el hover del cluster */
+.cluster-rect:hover ~ * .embedded-thumbnail,
+.cluster-rect.cluster-hover ~ * .embedded-thumbnail {
+  pointer-events: none !important;
+}
+
+/* Restaurar pointer-events para thumbnails en clusters seleccionados */
+body.cluster-click-mode-active .cluster-rect[data-selected="true"] ~ * .embedded-thumbnail {
+  pointer-events: auto !important;
+}
+
+/* Restaurar pointer-events para thumbnails en clusters auto-seleccionados (single cluster) */
+body:not(.cluster-click-mode-active) .cluster-rect[data-selected="true"] ~ * .embedded-thumbnail {
+  pointer-events: auto !important;
+}
  
   .label-text {
     font-size: var(--label-font-size);
@@ -647,9 +702,8 @@
   right: -400px;
   width: var(--side-panel-width);
   height: calc(100vh - 60px); /* Altura total menos el topbar */
-  background-color: var(--side-panel-bg);
-  border-left: 1px solid var(--side-panel-border);
-  border-top: 1px solid var(--side-panel-border);
+  background-color: var(--ui-panel-bg);
+  border-left: 1px solid var(--ui-panel-border);
   /* box-shadow: -2px 0 10px var(--side-panel-shadow); */
   z-index: 999; /* Por debajo del topbar (z-index: 2000) pero por encima del SVG */
   transition: right 0.3s ease-in-out;
@@ -677,8 +731,8 @@
 }
 
 .side-panel-header {
-  background-color: var(--side-panel-header-bg) !important;
-  border-bottom: 1px solid var(--side-panel-header-border) !important;
+  background-color: var(--ui-panel-bg) !important;
+  border-bottom: 1px solid var(--ui-panel-border) !important;
   padding: 20px;
   display: flex;
   justify-content: space-between;
@@ -689,7 +743,7 @@
   margin: 0;
   font-size: 18px;
   font-weight: 600;
-  color: var(--side-panel-text) !important;
+  color: var(--ui-panel-text) !important;
   display: flex;
   align-items: center;
   gap: 12px;
@@ -715,9 +769,9 @@
 }
 
 .side-panel-close {
-  background-color: var(--control-bg) !important;
-  color: var(--control-text) !important;
-  border: 1px solid var(--control-border) !important;
+  background-color: var(--ui-control-bg) !important;
+  color: var(--ui-control-text) !important;
+  border: 1px solid var(--ui-control-border) !important;
   border-radius: 50%;
   width: 30px;
   height: 30px;
@@ -727,7 +781,7 @@
   justify-content: center;
   font-size: 16px;
   transition: all 0.2s ease;
-  box-shadow: 0 1px 3px var(--control-shadow);
+  box-shadow: 0 1px 3px var(--ui-control-shadow);
   user-select: none;
   -webkit-user-select: none;
   -moz-user-select: none;
@@ -735,9 +789,9 @@
 }
 
 .side-panel-close:hover {
-  background-color: var(--side-panel-close-hover) !important;
-  color: var(--control-text) !important;
-  box-shadow: 0 2px 6px var(--control-shadow);
+  background-color: var(--ui-panel-border) !important;
+  color: var(--ui-control-text) !important;
+  box-shadow: 0 2px 6px var(--ui-control-shadow);
 }
 
 .side-panel-content {
@@ -771,7 +825,7 @@
 .side-panel-label {
   display: table-cell;
   font-size: 13px;
-  color: var(--side-panel-label);
+  color: var(--ui-panel-text-muted);
   font-weight: 500;
   padding: 2px 16px 2px 0;
   vertical-align: top;
@@ -788,7 +842,7 @@
 .side-panel-value {
   display: table-cell;
   font-size: 15px;
-  color: var(--side-panel-value);
+  color: var(--ui-panel-text);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -801,7 +855,7 @@
 }
 
 .side-panel-value.empty {
-  color: var(--side-panel-label);
+  color: var(--ui-panel-text-muted);
   font-style: normal;
   opacity: 0.8;
 }
@@ -900,7 +954,7 @@
   height: auto;
   border-radius: 8px;
   margin-top: 10px;
-  border: 1px solid var(--side-panel-border);
+  border: 1px solid var(--ui-panel-border);
 }
 
 .side-panel-url {
@@ -924,7 +978,7 @@
 }
 
 .side-panel-url-link:hover {
-  color: var(--side-panel-value);
+  color: var(--ui-panel-text);
   text-decoration: none;
   background-color: rgba(0, 0, 0, 0.05);
   padding: 2px 4px;
@@ -1038,11 +1092,24 @@ svg .node.node-selected {
 /* Node click cursor */
 .node-clickable {
   cursor: pointer;
+  position: relative;
 }
 
+/* Área clicable extendida para nodos */
+.node-clickable::before {
+  content: '';
+  position: absolute;
+  top: calc(-1 * var(--node-clickable-padding, 8px));
+  left: calc(-1 * var(--node-clickable-padding, 8px));
+  right: calc(-1 * var(--node-clickable-padding, 8px));
+  bottom: calc(-1 * var(--node-clickable-padding, 8px));
+  z-index: -1;
+  /* Área invisible que extiende el área clicable */
+}
+
+/* Hover de nodos desactivado por defecto */
 .node-clickable:hover rect {
-  stroke: var(--node-selection-hover);
-  stroke-width: 2px;
+  /* No hay cambios por defecto */
 }
 
 /* Prevenir que los nodos interfieran con el hover del cluster */
@@ -1054,6 +1121,36 @@ svg .node.node-selected {
 /* Restaurar pointer-events para nodos en clusters seleccionados */
 body.cluster-click-mode-active .cluster-rect[data-selected="true"] ~ * .node-clickable {
   pointer-events: auto !important;
+}
+
+/* Hover de nodos solo cuando el cluster padre está seleccionado */
+body.cluster-click-mode-active .cluster-rect[data-selected="true"] ~ * .node-clickable:hover rect {
+  fill: var(--node-fill-hover);
+  stroke: var(--node-stroke-hover);
+  stroke-width: 2px;
+}
+
+/* Hover de nodos cuando hay un solo cluster (auto-seleccionado) */
+body:not(.cluster-click-mode-active) .cluster-rect[data-selected="true"] ~ * .node-clickable:hover rect {
+  fill: var(--node-fill-hover);
+  stroke: var(--node-stroke-hover);
+  stroke-width: 2px;
+}
+
+/* Mantener estilos originales de textos durante hover */
+body.cluster-click-mode-active .cluster-rect[data-selected="true"] ~ * .node-clickable:hover .label-text,
+body:not(.cluster-click-mode-active) .cluster-rect[data-selected="true"] ~ * .node-clickable:hover .label-text {
+  fill: var(--text-color) !important;
+  stroke: none !important;
+  stroke-width: 0 !important;
+}
+
+/* Mantener estilos originales de textos de ID durante hover */
+body.cluster-click-mode-active .cluster-rect[data-selected="true"] ~ * .node-clickable:hover .label-id,
+body:not(.cluster-click-mode-active) .cluster-rect[data-selected="true"] ~ * .node-clickable:hover .label-id {
+  fill: var(--label-id-text-color) !important;
+  stroke: none !important;
+  stroke-width: 0 !important;
 }
 
 .node.node-selected rect {
@@ -1114,7 +1211,7 @@ body.cluster-click-mode-active .cluster-rect[data-selected="true"] ~ * .node-cli
   margin: 0 0 8px 0;
   font-size: 0.9em;
   font-weight: 600;
-  color: var(--side-panel-label, #666);
+  color: var(--ui-panel-text-muted, #666);
 }
 
 .keyboard-instructions .instructions-grid {
@@ -1187,13 +1284,10 @@ body.cluster-click-mode-active .cluster-rect[data-selected="true"] ~ * .node-cli
   --node-stroke-focus: #1976d2;
   --node-stroke: #bdbdbd;
   --node-connector: #999;
-  --side-panel-bg: #fff;
-  --side-panel-text: #222;
-  --side-panel-header-bg: #f8f9fa;
-  --side-panel-header-border: #dee2e6;
-  --side-panel-border: #e0e0e0;
-  --side-panel-label: #666;
-  --side-panel-value: #222;
+  --ui-panel-bg: #fff;
+  --ui-panel-border: #e0e0e0;
+  --ui-panel-text: #222;
+  --ui-panel-text-muted: #666;
   --node-selection-border: #e0e0e0;
   --node-selection-focus: #1976d2;
   --node-selection-hover: #bdbdbd;
@@ -1204,14 +1298,15 @@ body.cluster-click-mode-active .cluster-rect[data-selected="true"] ~ * .node-cli
   --bg-image: none; /* Sin imagen de fondo por defecto */
   --bg-opacity: 1; /* Opacidad completa */
   /* Variables específicas para controles */
-  --control-bg: #ffffff;
-  --control-text: #333333;
-  --control-border: #d1d5db;
-  --control-border-hover: #9ca3af;
-  --control-border-focus: #1976d2;
-  --control-placeholder: #9ca3af;
-  --control-shadow: rgba(0, 0, 0, 0.1);
-  --control-shadow-focus: rgba(25, 118, 210, 0.2);
+  --ui-control-bg: #ffffff;
+  --ui-control-text: #333333;
+  --ui-control-icon: #666666;
+  --ui-control-border: #d1d5db;
+  --ui-control-border-hover: #9ca3af;
+  --ui-control-border-focus: #1976d2;
+  --ui-control-placeholder: #9ca3af;
+  --ui-control-shadow: rgba(0, 0, 0, 0.1);
+  --ui-control-shadow-focus: rgba(25, 118, 210, 0.2);
   --cluster-bg: rgba(0,0,0,0.02);
   --cluster-stroke: rgba(0,0,0,0.1);
   --cluster-title-color: #222;
@@ -1224,13 +1319,10 @@ body.cluster-click-mode-active .cluster-rect[data-selected="true"] ~ * .node-cli
   --node-stroke-focus: #00eaff;
   --node-stroke: #444;
   --node-connector: #666;
-  --side-panel-bg: #23272f;
-  --side-panel-text: #f6f7f9;
-  --side-panel-header-bg: #23272f;
-  --side-panel-header-border: #333;
-  --side-panel-border: #333;
-  --side-panel-label: #aaa;
-  --side-panel-value: #fff;
+  --ui-panel-bg: #23272f;
+  --ui-panel-border: #333;
+  --ui-panel-text: #f6f7f9;
+  --ui-panel-text-muted: #aaa;
   --node-selection-border: #444;
   --node-selection-focus: #00eaff;
   --node-selection-hover: #555;
@@ -1241,139 +1333,23 @@ body.cluster-click-mode-active .cluster-rect[data-selected="true"] ~ * .node-cli
   --bg-image: none; /* Sin imagen de fondo por defecto */
   --bg-opacity: 1; /* Opacidad completa */
   /* Variables específicas para controles */
-  --control-bg: #2d3748;
-  --control-text: #e2e8f0;
-  --control-border: #4a5568;
-  --control-border-hover: #718096;
-  --control-border-focus: #00eaff;
-  --control-placeholder: #a0aec0;
-  --control-shadow: rgba(0, 0, 0, 0.3);
-  --control-shadow-focus: rgba(0, 234, 255, 0.3);
+  --ui-control-bg: #2d3748;
+  --ui-control-bg-hover: #4a5568;
+  --ui-control-text: #e2e8f0;
+  --ui-control-icon: #a0aec0;
+  --ui-control-border: #4a5568;
+  --ui-control-border-hover: #718096;
+  --ui-control-border-focus: #00eaff;
+  --ui-control-bg-active: rgba(255, 255, 255, 0.15);
+  --ui-control-placeholder: #a0aec0;
+  --ui-control-shadow: rgba(0, 0, 0, 0.3);
+  --ui-control-shadow-focus: rgba(0, 234, 255, 0.3);
   --cluster-bg: rgba(255,255,255,0.02);
   --cluster-stroke: rgba(255,255,255,0.1);
   --cluster-title-color: #00eaff;
   --label-max-width: 60px;
 }
-.theme-vintage {
-  --canvas-bg: #f5e9da;
-  --text-color: #7c4f20;
-  --node-fill: #fffbe6;
-  --node-stroke-focus: #b97a56;
-  --node-stroke: #b97a56;
-  --node-connector: #b97a56;
-  --side-panel-bg: #fffbe6;
-  --side-panel-text: #7c4f20;
-  --side-panel-header-bg: #f5e9da;
-  --side-panel-header-border: #b97a56;
-  --side-panel-border: #b97a56;
-  --side-panel-label: #b97a56;
-  --side-panel-value: #7c4f20;
-  --node-selection-border: #b97a56;
-  --node-selection-focus: #8b4513;
-  --node-selection-hover: #a0522d;
-  --node-selection-selected: #8b4513;
-  --image-filter: sepia(40%) brightness(1.1); /* Efecto vintage */
-  --loading-color: #8b4513; /* Marrón vintage para el spinner */
-  --loading-bg: #fffbe6; /* Fondo crema vintage para el loading */
-  --bg-image: none; /* Sin imagen de fondo por defecto */
-  --bg-opacity: 1; /* Opacidad completa */
-  /* Variables específicas para controles */
-  --control-bg: #fef7e0;
-  --control-text: #5d4037;
-  --control-border: #d4a574;
-  --control-border-hover: #b97a56;
-  --control-border-focus: #8b4513;
-  --control-placeholder: #a1887f;
-  --control-shadow: rgba(139, 69, 19, 0.2);
-  --control-shadow-focus: rgba(139, 69, 19, 0.4);
-  --cluster-bg: rgba(0,0,0,0.05);
-  --cluster-stroke: rgba(0,0,0,0.1);
-      --cluster-title-color: #7c4f20;
-    --cluster-selected-bg: rgba(124, 79, 32, 0.25);
-    --cluster-selected-stroke: #7c4f20;
-    --cluster-selected-title-color: #7c4f20;
-  --label-max-width: 68px;
-}
-.theme-pastel {
-  --canvas-bg: #fdf6fb;
-  --text-color: #7a7a7a;
-  --node-fill: #fff;
-  --node-stroke-focus: #b6b6f7;
-  --node-stroke: #e0b1cb;
-  --node-connector: #b6b6f7;
-  --side-panel-bg: #fff;
-  --side-panel-text: #7a7a7a;
-  --side-panel-header-bg: #fdf6fb;
-  --side-panel-header-border: #e0b1cb;
-  --side-panel-border: #e0b1cb;
-  --side-panel-label: #b6b6f7;
-  --side-panel-value: #7a7a7a;
-  --node-selection-border: #e0b1cb;
-  --node-selection-focus: #b6b6f7;
-  --node-selection-hover: #d4a5c0;
-  --node-selection-selected: #b6b6f7;
-  --image-filter: hue-rotate(15deg) saturate(0.8); /* Tono pastel */
-  --loading-color: #b6b6f7; /* Lila pastel para el spinner */
-  --loading-bg: #ffffff; /* Fondo blanco para el loading */
-  --bg-image: none; /* Sin imagen de fondo por defecto */
-  --bg-opacity: 1; /* Opacidad completa */
-  /* Variables específicas para controles */
-  --control-bg: #ffffff;
-  --control-text: #7a7a7a;
-  --control-border: #e8d5e0;
-  --control-border-hover: #d4a5c0;
-  --control-border-focus: #b6b6f7;
-  --control-placeholder: #c4a8b8;
-  --control-shadow: rgba(182, 182, 247, 0.2);
-  --control-shadow-focus: rgba(182, 182, 247, 0.4);
-  --cluster-bg: rgba(0,0,0,0.05);
-  --cluster-stroke: rgba(0,0,0,0.1);
-      --cluster-title-color: #b6b6f7;
-    --cluster-selected-bg: rgba(182, 182, 247, 0.25);
-    --cluster-selected-stroke: #b6b6f7;
-    --cluster-selected-title-color: #b6b6f7;
-  --label-max-width: 68px;
-}
-.theme-neon {
-  --canvas-bg: #0f0026;
-  --text-color: #00ffe7;
-  --node-fill: #1a0033;
-  --node-stroke-focus: #ff00c8;
-  --node-stroke: #00ffe7;
-  --node-connector: #ff00c8;
-  --side-panel-bg: #1a0033;
-  --side-panel-text: #00ffe7;
-  --side-panel-header-bg: #0f0026;
-  --side-panel-header-border: #ff00c8;
-  --side-panel-border: #ff00c8;
-  --side-panel-label: #ff00c8;
-  --side-panel-value: #00ffe7;
-  --node-selection-border: #ff00c8;
-  --node-selection-focus: #00ffe7;
-  --node-selection-hover: #ff33d6;
-  --node-selection-selected: #00ffe7;
-  --image-filter: invert(100%) brightness(3.5) contrast(200%); /* Invertir colores para tema neon */
-  --loading-color: #00ffe7; /* Cyan neon para el spinner */
-  --loading-bg: #1a0033; /* Fondo púrpura oscuro para el loading */
-  --bg-image: none; /* Sin imagen de fondo por defecto */
-  --bg-opacity: 1; /* Opacidad completa */
-  /* Variables específicas para controles */
-  --control-bg: #2a0040;
-  --control-text: #00ffe7;
-  --control-border: #ff00c8;
-  --control-border-hover: #ff33d6;
-  --control-border-focus: #00ffe7;
-  --control-placeholder: #7a4d8a;
-  --control-shadow: rgba(255, 0, 200, 0.3);
-  --control-shadow-focus: rgba(0, 255, 231, 0.4);
-  --cluster-bg: rgba(255,255,255,0.02);
-  --cluster-stroke: rgba(255,255,255,0.1);
-      --cluster-title-color: #00ffe7;
-    --cluster-selected-bg: rgba(0, 255, 231, 0.25);
-    --cluster-selected-stroke: #00ffe7;
-    --cluster-selected-title-color: #00ffe7;
-  --label-max-width: 68px;
-}
+
 
 /* Selector de tema compacto (para uso fuera del topbar) */
 .theme-selector-compact {
@@ -1408,9 +1384,9 @@ body.cluster-click-mode-active .cluster-rect[data-selected="true"] ~ * .node-cli
   left: 0;
   width: 100%;
   height: 60px;
-  background: var(--topbar-bg, #fff);
-  color: var(--topbar-text, #333);
-  border-bottom: 1px solid var(--side-panel-border);
+  background: var(--ui-panel-bg, #fff);
+  color: var(--ui-panel-text, #333);
+  border-bottom: 1px solid var(--ui-panel-border);
   /* box-shadow: 0 2px 8px rgba(0,0,0,0.03); */
   display: flex;
   align-items: center;
@@ -1419,6 +1395,16 @@ body.cluster-click-mode-active .cluster-rect[data-selected="true"] ~ * .node-cli
   z-index: 2000; /* Por encima del side panel y SVG */
   box-sizing: border-box;
   margin: 0;
+  /* Oculto por defecto para evitar flash durante la carga */
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease-out, visibility 0.3s ease-out;
+}
+
+/* Mostrar topbar cuando la aplicación esté lista */
+.topbar.loaded {
+  opacity: 1;
+  visibility: visible;
 }
 
 .topbar * {
@@ -1511,7 +1497,7 @@ body.theme-onyx #node-count {
   margin: 0;
   font-size: 16px;
   font-weight: 600;
-  color: var(--side-panel-text);
+  color: var(--ui-panel-text);
   display: flex;
   align-items: center;
   height: 100%;
@@ -1674,12 +1660,12 @@ svg {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 40px;
-  height: 40px;
-  border: 1px solid var(--control-border);
-  border-radius: 8px;
-  background: var(--control-bg);
-  color: var(--control-text);
+  width: var(--theme-toggle-size, 40px);
+  height: var(--theme-toggle-size, 40px);
+  border: 1px solid var(--ui-control-border);
+  border-radius: var(--theme-toggle-border-radius, 8px);
+  background: var(--ui-control-bg);
+  color: var(--ui-control-text);
   cursor: pointer;
   transition: all 0.3s ease;
   position: relative;
@@ -1687,11 +1673,17 @@ svg {
   margin: 0;
   padding: 0;
   line-height: 1;
+  /* Remover estilos por defecto del botón */
+  outline: none;
+  box-shadow: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
 }
 
 .theme-toggle:hover {
-  border-color: var(--control-border-hover);
-  box-shadow: 0 0 0 2px var(--control-shadow);
+  border-color: var(--ui-control-border-hover);
+  box-shadow: 0 0 0 2px var(--ui-control-shadow);
   transform: scale(1.05);
 }
 
@@ -1701,8 +1693,11 @@ svg {
 
 .theme-toggle:focus {
   outline: none;
-  border-color: var(--control-border-focus);
-  box-shadow: 0 0 0 2px var(--control-shadow-focus);
+  border-color: var(--ui-control-border-focus);
+  box-shadow: 0 0 0 2px var(--ui-control-shadow-focus);
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
 }
 
 /* Theme Icons */
@@ -1740,36 +1735,6 @@ svg {
 
 /* --- Estilos migrados desde index.html para integración en la librería --- */
 
-/* Ocultar elementos hasta que se aplique el tema para evitar FOUC */
-.diagram-switcher,
-.theme-toggle,
-.topbar {
-    opacity: 0;
-    transition: opacity 0.3s ease;
-}
-
-/* Mostrar elementos cuando el tema esté aplicado */
-body.theme-snow .diagram-switcher,
-body.theme-snow .theme-toggle,
-body.theme-snow .topbar,
-body.theme-onyx .diagram-switcher,
-body.theme-onyx .theme-toggle,
-body.theme-onyx .topbar,
-body.theme-vintage .diagram-switcher,
-body.theme-vintage .theme-toggle,
-body.theme-vintage .topbar,
-body.theme-pastel .diagram-switcher,
-body.theme-pastel .theme-toggle,
-body.theme-pastel .topbar,
-body.theme-neon .diagram-switcher,
-body.theme-neon .theme-toggle,
-body.theme-neon .topbar,
-body.theme-forest .diagram-switcher,
-body.theme-forest .theme-toggle,
-body.theme-forest .topbar {
-    opacity: 1;
-}
-
 .diagram-switcher {
     position: fixed;
     top: 80px;
@@ -1777,12 +1742,12 @@ body.theme-forest .topbar {
     z-index: 9999;
     display: flex;
     flex-direction: column;
-    gap: var(--switcher-gap, 10px);
-    background: var(--switcher-bg, #fff);
-    padding: var(--switcher-padding, 15px);
-    border-radius: var(--switcher-border-radius, 12px);
-    box-shadow: var(--switcher-shadow, none);
-    border: 1px solid var(--switcher-border, #ddd);
+      gap: var(--ui-control-gap, 10px);
+  background: var(--ui-control-bg, #fff);
+  padding: var(--ui-control-padding, 15px);
+  border-radius: var(--ui-control-border-radius, 12px);
+  box-shadow: var(--ui-control-shadow, none);
+  border: 1px solid var(--ui-control-border, #ddd);
     pointer-events: auto;
     user-select: none;
     display: none; /* Oculto por defecto */
@@ -1804,10 +1769,10 @@ body.theme-forest .topbar {
 }
 
 .diagram-dropdown-btn {
-    background: var(--switcher-btn-bg, var(--control-bg, #fff));
-    color: var(--switcher-btn-text, var(--control-text, #333));
-    border: 1px solid var(--switcher-btn-border, var(--control-border, #d1d5db));
-    border-radius: var(--switcher-btn-border-radius, 8px);
+      background: var(--ui-control-bg, #fff);
+  color: var(--ui-control-text, #333);
+  border: 1px solid var(--ui-control-border, #d1d5db);
+  border-radius: var(--ui-control-btn-border-radius, 8px);
     padding: 8px 12px 8px 16px;
     font-size: 0.85rem; /* texto ligeramente más pequeño */
     font-weight: 500;
@@ -1827,9 +1792,9 @@ body.theme-forest .topbar {
 }
 
 .diagram-dropdown-btn:hover {
-    border-color: var(--switcher-btn-border-hover, var(--control-border-hover, #9ca3af));
-    box-shadow: var(--switcher-btn-shadow-hover, none);
-    background: var(--switcher-btn-bg-hover, rgba(0, 0, 0, 0.02));
+    border-color: var(--ui-control-border-hover, #9ca3af);
+    box-shadow: var(--ui-control-shadow, none);
+    background: var(--ui-control-bg-hover, rgba(0, 0, 0, 0.02));
 }
 
 .diagram-dropdown-btn .dropdown-text {
@@ -1847,7 +1812,7 @@ body.theme-forest .topbar {
     height: 20px;
     transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     flex-shrink: 0;
-    color: var(--switcher-btn-text, var(--control-text, #333));
+    color: var(--ui-control-icon, var(--ui-control-text, #333));
     opacity: 0.8;
     margin: 0;
     padding: 0;
@@ -1868,8 +1833,8 @@ body.theme-forest .topbar {
     top: 100%;
     left: 0;
     right: 0;
-    background: var(--switcher-bg, #fff);
-    border: 1px solid var(--switcher-border, #ddd);
+    background: var(--ui-control-bg, #fff);
+    border: 1px solid var(--ui-control-border, #ddd);
     border-radius: 8px;
     z-index: 10001;
     max-height: 70vh;
@@ -1880,7 +1845,7 @@ body.theme-forest .topbar {
     width: 100%;
     box-sizing: border-box;
     scrollbar-width: thin;
-    scrollbar-color: var(--switcher-border, #ddd) transparent;
+    scrollbar-color: var(--ui-control-border, #ddd) transparent;
     margin-left: 0;
     margin-right: 0;
     margin-bottom: 0;
@@ -1899,12 +1864,12 @@ body.theme-forest .topbar {
 }
 
 .diagram-dropdown-content::-webkit-scrollbar-thumb {
-    background: var(--switcher-border, #ddd);
+    background: var(--ui-control-border, #ddd);
     border-radius: 4px;
 }
 
 .diagram-dropdown-content::-webkit-scrollbar-thumb:hover {
-    background: var(--switcher-btn-border-hover, #9ca3af);
+    background: var(--ui-control-border-hover, #9ca3af);
 }
 
 .diagram-dropdown.open .diagram-dropdown-content {
@@ -1920,8 +1885,8 @@ body.theme-forest .topbar {
     width: 100%;
     text-align: left;
     background: transparent;
-    color: var(--switcher-btn-text, var(--control-text, #333));
-    border-bottom: 1px solid var(--switcher-border, #ddd);
+    color: var(--ui-control-text, #333);
+    border-bottom: 1px solid var(--ui-control-border, #ddd);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -1942,33 +1907,33 @@ body.theme-forest .topbar {
 }
 
 .diagram-dropdown-content .switcher-btn:hover {
-    background: var(--switcher-btn-bg-hover, rgba(0, 0, 0, 0.1));
-    border-color: var(--switcher-border, #ddd) !important;
-    border-bottom-color: var(--switcher-border, #ddd) !important;
+    background: var(--ui-control-bg-hover, rgba(0, 0, 0, 0.05));
+    border-color: var(--ui-control-border, #ddd) !important;
+    border-bottom-color: var(--ui-control-border, #ddd) !important;
 }
 
 .diagram-dropdown-content .switcher-btn.active {
-    background: var(--switcher-btn-bg-active, var(--control-focus, #1976d2));
-    color: var(--switcher-btn-text-active, #fff);
+    background: var(--ui-control-bg-active, #1976d2);
+    color: #fff;
     font-weight: 600;
     border: none !important;
-    border-bottom: 1px solid var(--switcher-border, #ddd) !important;
+    border-bottom: 1px solid var(--ui-control-border, #ddd) !important;
 }
 
 
 .switcher-btn {
-    background: var(--switcher-btn-bg, var(--control-bg, #fff));
-    color: var(--switcher-btn-text, var(--control-text, #333));
-    border: 2px solid var(--switcher-btn-border, var(--control-border, #d1d5db));
-    border-radius: var(--switcher-btn-border-radius, 8px);
-    padding: var(--switcher-btn-padding, 10px 20px);
+    background: var(--ui-control-bg, #fff);
+    color: var(--ui-control-text, #333);
+    border: 2px solid var(--ui-control-border, #d1d5db);
+    border-radius: var(--ui-control-btn-border-radius, 8px);
+    padding: var(--ui-control-btn-padding, 10px 20px);
     font-size: 0.85rem; /* texto ligeramente más pequeño */
     font-weight: 500;
     cursor: pointer;
-    box-shadow: var(--switcher-btn-shadow, none);
+    box-shadow: var(--ui-control-shadow, none);
     transition: all 0.2s ease;
     text-align: left;
-    min-width: var(--switcher-btn-min-width, 240px);
+    min-width: var(--ui-control-btn-min-width, 240px);
     pointer-events: auto;
     position: relative;
     z-index: 10001;
@@ -1977,33 +1942,33 @@ body.theme-forest .topbar {
     display: block;
 }
 .switcher-btn.active {
-    background: var(--switcher-btn-bg-active, var(--control-focus, #1976d2));
-    color: var(--switcher-btn-text-active, #fff);
-    border: 2px solid var(--switcher-btn-border-active, var(--control-focus, #1976d2));
-    box-shadow: var(--switcher-btn-shadow, none);
+    background: var(--ui-control-bg-active, #1976d2);
+    color: #fff;
+    border: 2px solid var(--ui-control-border-focus, #1976d2);
+    box-shadow: var(--ui-control-shadow, none);
 }
 .switcher-btn:hover:not(:disabled) {
-    background: var(--switcher-btn-bg-hover, var(--control-bg, #fff));
-    border-color: var(--switcher-btn-border-hover, var(--control-border-hover, #9ca3af));
-    box-shadow: var(--switcher-btn-shadow-hover, none);
+    background: var(--ui-control-bg-hover, rgba(0, 0, 0, 0.02));
+    border-color: var(--ui-control-border-hover, #9ca3af);
+    box-shadow: var(--ui-control-shadow, none);
 }
 .switcher-btn.active:hover:not(:disabled) {
-    background: var(--switcher-btn-bg-active, var(--control-focus, #1976d2));
-    border-color: var(--switcher-btn-border-active, var(--control-focus, #1976d2));
+    background: var(--ui-control-bg-active, #1976d2);
+    border-color: var(--ui-control-border-focus, #1976d2);
 }
 .switcher-btn:disabled {
-    opacity: 0.5;
+    opacity: var(--ui-control-btn-opacity-disabled, 0.5);
     cursor: not-allowed;
-    background: var(--switcher-btn-bg-disabled, var(--control-bg, #f5f5f5));
-    color: var(--switcher-btn-text-disabled, var(--control-placeholder, #9ca3af));
-    border-color: var(--switcher-btn-border-disabled, var(--control-border, #ddd));
+    background: #f5f5f5;
+    color: var(--ui-control-placeholder, #9ca3af);
+    border-color: var(--ui-control-border, #ddd);
     transform: none;
 }
 .switcher-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: var(--switcher-header-margin, 10px);
+    margin-bottom: var(--ui-control-header-margin, 10px);
     margin-top: 0;
     margin-left: 0;
     margin-right: 0;
@@ -2013,9 +1978,9 @@ body.theme-forest .topbar {
 
 /* Google Sheets button */
 .sheets-btn {
-    background: var(--switcher-btn-bg, var(--control-bg, #fff));
-    color: var(--switcher-btn-text, var(--control-text, #333));
-    border: 1px solid var(--switcher-btn-border, var(--control-border, #d1d5db));
+    background: var(--ui-control-bg, #fff);
+    color: var(--ui-control-text, #333);
+    border: 1px solid var(--ui-control-border, #d1d5db);
     border-radius: 50%;
     padding: 6px;
     cursor: pointer;
@@ -2036,9 +2001,9 @@ body.theme-forest .topbar {
 }
 
 .sheets-btn:hover {
-    border-color: var(--switcher-btn-border-hover, var(--control-border-hover, #9ca3af));
-    background: var(--switcher-btn-bg-hover, rgba(0, 0, 0, 0.02));
-    box-shadow: var(--switcher-btn-shadow-hover, none);
+    border-color: var(--ui-control-border-hover, #9ca3af);
+    background: var(--ui-control-bg-hover, rgba(0, 0, 0, 0.02));
+    box-shadow: var(--ui-control-shadow, none);
 }
 
 .sheets-btn svg {
@@ -2046,6 +2011,7 @@ body.theme-forest .topbar {
     opacity: 0.7;
     width: 14px;
     height: 14px;
+    color: var(--ui-control-icon, var(--ui-control-text, #333));
 }
 
 .sheets-btn:hover svg {
@@ -2054,9 +2020,9 @@ body.theme-forest .topbar {
 
 /* Cache refresh button */
 .cache-refresh-btn {
-    background: var(--switcher-btn-bg, var(--control-bg, #fff));
-    color: var(--switcher-btn-text, var(--control-text, #333));
-    border: 1px solid var(--switcher-btn-border, var(--control-border, #d1d5db));
+    background: var(--ui-control-bg, #fff);
+    color: var(--ui-control-text, #333);
+    border: 1px solid var(--ui-control-border, #d1d5db);
     border-radius: 50%;
     padding: 6px;
     cursor: pointer;
@@ -2077,9 +2043,9 @@ body.theme-forest .topbar {
 }
 
 .cache-refresh-btn:hover {
-    border-color: var(--switcher-btn-border-hover, var(--control-border-hover, #9ca3af));
-    background: var(--switcher-btn-bg-hover, rgba(0, 0, 0, 0.02));
-    box-shadow: var(--switcher-btn-shadow-hover, none);
+    border-color: var(--ui-control-border-hover, #9ca3af);
+    background: var(--ui-control-bg-hover, rgba(0, 0, 0, 0.02));
+    box-shadow: var(--ui-control-shadow, none);
 }
 
 .cache-refresh-btn svg {
@@ -2087,6 +2053,7 @@ body.theme-forest .topbar {
     opacity: 0.7;
     width: 14px;
     height: 14px;
+    color: var(--ui-control-icon, var(--ui-control-text, #333));
 }
 
 .cache-refresh-btn:hover svg {
@@ -2107,8 +2074,8 @@ body.theme-forest .topbar {
     gap: 10px;
 }
 .theme-toggle {
-    background: var(--theme-toggle-bg, var(--control-bg, #fff));
-    border: 1px solid var(--theme-toggle-border, var(--control-border, #ddd));
+    background: var(--ui-control-bg);
+    border: 1px solid var(--ui-control-border);
     border-radius: var(--theme-toggle-border-radius, 50%);
     width: var(--theme-toggle-size, 40px);
     height: var(--theme-toggle-size, 40px);
@@ -2120,11 +2087,17 @@ body.theme-forest .topbar {
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     position: relative;
     overflow: hidden;
+    /* Remover estilos por defecto del botón */
+    outline: none;
+    box-shadow: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
 }
 .theme-toggle:hover {
-    border-color: var(--theme-toggle-border-hover, var(--control-border-hover, #9ca3af));
+    border-color: var(--ui-control-border-hover);
     transform: scale(1.05);
-    box-shadow: 0 0 0 2px var(--theme-toggle-shadow, var(--control-shadow, rgba(0, 0, 0, 0.1)));
+    box-shadow: 0 0 0 2px var(--ui-control-shadow);
 }
 .theme-toggle:active {
     transform: scale(0.95);
@@ -2132,7 +2105,7 @@ body.theme-forest .topbar {
 .theme-icon {
     width: var(--theme-icon-size, 18px);
     height: var(--theme-icon-size, 18px);
-    color: var(--theme-toggle-text, var(--control-text, #333));
+    color: var(--ui-control-icon, var(--ui-control-text, #333));
     position: absolute;
     top: 50%;
     left: 50%;
@@ -2309,13 +2282,19 @@ body.theme-neon .theme-toggle .moon-icon {
   height: 100vh;
   z-index: 1;
   overflow: hidden;
-  background-color: var(--canvas-bg);
+  background-color: transparent; /* Cambiado a transparente para ver el spinner inicial */
 }
 
 .xcanvas.drag-over {
   background: rgba(25, 118, 210, 0.1) !important;
   border: none !important;
   border-radius: 12px;
+}
+
+/* Restaurar fondo cuando se complete la carga */
+.xcanvas.loaded {
+  background-color: var(--canvas-bg);
+  transition: background-color 0.3s ease-out;
 }
 
 .drag-overlay {
@@ -3004,6 +2983,11 @@ body:not(.cluster-click-mode-active) .cluster-rect[data-selected="true"] {
   stroke-width: 1px;
 }
 
+/* Cluster title text styles */
+.cluster-title {
+  fill: var(--cluster-title-color, #222);
+}
+
 /* Floating label background styles */
 .floating-label-bg {
   fill: var(--cluster-hover-bg, rgba(255, 255, 255, 0.95));
@@ -3016,41 +3000,15 @@ body:not(.cluster-click-mode-active) .cluster-rect[data-selected="true"] {
 
 /* Theme-specific cluster title styles */
 body.theme-onyx .cluster-title-bg {
-  fill: rgba(30, 30, 30, 0.95) !important;
-  stroke: var(--cluster-hover-stroke, #00eaff) !important;
+  fill: var(--cluster-title-bg, rgba(30, 30, 30, 0.95)) !important;
+  stroke: var(--cluster-stroke, rgba(255,255,255,0.1)) !important;
 }
 
 body.theme-onyx .cluster-title {
-  fill: var(--cluster-hover-title-color, #00eaff) !important;
+  fill: var(--cluster-title-color, hsl(var(--color-base) 80% / 1)) !important;
 }
 
-body.theme-vintage .cluster-title-bg {
-  fill: rgba(245, 235, 224, 0.95) !important;
-  stroke: var(--cluster-hover-stroke, #7c4f20) !important;
-}
 
-body.theme-vintage .cluster-title {
-  fill: var(--cluster-hover-title-color, #7c4f20) !important;
-}
-
-body.theme-pastel .cluster-title-bg {
-  fill: rgba(255, 255, 255, 0.95) !important;
-  stroke: var(--cluster-hover-stroke, #b6b6f7) !important;
-}
-
-body.theme-pastel .cluster-title {
-  fill: var(--cluster-hover-title-color, #b6b6f7) !important;
-}
-
-body.theme-neon .cluster-title-bg {
-  fill: rgba(0, 0, 0, 0.95) !important;
-  stroke: var(--cluster-hover-stroke, #00ffe7) !important;
-  filter: drop-shadow(0 0 20px rgba(0, 255, 231, 0.5)) !important;
-}
-
-body.theme-neon .cluster-title {
-  fill: var(--cluster-hover-title-color, #00ffe7) !important;
-}
 
 
 
@@ -3061,23 +3019,7 @@ body.theme-onyx {
   --cluster-selected-title-color: #ff4081;
 }
 
-body.theme-vintage {
-  --cluster-selected-bg: rgba(156, 39, 176, 0.25);
-  --cluster-selected-stroke: #9c27b0;
-  --cluster-selected-title-color: #9c27b0;
-}
 
-body.theme-pastel {
-  --cluster-selected-bg: rgba(255, 87, 34, 0.25);
-  --cluster-selected-stroke: #ff5722;
-  --cluster-selected-title-color: #ff5722;
-}
-
-body.theme-neon {
-  --cluster-selected-bg: rgba(255, 193, 7, 0.25);
-  --cluster-selected-stroke: #ffc107;
-  --cluster-selected-title-color: #ffc107;
-}
 
 /* Cluster Tooltip Styles */
 #cluster-tooltip {
@@ -3104,3 +3046,176 @@ body.theme-neon {
 
 
 
+
+/* ===== SPINNER DE LOADING INICIAL ===== */
+/* Se muestra inmediatamente al cargar la página, antes de que se ejecuten los scripts */
+
+.initial-loading {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: var(--canvas-bg, #f6f7f9);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  opacity: 1;
+  transition: opacity 0.5s ease-out;
+}
+
+.initial-loading.hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.initial-spinner {
+  width: 50px;
+  height: 50px;
+  border: 4px solid rgba(0, 0, 0, 0.1);
+  border-top: 4px solid var(--loading-color, #dadada);
+  border-radius: 50%;
+  animation: initial-spin 1s linear infinite;
+  margin-bottom: 20px;
+}
+
+.initial-loading-text {
+  color: var(--text-color, #222);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+  text-align: center;
+  margin: 0;
+  line-height: 1.4;
+  opacity: 0; /* Oculto por defecto */
+  visibility: hidden; /* Oculto por defecto */
+}
+
+@keyframes initial-spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Ajustes para temas oscuros */
+body.theme-onyx .initial-loading {
+  background-color: var(--canvas-bg, #1a1a1a);
+}
+
+body.theme-onyx .initial-loading-text {
+  color: var(--text-color, #ffffff);
+}
+
+body.theme-onyx .initial-spinner {
+  border-color: rgba(255, 255, 255, 0.1);
+  border-top-color: var(--loading-color, #00eaff);
+}
+
+/* Responsive para móviles */
+@media (max-width: 768px) {
+  .initial-spinner {
+    width: 40px;
+    height: 40px;
+    border-width: 3px;
+  }
+  
+  .initial-loading-text {
+    font-size: 14px;
+  }
+}
+
+@media (max-width: 480px) {
+  .initial-spinner {
+    width: 35px;
+    height: 35px;
+    border-width: 3px;
+  }
+  
+  .initial-loading-text {
+    font-size: 13px;
+  }
+}
+
+/* ============================================================================
+   THEME TRANSITION CONTROL
+   ============================================================================ */
+
+/* Deshabilitar transiciones durante cambio de tema para cambio inmediato */
+body.theme-transitioning,
+body.theme-transitioning *,
+body.theme-transitioning *::before,
+body.theme-transitioning *::after {
+  transition: none !important;
+  animation: none !important;
+}
+
+/* Deshabilitar transiciones específicas que afectan el cambio de tema */
+body.theme-transitioning {
+  transition: none !important;
+}
+
+body.theme-transitioning .node {
+  transition: none !important;
+}
+
+body.theme-transitioning .image-base {
+  transition: none !important;
+}
+
+body.theme-transitioning .topbar {
+  transition: none !important;
+}
+
+body.theme-transitioning .theme-toggle {
+  transition: none !important;
+}
+
+body.theme-transitioning .diagram-switcher {
+  transition: none !important;
+}
+
+body.theme-transitioning .side-panel {
+  transition: none !important;
+}
+
+body.theme-transitioning .cluster-rect {
+  transition: none !important;
+}
+
+body.theme-transitioning .cluster-title {
+  transition: none !important;
+}
+
+body.theme-transitioning .node-counter {
+  transition: none !important;
+}
+
+body.theme-transitioning .diagram-title {
+  transition: none !important;
+}
+
+body.theme-transitioning .diagram-logo {
+  transition: none !important;
+}
+
+/* Asegurar que los colores se apliquen inmediatamente */
+body.theme-snow,
+body.theme-onyx {
+  transition: none !important;
+}
+
+body.theme-snow *,
+body.theme-onyx * {
+  transition: none !important;
+}
+
+/* Excepciones: mantener transiciones solo para hover y focus */
+body.theme-snow .theme-toggle:hover,
+body.theme-onyx .theme-toggle:hover,
+body.theme-snow .switcher-btn:hover,
+body.theme-onyx .switcher-btn:hover,
+body.theme-snow .node:hover,
+body.theme-onyx .node:hover {
+  transition: all 0.2s ease !important;
+}

@@ -1,6 +1,313 @@
 // Swanix Diagrams - JS
 // v0.6.0
 
+// ============================================================================
+// THEME MANAGER FALLBACK SYSTEM
+// ============================================================================
+// Provide fallback functions when themeManager.js is not loaded
+// This ensures the system works with just CSS or with custom theme implementations
+
+if (!window.ThemeManager) {
+  console.log('[XDiagrams] ThemeManager not found, using CSS-only fallback system');
+  
+  // Create fallback ThemeManager object
+  window.ThemeManager = {
+    // Basic theme functions
+    setTheme: function(themeId) {
+      console.log('[CSS Fallback] Setting theme:', themeId);
+      
+      // Agregar clase para deshabilitar transiciones si no está ya presente
+      if (!document.body.classList.contains('theme-transitioning')) {
+        document.body.classList.add('theme-transitioning');
+      }
+      
+      // Apply theme class to body
+      document.body.classList.remove('theme-snow', 'theme-onyx');
+      document.body.classList.add('theme-' + themeId);
+      
+      // Save to localStorage for persistence
+      const storageKey = this.getStorageKey();
+      localStorage.setItem(storageKey, themeId);
+      
+      // Update tooltip if it exists and is active
+      this.updateTooltipTheme();
+      
+      // Update cluster titles theme
+      this.updateClusterTitlesTheme();
+      
+      // Remover la clase después de un breve delay para permitir que los estilos se apliquen
+      setTimeout(() => {
+        document.body.classList.remove('theme-transitioning');
+      }, 50);
+    },
+    
+    initializeThemeSystem: function() {
+      console.log('[CSS Fallback] Theme system initialization - using CSS defaults');
+      
+      return new Promise((resolve) => {
+        // Load saved theme from localStorage or use default
+        const storageKey = this.getStorageKey();
+        const savedTheme = localStorage.getItem(storageKey);
+        const defaultTheme = 'snow';
+        const themeToApply = savedTheme || defaultTheme;
+        
+        // Apply the theme
+        this.setTheme(themeToApply);
+        
+        // Setup theme toggle button
+        this.setupThemeToggle();
+        
+        console.log('[CSS Fallback] Theme system initialized with theme:', themeToApply);
+        
+        // Resolve immediately for CSS-only mode
+        setTimeout(resolve, 100);
+      });
+    },
+    
+    forceDefaultLightTheme: function() {
+      console.log('[CSS Fallback] Default light theme applied');
+      document.body.classList.remove('theme-onyx');
+      document.body.classList.add('theme-snow');
+    },
+    
+    preserveCurrentTheme: function() {
+      console.log('[CSS Fallback] Current theme preserved');
+      // No action needed - CSS handles theme persistence
+    },
+    
+    // Configuration functions
+    getThemeConfiguration: function() {
+      return { lightTheme: 'snow', darkTheme: 'onyx' };
+    },
+    
+    getStorageKey: function() {
+      const path = window.location.pathname;
+      const filename = path.split('/').pop() || 'index.html';
+      return `selectedTheme_${filename}`;
+    },
+    
+    getOppositeTheme: function(currentTheme) {
+      return currentTheme === 'snow' ? 'onyx' : 'snow';
+    },
+    
+    isLightTheme: function(themeId) {
+      return themeId === 'snow';
+    },
+    
+    getCurrentTheme: function() {
+      if (document.body.classList.contains('theme-snow')) {
+        return 'snow';
+      } else if (document.body.classList.contains('theme-onyx')) {
+        return 'onyx';
+      }
+      return 'snow'; // default
+    },
+    
+    // Theme management functions
+    clearThemeCache: function() {
+      console.log('[CSS Fallback] Theme cache cleared');
+    },
+    
+    getThemeVariables: function() {
+      console.log('[CSS Fallback] Using CSS variables');
+      return {};
+    },
+    
+    updateSVGColors: function() {
+      console.log('[CSS Fallback] SVG colors updated via CSS');
+    },
+    
+    updateImageFilters: function() {
+      console.log('[CSS Fallback] Image filters updated via CSS');
+    },
+    
+    updateTooltipTheme: function() {
+      try {
+        const tooltip = d3.select('#cluster-tooltip');
+        if (!tooltip.empty() && window.$xDiagrams.clusterTooltip.active) {
+          applyThemeVariablesToTooltip(tooltip);
+          console.log('[CSS Fallback] Tooltip theme updated');
+        }
+      } catch (error) {
+        console.warn('[CSS Fallback] Error updating tooltip theme:', error);
+      }
+    },
+    
+    updateClusterTitlesTheme: function() {
+      try {
+        // Update cluster title backgrounds
+        d3.selectAll('.cluster-title-bg').each(function() {
+          const computedStyle = getComputedStyle(document.documentElement);
+          const titleBg = computedStyle.getPropertyValue('--cluster-title-bg');
+          if (titleBg && titleBg.trim() !== '') {
+            d3.select(this).style('fill', titleBg);
+          }
+        });
+        
+        // Update cluster title text colors
+        d3.selectAll('.cluster-title').each(function() {
+          const computedStyle = getComputedStyle(document.documentElement);
+          const titleColor = computedStyle.getPropertyValue('--cluster-title-color');
+          if (titleColor && titleColor.trim() !== '') {
+            d3.select(this).style('fill', titleColor);
+          }
+        });
+        
+        console.log('[CSS Fallback] Cluster titles theme updated');
+      } catch (error) {
+        console.warn('[CSS Fallback] Error updating cluster titles theme:', error);
+      }
+    },
+    
+    updateSwitcherColors: function() {
+      console.log('[CSS Fallback] Switcher colors updated via CSS');
+    },
+    
+    getThemeConfigurationLegacy: function() {
+      return this.getThemeConfiguration();
+    },
+    
+    toggleTheme: function() {
+      const currentTheme = this.getCurrentTheme();
+      const newTheme = this.getOppositeTheme(currentTheme);
+      
+      // Agregar clase para deshabilitar transiciones
+      document.body.classList.add('theme-transitioning');
+      
+      // Aplicar el nuevo tema
+      this.setTheme(newTheme);
+      
+      // Remover la clase después de un breve delay para permitir que los estilos se apliquen
+      setTimeout(() => {
+        document.body.classList.remove('theme-transitioning');
+      }, 50);
+      
+      console.log('[CSS Fallback] Theme toggled from', currentTheme, 'to:', newTheme);
+    },
+    
+    setupThemeToggle: function() {
+      console.log('[CSS Fallback] Theme toggle setup - using CSS classes');
+      
+      const themeToggle = document.getElementById('theme-toggle');
+      if (themeToggle) {
+        // Remove any existing event listeners
+        themeToggle.removeEventListener('click', this._toggleThemeHandler);
+        
+        // Create handler function
+        this._toggleThemeHandler = () => {
+          this.toggleTheme();
+        };
+        
+        // Add click event listener
+        themeToggle.addEventListener('click', this._toggleThemeHandler);
+        
+        console.log('[CSS Fallback] Theme toggle button configured');
+      } else {
+        console.warn('[CSS Fallback] Theme toggle button not found');
+      }
+    },
+    
+    setupThemeFileWatcher: function() {
+      console.log('[CSS Fallback] Theme file watcher setup - not needed for CSS-only');
+    },
+    
+    reloadThemes: function() {
+      console.log('[CSS Fallback] Themes reloaded - using CSS defaults');
+    },
+    
+    forceShow: function() {
+      console.log('[CSS Fallback] Force show called');
+    },
+    
+    // Essential system functions that should work without themeManager.js
+    init: function() {
+      console.log('[CSS Fallback] System initialization - using CSS defaults');
+      // Apply default theme immediately
+      this.initializeThemeSystem().then(() => {
+        // Show content immediately since we're using CSS-only
+        this.showContent();
+      });
+    },
+    
+    showContent: function() {
+      console.log('[CSS Fallback] Showing content with CSS defaults');
+      
+      // Show main content
+      const mainContent = document.querySelector('.xcanvas') || document.body;
+      if (mainContent) {
+        mainContent.classList.remove('xdiagrams-content-hidden');
+        mainContent.classList.add('xdiagrams-content-visible');
+      }
+      
+      // Show topbar
+      const topbar = document.querySelector('.topbar');
+      if (topbar) {
+        topbar.classList.add('loaded');
+      }
+      
+      // Hide initial loading spinner
+      const initialLoading = document.getElementById('initial-loading');
+      if (initialLoading) {
+        initialLoading.style.opacity = '0';
+        setTimeout(() => {
+          if (initialLoading && initialLoading.parentNode) {
+            initialLoading.parentNode.removeChild(initialLoading);
+          }
+        }, 150);
+      }
+      
+      console.log('[CSS Fallback] Content shown successfully');
+      
+      // Trigger ready event
+      window.dispatchEvent(new CustomEvent('xdiagrams-ready'));
+    },
+    
+    listenForAppReady: function() {
+      console.log('[CSS Fallback] Listening for app ready - using immediate initialization');
+      // For CSS-only mode, initialize immediately
+      setTimeout(() => {
+        this.init();
+      }, 100);
+    },
+    
+    checkReadyState: function() {
+      console.log('[CSS Fallback] Checking ready state - always ready for CSS-only');
+      return true;
+    },
+    
+    waitForDiagramComplete: function() {
+      console.log('[CSS Fallback] Waiting for diagram complete - using immediate completion');
+      return Promise.resolve();
+    },
+    
+    waitForSVGStyles: function() {
+      console.log('[CSS Fallback] Waiting for SVG styles - using immediate completion');
+      return Promise.resolve();
+    },
+    
+    applyCompleteThemeStyles: function() {
+      console.log('[CSS Fallback] Applying complete theme styles - using CSS defaults');
+      return Promise.resolve();
+    }
+  };
+  
+  // Also expose individual functions for backward compatibility
+  window.setTheme = window.ThemeManager.setTheme;
+  window.initializeThemeSystem = window.ThemeManager.initializeThemeSystem;
+  window.forceDefaultLightTheme = window.ThemeManager.forceDefaultLightTheme;
+  window.preserveCurrentTheme = window.ThemeManager.preserveCurrentTheme;
+  window.getThemeConfiguration = window.ThemeManager.getThemeConfiguration;
+  window.getStorageKey = window.ThemeManager.getStorageKey;
+  window.getOppositeTheme = window.ThemeManager.getOppositeTheme;
+  window.isLightTheme = window.ThemeManager.isLightTheme;
+  
+  // Initialize the system immediately for CSS-only mode
+  console.log('[XDiagrams] Initializing CSS-only system...');
+  setTimeout(() => {
+    window.ThemeManager.init();
+  }, 50);
+}
+
 // Global zoom behavior - defined at the beginning to avoid scope issues
 const zoom = d3.zoom()
   .scaleExtent([0.1, 3.0]) // Max zoom to 3x and min to 10% for better visibility
@@ -1847,6 +2154,11 @@ function applyMasonryLayout(clusterGroups, container, originalTrees, preCalculat
         window.applyAutoZoom();
       }, 100); // Small delay to ensure DOM is updated
     }
+    
+    // Auto-select single cluster if there's only one
+    setTimeout(() => {
+      detectMultiClusterDiagram();
+    }, 150);
   };
   
   // Iniciar el proceso de espera
@@ -1899,7 +2211,6 @@ function createClusterTitle(cluster, minX, minY, isFlat = false) {
     .attr("class", "cluster-title-bg")
     .attr("rx", 12)
     .attr("ry", 12)
-    .style("fill", "var(--cluster-title-bg, rgba(255, 255, 255, 0.9))")
     .style("stroke", "var(--cluster-stroke, #222)")
     .style("stroke-width", "1px");
   
@@ -1911,7 +2222,6 @@ function createClusterTitle(cluster, minX, minY, isFlat = false) {
     .attr("text-anchor", "start")
     .style("font-size", "2.25em")
     .style("font-weight", "bold")
-    .style("fill", "var(--cluster-title-color, #222)")
     .text(clusterTitle);
     
   // Ajustar el fondo al tamaño del texto
@@ -2456,7 +2766,6 @@ function drawTrees(trees, diagramConfig = null) {
                 .attr("class", "cluster-title-bg")
                 .attr("rx", 12)
                 .attr("ry", 12)
-                .style("fill", "var(--cluster-title-bg, rgba(255, 255, 255, 0.9))")
                 .style("stroke", "var(--cluster-stroke, #222)")
                 .style("stroke-width", "1px");
               
@@ -2468,7 +2777,6 @@ function drawTrees(trees, diagramConfig = null) {
                 .attr("text-anchor", "start")
                 .style("font-size", titleFontSize)
                 .style("font-weight", "bold")
-                .style("fill", "var(--cluster-title-color, #222)")
                 .text(clusterTitle);
                 
               // Ajustar el fondo al tamaño del texto
@@ -2506,6 +2814,11 @@ function drawTrees(trees, diagramConfig = null) {
     console.error('Error general en drawTrees:', err);
   }
   } // End of else block for tree layout
+  
+  // Auto-select single cluster if there's only one
+  setTimeout(() => {
+    detectMultiClusterDiagram();
+  }, 100);
 }
 
 // Function to recalculate spacing between clusters
@@ -4787,8 +5100,6 @@ window.$xDiagrams.loadDiagram = function(input) {
     // Limpieza visual
     const svgD3 = d3.select("#main-diagram-svg");
     if (!svgD3.empty()) svgD3.interrupt();
-    const loading = document.getElementById('loading');
-    if (loading) loading.style.display = 'block';
     const svg = document.getElementById('main-diagram-svg');
     if (svg) {
         svg.style.transition = 'none';
@@ -4815,10 +5126,19 @@ window.$xDiagrams.loadDiagram = function(input) {
                 window.applyAutoZoom();
             }
             
-
+            // Ocultar el spinner inicial cuando se complete la carga
+            const initialLoading = document.getElementById('initial-loading');
+            if (initialLoading) {
+                initialLoading.classList.add('hidden');
+                // Remover completamente después de la transición
+                setTimeout(() => {
+                    if (initialLoading && initialLoading.classList.contains('hidden')) {
+                        initialLoading.remove();
+                    }
+                }, 500);
+            }
             
             setTimeout(() => {
-                if (loading) loading.style.display = 'none';
                 if (svg) {
                     svg.style.transition = '';
                     svg.style.opacity = '1';
@@ -4827,18 +5147,77 @@ window.$xDiagrams.loadDiagram = function(input) {
                     if (window.ensureZoomBehavior) window.ensureZoomBehavior();
                     if (window.setupClosePanelOnSvgClick) window.setupClosePanelOnSvgClick();
                 }
+                
+                // Agregar clase loaded al xcanvas para restaurar el fondo
+                const xcanvas = document.querySelector('.xcanvas');
+                if (xcanvas) {
+                    xcanvas.classList.add('loaded');
+                }
+                
+                // Mostrar el topbar cuando se complete la carga
+                const topbar = document.querySelector('.topbar');
+                if (topbar) {
+                    topbar.classList.add('loaded');
+                }
+                
                 window.$xDiagrams.isLoading = false;
             }, 100);
         }, 0, diagramToLoad);
         setTimeout(() => {
             if (window.$xDiagrams.isLoading) {
-                if (loading) loading.style.display = 'none';
                 if (svg) svg.classList.add('loaded');
+                
+                // Agregar clase loaded al xcanvas para restaurar el fondo
+                const xcanvas = document.querySelector('.xcanvas');
+                if (xcanvas) {
+                    xcanvas.classList.add('loaded');
+                }
+                
+                // Mostrar el topbar cuando se complete la carga
+                const topbar = document.querySelector('.topbar');
+                if (topbar) {
+                    topbar.classList.add('loaded');
+                }
+                
+                // Ocultar el spinner inicial en caso de timeout
+                const initialLoading = document.getElementById('initial-loading');
+                if (initialLoading) {
+                    initialLoading.classList.add('hidden');
+                    setTimeout(() => {
+                        if (initialLoading && initialLoading.classList.contains('hidden')) {
+                            initialLoading.remove();
+                        }
+                    }, 500);
+                }
+                
                 window.$xDiagrams.isLoading = false;
                 window.$xDiagrams.currentUrl = null;
             }
         }, 10000);
     } else {
+        // Agregar clase loaded al xcanvas para restaurar el fondo
+        const xcanvas = document.querySelector('.xcanvas');
+        if (xcanvas) {
+            xcanvas.classList.add('loaded');
+        }
+        
+        // Mostrar el topbar cuando se complete la carga
+        const topbar = document.querySelector('.topbar');
+        if (topbar) {
+            topbar.classList.add('loaded');
+        }
+        
+        // Ocultar el spinner inicial en caso de error
+        const initialLoading = document.getElementById('initial-loading');
+        if (initialLoading) {
+            initialLoading.classList.add('hidden');
+            setTimeout(() => {
+                if (initialLoading && initialLoading.classList.contains('hidden')) {
+                    initialLoading.remove();
+                }
+            }, 500);
+        }
+        
         window.$xDiagrams.isLoading = false;
     }
 };
@@ -5031,7 +5410,6 @@ function renderSwDiagramBase() {
         </div>
       </div>
       <svg id="main-diagram-svg"></svg>
-      <div id="loading" class="loading"><div class="spinner"></div></div>
       <small id="error-message" class="error-message"></small>
       <div class="file-drop-zone" id="fileDropZone">
         <span class="icon">
@@ -5057,14 +5435,22 @@ function renderSwDiagramBase() {
     }
   }
   // Initialize theme system after base structure is rendered
-      window.ThemeManager.initializeThemeSystem().then(() => {
-    // Check theme state after initialization
+  const themeInitPromise = window.ThemeManager.initializeThemeSystem();
+  if (themeInitPromise && typeof themeInitPromise.then === 'function') {
+    themeInitPromise.then(() => {
+      // Check theme state after initialization
+      setTimeout(() => {
+        checkThemeOnLoad();
+      }, 500);
+    }).catch(error => {
+      console.error('[Base Render] Error inicializando sistema de temas:', error);
+    });
+  } else {
+    // For CSS-only fallback, just check theme after a delay
     setTimeout(() => {
       checkThemeOnLoad();
     }, 500);
-  }).catch(error => {
-    console.error('[Base Render] Error inicializando sistema de temas:', error);
-  });
+  }
       // Automatic initialization of dropdown and diagram when page loads
     if (document.getElementById('diagram-dropdown')) {
       const diagrams = getDiagrams();
@@ -5108,7 +5494,12 @@ function initializeWhenReady() {
     
     // Initialize theme system after base structure is rendered
     if (window.$xDiagrams.themeState && !window.$xDiagrams.themeState.isInitialized) {
-      window.ThemeManager.initializeThemeSystem();
+      const themeInitPromise = window.ThemeManager.initializeThemeSystem();
+      if (themeInitPromise && typeof themeInitPromise.then === 'function') {
+        themeInitPromise.catch(error => {
+          console.error('[Initialize When Ready] Error inicializando sistema de temas:', error);
+        });
+      }
     }
     
     // Drag & Drop functionality moved to XDragDrop plugin
@@ -5796,10 +6187,8 @@ function loadFromRestApi(apiUrl, onComplete, retryCount = 0, diagramConfig = nul
 function loadFromCsvUrl(csvUrl, onComplete, retryCount = 0, diagramConfig = null) {
   console.log("📄 Cargando desde URL CSV:", csvUrl);
   
-  const loadingElement = document.querySelector("#loading");
   const errorElement = document.querySelector("#error-message");
   
-  if (loadingElement) loadingElement.style.display = "block";
   if (errorElement) errorElement.style.display = "none";
 
   // Add cache-busting parameter to force fresh data
@@ -5847,7 +6236,6 @@ function loadFromCsvUrl(csvUrl, onComplete, retryCount = 0, diagramConfig = null
       } catch (error) {
         console.error("Error durante la inicialización:", error);
         if (errorElement) errorElement.innerText = `Error: ${error.message}`;
-        if (loadingElement) loadingElement.style.display = "none";
         
         if (onComplete && typeof onComplete === 'function') {
           onComplete();
@@ -5892,7 +6280,6 @@ function loadFromCsvUrl(csvUrl, onComplete, retryCount = 0, diagramConfig = null
       if (isFileNotFound) {
         console.log('[File Not Found] Showing "Diagram not found" message');
         showDiagramNotFound();
-        if (loadingElement) loadingElement.style.display = "none";
         if (onComplete && typeof onComplete === 'function') {
           onComplete();
         }
@@ -5907,7 +6294,6 @@ function loadFromCsvUrl(csvUrl, onComplete, retryCount = 0, diagramConfig = null
         errorElement.innerText = errorMessage;
         errorElement.style.display = "block";
       }
-      if (loadingElement) loadingElement.style.display = "none";
       
       if (onComplete && typeof onComplete === 'function') {
         onComplete();
@@ -5920,10 +6306,8 @@ function loadFromCsvUrl(csvUrl, onComplete, retryCount = 0, diagramConfig = null
 function loadFromMultipleUrls(urls, onComplete, retryCount = 0, diagramConfig = null) {
   console.log("📄 Cargando múltiples URLs:", urls.length, "hojas");
   
-  const loadingElement = document.querySelector("#loading");
   const errorElement = document.querySelector("#error-message");
   
-  if (loadingElement) loadingElement.style.display = "block";
   if (errorElement) errorElement.style.display = "none";
 
   let allData = [];
@@ -5986,7 +6370,6 @@ function loadFromMultipleUrls(urls, onComplete, retryCount = 0, diagramConfig = 
     if (allData.length === 0) {
       console.error("❌ No se pudo cargar ninguna hoja");
       showDiagramNotFound();
-      if (loadingElement) loadingElement.style.display = "none";
       
       if (onComplete && typeof onComplete === 'function') {
         onComplete();
@@ -6033,7 +6416,6 @@ function loadFromMultipleUrls(urls, onComplete, retryCount = 0, diagramConfig = 
     } catch (error) {
       console.error("Error durante la inicialización del diagrama desde múltiples URLs:", error);
       showDiagramNotFound();
-      if (loadingElement) loadingElement.style.display = "none";
       
       if (onComplete && typeof onComplete === 'function') {
         onComplete();
@@ -6049,10 +6431,8 @@ function loadFromMultipleUrls(urls, onComplete, retryCount = 0, diagramConfig = 
 function loadFromMultipleFiles(files, onComplete, retryCount = 0, diagramConfig = null) {
   console.log("📁 Cargando múltiples archivos:", files.length, "archivos");
   
-  const loadingElement = document.querySelector("#loading");
   const errorElement = document.querySelector("#error-message");
   
-  if (loadingElement) loadingElement.style.display = "block";
   if (errorElement) errorElement.style.display = "none";
 
   let allData = [];
@@ -6121,7 +6501,6 @@ function loadFromMultipleFiles(files, onComplete, retryCount = 0, diagramConfig 
     if (allData.length === 0) {
       console.error("❌ No se pudo procesar ningún archivo");
       showDiagramNotFound();
-      if (loadingElement) loadingElement.style.display = "none";
       if (onComplete && typeof onComplete === 'function') {
         onComplete();
       }
@@ -6168,7 +6547,6 @@ function loadFromMultipleFiles(files, onComplete, retryCount = 0, diagramConfig 
     } catch (error) {
       console.error("Error durante la inicialización del diagrama desde múltiples archivos:", error);
       showDiagramNotFound();
-      if (loadingElement) loadingElement.style.display = "none";
       
       if (onComplete && typeof onComplete === 'function') {
         onComplete();
@@ -6181,10 +6559,8 @@ function loadFromMultipleFiles(files, onComplete, retryCount = 0, diagramConfig 
 function loadFromObject(diagramObject, onComplete, diagramConfig = null) {
           console.log("Cargando desde objeto:", diagramObject.name);
   
-  const loadingElement = document.querySelector("#loading");
   const errorElement = document.querySelector("#error-message");
   
-  if (loadingElement) loadingElement.style.display = "block";
   if (errorElement) errorElement.style.display = "none";
 
   try {
@@ -6192,7 +6568,6 @@ function loadFromObject(diagramObject, onComplete, diagramConfig = null) {
     if (!diagramObject.data || !Array.isArray(diagramObject.data) || diagramObject.data.length === 0) {
       console.log('[Object] Empty or invalid data, showing "Diagram not found"');
       showDiagramNotFound();
-      if (loadingElement) loadingElement.style.display = "none";
       if (onComplete && typeof onComplete === 'function') {
         onComplete();
       }
@@ -6233,7 +6608,6 @@ function loadFromObject(diagramObject, onComplete, diagramConfig = null) {
     console.error("Error durante la inicialización del diagrama desde objeto:", error);
     console.log('[Object] Error processing data, showing "Diagram not found"');
     showDiagramNotFound();
-    if (loadingElement) loadingElement.style.display = "none";
     
     if (onComplete && typeof onComplete === 'function') {
       onComplete();
@@ -6539,10 +6913,8 @@ function loadFromRestApiWithCache(apiUrl, onComplete, retryCount = 0, diagramCon
     });
   }
   
-  const loadingElement = document.querySelector("#loading");
   const errorElement = document.querySelector("#error-message");
   
-  if (loadingElement) loadingElement.style.display = "block";
   if (errorElement) errorElement.style.display = "none";
 
   // Check cache first
@@ -6674,7 +7046,6 @@ function loadFromRestApiWithCache(apiUrl, onComplete, retryCount = 0, diagramCon
         errorElement.innerText = `Error cargando API: ${error.message}`;
         errorElement.style.display = "block";
       }
-      if (loadingElement) loadingElement.style.display = "none";
       
       if (onComplete && typeof onComplete === 'function') {
         onComplete();
@@ -7646,6 +8017,58 @@ window.$xDiagrams.clusterClickMode = {
   isZoomingToCluster: false // Flag to prevent deselection during cluster zoom transitions
 };
 
+// Function to auto-select single cluster
+function autoSelectSingleCluster() {
+  const clusterRects = d3.selectAll(".cluster-rect");
+  const clusterCount = clusterRects.size();
+  
+  // Only auto-select if there's exactly one cluster
+  if (clusterCount === 1) {
+    const singleClusterRect = clusterRects.node();
+    if (singleClusterRect) {
+      const clusterGroup = singleClusterRect.parentNode;
+      const clusterId = clusterGroup.getAttribute('data-root-id') || 
+                       clusterGroup.querySelector('.cluster-title')?.textContent || 
+                       'single-cluster';
+      
+      // Create cluster info object
+      const clusterInfo = {
+        id: clusterId,
+        rect: d3.select(singleClusterRect),
+        group: d3.select(clusterGroup),
+        bounds: null
+      };
+      
+      // Set as selected cluster
+      window.$xDiagrams.clusterClickMode.selectedCluster = clusterInfo;
+      
+      // Apply visual selection styles
+      const rect = clusterInfo.rect;
+      if (rect && rect.node()) {
+        rect
+          .attr("data-selected", "true")
+          .style("fill", "var(--cluster-selected-bg, rgba(255, 152, 0, 0.25))")
+          .style("stroke", "var(--cluster-selected-stroke, #ff9800)")
+          .style("stroke-width", "4")
+          .style("stroke-dasharray", "none")
+          .style("box-shadow", "0 0 8px rgba(255, 152, 0, 0.3)");
+        
+        // Disable hover on selected cluster
+        rect.on("mouseenter", null).on("mouseleave", null);
+      }
+      
+      console.log('[ClusterClickMode] Auto-selected single cluster:', clusterId);
+      
+      // Update node interactions for the selected cluster
+      updateNodeInteractionsForClusterSelection();
+      
+      return true;
+    }
+  }
+  
+  return false;
+}
+
 // Function to detect if current diagram has multiple clusters
 function detectMultiClusterDiagram() {
   const clusterRects = d3.selectAll(".cluster-rect");
@@ -7657,6 +8080,12 @@ function detectMultiClusterDiagram() {
   console.log('[ClusterClickMode] Detected cluster count:', clusterCount, 'isMultiCluster:', isMultiCluster);
   
   window.$xDiagrams.clusterClickMode.isMultiCluster = isMultiCluster;
+  
+  // Auto-select single cluster if there's only one
+  if (!isMultiCluster && clusterCount === 1) {
+    autoSelectSingleCluster();
+  }
+  
   return isMultiCluster;
 }
 
@@ -9150,16 +9579,17 @@ function showClusterTooltip(clusterInfo) {
         .style('position', 'fixed')
         .style('z-index', '10000')
         .style('pointer-events', 'none')
-        .style('background', 'rgba(0, 0, 0, 0.8)')
-        .style('color', 'white')
         .style('padding', '8px 12px')
         .style('border-radius', '6px')
         .style('font-size', '14px')
         .style('font-weight', 'bold')
         .style('white-space', 'nowrap')
-        .style('box-shadow', '0 2px 8px rgba(0, 0, 0, 0.3)')
         .style('opacity', '0')
-        .style('transition', 'opacity 0.2s ease');
+        .style('transition', 'opacity 0.2s ease')
+        .style('font-family', '-apple-system, BlinkMacSystemFont, \'Segoe UI\', Roboto, sans-serif');
+      
+      // Apply theme CSS variables to the tooltip
+      applyThemeVariablesToTooltip(tooltip);
       
       window.$xDiagrams.clusterTooltip.element = tooltip;
     }
@@ -9195,6 +9625,38 @@ function showClusterTooltip(clusterInfo) {
     
   } catch (error) {
     console.error('[ClusterTooltip] Error showing tooltip:', error);
+  }
+}
+
+// Function to apply theme CSS variables to tooltip
+function applyThemeVariablesToTooltip(tooltip) {
+  try {
+    // Get computed styles from document root to access CSS variables
+    const computedStyle = getComputedStyle(document.documentElement);
+    
+    // Get theme variables for tooltip
+    const tooltipBg = computedStyle.getPropertyValue('--cluster-tooltip-bg');
+    const tooltipColor = computedStyle.getPropertyValue('--cluster-tooltip-color');
+    const tooltipBorder = computedStyle.getPropertyValue('--cluster-tooltip-border');
+    const tooltipShadow = computedStyle.getPropertyValue('--cluster-tooltip-shadow');
+    
+    // Apply variables to tooltip element
+    if (tooltipBg && tooltipBg.trim() !== '') {
+      tooltip.style('background', tooltipBg);
+    }
+    if (tooltipColor && tooltipColor.trim() !== '') {
+      tooltip.style('color', tooltipColor);
+    }
+    if (tooltipBorder && tooltipBorder.trim() !== '') {
+      tooltip.style('border', tooltipBorder);
+    }
+    if (tooltipShadow && tooltipShadow.trim() !== '') {
+      tooltip.style('box-shadow', tooltipShadow);
+    }
+    
+    console.log('[ClusterTooltip] Theme variables applied:', { tooltipBg, tooltipColor, tooltipBorder, tooltipShadow });
+  } catch (error) {
+    console.warn('[ClusterTooltip] Error applying theme variables:', error);
   }
 }
 

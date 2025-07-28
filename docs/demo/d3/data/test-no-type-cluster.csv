@@ -1,0 +1,13 @@
+ID,Parent,Name,Type,Subtitle,URL,Img
+GRP1,,Equipo de Desarrollo,Group,Desarrolladores,,,
+DEV1,GRP1,Ana López,Developer,Frontend,,,
+DEV2,GRP1,Carlos Ruiz,Developer,Backend,,,
+GRP2,,Equipo de Diseño,Group,Diseñadores,,,
+DES1,GRP2,María García,Designer,UI/UX,,,
+DES2,GRP2,Pedro Martín,Designer,Ilustrador,,,
+IND1,,Consultor Externo,Consultant,Consultor independiente,,,
+IND2,,Freelancer,Contractor,Trabajador por proyecto,,,
+NODE1,,Nodo Antiguo 1,,Nodo sin Type (se agrupa automáticamente),,,
+NODE2,,Nodo Antiguo 2,,Otro nodo sin Type,,,
+NODE3,,Nodo Antiguo 3,,Tercer nodo sin Type,,,
+NODE4,,Nodo Antiguo 4,,Cuarto nodo sin Type,,, 

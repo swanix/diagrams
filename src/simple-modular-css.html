@@ -3,32 +3,32 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Swanix Diagrams - CSS Only (No Theme Manager)</title>
-  
+  <title>Swanix Diagrams - Simple (Theme Test)</title> 
   <link href="xdiagrams.css" rel="stylesheet">
   <script src="https://d3js.org/d3.v7.min.js"></script>
   <script src="https://unpkg.com/papaparse@5.3.0/papaparse.min.js"></script>
+  <style>
+    .theme-snow { --color-base: 0 0%; }
+    .theme-onyx { --color-base: 0 0%; }
+  </style>
 </head>
 <body>
-<!-- Spinner de loading inmediato - se muestra desde el primer momento -->
-<div id="initial-loading" class="initial-loading">
-  <div class="initial-spinner"></div>
-  <div class="initial-loading-text">Cargando diagramas (CSS Only - No Theme Manager)...</div>
-</div>
 
 <div class="xcanvas"></div>
-<script>
-// No necesitamos funciones stub - xdiagrams.js tiene su propio sistema de fallback
-// El sistema funcionará automáticamente sin themeManager.js
-console.log('[CSS Only Test] Archivo configurado para probar sin themeManager.js');
-console.log('[CSS Only Test] xdiagrams.js proporcionará todas las funciones necesarias');
 
+<script>
 window.$xDiagrams = {
-  title: "CSS Only - No Theme Manager",
+  title: "My Diagram",
+  // logo: "img/logo.png",
   diagrams: [
     {
       name: "Diagram", 
       url: "data/one-cluster.csv"
+    },
+    {
+      name: "Google Sheets", 
+      url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vT1F3LXPwnGlnF_uOlhoR-5kK1DrWLwlCAKH8Ag6hPrNLzwqWYWU8ofE19xSv4cH1-Cq7ZYm7lPys7V/pub?output=csv",
+      edit: "https://docs.google.com/spreadsheets/d/12XSWGm6CAkv7SVSeBU0dtS3dhqc1dLasoxWqsW2AX40/edit?gid=0#gid=0"
     },
     {
       name: "Multiclusters",
@@ -47,7 +47,6 @@ window.$xDiagrams = {
   ]
 };
 </script>
-<!-- Cargar la librería principal al final -->
 <script src="xdiagrams.js"></script>
 </body>
 </html> 

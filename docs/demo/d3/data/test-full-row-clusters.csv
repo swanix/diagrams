@@ -1,0 +1,14 @@
+Node,Name,Parent,Description
+A1,Cluster Pequeño 1,,Este es un cluster pequeño
+A2,Cluster Pequeño 2,,Otro cluster pequeño
+A3,Cluster Pequeño 3,,Tercer cluster pequeño
+B1,Cluster Mediano 1,,Este cluster es de tamaño mediano
+B2,Cluster Mediano 2,,Otro cluster mediano
+C1,Cluster Grande 1,,Este es un cluster muy grande que debería ocupar toda una fila
+D1,Cluster Pequeño 4,,Cuarto cluster pequeño
+D2,Cluster Pequeño 5,,Quinto cluster pequeño
+E1,Cluster Mediano 3,,Tercer cluster mediano
+F1,Cluster Enorme 1,,Este cluster es enorme y definitivamente debería ocupar toda una fila
+G1,Cluster Pequeño 6,,Sexto cluster pequeño
+G2,Cluster Pequeño 7,,Séptimo cluster pequeño
+G3,Cluster Pequeño 8,,Octavo cluster pequeño 

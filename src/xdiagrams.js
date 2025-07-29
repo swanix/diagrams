@@ -3682,6 +3682,9 @@ function wrap(text, width, hasImages = true) {
     const dy = hasImages ? 
       (parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--label-dy')) || 0) + 'em' : 
       '0em';
+    const dySingle = hasImages ? 
+      (parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--label-dy-single')) || 0) + 'em' : 
+      '0em';
     const fontSize = hasImages ? 
       getComputedStyle(document.documentElement).getPropertyValue('--label-font-size') : 
       '8px';
@@ -3752,8 +3755,8 @@ function wrap(text, width, hasImages = true) {
         }
       }
     } else {
-      // Single line: use dominant-baseline for perfect centering
-      tspan1.attr('dominant-baseline', hasImages ? 'auto' : 'middle');
+      // Single line: use dy-single for proper vertical centering
+      tspan1.attr('dy', dySingle);
     }
   });
 }

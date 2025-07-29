@@ -33,7 +33,8 @@
         },
         options: {
           thumbnailMode: "Custom"
-        }
+        },
+        counterWord: "personas"
       },
       {
         name: "Google Sheets", 
@@ -114,15 +115,16 @@
         url: "data/flat-list-example.json",
         grid: 5
       },
-      {
-      name: "Hanzi Characters",
-      url: "data/characters.json",
-      grid: 19,
-      cols: {
+            {
+        name: "Hanzi Characters",
+        url: "data/characters.json",
+        grid: 19,
+        cols: {
           name: "hanzi",
           subtitle: "meaning",
           img: "thumbnail"
-        }
+        },
+        counterWord: "caracteres"
       },
       {
         name: "Tree - 300 Nodes",
@@ -133,7 +135,8 @@
           parent: "parent",
           type: "type",
           subtitle: "description"
-        }
+        },
+        counterWord: "elementos"
       },
       {
         name: "Flat - 1000 Nodes",
@@ -149,7 +152,8 @@
           location: "location",
           status: "status",
           joinDate: "joinDate"
-        }
+        },
+        counterWord: "registros"
       },
       {
         name: "Test Cluster Criteria",
@@ -249,7 +253,8 @@
       sidePanel: true,
       tooltips: true,
       responsive: true,
-      dragAndDrop: true
+      dragAndDrop: true,
+      counterWord: "nodos" // Palabra por defecto para el contador
     },
     hooks: {
       onLoad: function(diagram) {

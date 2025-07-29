@@ -1536,9 +1536,8 @@ function drawGridLayout(nodes, svg, diagramConfig = null) {
   const nameText = textGroup.append("text")
     .attr("class", "label-text")
     .attr("x", 0)
-    .attr("y", hasImages ? 15 : -5) // Move text up in no-image mode for better positioning
+    .attr("y", hasImages ? 15 : 0) // Perfect vertical centering when no image
     .style("text-anchor", "middle") // Override CSS with inline style
-    .attr("dominant-baseline", "middle") // Perfect vertical centering
     .style("font-size", hasImages ? "12px" : "14px") // Slightly larger font for no-image mode
     .text(d => d.name);
 
@@ -1831,9 +1830,8 @@ function drawGridLayout(nodes, svg, diagramConfig = null) {
         .attr("x", parseFloat(themeVars.getPropertyValue('--label-x')))
         .attr("y", hasImages ? 
           parseFloat(themeVars.getPropertyValue('--label-y')) : 
-          parseFloat(themeVars.getPropertyValue('--label-y-no-image')) - 5) // Move text up in no-image mode
+          parseFloat(themeVars.getPropertyValue('--label-y-no-image'))) // Perfect vertical centering when no image
         .attr("dy", hasImages ? parseFloat(themeVars.getPropertyValue('--label-dy')) : "0") // No dy when using dominant-baseline middle
-        .attr("dominant-baseline", hasImages ? "auto" : "middle") // Perfect vertical centering for no-image mode
         .style("text-anchor", "middle") // Override CSS with inline style
         .style("font-size", hasImages ? 
           themeVars.getPropertyValue('--label-font-size') : 
@@ -2595,7 +2593,7 @@ function drawTrees(trees, diagramConfig = null) {
   });
   
   // Update node counter
-  updateNodeCounter();
+  updateNodeCounter(diagramConfig);
     
   // Check layout type and choose appropriate rendering method
   if (isFlatList(trees)) {
@@ -2936,9 +2934,8 @@ function drawTrees(trees, diagramConfig = null) {
           .attr("x", parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--label-x')))
           .attr("y", hasImages ? 
             parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--label-y')) : 
-            parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--label-y-no-image')) - 5) // Move text up in no-image mode
+            parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--label-y-no-image'))) // Perfect vertical centering when no image
           .attr("dy", hasImages ? getComputedStyle(document.documentElement).getPropertyValue('--label-dy') : "0") // No dy when using dominant-baseline middle
-          .attr("dominant-baseline", hasImages ? "auto" : "middle") // Perfect vertical centering for no-image mode
           .style("text-anchor", "middle") // Override CSS with inline style
           .style("font-size", hasImages ? 
             getComputedStyle(document.documentElement).getPropertyValue('--label-font-size') : 
@@ -3662,7 +3659,7 @@ window.getZoomInfo = function() {
 
 // Function to wrap text
 function wrap(text, width, hasImages = true) {
-  const lineHeight = 1.5;
+  const lineHeight = hasImages ? 1.5 : 1.2; // Reduce line spacing when no image
   text.each(function() {
     const textElement = d3.select(this);
     let originalText = textElement.text();
@@ -3678,7 +3675,7 @@ function wrap(text, width, hasImages = true) {
     const x = getComputedStyle(document.documentElement).getPropertyValue('--label-x');
     const y = hasImages ? 
       getComputedStyle(document.documentElement).getPropertyValue('--label-y') : 
-      (parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--label-y-no-image')) - 5);
+      getComputedStyle(document.documentElement).getPropertyValue('--label-y-no-image');
     const dy = hasImages ? 
       (parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--label-dy')) || 0) + 'em' : 
       '0em';
@@ -3730,33 +3727,66 @@ function wrap(text, width, hasImages = true) {
     const hasMultipleLines = secondLineText.length > 0;
 
     if (hasMultipleLines) {
-      // Multiple lines: use dy for proper spacing
-      tspan1.attr('dy', dy);
-      
-      let tspan2 = textElement.append('tspan')
-        .attr('x', x)
-        .attr('y', y)
-        .attr('dy', lineHeight + 'em')
-        .attr('text-anchor', 'middle')
-        .style('font-size', fontSize)
-        .text('');
-      const words2 = secondLineText.split(/\s+/);
-      let currentLine2 = '';
-      
-      for (let i = 0; i < words2.length; i++) {
-        let testLine2 = currentLine2 ? currentLine2 + ' ' + words2[i] : words2[i];
-        tspan2.text(testLine2 + '...');
-        if (tspan2.node().getComputedTextLength() > width) {
-          tspan2.text(currentLine2 + '...');
-          return;
-        } else {
-          currentLine2 = testLine2;
-          tspan2.text(currentLine2);
+      // Multiple lines: adjust positioning based on image mode
+      if (!hasImages) {
+        // For no-image mode, center the two lines vertically
+        tspan1.attr('dy', '-0.4em'); // Move first line up by adjusted amount
+        
+        let tspan2 = textElement.append('tspan')
+          .attr('x', x)
+          .attr('y', y)
+          .attr('dy', lineHeight + 'em')
+          .attr('text-anchor', 'middle')
+          .style('font-size', fontSize)
+          .text('');
+        const words2 = secondLineText.split(/\s+/);
+        let currentLine2 = '';
+        
+        for (let i = 0; i < words2.length; i++) {
+          let testLine2 = currentLine2 ? currentLine2 + ' ' + words2[i] : words2[i];
+          tspan2.text(testLine2 + '...');
+          if (tspan2.node().getComputedTextLength() > width) {
+            tspan2.text(currentLine2 + '...');
+            return;
+          } else {
+            currentLine2 = testLine2;
+            tspan2.text(currentLine2);
+          }
+        }
+      } else {
+        // For image mode, use original spacing
+        tspan1.attr('dy', dy);
+        
+        let tspan2 = textElement.append('tspan')
+          .attr('x', x)
+          .attr('y', y)
+          .attr('dy', lineHeight + 'em')
+          .attr('text-anchor', 'middle')
+          .style('font-size', fontSize)
+          .text('');
+        const words2 = secondLineText.split(/\s+/);
+        let currentLine2 = '';
+        
+        for (let i = 0; i < words2.length; i++) {
+          let testLine2 = currentLine2 ? currentLine2 + ' ' + words2[i] : words2[i];
+          tspan2.text(testLine2 + '...');
+          if (tspan2.node().getComputedTextLength() > width) {
+            tspan2.text(currentLine2 + '...');
+            return;
+          } else {
+            currentLine2 = testLine2;
+            tspan2.text(currentLine2);
+          }
         }
       }
     } else {
-      // Single line: use dy-single for proper vertical centering
-      tspan1.attr('dy', dySingle);
+      // Single line: use dominant-baseline for perfect centering when no image
+      if (!hasImages) {
+        tspan1.attr('dominant-baseline', 'middle');
+        tspan1.attr('dy', '0em');
+      } else {
+        tspan1.attr('dy', dySingle);
+      }
     }
   });
 }
@@ -5673,7 +5703,7 @@ function renderSwDiagramBase() {
         </div>
         <div class="topbar-center">
           <div class="node-counter" id="node-counter">
-            <span class="node-counter-text"><span id="node-count">0</span> nodes</span>
+            <span class="node-counter-text"><span id="node-count">0</span> <span id="counter-word">nodes</span></span>
           </div>
         </div>
         <div class="topbar-right">
@@ -10346,12 +10376,48 @@ function findClusterUnderMouse(event) {
   return null;
 }
 
+// Function to get counter word configuration from diagram
+function getCounterWordConfiguration(diagramConfig = null) {
+  // Get current diagram configuration
+  const currentDiagram = diagramConfig || window.$xDiagrams.currentDiagram;
+  
+  // Check if counter word is specified in the diagram configuration
+  if (currentDiagram && currentDiagram.counterWord) {
+    return currentDiagram.counterWord;
+  }
+  
+  // Check if counter word is specified in global options
+  const globalOptions = getDiagramOptions();
+  if (globalOptions && globalOptions.counterWord) {
+    return globalOptions.counterWord;
+  }
+  
+  // Default fallback
+  return "nodes";
+}
+
 // Function to update the node counter in the topbar
-function updateNodeCounter() {
+function updateNodeCounter(diagramConfig = null) {
   const nodeCountElement = document.getElementById('node-count');
+  const counterWordElement = document.getElementById('counter-word');
+  
   if (nodeCountElement && window.$xDiagrams.currentData) {
-    const nodeCount = window.$xDiagrams.currentData.length;
+    // Filter out Group and Link type nodes from the count
+    const filteredNodes = window.$xDiagrams.currentData.filter(node => {
+      const nodeType = node.type || '';
+      return nodeType !== 'Group' && nodeType !== 'Link';
+    });
+    
+    const nodeCount = filteredNodes.length;
     nodeCountElement.textContent = nodeCount.toLocaleString();
+    
+    // Update the counter word based on diagram configuration
+    const counterWord = getCounterWordConfiguration(diagramConfig);
+    
+    // Update the counter word element
+    if (counterWordElement) {
+      counterWordElement.textContent = counterWord;
+    }
     
     // Add a subtle animation to highlight the update using CSS variable
     nodeCountElement.style.transition = 'color 0.3s ease';

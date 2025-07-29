@@ -174,6 +174,20 @@ layout: {
 }
 ```
 
+### `shortLastRow`
+- **Tipo**: `boolean`
+- **Default**: `false`
+- **Descripción**: Controla si la última fila debe tener una altura modificada (mitad de la altura normal)
+- **Comportamiento**:
+  - `false`: La última fila mantiene la misma altura que las demás filas (comportamiento por defecto)
+  - `true`: La última fila usa la mitad de la altura normal, creando un efecto visual diferente
+
+```javascript
+layout: {
+  shortLastRow: true  // Activar modificación de altura en última fila
+}
+```
+
 ---
 
 ## Configuración de Múltiples Valores en clustersPerRow
@@ -495,6 +509,21 @@ layout: {
 }
 ```
 
+### Caso 6: Diagrama con Altura Modificada en Última Fila
+**Problema**: Quieres crear un efecto visual especial donde la última fila tenga una altura diferente.
+
+**Solución**:
+```javascript
+layout: {
+  clustersPerRow: 4,
+  marginX: 30,
+  marginY: 30,
+  spacingX: 60,
+  spacingY: 60,
+  shortLastRow: true  // Última fila con altura reducida
+}
+```
+
 ---
 
 ## Troubleshooting
@@ -581,7 +610,7 @@ El sistema genera logs detallados en la consola del navegador para ayudar con el
 
 ## Versión
 
-Esta documentación corresponde a la versión **0.4.4** de Swanix Diagrams.
+Esta documentación corresponde a la versión **0.4.5** de Swanix Diagrams.
 
 ## Nuevas Funcionalidades
 
@@ -597,6 +626,12 @@ Esta documentación corresponde a la versión **0.4.4** de Swanix Diagrams.
 - **Comportamiento**: Valores explícitos para filas definidas, lógica automática para filas adicionales
 - **Prioridad**: Los valores explícitos tienen prioridad total sobre lógica automática
 - **Compatibilidad**: Totalmente retrocompatible con valores únicos
+
+### Modificación de Altura en Última Fila (v0.4.5)
+- **Nuevo parámetro**: `shortLastRow`
+- **Comportamiento**: Controla si la última fila debe tener altura modificada (mitad de altura normal)
+- **Valor por defecto**: `false` (comportamiento original)
+- **Compatibilidad**: Totalmente retrocompatible
 
 ---
 

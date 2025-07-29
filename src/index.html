@@ -16,18 +16,8 @@
   window.$xDiagrams = {
     title: "Diagrams",
     
-    // Configuración de color base para personalizar el tinte de la UI
-    // Formato: "H S%" donde H es el matiz (0-360) y S es la saturación (0-100%)
-    // Ejemplos:
-    // "0 0%" = gris neutro (actual)
-    // "200 15%" = azul sutil
-    // "120 10%" = verde sutil
-    // "45 20%" = dorado cálido
-    // "280 12%" = púrpura sutil
-    colorBase: "0 0%", // Cambia este valor para personalizar el tinte
-    
     diagrams: [
-          {
+      {
         name: "Multiclusters",
         url: "data/companies-board.csv",
         // maxRecords: 350,
@@ -37,7 +27,8 @@
           marginX: 40,
           marginY: 320,
           spacingX: 80,
-          spacingY: 80
+          spacingY: 80,
+          lastRowThreshold: 0
         },
         options: {
           thumbnailMode: "Custom"
@@ -193,6 +184,18 @@
         }
       },
       {
+        name: "Última Fila Altura Modificada",
+        url: "data/multi-clusters-20.csv",
+        layout: {
+          clustersPerRow: 3,
+          marginX: 30,
+          marginY: 30,
+          spacingX: 60,
+          spacingY: 60,
+          shortLastRow: true
+        }
+      },
+      {
         name: "Performance Test - Limited Records",
         url: "data/flat-1000-nodes.json",
         grid: 30,
@@ -219,6 +222,18 @@
           marginY: 30,
           spacingX: 60,
           spacingY: 60
+        }
+      },
+      {
+        name: "Última Fila Altura Normal (Explícito)",
+        url: "data/multi-clusters-20.csv",
+        layout: {
+          clustersPerRow: 3,
+          marginX: 30,
+          marginY: 30,
+          spacingX: 60,
+          spacingY: 60,
+          shortLastRow: false
         }
       }
     ],

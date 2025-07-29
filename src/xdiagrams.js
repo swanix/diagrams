@@ -868,7 +868,8 @@ function getLayoutConfiguration(diagramConfig = null) {
     wideClusterThreshold: 50, // Default: 50% threshold for wide cluster detection
     fullRowThreshold: 70,     // Default: 70% threshold for full row cluster detection
     lastRowThreshold: 50,     // Default: 50% threshold for last row width check
-    lastRowAlignment: 'left'  // Default: 'left' alignment for last row when using original width
+    lastRowAlignment: 'left', // Default: 'left' alignment for last row when using original width
+    shortLastRow: false // Default: false - no modificar altura de última fila
   };
   
   // Helper function to process clustersPerRow with multiple values
@@ -911,7 +912,8 @@ function getLayoutConfiguration(diagramConfig = null) {
       wideClusterThreshold: diagramConfig.layout.wideClusterThreshold || defaultLayout.wideClusterThreshold,
       fullRowThreshold: diagramConfig.layout.fullRowThreshold || defaultLayout.fullRowThreshold,
       lastRowThreshold: diagramConfig.layout.lastRowThreshold || defaultLayout.lastRowThreshold,
-      lastRowAlignment: diagramConfig.layout.lastRowAlignment || defaultLayout.lastRowAlignment
+      lastRowAlignment: diagramConfig.layout.lastRowAlignment || defaultLayout.lastRowAlignment,
+      shortLastRow: diagramConfig.layout.shortLastRow !== undefined ? diagramConfig.layout.shortLastRow : defaultLayout.shortLastRow
     };
   }
   
@@ -966,23 +968,25 @@ function getLayoutConfiguration(diagramConfig = null) {
       wideClusterThreshold: defaultLayout.wideClusterThreshold,
       fullRowThreshold: defaultLayout.fullRowThreshold,
       lastRowThreshold: defaultLayout.lastRowThreshold,
-      lastRowAlignment: defaultLayout.lastRowAlignment
+      lastRowAlignment: defaultLayout.lastRowAlignment,
+      shortLastRow: defaultLayout.shortLastRow
     };
   }
   
-  // Return default layout with processed clustersPerRow
-  return {
-    clustersPerRow: [defaultLayout.clustersPerRow], // Convert to array for consistency
-    clustersTooltip: defaultLayout.clustersTooltip,
-    marginX: defaultLayout.marginX,
-    marginY: defaultLayout.marginY,
-    spacingX: defaultLayout.spacingX,
-    spacingY: defaultLayout.spacingY,
-    wideClusterThreshold: defaultLayout.wideClusterThreshold,
-    fullRowThreshold: defaultLayout.fullRowThreshold,
-    lastRowThreshold: defaultLayout.lastRowThreshold,
-    lastRowAlignment: defaultLayout.lastRowAlignment
-  };
+      // Return default layout with processed clustersPerRow
+    return {
+      clustersPerRow: [defaultLayout.clustersPerRow], // Convert to array for consistency
+      clustersTooltip: defaultLayout.clustersTooltip,
+      marginX: defaultLayout.marginX,
+      marginY: defaultLayout.marginY,
+      spacingX: defaultLayout.spacingX,
+      spacingY: defaultLayout.spacingY,
+      wideClusterThreshold: defaultLayout.wideClusterThreshold,
+      fullRowThreshold: defaultLayout.fullRowThreshold,
+      lastRowThreshold: defaultLayout.lastRowThreshold,
+      lastRowAlignment: defaultLayout.lastRowAlignment,
+      shortLastRow: defaultLayout.shortLastRow
+    };
 }
 
 // Get maxRecords configuration for performance optimization
@@ -1959,6 +1963,7 @@ function applyMasonryLayout(clusterGroups, container, originalTrees, preCalculat
   console.log(`[Layout] Configuración de layout:`, layoutConfig);
   console.log(`[Layout] clustersPerRow array:`, clustersPerRowArray);
   console.log(`[Layout] clustersPerRow por defecto:`, defaultClustersPerRow);
+      console.log(`[Layout] Modificación de altura de última fila: ${layoutConfig.shortLastRow ? 'HABILITADA' : 'DESHABILITADA'}`);
   
   // Si solo hay un cluster, centrarlo
   if (clusterGroups.length === 1) {
@@ -1981,12 +1986,47 @@ function applyMasonryLayout(clusterGroups, container, originalTrees, preCalculat
   }
   
   // PASO 1: Aplicar fondos a todos los clusters primero para medir el área real
+  // Calcular exactamente qué clusters están en la última fila
+  let currentIndex = 0;
+  let currentRow = 0;
+  const lastRowStartIndex = [];
+  
+  // Primero calcular dónde empieza la última fila
+  while (currentIndex < clusterGroups.length) {
+    const clustersPerRowForThisRow = getClustersPerRowForRow(currentRow);
+    const clustersInThisRow = clustersPerRowForThisRow || defaultClustersPerRow;
+    
+    if (currentIndex + clustersInThisRow >= clusterGroups.length) {
+      // Esta es la última fila
+      lastRowStartIndex.push(currentIndex);
+      break;
+    }
+    
+    currentIndex += clustersInThisRow;
+    currentRow++;
+  }
+  
+  // Si no se encontró la última fila, usar el último grupo de clusters
+  if (lastRowStartIndex.length === 0) {
+    lastRowStartIndex.push(Math.max(0, clusterGroups.length - defaultClustersPerRow));
+  }
+  
+  const lastRowStart = lastRowStartIndex[0];
+  console.log(`[Layout] Última fila empieza en índice: ${lastRowStart}, total clusters: ${clusterGroups.length}`);
+  
   clusterGroups.forEach((cluster, index) => {
     if (isFlat) {
       addClusterBackground(cluster, isFlat);
     } else {
       if (uniformHeight !== null) {
-        addClusterBackgroundWithUniformHeight(cluster, uniformHeight, isFlat);
+        // Determinar si este cluster está en la última fila
+        const isLastRow = (index >= lastRowStart);
+        // Aplicar modificación de altura solo si está habilitada en la configuración
+        const clusterHeight = (isLastRow && layoutConfig.shortLastRow) ? uniformHeight / 2 : uniformHeight;
+        if (isLastRow && layoutConfig.shortLastRow) {
+          console.log(`[Layout] Cluster ${cluster.id} en última fila: aplicando altura modificada (${clusterHeight}px en lugar de ${uniformHeight}px)`);
+        }
+        addClusterBackgroundWithUniformHeight(cluster, clusterHeight, isFlat);
       } else {
         addClusterBackground(cluster, isFlat);
       }
@@ -2196,7 +2236,7 @@ function applyMasonryLayout(clusterGroups, container, originalTrees, preCalculat
       console.log(`[Layout] Fila ${index}: ${row.length} clusters [${clusterIds}]`);
     });
     
-    // PASO 6: Calcular altura uniforme por fila basándose en el cluster más alto
+    // PASO 6: Calcular altura por fila basándose en la altura real de los clusters
     const rowHeights = [];
     
     for (let row = 0; row < recalculatedRows.length; row++) {
@@ -2204,7 +2244,7 @@ function applyMasonryLayout(clusterGroups, container, originalTrees, preCalculat
       if (clustersInRow.length > 0) {
         const maxHeightInRow = Math.max(...clustersInRow.map(c => c.realHeight));
         rowHeights[row] = maxHeightInRow;
-        console.log(`[Layout] Fila ${row}: ${clustersInRow.length} clusters, altura máxima: ${maxHeightInRow}`);
+        console.log(`[Layout] Fila ${row}: ${clustersInRow.length} clusters, altura real: ${maxHeightInRow}`);
       }
     }
     
@@ -2218,7 +2258,9 @@ function applyMasonryLayout(clusterGroups, container, originalTrees, preCalculat
         rowWidths[row] = totalWidth;
       }
     }
-    const maxWidth = Math.max(...rowWidths);
+    // Usar el ancho de la ventana como maxWidth para que los clusters llenen todo el ancho disponible
+    const windowWidth = window.innerWidth;
+    const maxWidth = Math.max(...rowWidths, windowWidth - (marginX * 2));
 
     // Calcular la altura total del contenido para centrado vertical
     let totalContentHeight = 0;
@@ -2271,22 +2313,12 @@ function applyMasonryLayout(clusterGroups, container, originalTrees, preCalculat
       const currentWidth = rowWidths[row];
       const widthDifference = maxWidth - currentWidth;
       
-      // Verificar si es la última fila y si sus clusters suman menos del umbral configurado de la fila anterior
+      // Forzar que la última fila siempre llene todo el ancho de la pantalla
       let shouldUseOriginalWidth = false;
       if (row > 0 && row === recalculatedRows.length - 1) {
-        const previousRow = recalculatedRows[row - 1];
-        if (previousRow.length > 0) {
-          const previousRowWidth = previousRow.reduce((sum, c) => sum + c.realWidth, 0) + 
-                                  (previousRow.length > 1 ? (previousRow.length - 1) * spacingX : 0);
-          const currentRowPercentage = (currentWidth / previousRowWidth) * 100;
-          
-          if (currentRowPercentage < layoutConfig.lastRowThreshold) {
-            shouldUseOriginalWidth = true;
-            console.log(`[Layout] Última fila ${row}: ancho total ${currentWidth.toFixed(1)}px (${currentRowPercentage.toFixed(1)}% de fila anterior), usando ancho original sin expandir`);
-          } else {
-            console.log(`[Layout] Última fila ${row}: ancho total ${currentWidth.toFixed(1)}px (${currentRowPercentage.toFixed(1)}% de fila anterior), expandiendo para llenar ancho disponible`);
-          }
-        }
+        // La última fila siempre se expande para llenar todo el ancho disponible
+        shouldUseOriginalWidth = false;
+        console.log(`[Layout] Última fila ${row}: forzando expansión para llenar todo el ancho de la pantalla`);
       }
       
       let extraWidthPerCluster = 0;
@@ -2295,21 +2327,6 @@ function applyMasonryLayout(clusterGroups, container, originalTrees, preCalculat
       }
 
       let currentX = marginX;
-      
-      // Si es la última fila y debe usar ancho original, aplicar alineación configurada
-      if (shouldUseOriginalWidth) {
-        const totalRowWidth = clustersInRow.reduce((sum, c) => sum + c.realWidth, 0) + 
-                             (clustersInRow.length > 1 ? (clustersInRow.length - 1) * spacingX : 0);
-        
-        if (layoutConfig.lastRowAlignment === 'center') {
-          // Centrar la fila
-          currentX = marginX + (maxWidth - totalRowWidth) / 2;
-          console.log(`[Layout] Última fila centrada: ancho total ${totalRowWidth.toFixed(1)}px, posición X inicial ${currentX.toFixed(1)}px`);
-        } else {
-          // Alinear a la izquierda (currentX ya está en marginX)
-          console.log(`[Layout] Última fila alineada a la izquierda: ancho total ${totalRowWidth.toFixed(1)}px, posición X inicial ${currentX.toFixed(1)}px`);
-        }
-      }
       
       clustersInRow.forEach((clusterData, colIndex) => {
         const { realWidth, realHeight, rectBounds, clusterRect } = clusterData;
@@ -2359,7 +2376,7 @@ function applyMasonryLayout(clusterGroups, container, originalTrees, preCalculat
       });
     }
     
-    console.log(`[Layout] Aplicado layout final con altura uniforme por fila: ${clusterGroups.length} clusters, ${recalculatedRows.length} filas (ajuste automático de columnas aplicado)`);
+    console.log(`[Layout] Aplicado layout final: ${clusterGroups.length} clusters, ${recalculatedRows.length} filas (última fila con clusters de altura reducida)`);
     
     // Verificación final de gaps horizontal y vertical
     console.log(`[Layout] === VERIFICACIÓN FINAL DE GAPS HORIZONTAL Y VERTICAL ===`);

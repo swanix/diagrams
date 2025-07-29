@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Swanix Diagrams - Logo Themes Demo</title>
+  <link href="xdiagrams.css" rel="stylesheet">
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <script src="https://unpkg.com/papaparse.min.js"></script>
+  <script src="js/themeManager.js"></script>
+  <style>
+    .demo-controls {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: rgba(255, 255, 255, 0.95);
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      z-index: 1000;
+      font-family: Arial, sans-serif;
+      max-width: 350px;
+    }
+    .demo-controls h3 {
+      margin-top: 0;
+      color: #333;
+    }
+    .demo-controls button {
+      margin: 5px;
+      padding: 8px 12px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      background: #fff;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .demo-controls button:hover {
+      background: #f0f0f0;
+    }
+    .demo-controls button.active {
+      background: #007bff;
+      color: white;
+      border-color: #007bff;
+    }
+    .demo-controls .info {
+      font-size: 12px;
+      color: #666;
+      margin-top: 15px;
+      padding: 10px;
+      background: #f9f9f9;
+      border-radius: 4px;
+    }
+    .demo-controls .filter-info {
+      font-family: monospace;
+      font-size: 11px;
+      background: #f0f0f0;
+      padding: 5px;
+      border-radius: 3px;
+      margin: 5px 0;
+    }
+  </style>
+</head>
+<body>
+<div class="xcanvas"></div>
+
+<div class="demo-controls">
+  <h3>🎨 Demo: Logo con Temas</h3>
+  <p>Cambia el tema para ver cómo el logo se adapta automáticamente:</p>
+  
+  <button onclick="changeTheme('snow')" class="active">❄️ Snow</button>
+  <button onclick="changeTheme('onyx')">⚫ Onyx</button>
+  <button onclick="changeTheme('vintage')">📜 Vintage</button>
+  <button onclick="changeTheme('pastel')">🎨 Pastel</button>
+  <button onclick="changeTheme('neon')">💚 Neon</button>
+  <button onclick="changeTheme('forest')">🌲 Forest</button>
+  
+  <div class="info">
+    <strong>Filtros CSS aplicados:</strong>
+    <div class="filter-info" id="filter-info">none</div>
+    <p><em>El logo usa la variable <code>--logo-filter</code> que se define en cada tema.</em></p>
+  </div>
+</div>
+
+<script>
+window.$xDiagrams = {
+  title: "Logo Themes Demo",
+  logo: "img/logo.svg",
+  diagrams: [
+    {
+      name: "Demo", 
+      url: "data/one-cluster.csv"
+    }
+  ]
+};
+
+// Función para cambiar tema
+async function changeTheme(themeName) {
+  // Actualizar botones
+  document.querySelectorAll('.demo-controls button').forEach(btn => {
+    btn.classList.remove('active');
+  });
+  event.target.classList.add('active');
+  
+  // Cambiar tema
+  if (window.setTheme) {
+    await window.setTheme(themeName);
+    
+    // Mostrar el filtro aplicado
+    const filterInfo = document.getElementById('filter-info');
+    const logoElement = document.querySelector('.diagram-logo');
+    if (logoElement) {
+      const computedStyle = getComputedStyle(logoElement);
+      const filter = computedStyle.filter;
+      filterInfo.textContent = filter || 'none';
+    }
+  }
+}
+
+// Función para mostrar el filtro actual
+function updateFilterInfo() {
+  setTimeout(() => {
+    const filterInfo = document.getElementById('filter-info');
+    const logoElement = document.querySelector('.diagram-logo');
+    if (logoElement) {
+      const computedStyle = getComputedStyle(logoElement);
+      const filter = computedStyle.filter;
+      filterInfo.textContent = filter || 'none';
+    }
+  }, 1000);
+}
+
+// Actualizar info cuando se carga la página
+document.addEventListener('DOMContentLoaded', updateFilterInfo);
+</script>
+<script src="xdiagrams.js"></script>
+</body>
+</html> 

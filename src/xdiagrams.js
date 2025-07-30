@@ -625,13 +625,16 @@ const zoom = d3.zoom()
         cleanupPersistentHoverStates();
       }
       
-      // Disable hover on non-selected clusters at high zoom levels
-      if (transform.k >= 2.0 && window.$xDiagrams.clusterClickMode.active) {
-        disableHoverOnNonSelectedClusters();
-      } else if (transform.k < 2.0 && window.$xDiagrams.clusterClickMode.active) {
-        // Restore hover on clusters when zoom level drops
-        restoreHoverOnClusters();
-      }
+        // Always keep clusters interactive regardless of zoom level
+  // Removed zoom-based restrictions to prevent user from getting stuck
+  if (window.$xDiagrams.clusterClickMode.active) {
+    // Ensure all clusters remain interactive at all zoom levels
+    ensureClusterInteractivity();
+  } else {
+    // Even when cluster click mode is not active, ensure clusters are clickable
+    // This prevents the user from getting stuck without any interaction
+    ensureBasicClusterInteractivity();
+  }
       
       // Check if we should activate cluster click mode
       checkAndActivateClusterClickMode(transform.k);
@@ -754,6 +757,8 @@ window.showDiagramNotFound = function() {
 
 // Main function to initialize diagram (now uses data source abstraction)
 function initDiagram(source, onComplete, retryCount = 0, diagramConfig = null) {
+  // Store current diagram config globally for side panel access
+  window.$xDiagrams.currentDiagramConfig = diagramConfig;
         detectAndLoadDataSource(source, onComplete, retryCount, diagramConfig);
 }
 
@@ -1030,7 +1035,7 @@ function getColumnConfiguration(diagramConfig = null) {
     columnConfig.name.push('name', 'Name', 'NAME', 'title', 'Title', 'TITLE', 'section', 'Section', 'SECTION', 'project', 'Project', 'PROJECT', 'product', 'Product', 'PRODUCT');
     columnConfig.subtitle.push('subtitle', 'Subtitle', 'SUBTITLE', 'description', 'Description', 'DESCRIPTION', 'desc', 'Desc', 'DESC');
     columnConfig.img.push('img', 'Img', 'IMG', 'thumbnail', 'Thumbnail', 'THUMBNAIL', 'icon', 'Icon', 'ICON', 'image', 'Image', 'IMAGE', 'picture', 'Picture', 'PICTURE');
-    columnConfig.parent.push('parent', 'Parent', 'PARENT');
+    columnConfig.parent.push('parent', 'Parent', 'PARENT', 'leader', 'Leader', 'LEADER', 'manager', 'Manager', 'MANAGER');
     columnConfig.url.push('url', 'Url', 'URL', 'link', 'Link', 'LINK');
     columnConfig.type.push('type', 'Type', 'TYPE');
 
@@ -1055,7 +1060,7 @@ function getColumnConfiguration(diagramConfig = null) {
     columnConfig.name.push('name', 'Name', 'NAME', 'title', 'Title', 'TITLE', 'section', 'Section', 'SECTION', 'project', 'Project', 'PROJECT', 'product', 'Product', 'PRODUCT');
     columnConfig.subtitle.push('subtitle', 'Subtitle', 'SUBTITLE', 'description', 'Description', 'DESCRIPTION', 'desc', 'Desc', 'DESC');
     columnConfig.img.push('img', 'Img', 'IMG', 'thumbnail', 'Thumbnail', 'THUMBNAIL', 'icon', 'Icon', 'ICON', 'image', 'Image', 'IMAGE', 'picture', 'Picture', 'PICTURE');
-    columnConfig.parent.push('parent', 'Parent', 'PARENT');
+    columnConfig.parent.push('parent', 'Parent', 'PARENT', 'leader', 'Leader', 'LEADER', 'manager', 'Manager', 'MANAGER');
     columnConfig.url.push('url', 'Url', 'URL', 'link', 'Link', 'LINK');
     columnConfig.type.push('type', 'Type', 'TYPE');
 
@@ -1070,16 +1075,16 @@ function getColumnConfiguration(diagramConfig = null) {
 function getColumnConfigurationLegacy() {
   const container = document.querySelector('.xcanvas');
   if (!container) {
-    // Fallback to default configuration
-    return {
-      id: ['node', 'Node', 'NODE', 'id', 'Id', 'ID'],
-      name: ['name', 'Name', 'NAME', 'title', 'Title', 'TITLE'],
-      subtitle: ['subtitle', 'Subtitle', 'SUBTITLE', 'description', 'Description', 'DESCRIPTION', 'desc', 'Desc', 'DESC'],
-      img: ['img', 'Img', 'IMG', 'thumbnail', 'Thumbnail', 'THUMBNAIL', 'icon', 'Icon', 'ICON'],
-      parent: ['parent', 'Parent', 'PARENT'],
-      url: ['url', 'Url', 'URL', 'link', 'Link', 'LINK'],
-      type: ['type', 'Type', 'TYPE']
-    };
+      // Fallback to default configuration
+  return {
+    id: ['node', 'Node', 'NODE', 'id', 'Id', 'ID'],
+    name: ['name', 'Name', 'NAME', 'title', 'Title', 'TITLE'],
+    subtitle: ['subtitle', 'Subtitle', 'SUBTITLE', 'description', 'Description', 'DESCRIPTION', 'desc', 'Desc', 'DESC'],
+    img: ['img', 'Img', 'IMG', 'thumbnail', 'Thumbnail', 'THUMBNAIL', 'icon', 'Icon', 'ICON'],
+    parent: ['parent', 'Parent', 'PARENT', 'leader', 'Leader', 'LEADER', 'manager', 'Manager', 'MANAGER'],
+    url: ['url', 'Url', 'URL', 'link', 'Link', 'LINK'],
+    type: ['type', 'Type', 'TYPE']
+  };
   }
 
   // Try to get JSON configuration first
@@ -1102,7 +1107,7 @@ function getColumnConfigurationLegacy() {
       config.name.push('name', 'Name', 'NAME', 'title', 'Title', 'TITLE', 'section', 'Section', 'SECTION', 'project', 'Project', 'PROJECT', 'product', 'Product', 'PRODUCT');
       config.subtitle.push('subtitle', 'Subtitle', 'SUBTITLE', 'description', 'Description', 'DESCRIPTION', 'desc', 'Desc', 'DESC');
       config.img.push('img', 'Img', 'IMG', 'thumbnail', 'Thumbnail', 'THUMBNAIL', 'icon', 'Icon', 'ICON', 'image', 'Image', 'IMAGE', 'picture', 'Picture', 'PICTURE');
-      config.parent.push('parent', 'Parent', 'PARENT');
+      config.parent.push('parent', 'Parent', 'PARENT', 'leader', 'Leader', 'LEADER', 'manager', 'Manager', 'MANAGER');
       config.url.push('url', 'Url', 'URL', 'link', 'Link', 'LINK');
       config.type.push('type', 'Type', 'TYPE');
 
@@ -1128,7 +1133,7 @@ function getColumnConfigurationLegacy() {
   config.name.push('name', 'Name', 'NAME', 'title', 'Title', 'TITLE', 'section', 'Section', 'SECTION', 'project', 'Project', 'PROJECT', 'product', 'Product', 'PRODUCT');
   config.subtitle.push('subtitle', 'Subtitle', 'SUBTITLE', 'description', 'Description', 'DESCRIPTION', 'desc', 'Desc', 'DESC');
   config.img.push('img', 'Img', 'IMG', 'thumbnail', 'Thumbnail', 'THUMBNAIL', 'icon', 'Icon', 'ICON', 'image', 'Image', 'IMAGE', 'picture', 'Picture', 'PICTURE');
-  config.parent.push('parent', 'Parent', 'PARENT');
+  config.parent.push('parent', 'Parent', 'PARENT', 'leader', 'Leader', 'LEADER', 'manager', 'Manager', 'MANAGER');
   config.url.push('url', 'Url', 'URL', 'link', 'Link', 'LINK');
   config.type.push('type', 'Type', 'TYPE');
 
@@ -1139,6 +1144,7 @@ function getColumnConfigurationLegacy() {
 function buildHierarchies(data, diagramConfig = null) {
   let roots = [];
   let nodeMap = new Map();
+  let nameToIdMap = new Map(); // Map to store name -> id relationships
   let autoIdCounter = 1;
   
   // Get column configuration (with diagram-specific config if available)
@@ -1148,6 +1154,7 @@ function buildHierarchies(data, diagramConfig = null) {
   const maxRecords = getMaxRecordsConfiguration(diagramConfig);
   let processedRecords = 0;
 
+  // First pass: create all nodes and build name-to-id mapping
   data.forEach(d => {
     // Check if we've reached the maximum number of records to process
     if (maxRecords && processedRecords >= maxRecords) {
@@ -1173,9 +1180,7 @@ function buildHierarchies(data, diagramConfig = null) {
     let img = getColumnValue(d, columnConfig.img, "");
     let parent = getColumnValue(d, columnConfig.parent, "");
     let url = getColumnValue(d, columnConfig.url, "");
-    let type = getColumnValue(d, columnConfig.type, "");
-
-
+    let type = getColumnValue(d, columnConfig.type, "default"); // Default type if not specified
 
     // Generate auto ID if not provided or empty
     if (!id || id.trim() === "") {
@@ -1200,51 +1205,38 @@ function buildHierarchies(data, diagramConfig = null) {
       originalData: d // Preserve original CSV data
     };
     nodeMap.set(id, node);
+    
+    // Store name -> id mapping for parent resolution
+    if (name && name.trim() !== "") {
+      nameToIdMap.set(name.trim(), id);
+    }
+  });
 
-    if (parent && nodeMap.has(parent)) {
-      nodeMap.get(parent).children.push(node);
-    } else if (!parent) {
-      // Solo agregar a roots si el nodo tiene type "Group"
-      if (type === "Group") {
+  // Second pass: resolve parent relationships (by ID or by name)
+  nodeMap.forEach((node, id) => {
+    if (node.parent && node.parent.trim() !== "") {
+      let parentId = null;
+      
+      // First try to find parent by ID
+      if (nodeMap.has(node.parent)) {
+        parentId = node.parent;
+      } else {
+        // If not found by ID, try to find by name
+        parentId = nameToIdMap.get(node.parent.trim());
+      }
+      
+      if (parentId && nodeMap.has(parentId)) {
+        nodeMap.get(parentId).children.push(node);
+      } else {
+        // Parent not found, this node will be handled as orphaned
+        console.warn(`[buildHierarchies] Parent not found for node "${node.name}": "${node.parent}"`);
+        // Add orphaned nodes to roots
         roots.push(node);
       }
+    } else if (!node.parent) {
+      // Nodos sin padre van directamente a roots (nodos raíz)
+      roots.push(node);
     }
-  });
-
-  // Segunda pasada: crear cluster de almacenaje temporal para nodos sin Type
-  const orphanedNodesWithoutType = [];
-  const orphanedNodesWithType = [];
-  
-  nodeMap.forEach((node, id) => {
-    // Verificar si el nodo no tiene padre y no está ya en roots
-    if (!node.parent && !roots.includes(node)) {
-      if (!node.type || node.type === "") {
-        // Nodos sin Type van al cluster de almacenaje temporal
-        orphanedNodesWithoutType.push(node);
-      } else {
-        // Nodos con Type pero sin padre van como nodos individuales
-        orphanedNodesWithType.push(node);
-      }
-    }
-  });
-
-  // Crear cluster de almacenaje temporal si hay nodos sin Type
-  if (orphanedNodesWithoutType.length > 0) {
-    const storageCluster = {
-      id: "storage-cluster",
-      name: "Nodos sin Type",
-      subtitle: `Cluster de almacenaje temporal (${orphanedNodesWithoutType.length} nodos)`,
-      type: "Group",
-      children: orphanedNodesWithoutType,
-      parent: "",
-      originalData: { ID: "storage-cluster", Name: "Nodos sin Type", Type: "Group" }
-    };
-    roots.push(storageCluster);
-  }
-
-  // Agregar nodos con Type como nodos individuales
-  orphanedNodesWithType.forEach(node => {
-    roots.push(node);
   });
   
   // Log performance optimization info if maxRecords was applied
@@ -1437,7 +1429,7 @@ function drawGridLayout(nodes, svg, diagramConfig = null) {
       
       // Open side panel only if enabled
       if (isOptionEnabled('sidePanel') !== false && window.openSidePanel) {
-        window.openSidePanel(d);
+        window.openSidePanel(d, diagramConfig);
       }
     });
 
@@ -1703,7 +1695,7 @@ function drawGridLayout(nodes, svg, diagramConfig = null) {
           //   }
           // }
           if (isOptionEnabled('sidePanel') !== false && window.openSidePanel) {
-            window.openSidePanel(d.data);
+            window.openSidePanel(d.data, diagramConfig);
           }
         });
       
@@ -1970,7 +1962,8 @@ function applyMasonryLayout(clusterGroups, container, originalTrees, preCalculat
     const y = window.innerHeight / 2;
     cluster.group.attr("transform", `translate(${x},${y})`);
     const isFlat = isFlatList(originalTrees);
-    addClusterBackground(cluster, isFlat);
+    const diagramName = diagramConfig ? diagramConfig.name : null;
+    addClusterBackground(cluster, isFlat, diagramName, true);
     return;
   }
   
@@ -2451,7 +2444,7 @@ function applyMasonryLayout(clusterGroups, container, originalTrees, preCalculat
 }
 
 // Función auxiliar para agregar fondo y título al cluster
-function addClusterBackground(cluster, isFlat = false) {
+function addClusterBackground(cluster, isFlat = false, diagramName = null, isSingleCluster = false) {
   const bounds = cluster.group.node().getBBox();
   const paddingX = cluster.paddingX || 80;
   const paddingY = cluster.paddingY || 80;
@@ -2475,7 +2468,7 @@ function addClusterBackground(cluster, isFlat = false) {
     .style("stroke-dasharray", "6,4");
   
   // Crear título del cluster con contenedor
-  createClusterTitle(cluster, minX, minY, isFlat);
+  createClusterTitle(cluster, minX, minY, isFlat, diagramName, isSingleCluster);
     
   // Add data-root-id attribute to cluster group for cluster click mode
   if (cluster.id) {
@@ -2484,8 +2477,15 @@ function addClusterBackground(cluster, isFlat = false) {
 }
 
 // Función auxiliar para crear el título del cluster con contenedor
-function createClusterTitle(cluster, minX, minY, isFlat = false) {
-  const clusterTitle = isFlat ? (cluster.name || cluster.id) : cluster.id;
+function createClusterTitle(cluster, minX, minY, isFlat = false, diagramName = null, isSingleCluster = false) {
+  let clusterTitle;
+  
+  // Si es un solo cluster, usar el nombre del diagrama
+  if (isSingleCluster && diagramName) {
+    clusterTitle = diagramName;
+  } else {
+    clusterTitle = isFlat ? (cluster.name || cluster.id) : cluster.id;
+  }
   
   // Crear contenedor para el título con fondo
   const titleGroup = cluster.group.append("g")
@@ -2527,7 +2527,7 @@ function createClusterTitle(cluster, minX, minY, isFlat = false) {
 }
 
 // Función auxiliar para agregar fondo con altura uniforme
-function addClusterBackgroundWithUniformHeight(cluster, uniformHeight, isFlat = false) {
+function addClusterBackgroundWithUniformHeight(cluster, uniformHeight, isFlat = false, diagramName = null, isSingleCluster = false) {
   const bounds = cluster.group.node().getBBox();
   const paddingX = cluster.paddingX || 80;
   const paddingY = cluster.paddingY || 80;
@@ -2553,7 +2553,7 @@ function addClusterBackgroundWithUniformHeight(cluster, uniformHeight, isFlat = 
     .style("stroke-dasharray", "6,4");
   
   // Crear título del cluster con contenedor
-  createClusterTitle(cluster, minX, minY, isFlat);
+  createClusterTitle(cluster, minX, minY, isFlat, diagramName, isSingleCluster);
     
   // Add data-root-id attribute to cluster group for cluster click mode
   if (cluster.id) {
@@ -2795,7 +2795,7 @@ function drawTrees(trees, diagramConfig = null) {
             
             // Open side panel only if enabled
             if (isOptionEnabled('sidePanel') !== false && window.openSidePanel) {
-              window.openSidePanel(d.data);
+              window.openSidePanel(d.data, diagramConfig);
             }
           });
 
@@ -3033,10 +3033,17 @@ function drawTrees(trees, diagramConfig = null) {
               }
 
               // Crear título del cluster con contenedor (igual que en multiclusters)
-              const clusterTitle = root.data.name;
+              let clusterTitle;
               
               // Detectar si es un solo cluster para ajustar el tamaño del título
               const isSingleCluster = trees.length === 1;
+              
+              // Si es un solo cluster, usar el nombre del diagrama
+              if (isSingleCluster && diagramConfig && diagramConfig.name) {
+                clusterTitle = diagramConfig.name;
+              } else {
+                clusterTitle = root.data.name;
+              }
               const titleFontSize = isSingleCluster ? "1.575em" : "2.25em"; // 70% del tamaño para un solo cluster
               const titlePaddingVertical = isSingleCluster ? 12 : 12;
               const titlePaddingHorizontal = isSingleCluster ? 14 : 20;
@@ -3819,7 +3826,7 @@ function createSidePanel() {
 }
 
 // Open side panel
-function openSidePanel(nodeData) {
+function openSidePanel(nodeData, diagramConfig = null) {
   const sidePanel = document.getElementById('side-panel');
   const content = document.getElementById('side-panel-content');
   const titleElement = document.getElementById('side-panel-title');
@@ -3882,11 +3889,8 @@ function openSidePanel(nodeData) {
     const dataToShow = nodeData.originalData || nodeData;
     // Get the name value from the data
     const nodeName = dataToShow.name || dataToShow.Name || dataToShow.NAME || nodeData.name || 'Nodo sin nombre';
-    // Get the type for thumbnail
-    const nodeType = dataToShow.type || dataToShow.Type || dataToShow.TYPE || nodeData.type || 'detail';
-    
-    // Create embedded thumbnail HTML instead of external image
-    const thumbnailHtml = createSidePanelThumbnailHtml(nodeType);
+    // Create thumbnail HTML using the same logic as the node image
+    const thumbnailHtml = createSidePanelThumbnailHtml(nodeData, diagramConfig);
 
     // Truncar el texto del título por ancho disponible antes del botón de cerrar
     function truncateSidePanelTitle(text, maxWidth, fontSize, fontWeight, fontFamily) {
@@ -4781,7 +4785,9 @@ window.$xDiagrams.keyboardNavigation = {
       // Get node data and open side panel
       const nodeData = this.getNodeData(node);
       if (nodeData) {
-        openSidePanel(nodeData);
+        // Get current diagram config from global state
+        const currentDiagramConfig = window.$xDiagrams.currentDiagramConfig || null;
+        openSidePanel(nodeData, currentDiagramConfig);
       }
       
       // Scroll node into view
@@ -8315,20 +8321,23 @@ function appendAppropriateImageElement(d3Selection, imageUrl, attributes = {}, c
 }
 
 /**
- * Crea el HTML del thumbnail embebido para el side panel
- * @param {string} nodeType - Tipo del nodo para determinar el thumbnail
- * @returns {string} HTML del thumbnail embebido
+ * Crea el HTML del thumbnail para el side panel usando la misma lógica que resolveNodeImage
+ * @param {Object} nodeData - Datos del nodo para determinar el thumbnail
+ * @param {Object} diagramConfig - Configuración del diagrama
+ * @returns {string} HTML del thumbnail
  */
-function createSidePanelThumbnailHtml(nodeType) {
-  // Normalizar el nombre del tipo
-  const normalizedType = nodeType.toLowerCase().replace(/\s+/g, '-');
+function createSidePanelThumbnailHtml(nodeData, diagramConfig = null) {
+  // Usar la misma lógica que resolveNodeImage para determinar qué imagen mostrar
+  const imageUrl = resolveNodeImage(nodeData, diagramConfig);
   
-  // Obtener el thumbnail embebido
-  const embeddedThumbnail = getEmbeddedThumbnail(normalizedType);
+  if (!imageUrl) {
+    // Si no hay imagen (thumbnailMode 'none'), mostrar un div vacío
+    return `<div class="side-panel-title-thumbnail" style="width: 24px; height: 24px; background: transparent;"></div>`;
+  }
   
-  if (embeddedThumbnail) {
-    // Si existe como thumbnail embebido, crear elemento SVG directo
-    const svgString = getEmbeddedThumbnailSvgString(embeddedThumbnail);
+  // Si es una data URI (thumbnail embebido), crear elemento SVG
+  if (imageUrl.startsWith('data:image/svg+xml')) {
+    const svgString = getEmbeddedThumbnailSvgString(imageUrl);
     if (svgString) {
       // Crear un contenedor temporal para parsear el SVG
       const tempDiv = document.createElement('div');
@@ -8360,39 +8369,8 @@ function createSidePanelThumbnailHtml(nodeType) {
     }
   }
   
-  // Fallback: usar thumbnail 'detail' embebido
-  const detailThumbnail = getEmbeddedThumbnail('detail');
-  if (detailThumbnail) {
-    const svgString = getEmbeddedThumbnailSvgString(detailThumbnail);
-    if (svgString) {
-      const tempDiv = document.createElement('div');
-      tempDiv.innerHTML = svgString.trim();
-      
-      const svgElement = tempDiv.querySelector('svg');
-      if (svgElement) {
-        svgElement.setAttribute('class', 'side-panel-title-thumbnail embedded-thumbnail loaded');
-        svgElement.setAttribute('width', '24');
-        svgElement.setAttribute('height', '24');
-        svgElement.style.opacity = '1';
-        svgElement.style.transition = 'opacity 0.2s ease-in-out';
-        
-        const allElements = svgElement.querySelectorAll('*');
-        allElements.forEach(element => {
-          if (element.hasAttribute('fill')) {
-            element.removeAttribute('fill');
-          }
-          if (element.hasAttribute('stroke')) {
-            element.removeAttribute('stroke');
-          }
-        });
-        
-        return svgElement.outerHTML;
-      }
-    }
-  }
-  
-  // Fallback final: elemento img vacío (muy improbable que llegue aquí)
-  return `<div class="side-panel-title-thumbnail" style="width: 24px; height: 24px; background: transparent;"></div>`;
+  // Si es una URL externa o archivo local, crear elemento img
+  return `<img src="${imageUrl}" class="side-panel-title-thumbnail" width="24" height="24" style="opacity: 1; transition: opacity 0.2s ease-in-out;" onerror="this.style.display='none'">`;
 }
 
 // ============================================================================
@@ -8491,50 +8469,31 @@ function checkAndActivateClusterClickMode(scale) {
   // Check if we have a selected cluster
   const hasSelectedCluster = window.$xDiagrams.clusterClickMode.selectedCluster;
   
-  // Determine if we should activate cluster click mode
-  // - Only activate for multi-cluster diagrams (more than 1 cluster)
-  // - Always activate for multi-cluster diagrams when zoomed out (scale <= threshold)
-  // - Keep active if there's a selected cluster (regardless of zoom level)
-  const shouldActivate = isMultiCluster && (scale <= window.$xDiagrams.clusterClickMode.threshold || hasSelectedCluster);
+  // Always keep cluster click mode active for multi-cluster diagrams
+  // This ensures clusters remain interactive at all zoom levels
+  const shouldActivate = isMultiCluster;
   
   if (shouldActivate && !window.$xDiagrams.clusterClickMode.active) {
     console.log('[ClusterClickMode] Activating cluster click mode - scale:', scale, 'threshold:', window.$xDiagrams.clusterClickMode.threshold, 'hasSelectedCluster:', hasSelectedCluster);
     activateClusterClickMode();
   } else if (!shouldActivate && window.$xDiagrams.clusterClickMode.active) {
-    console.log('[ClusterClickMode] Deactivating cluster click mode - scale:', scale, 'threshold:', window.$xDiagrams.clusterClickMode.threshold, 'hasSelectedCluster:', hasSelectedCluster);
-    
-    // Keep cluster selected even when zooming out - only deselect via manual interaction
-    if (hasSelectedCluster) {
-      console.log('[ClusterClickMode] Keeping cluster selected during zoom out - cluster:', hasSelectedCluster.id, 'scale:', scale);
-    } else {
-      console.log('[ClusterClickMode] No cluster to deselect');
-    }
-    
+    console.log('[ClusterClickMode] Deactivating cluster click mode - single cluster detected');
     deactivateClusterClickMode();
   }
   
   // Note: Cluster deselection is now only done via manual interaction (click on another cluster or click outside)
   
-  // Only setup tooltips for multi-cluster diagrams (not needed for single cluster)
-  if (isMultiCluster && !window.$xDiagrams.clusterTooltip.initialized) {
-    // Only initialize tooltips if not already initialized
+  // Setup tooltips for all diagrams to ensure consistent behavior
+  if (!window.$xDiagrams.clusterTooltip.initialized) {
     setupClusterTooltips();
-  } else if (!isMultiCluster && window.$xDiagrams.clusterTooltip.initialized) {
-    // Clean up tooltips if switching from multi-cluster to single cluster
-    console.log('[ClusterClickMode] Single cluster detected - cleaning up tooltips');
-    hideClusterTooltip();
-    window.$xDiagrams.clusterTooltip.initialized = false;
   }
 }
 
 // Function to activate cluster click mode
 function activateClusterClickMode() {
-  // Don't activate for single cluster diagrams
+  // Always activate for all diagrams to ensure clusters remain interactive
   const isMultiCluster = detectMultiClusterDiagram();
-  if (!isMultiCluster) {
-    console.log('[ClusterClickMode] Skipping activation - single cluster diagram detected');
-    return;
-  }
+  console.log('[ClusterClickMode] Activating cluster click mode for diagram type:', isMultiCluster ? 'multi-cluster' : 'single-cluster');
   
   console.log('[ClusterClickMode] Activating cluster click mode');
   
@@ -8778,11 +8737,9 @@ function updateNodeInteractionsForClusterSelection() {
   
   if (forceNodeInteractions) {
     console.log('[ClusterClickMode] Cluster is selected - forcing node interactions regardless of zoom level');
-  } else if (currentZoom <= 0.1) {
-    console.log('[ClusterClickMode] Skipping node interaction update - zoom level too low and no cluster selected:', currentZoom);
-    return;
   }
   
+  // Always update node interactions regardless of zoom level to ensure consistent behavior
   allClusters.forEach(clusterInfo => {
     const clusterGroup = clusterInfo.group.node();
     if (!clusterGroup) return;
@@ -8811,9 +8768,10 @@ function updateNodeInteractionsForClusterSelection() {
         
         console.log(`[ClusterClickMode] Node ${nodeId} in selected cluster ${clusterInfo.id} - interactions ENABLED`);
       } else {
-        // Disable interactions for nodes in non-selected clusters (or when no cluster is selected)
-        node.style.pointerEvents = 'none';
-        node.style.cursor = 'default';
+        // Keep nodes interactive even in non-selected clusters to prevent user from getting stuck
+        // This ensures users can always interact with nodes to navigate
+        node.style.pointerEvents = 'auto';
+        node.style.cursor = 'pointer';
         
         // Store original click handler if not already stored
         if (!window.$xDiagrams.clusterClickMode.originalNodeClickHandlers.has(nodeId)) {
@@ -8821,13 +8779,21 @@ function updateNodeInteractionsForClusterSelection() {
           window.$xDiagrams.clusterClickMode.originalNodeClickHandlers.set(nodeId, originalClick);
         }
         
-        // Remove click handler
-        node.onclick = null;
+        // Keep the original click handler active
+        if (window.$xDiagrams.clusterClickMode.originalNodeClickHandlers.has(nodeId)) {
+          const originalClick = window.$xDiagrams.clusterClickMode.originalNodeClickHandlers.get(nodeId);
+          if (originalClick) {
+            node.onclick = originalClick;
+          }
+        }
         
-        console.log(`[ClusterClickMode] Node ${nodeId} in non-selected cluster ${clusterInfo.id} - interactions DISABLED`);
+        console.log(`[ClusterClickMode] Node ${nodeId} in non-selected cluster ${clusterInfo.id} - interactions KEPT ENABLED`);
       }
     });
   });
+  
+  // Since clusters are always interactive now, we don't need complex fallback logic
+  // Users can always click on clusters to navigate and interact with nodes
 }
 
 // Function to deactivate cluster click mode
@@ -8895,8 +8861,8 @@ function deactivateClusterClickMode() {
   window.$xDiagrams.clusterTooltip.initialized = false;
   setupClusterTooltips();
   
-  // Hide any visible hover title
-  hideClusterHoverTitle();
+  // Hide any visible hover title (function doesn't exist, so we'll just hide tooltips)
+  hideClusterTooltip();
   
   // Remove CSS class
   document.body.classList.remove('cluster-click-mode-active');
@@ -9362,14 +9328,11 @@ function disableHoverOnSelectedCluster(selectedClusterInfo) {
   updateNodeInteractionsForClusterSelection();
 }
 
-// Function to disable hover on non-selected clusters at high zoom levels
-function disableHoverOnNonSelectedClusters() {
-  const currentZoom = window.$xDiagrams.currentZoom ? window.$xDiagrams.currentZoom.k : 1;
+// Function to ensure all clusters remain interactive at all zoom levels
+function ensureClusterInteractivity() {
   const selectedCluster = window.$xDiagrams.clusterClickMode.selectedCluster;
   
-  if (currentZoom < 2.0) return; // Only apply at high zoom levels
-  
-  console.log('[ClusterClickMode] Disabling hover on non-selected clusters at high zoom:', currentZoom);
+  console.log('[ClusterClickMode] Ensuring cluster interactivity - selected cluster:', selectedCluster ? selectedCluster.id : 'none');
   
   window.$xDiagrams.clusterClickMode.clusters.forEach(clusterInfo => {
     const rect = clusterInfo.rect;
@@ -9377,31 +9340,143 @@ function disableHoverOnNonSelectedClusters() {
     
     const isSelected = selectedCluster && selectedCluster.id === clusterInfo.id;
     
-    if (!isSelected) {
-      // Disable hover effects on non-selected clusters
-      rect
-        .classed("cluster-hover", false)
-        .style("fill", null)
-        .style("stroke", null)
-        .style("stroke-width", null)
-        .style("stroke-dasharray", null)
-        .style("cursor", "default")
-        .style("pointer-events", "none"); // Disable pointer events to prevent hover
-      
-      // Remove hover event listeners
-      rect.on("mouseenter", null).on("mouseleave", null);
-      
-      console.log('[ClusterClickMode] Disabled hover on cluster:', clusterInfo.id);
-    } else {
-      // Keep selected cluster interactive
+    if (isSelected) {
+      // Keep selected cluster interactive with selection styles
       rect
         .style("cursor", "pointer")
-        .style("pointer-events", "all");
+        .style("pointer-events", "all")
+        .on("click", function(event) {
+          event.stopPropagation();
+          // Check if this cluster is already selected at the time of click
+          const currentlySelectedCluster = window.$xDiagrams.clusterClickMode.selectedCluster;
+          const isCurrentlySelected = currentlySelectedCluster && currentlySelectedCluster.id === clusterInfo.id;
+          
+          if (isCurrentlySelected) {
+            console.log('[ClusterClickMode] Cluster already selected, keeping selection:', clusterInfo.id);
+            return;
+          }
+          // Otherwise, select this cluster
+          zoomToCluster(clusterInfo);
+        })
+        .on("mouseenter", null)
+        .on("mouseleave", null);
+      
+      console.log('[ClusterClickMode] Selected cluster kept interactive:', clusterInfo.id);
+    } else {
+      // Keep non-selected clusters interactive with hover effects
+      rect
+        .style("cursor", "pointer")
+        .style("pointer-events", "all")
+        .on("click", function(event) {
+          event.stopPropagation();
+          zoomToCluster(clusterInfo);
+        })
+        .on("mouseenter", function() {
+          // Check if this is a single cluster diagram - if so, disable hover effects
+          const isMultiCluster = detectMultiClusterDiagram();
+          if (!isMultiCluster) {
+              console.log('[ClusterClickMode] Single cluster detected - hover effects disabled');
+              return;
+          }
+          
+          // Add hover effect
+          rect
+            .style("fill", "var(--cluster-hover-bg, rgba(25, 118, 210, 0.15))")
+            .style("stroke", "var(--cluster-hover-stroke, #1976d2)")
+            .style("stroke-width", "3")
+            .style("stroke-dasharray", "none");
+          
+          // Add cluster-hover class to prevent node interference
+          rect.classed("cluster-hover", true);
+          
+          // Show cluster hover tooltip
+          showClusterTooltip(clusterInfo);
+        })
+        .on("mouseleave", function() {
+          // Check if this is a single cluster diagram - if so, disable hover effects
+          const isMultiCluster = detectMultiClusterDiagram();
+          if (!isMultiCluster) {
+              console.log('[ClusterClickMode] Single cluster detected - hover effects disabled');
+              return;
+          }
+          
+          // Remove hover effect
+          rect.classed("cluster-hover", false);
+          
+          rect
+            .style("fill", null)
+            .style("stroke", null)
+            .style("stroke-width", null)
+            .style("stroke-dasharray", null);
+          
+          // Hide tooltip
+          hideClusterTooltip();
+        });
+      
+      console.log('[ClusterClickMode] Non-selected cluster kept interactive:', clusterInfo.id);
     }
   });
+}
+
+// Function to ensure basic cluster interactivity even when cluster click mode is not active
+function ensureBasicClusterInteractivity() {
+  console.log('[ClusterClickMode] Ensuring basic cluster interactivity');
   
-  // Hide any active tooltips
-  hideClusterTooltip();
+  // Find all cluster rectangles and ensure they are clickable
+  const clusterRects = d3.selectAll(".cluster-rect");
+  
+  clusterRects.each(function() {
+    const rect = d3.select(this);
+    const clusterGroup = rect.node().parentNode;
+    const clusterId = clusterGroup.getAttribute('data-root-id') || 
+                     clusterGroup.querySelector('.cluster-title')?.textContent || 
+                     'unknown';
+    
+    // Ensure the cluster is clickable
+    rect
+      .style("cursor", "pointer")
+      .style("pointer-events", "all")
+      .on("click", function(event) {
+        event.stopPropagation();
+        console.log('[ClusterClickMode] Basic cluster click on:', clusterId);
+        
+        // Activate cluster click mode and zoom to this cluster
+        if (!window.$xDiagrams.clusterClickMode.active) {
+          activateClusterClickMode();
+        }
+        
+        // Find the cluster info and zoom to it
+        const clusterInfo = window.$xDiagrams.clusterClickMode.clusters.find(c => c.id === clusterId);
+        if (clusterInfo) {
+          zoomToCluster(clusterInfo);
+        }
+      })
+      .on("mouseenter", function() {
+        // Add basic hover effect
+        rect
+          .style("fill", "var(--cluster-hover-bg, rgba(25, 118, 210, 0.15))")
+          .style("stroke", "var(--cluster-hover-stroke, #1976d2)")
+          .style("stroke-width", "3")
+          .style("stroke-dasharray", "none");
+        rect.classed("cluster-hover", true);
+      })
+      .on("mouseleave", function() {
+        // Remove hover effect
+        rect.classed("cluster-hover", false);
+        rect
+          .style("fill", null)
+          .style("stroke", null)
+          .style("stroke-width", null)
+          .style("stroke-dasharray", null);
+      });
+  });
+}
+
+// Function to disable hover on non-selected clusters at high zoom levels (DEPRECATED - NO LONGER USED)
+function disableHoverOnNonSelectedClusters() {
+  console.log('[ClusterClickMode] DEPRECATED: disableHoverOnNonSelectedClusters() called - this function is no longer used');
+  // This function is deprecated and no longer used
+  // All clusters now remain interactive at all zoom levels
 }
 
 // Function to restore hover on clusters when zoom level drops
@@ -10420,7 +10495,7 @@ function getClusterParentNode(clusterInfo) {
 }
 
 // Function to update side panel content without closing/opening animation
-function updateSidePanelContent(nodeData) {
+function updateSidePanelContent(nodeData, diagramConfig = null) {
   const sidePanel = document.getElementById('side-panel');
   const content = document.getElementById('side-panel-content');
   const titleElement = document.getElementById('side-panel-title');
@@ -10435,7 +10510,7 @@ function updateSidePanelContent(nodeData) {
   
   if (!isPanelOpen) {
     // If panel is not open, use the regular openSidePanel function
-    openSidePanel(nodeData);
+    openSidePanel(nodeData, diagramConfig);
     return;
   }
   
@@ -10474,11 +10549,8 @@ function updateSidePanelContent(nodeData) {
   const dataToShow = nodeData.originalData || nodeData;
   // Get the name value from the data
   const nodeName = dataToShow.name || dataToShow.Name || dataToShow.NAME || nodeData.name || 'Nodo sin nombre';
-  // Get the type for thumbnail
-  const nodeType = dataToShow.type || dataToShow.Type || dataToShow.TYPE || nodeData.type || 'detail';
-  
-  // Create embedded thumbnail HTML instead of external image
-  const thumbnailHtml = createSidePanelThumbnailHtml(nodeType);
+  // Create thumbnail HTML using the same logic as the node image
+  const thumbnailHtml = createSidePanelThumbnailHtml(nodeData, diagramConfig);
 
   // Truncar el texto del título por ancho disponible antes del botón de cerrar
   function truncateSidePanelTitle(text, maxWidth, fontSize, fontWeight, fontFamily) {

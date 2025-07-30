@@ -18,6 +18,21 @@
     
     diagrams: [
       {
+        name: "Org Chart",
+        url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vSRXkFV0Kc67855z3cYY1qoY2crCXX2ww34quVAWIBi_ISD2uXZI0pxbGNIsZtPP35VwosZG_HFUJPW/pub?output=csv",
+        // layout: {
+        //   clustersPerRow: "5 4 3 7 8",
+        //   marginX: 30,
+        //   marginY: 30,
+        //   spacingX: 100,
+        //   spacingY: 100,
+        //   fullRowThreshold: 70
+        // },
+        options: {
+          thumbnailMode: "custom"
+        }
+      },
+      {
         name: "Multiclusters",
         url: "data/companies-board.csv",
         // maxRecords: 350,
@@ -35,24 +50,26 @@
         counterWord: "personas"
       },
       {
+        name: "Multiclusters (Thumb None)",
+        url: "data/companies-board.csv",
+        // maxRecords: 350,
+        layout: {
+          clustersPerRow: "4 5 7 5",
+          marginX: 40,
+          marginY: 320,
+          spacingX: 80,
+          spacingY: 80,
+          lastRowThreshold: 0
+        },
+        options: {
+          thumbnailMode: "none"
+        },
+        counterWord: "personas"
+      },
+      {
         name: "Google Sheets", 
         url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vT1F3LXPwnGlnF_uOlhoR-5kK1DrWLwlCAKH8Ag6hPrNLzwqWYWU8ofE19xSv4cH1-Cq7ZYm7lPys7V/pub?output=csv",
         edit: "https://docs.google.com/spreadsheets/d/12XSWGm6CAkv7SVSeBU0dtS3dhqc1dLasoxWqsW2AX40/edit?gid=0#gid=0"
-      },
-      {
-        name: "Org Chart",
-        url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vSRXkFV0Kc67855z3cYY1qoY2crCXX2ww34quVAWIBi_ISD2uXZI0pxbGNIsZtPP35VwosZG_HFUJPW/pub?output=csv",
-        // layout: {
-        //   clustersPerRow: "5 4 3 7 8",
-        //   marginX: 30,
-        //   marginY: 30,
-        //   spacingX: 100,
-        //   spacingY: 100,
-        //   fullRowThreshold: 70
-        // },
-        options: {
-          thumbnailMode: "custom"
-        }
       },
       {
         name: "Thumbnails None", 
@@ -80,6 +97,32 @@
           img: "thumbnail"
         },
         counterWord: "caracteres"
+      },
+      {
+        name: "Test Custom Thumbnails",
+        url: "data/test-custom-thumbnails.csv",
+        cols: {
+          id: "ID",
+          name: "Name",
+          parent: "Parent",
+          subtitle: "Position",
+          type: "Type",
+          img: "Image"
+        },
+        options: {
+          thumbnailMode: "custom"
+        }
+      },
+      {
+        name: "Test Cluster Interaction",
+        url: "data/test-cluster-interaction.csv",
+        cols: {
+          id: "ID",
+          name: "Name",
+          parent: "Parent",
+          subtitle: "Position",
+          type: "Type"
+        }
       }
     ],
     themes: {

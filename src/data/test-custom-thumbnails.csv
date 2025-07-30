@@ -1,0 +1,14 @@
+ID,Name,Parent,Position,Type,Image
+CEO001,Alan Roberts,,CEO,Executive,https://swanix.org/diagrams/src/people/man01.png
+CTO001,Tim Watson,CEO001,CTO,Technology,https://swanix.org/diagrams/src/people/man02.png
+DEV001,Carl Reynolds,CTO001,Developer,Technology,https://swanix.org/diagrams/src/people/man03.png
+DEV002,Kelsie Weeks,CTO001,Developer,Technology,https://swanix.org/diagrams/src/people/woman01.png
+PD001,Kathie Maxwell,CEO001,Product Director,Product,https://swanix.org/diagrams/src/people/woman02.png
+PL001,Richard River,PD001,Product Leader,Product,https://swanix.org/diagrams/src/people/man04.png
+PL002,Angela Duke,PD001,Product Leader,Product,https://swanix.org/diagrams/src/people/woman03.png
+DD001,Simon Fox,CEO001,Design Director,Design,https://swanix.org/diagrams/src/people/man05.png
+DES001,Karina Newman,DD001,Designer,Design,https://swanix.org/diagrams/src/people/woman04.png
+DES002,Ryan Duran,DD001,Designer,Design,https://swanix.org/diagrams/src/people/man06.png
+MD001,Mia Winters,CEO001,Marketing Director,Marketing,https://swanix.org/diagrams/src/people/woman05.png
+ML001,Sarah Bartlett,MD001,Marketing Leader,Marketing,https://swanix.org/diagrams/src/people/woman06.png
+ML002,Lauren Wilkins,MD001,Marketing Leader,Marketing,https://swanix.org/diagrams/src/people/woman07.png 

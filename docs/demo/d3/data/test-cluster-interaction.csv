@@ -1,0 +1,22 @@
+ID,Name,Parent,Position,Type
+CEO001,Alan Roberts,,CEO,Executive
+CTO001,Tim Watson,CEO001,CTO,Technology
+DEV001,Carl Reynolds,CTO001,Developer,Technology
+DEV002,Kelsie Weeks,CTO001,Developer,Technology
+DEV003,Alex Chen,CTO001,Developer,Technology
+PD001,Kathie Maxwell,CEO001,Product Director,Product
+PL001,Richard River,PD001,Product Leader,Product
+PL002,Angela Duke,PD001,Product Leader,Product
+PL003,Sarah Johnson,PD001,Product Leader,Product
+DD001,Simon Fox,CEO001,Design Director,Design
+DES001,Karina Newman,DD001,Designer,Design
+DES002,Ryan Duran,DD001,Designer,Design
+DES003,Lisa Wang,DD001,Designer,Design
+MD001,Mia Winters,CEO001,Marketing Director,Marketing
+ML001,Sarah Bartlett,MD001,Marketing Leader,Marketing
+ML002,Lauren Wilkins,MD001,Marketing Leader,Marketing
+ML003,David Kim,MD001,Marketing Leader,Marketing
+FD001,Robert Brown,CEO001,Finance Director,Finance
+FA001,Emma Davis,FD001,Financial Analyst,Finance
+FA002,Michael Wilson,FD001,Financial Analyst,Finance
+FA003,Jennifer Lee,FD001,Financial Analyst,Finance 

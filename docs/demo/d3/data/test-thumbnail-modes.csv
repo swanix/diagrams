@@ -1,0 +1,15 @@
+Node,Name,Description,Parent,Type,URL,Img
+ROOT,Empresa Principal,Empresa de tecnología líder,company,https://empresa.com,company.svg
+DEV,Desarrollo,Equipo de desarrollo de software,ROOT,department,https://github.com,dev.svg
+QA,Calidad,Equipo de aseguramiento de calidad,ROOT,department,https://qa.com,qa.svg
+SALES,Ventas,Equipo de ventas y marketing,ROOT,department,https://sales.com,sales.svg
+HR,Recursos Humanos,Equipo de recursos humanos,ROOT,department,https://hr.com,hr.svg
+FRONTEND,Frontend,Desarrollo de interfaces de usuario,DEV,team,https://frontend.com,frontend.svg
+BACKEND,Backend,Desarrollo de servicios y APIs,DEV,team,https://backend.com,backend.svg
+MOBILE,Mobile,Desarrollo de aplicaciones móviles,DEV,team,https://mobile.com,mobile.svg
+TESTING,Testing,Pruebas automatizadas,QA,team,https://testing.com,testing.svg
+MANUAL,Manual,Pruebas manuales,QA,team,https://manual.com,manual.svg
+ONLINE,Online,Ventas online,SALES,team,https://online.com,online.svg
+OFFLINE,Offline,Ventas presenciales,SALES,team,https://offline.com,offline.svg
+RECRUIT,Reclutamiento,Reclutamiento de talento,HR,team,https://recruit.com,recruit.svg
+TRAINING,Capacitación,Capacitación de empleados,HR,team,https://training.com,training.svg 

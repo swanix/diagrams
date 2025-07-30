@@ -16,9 +16,9 @@ window.$xDiagrams = {
 
 ## Themes
 Configuration of available visual themes:
-- `themes.light`: Light theme (value: "snow")
-- `themes.dark`: Dark theme (value: "onyx")
-- `themes.default`: Default theme (value: "snow")
+- `themes.light`: Light theme (value: "light")
+- `themes.dark`: Dark theme (value: "dark")
+- `themes.default`: Default theme (value: "light")
 
 ```javascript
 window.$xDiagrams = {

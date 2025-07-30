@@ -1184,7 +1184,7 @@ function buildHierarchies(data, diagramConfig = null) {
 
     // Generate auto ID if not provided or empty
     if (!id || id.trim() === "") {
-      id = `id-${autoIdCounter.toString().padStart(2, '0')}`;
+      id = `ID-${autoIdCounter.toString().padStart(2, '0')}`;
       autoIdCounter++;
     }
 
@@ -3815,8 +3815,9 @@ function createSidePanel() {
   sidePanel.innerHTML = `
     <div class="side-panel-header">
       <h3 class="side-panel-title" id="side-panel-title">Detalles del Nodo</h3>
-              <span class="side-panel-close" onclick="closeSidePanel()" role="button">×</span>
+      <span class="side-panel-close" onclick="closeSidePanel()" role="button">×</span>
     </div>
+    <div class="side-panel-id-tag" id="side-panel-id-tag"></div>
     <div class="side-panel-content" id="side-panel-content">
     </div>
   `;
@@ -3885,6 +3886,17 @@ function openSidePanel(nodeData, diagramConfig = null) {
 
   // Update title with node name and thumbnail
   if (titleElement && nodeData) {
+    // Update ID tag
+    const idTagElement = document.getElementById('side-panel-id-tag');
+    if (idTagElement) {
+      const nodeIdValue = getNodeIdValue(nodeData);
+      if (nodeIdValue) {
+        idTagElement.textContent = nodeIdValue;
+        idTagElement.style.display = 'block';
+      } else {
+        idTagElement.style.display = 'none';
+      }
+    }
     // Use original CSV data if available, otherwise fall back to processed data
     const dataToShow = nodeData.originalData || nodeData;
     // Get the name value from the data
@@ -3946,7 +3958,7 @@ function openSidePanel(nodeData, diagramConfig = null) {
   }
 
   // Generate content
-  content.innerHTML = generateSidePanelContent(nodeData);
+  content.innerHTML = generateSidePanelContent(nodeData, diagramConfig);
   
   // Re-initialize tooltips after content is generated
   setTimeout(() => {
@@ -4061,7 +4073,7 @@ function openUrlSecurely(url) {
 }
 
 // Generate panel content
-function generateSidePanelContent(nodeData) {
+function generateSidePanelContent(nodeData, diagramConfig = null) {
   if (!nodeData) return '<p>No hay datos disponibles</p>';
 
   let html = '<div class="side-panel-fields-table">';
@@ -4069,24 +4081,22 @@ function generateSidePanelContent(nodeData) {
   // Use original CSV data if available, otherwise fall back to processed data
   const dataToShow = nodeData.originalData || nodeData;
   
-  // Always show ID first (either from original data or generated automatically)
-  const nodeId = nodeData.id || dataToShow.id || '';
-  if (nodeId) {
-    html += `
-      <div class="side-panel-field">
-        <div class="side-panel-label">ID</div>
-        <div class="side-panel-value">${nodeId}</div>
-      </div>
-    `;
-  }
+  // ID is now shown in the tag above the content, not in the fields table
+  
+  // Get configuration for showing all columns
+  const showAllColumns = getShowAllColumnsConfiguration(diagramConfig);
   
   // Show all available fields from the original CSV data
   Object.keys(dataToShow).forEach(key => {
-    // Skip internal properties, name field (already shown in header), and id field (already shown above)
+    // Skip internal properties, name field (already shown in header), id/node fields (already shown in tag), and img field (shown in thumbnail)
     if (key === 'children' || key === 'parent' || key === 'originalData' || 
-        key.toLowerCase() === 'name' || key.toLowerCase() === 'id') return;
+        key.toLowerCase() === 'name' || key.toLowerCase() === 'id' || key.toLowerCase() === 'node' ||
+        key.toLowerCase() === 'img' || key.toLowerCase() === 'image' || key.toLowerCase() === 'thumbnail') return;
     
     const value = dataToShow[key] || '';
+    
+    // Skip empty columns unless showAllColumns is enabled
+    if (!showAllColumns && !value) return;
     // Convert label to title case for professional appearance, with special handling for ID and URL
     let label;
     if (key.toLowerCase() === 'url') {
@@ -5689,59 +5699,67 @@ function renderSwDiagramBase() {
         }
     }
     
-    container.innerHTML = `
-      <div class="topbar">
-        <div class="topbar-left">
-          <div class="title-dropdown-container">
-            ${logoUrl ? `<img class="diagram-logo" src="${logoUrl}" alt="Logo" style="max-height: 48px; max-width: 180px; object-fit: contain; padding: 8px 0; margin-right: -4px;">` : ''}
-            <h1 class="diagram-title">${fixedTitle}</h1>
-            <div class="diagram-dropdown" id="diagram-dropdown">
-              <button class="diagram-dropdown-btn" id="diagram-dropdown-btn">
-                <span class="dropdown-text">Seleccionar diagrama</span>
-                <svg class="dropdown-arrow" width="20" height="20" viewBox="0 0 24 24" fill="none">
-                  <path d="M7 10l5 5 5-5" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-              </button>
-              <div class="diagram-dropdown-content" id="diagram-dropdown-content">
-              </div>
+    // Create topbar outside the canvas container
+    const topbar = document.createElement('div');
+    topbar.className = 'topbar';
+    topbar.innerHTML = `
+      <div class="topbar-left">
+        <div class="title-dropdown-container">
+          ${logoUrl ? `<img class="diagram-logo" src="${logoUrl}" alt="Logo" style="max-height: 48px; max-width: 180px; object-fit: contain; padding: 8px 0; margin-right: -4px;">` : ''}
+          <h1 class="diagram-title">${fixedTitle}</h1>
+          <div class="diagram-dropdown" id="diagram-dropdown">
+            <button class="diagram-dropdown-btn" id="diagram-dropdown-btn">
+              <span class="dropdown-text">Seleccionar diagrama</span>
+              <svg class="dropdown-arrow" width="20" height="20" viewBox="0 0 24 24" fill="none">
+                <path d="M7 10l5 5 5-5" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
+            <div class="diagram-dropdown-content" id="diagram-dropdown-content">
             </div>
           </div>
         </div>
-        <div class="topbar-center">
-          <div class="node-counter" id="node-counter">
-            <span class="node-counter-text"><span id="node-count">0</span> <span id="counter-word">nodes</span></span>
-          </div>
-        </div>
-        <div class="topbar-right">
-          <div class="theme-controls">
-            <button id="theme-toggle" class="theme-toggle" title="Cambiar tema">
-              <svg class="theme-icon sun-icon" width="18" height="18" viewBox="0 0 24 24">
-                <circle cx="12" cy="12" r="4" fill="currentColor"></circle>
-                <g stroke="currentColor" stroke-width="2" stroke-linecap="round">
-                  <line x1="12" y1="1" x2="12" y2="3"></line>
-                  <line x1="12" y1="21" x2="12" y2="23"></line>
-                  <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
-                  <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
-                  <line x1="1" y1="12" x2="3" y2="12"></line>
-                  <line x1="21" y1="12" x2="23" y2="12"></line>
-                  <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
-                  <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
-                </g>
-              </svg>
-              <svg class="theme-icon moon-icon" width="18" height="18" viewBox="0 0 24 24">
-                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" fill="currentColor"></path>
-              </svg>
-            </button>
-            <!-- Botón data-refresh oculto temporalmente
-            <button id="data-refresh" class="theme-toggle data-refresh-btn" title="Refrescar datos">
-              <svg class="theme-icon refresh-icon" width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M17.65,6.35C16.2,4.9 14.21,4 12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20C15.73,20 18.84,17.45 19.73,14H17.65C16.83,16.33 14.61,18 12,18A6,6 0 0,1 6,12A6,6 0 0,1 12,6C13.66,6 15.14,6.69 16.22,7.78L13,11H20V4L17.65,6.35Z"></path>
-              </svg>
-            </button>
-            -->
-          </div>
+      </div>
+      <div class="topbar-center">
+        <div class="node-counter" id="node-counter">
+          <span class="node-counter-text"><span id="node-count">0</span> <span id="counter-word">nodes</span></span>
         </div>
       </div>
+      <div class="topbar-right">
+        <div class="theme-controls">
+          <button id="theme-toggle" class="theme-toggle" title="Cambiar tema">
+            <svg class="theme-icon sun-icon" width="18" height="18" viewBox="0 0 24 24">
+              <circle cx="12" cy="12" r="4" fill="currentColor"></circle>
+              <g stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                <line x1="12" y1="1" x2="12" y2="3"></line>
+                <line x1="12" y1="21" x2="12" y2="23"></line>
+                <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                <line x1="1" y1="12" x2="3" y2="12"></line>
+                <line x1="21" y1="12" x2="23" y2="12"></line>
+                <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+              </g>
+            </svg>
+            <svg class="theme-icon moon-icon" width="18" height="18" viewBox="0 0 24 24">
+              <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" fill="currentColor"></path>
+            </svg>
+          </button>
+          <!-- Botón data-refresh oculto temporalmente
+          <button id="data-refresh" class="theme-toggle data-refresh-btn" title="Refrescar datos">
+            <svg class="theme-icon refresh-icon" width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M17.65,6.35C16.2,4.9 14.21,4 12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20C15.73,20 18.84,17.45 19.73,14H17.65C16.83,16.33 14.61,18 12,18A6,6 0 0,1 6,12A6,6 0 0,1 12,6C13.66,6 15.14,6.69 16.22,7.78L13,11H20V4L17.65,6.35Z"></path>
+            </svg>
+          </button>
+          -->
+        </div>
+      </div>
+    `;
+    
+    // Append topbar to body first
+    document.body.appendChild(topbar);
+    
+    // Create canvas container content without topbar
+    container.innerHTML = `
       <div class="diagram-switcher" id="diagram-switcher">
         <div class="switcher-header">
         </div>
@@ -7629,11 +7647,88 @@ function resolveNodeImage(node, diagramConfig = null) {
   // Obtener valor de la columna img directamente del nodo
   const imgVal = node.img || (node.data && node.data.img) || "";
   const typeVal = node.type || (node.data && node.data.type) || "";
+  const nameVal = node.name || (node.data && node.data.name) || "";
 
-  console.log(`[resolveNodeImage] Processing node: ${node.name || node.data?.name || 'unknown'}`);
+  console.log(`[resolveNodeImage] Processing node: ${nameVal || 'unknown'}`);
   console.log(`[resolveNodeImage] Thumbnail mode: ${thumbnailMode}`);
   console.log(`[resolveNodeImage] Img value: "${imgVal}"`);
   console.log(`[resolveNodeImage] Type value: "${typeVal}"`);
+  console.log(`[resolveNodeImage] Name value: "${nameVal}"`);
+
+  // Función para transformar nombre a formato de archivo de imagen
+  function normalizeNameForImage(name) {
+    if (!name || name.trim() === "") return null;
+    
+    return name
+      .toLowerCase()
+      .normalize('NFD') // Normalizar caracteres Unicode
+      .replace(/[\u0300-\u036f]/g, '') // Remover acentos
+      .replace(/ñ/g, 'n') // Reemplazar ñ por n
+      .replace(/\s+/g, '-') // Reemplazar espacios por guiones
+      .replace(/[^a-z0-9-]/g, '') // Solo letras, números y guiones
+      .replace(/-+/g, '-') // Múltiples guiones por uno solo
+      .replace(/^-|-$/g, ''); // Remover guiones al inicio y final
+  }
+
+  // Función para verificar si existe una imagen automática basada en el nombre
+  function findAutoImageByName(name) {
+    if (!name || name.trim() === "") return null;
+    
+    const normalizedName = normalizeNameForImage(name);
+    if (!normalizedName) return null;
+    
+    // Lista de extensiones de imagen comunes en orden de prioridad
+    const imageExtensions = ['.jpeg', '.jpg', '.png', '.webp', '.gif'];
+    
+    // Generar la ruta de imagen basada en el nombre normalizado
+    // Usamos .jpeg como extensión por defecto (la más común)
+    const imagePath = `img/photos/${normalizedName}.jpeg`;
+    
+    console.log(`[resolveNodeImage] Auto image path generated: ${imagePath} for name: "${name}" (normalized: "${normalizedName}")`);
+    console.log(`[resolveNodeImage] Supported extensions: ${imageExtensions.join(', ')}`);
+    
+    // Retornamos la ruta generada. El sistema de manejo de errores de imágenes
+    // se encargará de mostrar un fallback si el archivo no existe realmente.
+    // En una implementación más avanzada, se podría verificar cada extensión
+    // usando checkImageExists de forma asíncrona.
+    return imagePath;
+  }
+
+  // Función asíncrona para verificar múltiples extensiones de imagen
+  async function findAutoImageByNameWithExtensions(name) {
+    if (!name || name.trim() === "") return null;
+    
+    const normalizedName = normalizeNameForImage(name);
+    if (!normalizedName) return null;
+    
+    // Lista de extensiones de imagen comunes en orden de prioridad
+    const imageExtensions = ['.jpeg', '.jpg', '.png', '.webp', '.gif'];
+    
+    console.log(`[resolveNodeImage] Checking multiple extensions for name: "${name}" (normalized: "${normalizedName}")`);
+    
+    // Verificar cada extensión
+    for (const ext of imageExtensions) {
+      const imagePath = `img/photos/${normalizedName}${ext}`;
+      console.log(`[resolveNodeImage] Checking: ${imagePath}`);
+      
+      try {
+        const exists = await checkImageExists(imagePath);
+        if (exists) {
+          console.log(`[resolveNodeImage] Found image: ${imagePath}`);
+          return imagePath;
+        }
+      } catch (error) {
+        console.log(`[resolveNodeImage] Error checking ${imagePath}:`, error);
+      }
+    }
+    
+    console.log(`[resolveNodeImage] No image found for name: "${name}" with any extension`);
+    return null;
+  }
+
+
+
+
 
                 // Si thumbnailMode es 'simple', usar siempre el thumbnail 'detail' para todos los nodos
               if (thumbnailMode === 'simple') {
@@ -7698,7 +7793,14 @@ function resolveNodeImage(node, diagramConfig = null) {
       return `img/${fileName}`;
     }
 
-    // SOLO si img está completamente vacío, usar type como fallback
+    // SI img está completamente vacío, buscar imagen automática basada en el nombre
+    const autoImage = findAutoImageByName(nameVal);
+    if (autoImage) {
+      console.log(`[resolveNodeImage] Custom mode - Auto image found for name "${nameVal}": ${autoImage}`);
+      return autoImage;
+    }
+
+    // SOLO si no se encontró imagen automática, usar type como fallback
     const typeName = (typeVal || 'detail').toLowerCase().replace(/\s+/g, '-');
     
     // Verificar si el type existe como thumbnail embebido
@@ -8335,6 +8437,19 @@ function createSidePanelThumbnailHtml(nodeData, diagramConfig = null) {
     return `<div class="side-panel-title-thumbnail" style="width: 24px; height: 24px; background: transparent;"></div>`;
   }
   
+  // Determinar si es una imagen custom (de la columna Img o automática)
+  const thumbnailMode = getThumbnailMode(diagramConfig);
+  const imgVal = nodeData.img || (nodeData.data && nodeData.data.img) || "";
+  const nameVal = nodeData.name || (nodeData.data && nodeData.data.name) || "";
+  
+  // Es imagen custom si:
+  // 1. Tiene valor en la columna img, O
+  // 2. Es una imagen automática (thumbnailMode custom + img vacío + nombre válido)
+  const isCustomImage = thumbnailMode === 'custom' && (
+    (imgVal && imgVal.trim() !== "") || 
+    (!imgVal || imgVal.trim() === "") && nameVal && nameVal.trim() !== ""
+  );
+  
   // Si es una data URI (thumbnail embebido), crear elemento SVG
   if (imageUrl.startsWith('data:image/svg+xml')) {
     const svgString = getEmbeddedThumbnailSvgString(imageUrl);
@@ -8347,7 +8462,8 @@ function createSidePanelThumbnailHtml(nodeData, diagramConfig = null) {
       const svgElement = tempDiv.querySelector('svg');
       if (svgElement) {
         // Aplicar estilos específicos para el side panel
-        svgElement.setAttribute('class', 'side-panel-title-thumbnail embedded-thumbnail loaded');
+        const customClass = isCustomImage ? 'side-panel-title-thumbnail embedded-thumbnail loaded custom-image' : 'side-panel-title-thumbnail embedded-thumbnail loaded';
+        svgElement.setAttribute('class', customClass);
         svgElement.setAttribute('width', '24');
         svgElement.setAttribute('height', '24');
         svgElement.style.opacity = '1';
@@ -8370,7 +8486,8 @@ function createSidePanelThumbnailHtml(nodeData, diagramConfig = null) {
   }
   
   // Si es una URL externa o archivo local, crear elemento img
-  return `<img src="${imageUrl}" class="side-panel-title-thumbnail" width="24" height="24" style="opacity: 1; transition: opacity 0.2s ease-in-out;" onerror="this.style.display='none'">`;
+  const customClass = isCustomImage ? 'side-panel-title-thumbnail custom-image' : 'side-panel-title-thumbnail';
+  return `<img src="${imageUrl}" class="${customClass}" width="24" height="24" style="opacity: 1; transition: opacity 0.2s ease-in-out;" onerror="this.style.display='none'">`;
 }
 
 // ============================================================================
@@ -8937,6 +9054,24 @@ function zoomToCluster(clusterInfo) {
   // Update node interactions after cluster selection
   updateNodeInteractionsForClusterSelection();
   
+  // Handle side panel based on current state
+  const parentNode = getClusterParentNode(clusterInfo);
+  if (parentNode && isOptionEnabled('sidePanel') !== false) {
+    // Check if side panel is currently visible
+    const sidePanel = document.querySelector('.side-panel');
+    const isSidePanelVisible = sidePanel && !sidePanel.classList.contains('hidden');
+    
+    if (isSidePanelVisible) {
+      // If side panel is already open, update content immediately
+      console.log('[ClusterClickMode] Side panel is open - updating content immediately for node:', parentNode.name);
+      updateSidePanelContent(parentNode);
+    } else {
+      // If side panel is closed, store node to show after zoom
+      console.log('[ClusterClickMode] Side panel is closed - storing node to show after zoom:', parentNode.name);
+      window.$xDiagrams.clusterClickMode.pendingSidePanelNode = parentNode;
+    }
+  }
+  
   // Disable hover and tooltips during zoom animation
   disableHoverAndTooltipsDuringZoom();
   
@@ -9035,37 +9170,38 @@ function zoomToCluster(clusterInfo) {
   console.log('[ClusterClickMode] Final transform:', { translateX, translateY, scale });
   
   // Apply smooth transition
-  svg.transition()
+  const transition = svg.transition()
     .duration(1000) // Increased duration for smoother animation
     .ease(d3.easeCubicOut)
     .call(zoom.transform, d3.zoomIdentity
       .translate(translateX, translateY)
       .scale(scale)
-    )
-    .on("end", function() {
-      // Zoom completed - cluster is already styled as selected
-      console.log('[ClusterClickMode] Zoom completed for cluster:', clusterInfo.id);
-      
-      // Re-enable hover and tooltips after zoom animation completes
-      reEnableHoverAndTooltipsAfterZoom();
-      
-      // Get the parent node of the cluster and update side panel content
-      const parentNode = getClusterParentNode(clusterInfo);
-      if (parentNode && isOptionEnabled('sidePanel') !== false) {
-        console.log('[ClusterClickMode] Updating side panel for cluster parent node:', parentNode.name);
-        
-        // Add a small delay to ensure zoom animation is fully complete
-        setTimeout(() => {
-          updateSidePanelContent(parentNode);
-        }, 100);
-      }
-      
-      // Add a delay before resetting the zooming flag to prevent immediate deselection
-      setTimeout(() => {
-        window.$xDiagrams.clusterClickMode.isZoomingToCluster = false;
-        console.log('[ClusterClickMode] Zooming flag reset after delay');
-      }, 500); // 500ms delay to prevent immediate deselection
-    });
+    );
+  
+  // Show side panel at 60% of zoom completion
+  setTimeout(() => {
+    const pendingSidePanelNode = window.$xDiagrams.clusterClickMode.pendingSidePanelNode;
+    if (pendingSidePanelNode && isOptionEnabled('sidePanel') !== false) {
+      console.log('[ClusterClickMode] Showing side panel at 60% zoom completion for node:', pendingSidePanelNode.name);
+      updateSidePanelContent(pendingSidePanelNode, window.$xDiagrams.currentDiagramConfig);
+      // Clear the pending node
+      window.$xDiagrams.clusterClickMode.pendingSidePanelNode = null;
+    }
+  }, 600); // 60% of 1000ms = 600ms
+  
+  transition.on("end", function() {
+    // Zoom completed - cluster is already styled as selected
+    console.log('[ClusterClickMode] Zoom completed for cluster:', clusterInfo.id);
+    
+    // Re-enable hover and tooltips after zoom animation completes
+    reEnableHoverAndTooltipsAfterZoom();
+    
+    // Add a delay before resetting the zooming flag to prevent immediate deselection
+    setTimeout(() => {
+      window.$xDiagrams.clusterClickMode.isZoomingToCluster = false;
+      console.log('[ClusterClickMode] Zooming flag reset after delay');
+    }, 500); // 500ms delay to prevent immediate deselection
+  });
   
   // Trigger hook
   triggerHook('onClusterZoom', {
@@ -10475,6 +10611,43 @@ function getCounterWordConfiguration(diagramConfig = null) {
   return "nodes";
 }
 
+// Function to get ID/Node value for tag display
+function getNodeIdValue(nodeData) {
+  if (!nodeData) return '';
+  
+  const dataToShow = nodeData.originalData || nodeData;
+  
+  // Try to get ID value first (priority order)
+  const idValue = nodeData.id || dataToShow.id || dataToShow.ID || dataToShow.Id || '';
+  if (idValue) return idValue;
+  
+  // If no ID, try to get Node value
+  const nodeValue = dataToShow.node || dataToShow.Node || dataToShow.NODE || '';
+  if (nodeValue) return nodeValue;
+  
+  return '';
+}
+
+// Function to get show all columns configuration from diagram
+function getShowAllColumnsConfiguration(diagramConfig = null) {
+  // Get current diagram configuration
+  const currentDiagram = diagramConfig || window.$xDiagrams.currentDiagram;
+  
+  // Check if showAllColumns is specified in the diagram configuration options
+  if (currentDiagram && currentDiagram.options && currentDiagram.options.showAllColumns !== undefined) {
+    return currentDiagram.options.showAllColumns;
+  }
+  
+  // Check if showAllColumns is specified in global options
+  const globalOptions = getDiagramOptions();
+  if (globalOptions && globalOptions.showAllColumns !== undefined) {
+    return globalOptions.showAllColumns;
+  }
+  
+  // Default fallback: hide empty columns
+  return false;
+}
+
 // Function to get the parent node of a cluster
 function getClusterParentNode(clusterInfo) {
   if (!clusterInfo || !clusterInfo.id) {
@@ -10482,12 +10655,18 @@ function getClusterParentNode(clusterInfo) {
     return null;
   }
   
-  // Find the node in currentData that matches the cluster ID
-  const parentNode = window.$xDiagrams.currentData.find(node => node.id === clusterInfo.id);
+  // First try to find the node in currentData that matches the cluster ID
+  let parentNode = window.$xDiagrams.currentData.find(node => node.id === clusterInfo.id);
   
   if (!parentNode) {
     console.warn('[ClusterParent] Parent node not found for cluster:', clusterInfo.id);
     return null;
+  }
+  
+  // If the node has originalData, use that for better data completeness
+  if (parentNode.originalData) {
+    console.log('[ClusterParent] Found parent node with originalData for cluster:', clusterInfo.id, parentNode.originalData);
+    return parentNode.originalData;
   }
   
   console.log('[ClusterParent] Found parent node for cluster:', clusterInfo.id, parentNode);
@@ -10541,6 +10720,18 @@ function updateSidePanelContent(nodeData, diagramConfig = null) {
          JSON.stringify(d.data.originalData) === JSON.stringify(nodeData.originalData))
       );
       fallbackNode.classed('node-selected', true);
+    }
+  }
+
+  // Update ID tag
+  const idTagElement = document.getElementById('side-panel-id-tag');
+  if (idTagElement) {
+    const nodeIdValue = getNodeIdValue(nodeData);
+    if (nodeIdValue) {
+      idTagElement.textContent = nodeIdValue;
+      idTagElement.style.display = 'block';
+    } else {
+      idTagElement.style.display = 'none';
     }
   }
 
@@ -10606,7 +10797,7 @@ function updateSidePanelContent(nodeData, diagramConfig = null) {
   titleElement.innerHTML = `${thumbnailHtml}<span class="side-panel-title-text" ${titleTooltip}>${truncatedTitle}</span>`;
 
   // Generate and update content
-  content.innerHTML = generateSidePanelContent(nodeData);
+  content.innerHTML = generateSidePanelContent(nodeData, diagramConfig);
   
   // Re-initialize tooltips after content is generated
   setTimeout(() => {

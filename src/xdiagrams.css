@@ -80,7 +80,6 @@
     
     /* ===== Side Panel ===== */
     --side-panel-width: 350px;
-    --side-panel-shadow: rgba(0, 0, 0, 0.1);
     
     /* ===== UI Controls ===== */
     --ui-control-bg: #ffffff;
@@ -260,6 +259,10 @@
   --ui-control-placeholder: hsl(var(--color-base) 30% / 1);
   --ui-control-shadow: none;
   --ui-control-shadow-focus: none;
+
+  /* ===== Shadow Variables ===== */
+  --side-panel-shadow: -4px 0 8px rgba(0, 0, 0, 0.05);
+  --topbar-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
 .theme-onyx {
   /* ===== Color Base Variables ===== */
@@ -341,6 +344,10 @@
   --ui-control-placeholder: hsl(var(--color-base) 30% / 1);
   --ui-control-shadow: none;
   --ui-control-shadow-focus: none;
+
+  /* ===== Shadow Variables ===== */
+  --side-panel-shadow: -4px 0 8px rgba(0, 0, 0, 0.2);
+  --topbar-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 
   /* ===== UI Control Layout ===== */
   --ui-control-padding: 15px;
@@ -867,7 +874,7 @@ body:not(.cluster-click-mode-active) .cluster-rect[data-selected="true"] ~ * .em
   height: calc(100vh - 60px); /* Altura total menos el topbar */
   background-color: var(--ui-panel-bg);
   border-left: 1px solid var(--ui-panel-border);
-  /* box-shadow: -2px 0 10px var(--side-panel-shadow); */
+  box-shadow: var(--side-panel-shadow);
   z-index: 999; /* Por debajo del topbar (z-index: 2000) pero por encima del SVG */
   transition: right 0.3s ease-in-out;
   overflow-y: auto;
@@ -896,7 +903,7 @@ body:not(.cluster-click-mode-active) .cluster-rect[data-selected="true"] ~ * .em
 .side-panel-header {
   background-color: var(--ui-panel-bg) !important;
   border-bottom: 1px solid var(--ui-panel-border) !important;
-  padding: 20px;
+  padding: 30px 20px;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -913,10 +920,17 @@ body:not(.cluster-click-mode-active) .cluster-rect[data-selected="true"] ~ * .em
 }
 
 .side-panel-title-thumbnail {
-  width: 24px;
-  height: 24px;
+  width: 40px;
+  height: 40px;
   filter: var(--image-filter);
   flex-shrink: 0;
+}
+
+/* Máscara circular para imágenes custom del side panel */
+.side-panel-title-thumbnail.custom-image {
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1px solid var(--ui-panel-border);
 }
 
 .side-panel-title-text {
@@ -929,6 +943,7 @@ body:not(.cluster-click-mode-active) .cluster-rect[data-selected="true"] ~ * .em
   text-overflow: ellipsis;
   display: inline-block;
   max-width: 100%;
+  margin-left: 8px;
 }
 
 .side-panel-close {
@@ -958,7 +973,7 @@ body:not(.cluster-click-mode-active) .cluster-rect[data-selected="true"] ~ * .em
 }
 
 .side-panel-content {
-  padding: 20px;
+  padding: 25px 20px 20px 20px;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   line-height: 1.5;
 }
@@ -1021,6 +1036,27 @@ body:not(.cluster-click-mode-active) .cluster-rect[data-selected="true"] ~ * .em
   color: var(--ui-panel-text-muted);
   font-style: normal;
   opacity: 0.8;
+}
+
+.side-panel-id-value {
+  font-family: 'Courier New', Courier, monospace !important;
+}
+
+.side-panel-id-tag {
+  display: none;
+  position: absolute;
+  top: 90px;
+  left: 15px;
+  background-color: var(--ui-panel-bg);
+  border: 1px solid var(--ui-panel-border);
+  border-radius: 8px;
+  padding: 3px 8px;
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 10px;
+  font-weight: bold;
+  color: var(--text-color);
+  z-index: 1000;
+  white-space: nowrap;
 }
 
 /* Tooltip styles for truncated text */
@@ -1476,12 +1512,12 @@ body:not(.cluster-click-mode-active) .cluster-rect[data-selected="true"] ~ * .no
   background: var(--ui-panel-bg, #fff);
   color: var(--ui-panel-text, #333);
   border-bottom: 1px solid var(--ui-panel-border);
-  /* box-shadow: 0 2px 8px rgba(0,0,0,0.03); */
+  box-shadow: var(--topbar-shadow);
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 0 24px;
-  z-index: 2000; /* Por encima del side panel y SVG */
+  z-index: 9999; /* El más alto de todos los elementos */
   box-sizing: border-box;
   margin: 0;
   /* Oculto por defecto para evitar flash durante la carga */
@@ -2365,10 +2401,10 @@ body.theme-neon .theme-toggle .moon-icon {
 /* ===== Drag & Drop Styles ===== */
 .xcanvas {
   position: fixed;
-  top: 0;
+  top: 60px; /* Margen superior para el topbar */
   left: 0;
   width: 100vw;
-  height: 100vh;
+  height: calc(100vh - 60px); /* Altura total menos el topbar */
   z-index: 1;
   overflow: hidden;
   background-color: transparent; /* Cambiado a transparente para ver el spinner inicial */
@@ -2605,6 +2641,12 @@ body.theme-neon .theme-toggle .moon-icon {
     height: calc(100vh - 50px);
   }
   
+  /* Ajustar xcanvas para el topbar más pequeño */
+  .xcanvas {
+    top: 50px; /* Margen superior para el topbar más pequeño */
+    height: calc(100vh - 50px); /* Altura total menos el topbar más pequeño */
+  }
+  
   .side-panel.open {
     right: 0;
   }
@@ -2702,6 +2744,12 @@ body.theme-neon .theme-toggle .moon-icon {
   .side-panel {
     top: 45px;
     height: calc(100vh - 45px);
+  }
+  
+  /* Ajustar xcanvas para el topbar más pequeño en móviles */
+  .xcanvas {
+    top: 45px; /* Margen superior para el topbar más pequeño */
+    height: calc(100vh - 45px); /* Altura total menos el topbar más pequeño */
   }
   
   .side-panel-header {
@@ -2841,6 +2889,12 @@ body.theme-neon .theme-toggle .moon-icon {
   .side-panel {
     top: 40px;
     height: calc(100vh - 40px);
+  }
+  
+  /* Ajustar xcanvas para el topbar más pequeño en pantallas muy pequeñas */
+  .xcanvas {
+    top: 40px; /* Margen superior para el topbar más pequeño */
+    height: calc(100vh - 40px); /* Altura total menos el topbar más pequeño */
   }
   
   .side-panel-header {
@@ -3361,6 +3415,7 @@ body.theme-onyx .cluster-tooltip-element {
 .label-id {
   fill: var(--node-text-secondary) !important;
   font-size: var(--label-id-font-size) !important;
+  font-family: 'Courier New', Courier, monospace !important;
 }
 
 /* Subtitle text styles */
@@ -3373,6 +3428,7 @@ body.theme-onyx .cluster-tooltip-element {
 body.theme-snow .label-id {
   fill: var(--node-text-secondary) !important;
   font-size: var(--label-id-font-size) !important;
+  font-family: 'Courier New', Courier, monospace !important;
 }
 
 body.theme-snow .subtitle-text {
@@ -3383,6 +3439,7 @@ body.theme-snow .subtitle-text {
 body.theme-onyx .label-id {
   fill: var(--node-text-secondary) !important;
   font-size: var(--label-id-font-size) !important;
+  font-family: 'Courier New', Courier, monospace !important;
 }
 
 body.theme-onyx .subtitle-text {

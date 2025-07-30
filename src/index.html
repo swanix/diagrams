@@ -20,14 +20,48 @@
       {
         name: "Org Chart",
         url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vSRXkFV0Kc67855z3cYY1qoY2crCXX2ww34quVAWIBi_ISD2uXZI0pxbGNIsZtPP35VwosZG_HFUJPW/pub?output=csv",
-        // layout: {
-        //   clustersPerRow: "5 4 3 7 8",
-        //   marginX: 30,
-        //   marginY: 30,
-        //   spacingX: 100,
-        //   spacingY: 100,
-        //   fullRowThreshold: 70
-        // },
+        options: {
+          thumbnailMode: "custom"
+        }
+      },
+      {
+        name: "Org Chart - Auto Image",
+        url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vSRXkFV0Kc67855z3cYY1qoY2crCXX2ww34quVAWIBi_ISD2uXZI0pxbGNIsZtPP35VwosZG_HFUJPW/pub?output=csv&gid=242704329",
+        options: {
+          thumbnailMode: "custom"
+        }
+      },
+      {
+        name: "Test Auto Images",
+        url: "data/test-auto-images.csv",
+        options: {
+          thumbnailMode: "custom"
+        }
+      },
+      {
+        name: "Test Auto Images (Special Characters)",
+        url: "data/test-auto-images-special.csv",
+        options: {
+          thumbnailMode: "custom"
+        }
+      },
+      {
+        name: "Test Auto Images (Mixed)",
+        url: "data/test-auto-images-mixed.csv",
+        options: {
+          thumbnailMode: "custom"
+        }
+      },
+      {
+        name: "Test Multiple Extensions",
+        url: "data/test-multiple-extensions.csv",
+        options: {
+          thumbnailMode: "custom"
+        }
+      },
+      {
+        name: "Test Side Panel Auto Images",
+        url: "data/test-side-panel-auto-images.csv",
         options: {
           thumbnailMode: "custom"
         }
@@ -122,6 +156,38 @@
           parent: "Parent",
           subtitle: "Position",
           type: "Type"
+        }
+      },
+      {
+        name: "Test Show All Columns",
+        url: "data/test-empty-columns.csv",
+        cols: {
+          id: "ID",
+          name: "Name",
+          parent: "Parent",
+          subtitle: "Position",
+          type: "Type",
+          img: "Image"
+        },
+        options: {
+          thumbnailMode: "custom",
+          showAllColumns: true
+        }
+      },
+      {
+        name: "Test Hide Empty Columns (Default)",
+        url: "data/test-empty-columns.csv",
+        cols: {
+          id: "ID",
+          name: "Name",
+          parent: "Parent",
+          subtitle: "Position",
+          type: "Type",
+          img: "Image"
+        },
+        options: {
+          thumbnailMode: "custom"
+          // showAllColumns: false (default)
         }
       }
     ],

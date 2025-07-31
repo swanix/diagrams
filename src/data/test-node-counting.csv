@@ -1,0 +1,10 @@
+Name,Type,Parent
+Section 1,Section,
+Section 2,Section,
+Section 3,Section,
+Regular Node,,Section 1
+Another Node,,Section 1
+Group Node,Group,Section 2
+Link Node,Link,Section 2
+Manager Node,Manager,Section 3
+Developer Node,Developer,Section 3 

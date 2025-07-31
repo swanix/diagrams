@@ -1,0 +1,13 @@
+ID,Name,Parent,Position,Type,Image
+1,Alice Thompson,,CEO,Person,img/photos/alice-thompson.jpeg
+2,Bob Martinez,1,CTO,Person,
+3,Carla Wilson,1,CFO,Person,img/photos/carla-wilson.jpeg
+4,Emily Johnson,2,Lead Developer,Person,
+5,Frank Brown,2,Senior Developer,Person,img/photos/frank-brown.jpeg
+6,Grace Lee,3,Accountant,Person,
+7,Henry Adams,4,Developer,Person,img/photos/henry-adams.jpeg
+8,Irene Zhang,5,Developer,Person,
+9,Kelly Simmons,6,Assistant,Person,img/photos/kelly-simmons.jpeg
+10,Liam Turner,7,Intern,Person,
+11,Ana Robinson,8,Designer,Person,img/photos/ana-robinson.jpeg
+12,Avatar,9,Manager,Person, 

@@ -1,0 +1,5 @@
+Name,Role,Subtitle,Description,Parent
+John Doe,CEO,Executive,Experienced executive with 15+ years in leadership roles. Responsible for overall company strategy and growth.,
+Jane Smith,CTO,Technology,Technology expert specializing in cloud infrastructure and digital transformation. Leads all technical initiatives.,John Doe
+Bob Johnson,Manager,Sales,Seasoned sales professional with proven track record in B2B sales and team management.,Jane Smith
+Alice Brown,Developer,Engineering,Full-stack developer with expertise in React, Node.js, and cloud technologies. Passionate about clean code and user experience.,Bob Johnson 

@@ -572,6 +572,12 @@
     filter: var(--image-filter) !important;
   }
   
+  /* Las imágenes ahora se crean solo cuando están preload, así que no necesitan estar ocultas */
+  svg image.image-base {
+    opacity: 1;
+    transition: opacity 0.2s ease-in-out;
+  }
+  
   /* Estilos para thumbnails embebidos */
     .embedded-thumbnail {
     opacity: var(--thumb-opacity, 0.8);
@@ -926,11 +932,54 @@ body:not(.cluster-click-mode-active) .cluster-rect[data-selected="true"] ~ * .em
   flex-shrink: 0;
 }
 
-/* Máscara circular para imágenes custom del side panel */
-.side-panel-title-thumbnail.custom-image {
+/* Máscara circular por defecto para todas las imágenes custom */
+/* Máscara circular SOLO para imágenes de bitmap (jpg, png, webp, gif, etc.) */
+.side-panel-title-thumbnail.custom-image[src*=".jpg"],
+.side-panel-title-thumbnail.custom-image[src*=".jpeg"],
+.side-panel-title-thumbnail.custom-image[src*=".png"],
+.side-panel-title-thumbnail.custom-image[src*=".webp"],
+.side-panel-title-thumbnail.custom-image[src*=".gif"],
+.side-panel-title-thumbnail.custom-image[src*=".bmp"],
+.side-panel-title-thumbnail.custom-image[src*=".tiff"],
+.side-panel-title-thumbnail.custom-image[href*=".jpg"],
+.side-panel-title-thumbnail.custom-image[href*=".jpeg"],
+.side-panel-title-thumbnail.custom-image[href*=".png"],
+.side-panel-title-thumbnail.custom-image[href*=".webp"],
+.side-panel-title-thumbnail.custom-image[href*=".gif"],
+.side-panel-title-thumbnail.custom-image[href*=".bmp"],
+.side-panel-title-thumbnail.custom-image[href*=".tiff"],
+/* URLs sin extensión (como Unsplash) - aplicar máscara circular */
+.side-panel-title-thumbnail.custom-image:not([src*=".svg"]):not([href*=".svg"]):not([src*="data:image/svg+xml"]):not([href*="data:image/svg+xml"]) {
   border-radius: 50%;
   object-fit: cover;
+  object-position: center;
   border: 1px solid var(--ui-panel-border);
+  transform: scale(1.1);
+  transform-origin: center;
+}
+
+/* Sin máscara circular para contenido vectorial (SVG) */
+.side-panel-title-thumbnail.custom-image[src*=".svg"],
+.side-panel-title-thumbnail.custom-image[href*=".svg"],
+.side-panel-title-thumbnail.custom-image[src*="data:image/svg+xml"],
+.side-panel-title-thumbnail.custom-image[href*="data:image/svg+xml"],
+/* Elementos SVG embebidos (thumbnails por defecto) */
+.side-panel-title-thumbnail.custom-image svg {
+  border-radius: 0;
+  object-fit: contain;
+  transform: none;
+  border: 1px solid var(--ui-panel-border);
+  /* Mantener la forma original del SVG */
+}
+
+/* Thumbnails embebidos del sistema (form, detail, list, grid, etc.) - siempre cuadrados */
+.side-panel-title-thumbnail.embedded-thumbnail,
+.side-panel-title-thumbnail.custom-image.embedded-thumbnail {
+  border-radius: 0 !important;
+  object-fit: contain;
+  transform: none;
+  border: 1px solid var(--ui-panel-border);
+  /* Mantener la forma original del SVG del sistema */
 }
 
 .side-panel-title-text {
@@ -1035,7 +1084,7 @@ body:not(.cluster-click-mode-active) .cluster-rect[data-selected="true"] ~ * .em
 .side-panel-value.empty {
   color: var(--ui-panel-text-muted);
   font-style: normal;
-  opacity: 0.8;
+  opacity: 0.4;
 }
 
 .side-panel-id-value {

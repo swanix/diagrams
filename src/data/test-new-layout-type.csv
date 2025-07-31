@@ -1,0 +1,19 @@
+Name,Type,Layout,Img,Node,Url,Subtitle
+Juan Pérez,Person,Profile,,JP001,https://example.com/juan,Desarrollador Senior
+María García,Person,Profile,,MG002,https://example.com/maria,Diseñadora UX
+Carlos López,Person,Profile,img/custom-photo.jpg,CL003,https://example.com/carlos,Product Manager
+Ana Rodríguez,Person,Profile,,AR004,https://example.com/ana,QA Engineer
+Luis Martínez,Person,Profile,,LM005,https://example.com/luis,DevOps Engineer
+Equipo Desarrollo,Group,Grid,,ED001,https://example.com/dev,Equipo de Desarrollo
+Equipo Diseño,Group,Grid,,ED002,https://example.com/design,Equipo de Diseño
+Documentación Técnica,Section,Document,,DT001,https://example.com/docs,Documentación del Proyecto
+Configuración Sistema,Section,Settings,,CS001,https://example.com/config,Configuración General
+Reporte Mensual,Section,Report,,RM001,https://example.com/report,Reporte de Actividades
+Formulario Contacto,Section,Form,,FC001,https://example.com/contact,Formulario de Contacto
+Lista Tareas,Section,List,,LT001,https://example.com/tasks,Lista de Tareas Pendientes
+Modal Confirmación,Section,Modal,,MC001,https://example.com/modal,Modal de Confirmación
+Archivo PDF,Section,File PDF,,AP001,https://example.com/pdf,Documento PDF
+Archivo Excel,Section,File XLS,,AE001,https://example.com/excel,Hoja de Cálculo
+Archivo CSV,Section,File CSV,,AC001,https://example.com/csv,Datos en CSV
+Archivo Texto,Section,File TXT,,AT001,https://example.com/txt,Archivo de Texto
+Documento Word,Section,File Docx,,DW001,https://example.com/word,Documento Word 

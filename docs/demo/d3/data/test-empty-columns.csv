@@ -1,9 +1,0 @@
-ID,Name,Parent,Position,Type,Image,Department,Email,Phone,Notes
-1,John Doe,,CEO,Executive,avatar1.jpg,Management,john@company.com,555-0101,
-2,Jane Smith,1,CTO,Executive,avatar2.jpg,Technology,jane@company.com,,Important team member
-3,Bob Johnson,1,CFO,Executive,avatar3.jpg,Finance,,555-0103,New hire
-4,Alice Brown,2,Lead Developer,Manager,avatar4.jpg,Technology,alice@company.com,555-0104,Experienced developer
-5,Charlie Wilson,2,Developer,Employee,avatar5.jpg,Technology,charlie@company.com,,
-6,Diana Davis,3,Accountant,Employee,avatar6.jpg,Finance,diana@company.com,555-0106,
-7,Edward Miller,4,Junior Developer,Employee,avatar7.jpg,Technology,edward@company.com,555-0107,Intern
-8,Fiona Garcia,3,Financial Analyst,Employee,avatar8.jpg,Finance,,555-0108,Part-time 

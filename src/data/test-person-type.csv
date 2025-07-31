@@ -1,0 +1,6 @@
+Name,Type,Img,Node,Url,Subtitle
+Juan Pérez,Person,,JP001,https://example.com/juan,Desarrollador Senior
+María García,Person,,MG002,https://example.com/maria,Diseñadora UX
+Carlos López,Person,img/custom-photo.jpg,CL003,https://example.com/carlos,Product Manager
+Ana Rodríguez,Person,,AR004,https://example.com/ana,QA Engineer
+Luis Martínez,Person,,LM005,https://example.com/luis,DevOps Engineer 

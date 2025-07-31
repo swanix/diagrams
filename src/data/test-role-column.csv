@@ -1,0 +1,5 @@
+Name,Role,Parent
+John Doe,CEO,
+Jane Smith,CTO,John Doe
+Bob Johnson,Manager,Jane Smith
+Alice Brown,Developer,Bob Johnson 

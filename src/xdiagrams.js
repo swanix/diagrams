@@ -1023,21 +1023,23 @@ function getColumnConfiguration(diagramConfig = null) {
     const columnConfig = {
       id: [columns.id || 'Node'],
       name: [columns.name || 'Name'],
-      subtitle: [columns.subtitle || 'Description'],
+      subtitle: [columns.subtitle || 'Subtitle'],
       img: [columns.img || 'img'],
       parent: [columns.parent || 'Parent'],
       url: [columns.url || 'url'],
-      type: [columns.type || 'Type']
+      type: [columns.type || 'Type'],
+      layout: [columns.layout || 'Layout']
     };
 
     // Add fallback names for each field
     columnConfig.id.push('node', 'Node', 'NODE', 'id', 'Id', 'ID');
     columnConfig.name.push('name', 'Name', 'NAME', 'title', 'Title', 'TITLE', 'section', 'Section', 'SECTION', 'project', 'Project', 'PROJECT', 'product', 'Product', 'PRODUCT');
-    columnConfig.subtitle.push('subtitle', 'Subtitle', 'SUBTITLE', 'description', 'Description', 'DESCRIPTION', 'desc', 'Desc', 'DESC');
+    columnConfig.subtitle.push('subtitle', 'Subtitle', 'SUBTITLE', 'desc', 'Desc', 'DESC', 'role', 'Role', 'ROLE');
     columnConfig.img.push('img', 'Img', 'IMG', 'thumbnail', 'Thumbnail', 'THUMBNAIL', 'icon', 'Icon', 'ICON', 'image', 'Image', 'IMAGE', 'picture', 'Picture', 'PICTURE');
     columnConfig.parent.push('parent', 'Parent', 'PARENT', 'leader', 'Leader', 'LEADER', 'manager', 'Manager', 'MANAGER');
     columnConfig.url.push('url', 'Url', 'URL', 'link', 'Link', 'LINK');
     columnConfig.type.push('type', 'Type', 'TYPE');
+    columnConfig.layout.push('layout', 'Layout', 'LAYOUT');
 
     return columnConfig;
   }
@@ -1048,21 +1050,23 @@ function getColumnConfiguration(diagramConfig = null) {
     const columnConfig = {
       id: [columns.id || 'Node'],
       name: [columns.name || 'Name'],
-      subtitle: [columns.subtitle || 'Description'],
+      subtitle: [columns.subtitle || 'Subtitle'],
       img: [columns.img || 'img'],
       parent: [columns.parent || 'Parent'],
       url: [columns.url || 'url'],
-      type: [columns.type || 'Type']
+      type: [columns.type || 'Type'],
+      layout: [columns.layout || 'Layout']
     };
 
     // Add fallback names for each field
     columnConfig.id.push('node', 'Node', 'NODE', 'id', 'Id', 'ID');
     columnConfig.name.push('name', 'Name', 'NAME', 'title', 'Title', 'TITLE', 'section', 'Section', 'SECTION', 'project', 'Project', 'PROJECT', 'product', 'Product', 'PRODUCT');
-    columnConfig.subtitle.push('subtitle', 'Subtitle', 'SUBTITLE', 'description', 'Description', 'DESCRIPTION', 'desc', 'Desc', 'DESC');
+    columnConfig.subtitle.push('subtitle', 'Subtitle', 'SUBTITLE', 'desc', 'Desc', 'DESC', 'role', 'Role', 'ROLE');
     columnConfig.img.push('img', 'Img', 'IMG', 'thumbnail', 'Thumbnail', 'THUMBNAIL', 'icon', 'Icon', 'ICON', 'image', 'Image', 'IMAGE', 'picture', 'Picture', 'PICTURE');
     columnConfig.parent.push('parent', 'Parent', 'PARENT', 'leader', 'Leader', 'LEADER', 'manager', 'Manager', 'MANAGER');
     columnConfig.url.push('url', 'Url', 'URL', 'link', 'Link', 'LINK');
     columnConfig.type.push('type', 'Type', 'TYPE');
+    columnConfig.layout.push('layout', 'Layout', 'LAYOUT');
 
     return columnConfig;
   }
@@ -1079,11 +1083,12 @@ function getColumnConfigurationLegacy() {
   return {
     id: ['node', 'Node', 'NODE', 'id', 'Id', 'ID'],
     name: ['name', 'Name', 'NAME', 'title', 'Title', 'TITLE'],
-    subtitle: ['subtitle', 'Subtitle', 'SUBTITLE', 'description', 'Description', 'DESCRIPTION', 'desc', 'Desc', 'DESC'],
+    subtitle: ['subtitle', 'Subtitle', 'SUBTITLE', 'desc', 'Desc', 'DESC', 'role', 'Role', 'ROLE'],
     img: ['img', 'Img', 'IMG', 'thumbnail', 'Thumbnail', 'THUMBNAIL', 'icon', 'Icon', 'ICON'],
     parent: ['parent', 'Parent', 'PARENT', 'leader', 'Leader', 'LEADER', 'manager', 'Manager', 'MANAGER'],
     url: ['url', 'Url', 'URL', 'link', 'Link', 'LINK'],
-    type: ['type', 'Type', 'TYPE']
+    type: ['type', 'Type', 'TYPE'],
+    layout: ['layout', 'Layout', 'LAYOUT']
   };
   }
 
@@ -1095,21 +1100,23 @@ function getColumnConfigurationLegacy() {
       const config = {
         id: [customConfig.id || 'Node'],
         name: [customConfig.name || 'Name'],
-        subtitle: [customConfig.subtitle || 'Description'],
+        subtitle: [customConfig.subtitle || 'Subtitle'],
         img: [customConfig.img || 'img'],
         parent: [customConfig.parent || 'Parent'],
         url: [customConfig.url || 'url'],
-        type: [customConfig.type || 'Type']
+        type: [customConfig.type || 'Type'],
+        layout: [customConfig.layout || 'Layout']
       };
 
       // Add fallback names for each field
       config.id.push('node', 'Node', 'NODE', 'id', 'Id', 'ID');
       config.name.push('name', 'Name', 'NAME', 'title', 'Title', 'TITLE', 'section', 'Section', 'SECTION', 'project', 'Project', 'PROJECT', 'product', 'Product', 'PRODUCT');
-      config.subtitle.push('subtitle', 'Subtitle', 'SUBTITLE', 'description', 'Description', 'DESCRIPTION', 'desc', 'Desc', 'DESC');
+      config.subtitle.push('subtitle', 'Subtitle', 'SUBTITLE', 'desc', 'Desc', 'DESC', 'role', 'Role', 'ROLE');
       config.img.push('img', 'Img', 'IMG', 'thumbnail', 'Thumbnail', 'THUMBNAIL', 'icon', 'Icon', 'ICON', 'image', 'Image', 'IMAGE', 'picture', 'Picture', 'PICTURE');
       config.parent.push('parent', 'Parent', 'PARENT', 'leader', 'Leader', 'LEADER', 'manager', 'Manager', 'MANAGER');
       config.url.push('url', 'Url', 'URL', 'link', 'Link', 'LINK');
       config.type.push('type', 'Type', 'TYPE');
+      config.layout.push('layout', 'Layout', 'LAYOUT');
 
       return config;
     } catch (error) {
@@ -1121,21 +1128,23 @@ function getColumnConfigurationLegacy() {
   const config = {
     id: [container.getAttribute('data-column-id') || 'Node'],
     name: [container.getAttribute('data-column-name') || 'Name'],
-    subtitle: [container.getAttribute('data-column-subtitle') || 'Description'],
+    subtitle: [container.getAttribute('data-column-subtitle') || 'Subtitle'],
     img: [container.getAttribute('data-column-img') || 'img'],
     parent: [container.getAttribute('data-column-parent') || 'Parent'],
     url: [container.getAttribute('data-column-url') || 'url'],
-    type: [container.getAttribute('data-column-type') || 'Type']
+    type: [container.getAttribute('data-column-type') || 'Type'],
+    layout: [container.getAttribute('data-column-layout') || 'Layout']
   };
 
   // Add fallback names for each field
   config.id.push('node', 'Node', 'NODE', 'id', 'Id', 'ID');
   config.name.push('name', 'Name', 'NAME', 'title', 'Title', 'TITLE', 'section', 'Section', 'SECTION', 'project', 'Project', 'PROJECT', 'product', 'Product', 'PRODUCT');
-  config.subtitle.push('subtitle', 'Subtitle', 'SUBTITLE', 'description', 'Description', 'DESCRIPTION', 'desc', 'Desc', 'DESC');
+  config.subtitle.push('subtitle', 'Subtitle', 'SUBTITLE', 'desc', 'Desc', 'DESC', 'role', 'Role', 'ROLE');
   config.img.push('img', 'Img', 'IMG', 'thumbnail', 'Thumbnail', 'THUMBNAIL', 'icon', 'Icon', 'ICON', 'image', 'Image', 'IMAGE', 'picture', 'Picture', 'PICTURE');
   config.parent.push('parent', 'Parent', 'PARENT', 'leader', 'Leader', 'LEADER', 'manager', 'Manager', 'MANAGER');
   config.url.push('url', 'Url', 'URL', 'link', 'Link', 'LINK');
   config.type.push('type', 'Type', 'TYPE');
+  config.layout.push('layout', 'Layout', 'LAYOUT');
 
   return config;
 }
@@ -1180,7 +1189,8 @@ function buildHierarchies(data, diagramConfig = null) {
     let img = getColumnValue(d, columnConfig.img, "");
     let parent = getColumnValue(d, columnConfig.parent, "");
     let url = getColumnValue(d, columnConfig.url, "");
-    let type = getColumnValue(d, columnConfig.type, "default"); // Default type if not specified
+    let type = getColumnValue(d, columnConfig.type, "Section"); // Default type is Section
+    let layout = getColumnValue(d, columnConfig.layout, "Detail"); // Default layout is Detail
 
     // Generate auto ID if not provided or empty
     if (!id || id.trim() === "") {
@@ -1200,6 +1210,7 @@ function buildHierarchies(data, diagramConfig = null) {
       img, 
       url, 
       type, 
+      layout,
       children: [], 
       parent: parent,
       originalData: d // Preserve original CSV data
@@ -1429,7 +1440,7 @@ function drawGridLayout(nodes, svg, diagramConfig = null) {
       
       // Open side panel only if enabled
       if (isOptionEnabled('sidePanel') !== false && window.openSidePanel) {
-        window.openSidePanel(d, diagramConfig);
+        window.openSidePanel(d.data, diagramConfig);
       }
     });
 
@@ -2842,61 +2853,46 @@ function drawTrees(trees, diagramConfig = null) {
               }
             }
           } else {
-            // Para imágenes no embebidas, usar elemento image tradicional
-            const imageElement = nodeSel.append("image")
-              .attr("href", getEmbeddedThumbnail('transparent') || "img/transparent.svg") // Usar thumbnail transparent embebido
-              .attr("data-src", imageUrl)
-              .attr("x", parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--image-x')))
-              .attr("y", parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--image-y')))
-              .attr("class", "image-base")
-              .attr("width", parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--image-width')))
-              .attr("height", parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--image-height')))
-              .attr("crossorigin", "anonymous") // Intentar resolver problemas de CORS
-              .on("load", function() {
-                const element = d3.select(this);
-                const dataSrc = element.attr("data-src");
-                const currentHref = element.attr("href");
-                
-                // Verificar si estamos cargando el placeholder transparent y tenemos una imagen real en data-src
-                if (dataSrc && (currentHref === "img/transparent.svg" || currentHref.includes('transparent'))) {
-                  console.log(`[Image Load] Loading real image: ${dataSrc}`);
-                  // Cambiar a la imagen real
-                  element.attr("href", dataSrc)
-                        .classed("loaded", true);
-                  // Solo aplicar el filtro si es necesario
-                  if (shouldApplyFilter(dataSrc)) {
-                    element.classed("image-filter", true);
-                  }
-                }
-              })
-              .on("error", function() {
-                const element = d3.select(this);
-                const currentSrc = element.attr("href");
-                const dataSrc = element.attr("data-src");
-                
-                console.log(`[Image Load] Error detected - currentSrc: ${currentSrc}, dataSrc: ${dataSrc}`);
-                console.log(`[Image Load] Element classes: ${element.attr("class")}`);
-                console.log(`[Image Load] Element display: ${element.style("display")}`);
-                
-                // Si tenemos una URL real en data-src y es diferente de la actual, intentar usarla
-                if (dataSrc && dataSrc !== currentSrc && !dataSrc.includes('data:image/svg+xml')) {
-                  console.log(`[Image Load] Retrying with real URL from data-src: ${dataSrc}`);
-                  element.attr("href", dataSrc);
-                  return; // Intentar cargar la URL real
-                }
-                
-                // Si la imagen actual es el placeholder transparent o una imagen externa que falló, usar thumbnail embebido del type
-                if (currentSrc.includes('transparent') || (dataSrc && dataSrc !== currentSrc)) {
-                  console.log(`[Image Load] Error loading image from Img column, using embedded thumbnail from Type column`);
-                  
-                  // Crear fallback embebido sin hacer peticiones adicionales
-                  createEmbeddedFallback(d, nodeSel, element);
-                } else {
-                  // Si ya es un thumbnail embebido (no transparent) y falla, ocultar la imagen
-                  console.log(`[Image Load] Error loading embedded thumbnail, hiding element`);
-                  element.style("display", "none");
-                }
-              });
+            // Sistema de preload para evitar flash del browser
+            console.log(`[Image Preload] Starting preload for node "${d.data.name}" with imageUrl: ${imageUrl}`);
+            
+            const img = new Image();
+            img.crossOrigin = "anonymous";
+            
+            img.onload = function() {
+              console.log(`[Image Preload] ✅ Preload successful for "${d.data.name}" - ${imageUrl}`);
+              
+              // Solo crear el elemento image cuando la imagen esté completamente cargada
+              const imageElement = nodeSel.append("image")
+                .attr("href", imageUrl)
+                .attr("x", parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--image-x')))
+                .attr("y", parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--image-y')))
+                .attr("class", "image-base loaded")
+                .attr("width", parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--image-width')))
+                .attr("height", parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--image-height')))
+                .attr("crossorigin", "anonymous")
+                .style("opacity", "1"); // Mostrar inmediatamente ya que está preload
+              
+              console.log(`[Image Preload] 🎯 SVG element created and displayed for "${d.data.name}"`);
+              
+              // Solo aplicar el filtro si es necesario
+              if (shouldApplyFilter(imageUrl)) {
+                imageElement.classed("image-filter", true);
+                console.log(`[Image Preload] 🎨 Filter applied to "${d.data.name}"`);
+              }
+            };
+            
+            img.onerror = function() {
+              console.log(`[Image Preload] ❌ Error preloading image for "${d.data.name}": ${imageUrl}`);
+              
+              // Si la imagen falla, usar thumbnail embebido del type como fallback
+              console.log(`[Image Preload] 🔄 Using embedded thumbnail fallback for "${d.data.name}"`);
+              createEmbeddedFallback(d, nodeSel, null);
+            };
+            
+            // Iniciar el preload
+            console.log(`[Image Preload] 🚀 Initiating preload for "${d.data.name}" - src: ${imageUrl}`);
+            img.src = imageUrl;
           }
         });
 
@@ -3826,31 +3822,16 @@ function createSidePanel() {
   console.log('[Side Panel] Created new panel');
 }
 
-// Open side panel
-function openSidePanel(nodeData, diagramConfig = null) {
+// Common function to update side panel content (used by both openSidePanel and updateSidePanelContent)
+function updateSidePanelContentCommon(nodeData, diagramConfig = null) {
+  console.log('[updateSidePanelContentCommon] Updating side panel content for nodeData:', nodeData);
+  
   const sidePanel = document.getElementById('side-panel');
   const content = document.getElementById('side-panel-content');
   const titleElement = document.getElementById('side-panel-title');
   
-  // Stabilize viewport to prevent layout shifts
-  const body = document.body;
-  const html = document.documentElement;
-  
-  // Store original overflow state but don't change it immediately
-  // This prevents conflicts with D3 zoom behavior
-  const originalOverflow = body.style.overflow;
-  
-  // Ensure topbar stays in place
-  const topbar = document.querySelector('.topbar');
-  if (topbar) {
-    topbar.style.position = 'fixed';
-    topbar.style.top = '0';
-    topbar.style.left = '0';
-    topbar.style.width = '100%';
-  }
-
-  if (!sidePanel || !content) {
-    console.error("No se encontró el panel lateral");
+  if (!sidePanel || !content || !titleElement) {
+    console.error('[SidePanel] Side panel elements not found');
     return;
   }
 
@@ -3884,19 +3865,21 @@ function openSidePanel(nodeData, diagramConfig = null) {
     }
   }
 
+  // Update ID tag
+  const idTagElement = document.getElementById('side-panel-id-tag');
+  if (idTagElement) {
+    const nodeIdValue = getNodeIdValue(nodeData);
+    console.log('[updateSidePanelContentCommon] Node ID value:', nodeIdValue);
+    if (nodeIdValue) {
+      idTagElement.textContent = nodeIdValue;
+      idTagElement.style.display = 'block';
+    } else {
+      idTagElement.style.display = 'none';
+    }
+  }
+
   // Update title with node name and thumbnail
   if (titleElement && nodeData) {
-    // Update ID tag
-    const idTagElement = document.getElementById('side-panel-id-tag');
-    if (idTagElement) {
-      const nodeIdValue = getNodeIdValue(nodeData);
-      if (nodeIdValue) {
-        idTagElement.textContent = nodeIdValue;
-        idTagElement.style.display = 'block';
-      } else {
-        idTagElement.style.display = 'none';
-      }
-    }
     // Use original CSV data if available, otherwise fall back to processed data
     const dataToShow = nodeData.originalData || nodeData;
     // Get the name value from the data
@@ -3935,6 +3918,7 @@ function openSidePanel(nodeData, diagramConfig = null) {
       document.body.removeChild(temp);
       return truncated;
     }
+    
     // Medir el ancho disponible en el header
     const header = titleElement.closest('.side-panel-header');
     const closeBtn = header ? header.querySelector('.side-panel-close') : null;
@@ -3962,10 +3946,60 @@ function openSidePanel(nodeData, diagramConfig = null) {
   
   // Re-initialize tooltips after content is generated
   setTimeout(() => {
-      initializeCustomTooltips();
-}, 100);
+    initializeCustomTooltips();
+  }, 100);
+  
+  // Trigger onNodeClick hook
+  triggerHook('onNodeClick', { 
+    node: nodeData, 
+    timestamp: new Date().toISOString() 
+  });
+  
+  console.log('[updateSidePanelContentCommon] Side panel content updated successfully');
+}
 
-sidePanel.classList.add('open');
+// Open side panel
+function openSidePanel(nodeData, diagramConfig = null) {
+  console.log('[openSidePanel] Opening side panel with nodeData:', nodeData);
+  console.log('[openSidePanel] diagramConfig:', diagramConfig);
+  
+  const sidePanel = document.getElementById('side-panel');
+  const content = document.getElementById('side-panel-content');
+  const titleElement = document.getElementById('side-panel-title');
+  
+  console.log('[openSidePanel] Side panel elements found:', {
+    sidePanel: !!sidePanel,
+    content: !!content,
+    titleElement: !!titleElement
+  });
+  
+  // Stabilize viewport to prevent layout shifts
+  const body = document.body;
+  const html = document.documentElement;
+  
+  // Store original overflow state but don't change it immediately
+  // This prevents conflicts with D3 zoom behavior
+  const originalOverflow = body.style.overflow;
+  
+  // Ensure topbar stays in place
+  const topbar = document.querySelector('.topbar');
+  if (topbar) {
+    topbar.style.position = 'fixed';
+    topbar.style.top = '0';
+    topbar.style.left = '0';
+    topbar.style.width = '100%';
+  }
+
+  if (!sidePanel || !content) {
+    console.error("No se encontró el panel lateral");
+    return;
+  }
+
+  // Use the common function to update content
+  updateSidePanelContentCommon(nodeData, diagramConfig);
+  
+  // Open the panel
+  sidePanel.classList.add('open');
   
   // Only restore body overflow if it was explicitly set before
   // This prevents conflicts with D3 zoom behavior
@@ -4088,10 +4122,11 @@ function generateSidePanelContent(nodeData, diagramConfig = null) {
   
   // Show all available fields from the original CSV data
   Object.keys(dataToShow).forEach(key => {
-    // Skip internal properties, name field (already shown in header), id/node fields (already shown in tag), and img field (shown in thumbnail)
-    if (key === 'children' || key === 'parent' || key === 'originalData' || 
+    // Skip internal properties, name field (already shown in header), id/node fields (already shown in tag), img field (shown in thumbnail), and type field (internal configuration)
+    if (key === 'children' || key.toLowerCase() === 'parent' || key === 'originalData' || 
         key.toLowerCase() === 'name' || key.toLowerCase() === 'id' || key.toLowerCase() === 'node' ||
-        key.toLowerCase() === 'img' || key.toLowerCase() === 'image' || key.toLowerCase() === 'thumbnail') return;
+        key.toLowerCase() === 'img' || key.toLowerCase() === 'image' || key.toLowerCase() === 'thumbnail' ||
+        key.toLowerCase() === 'type') return;
     
     const value = dataToShow[key] || '';
     
@@ -7570,7 +7605,7 @@ function preloadCommonImages() {
           console.log('🖼️ [Preload] Common images preload completed with some errors');
         }
       };
-      img.src = `img/${imageName}.svg?t=${Date.now()}`;
+      img.src = `img/${imageName}.svg`;
     }
   });
 }
@@ -7644,16 +7679,18 @@ function resolveNodeImage(node, diagramConfig = null) {
     return null;
   }
   
-  // Obtener valor de la columna img directamente del nodo
+  // Obtener valor de las columnas directamente del nodo
   const imgVal = node.img || (node.data && node.data.img) || "";
   const typeVal = node.type || (node.data && node.data.type) || "";
+  const layoutVal = node.layout || (node.data && node.data.layout) || "";
   const nameVal = node.name || (node.data && node.data.name) || "";
 
-  console.log(`[resolveNodeImage] Processing node: ${nameVal || 'unknown'}`);
-  console.log(`[resolveNodeImage] Thumbnail mode: ${thumbnailMode}`);
-  console.log(`[resolveNodeImage] Img value: "${imgVal}"`);
-  console.log(`[resolveNodeImage] Type value: "${typeVal}"`);
-  console.log(`[resolveNodeImage] Name value: "${nameVal}"`);
+  console.log(`[resolveNodeImage] 🔍 Processing node: ${nameVal || 'unknown'}`);
+  console.log(`[resolveNodeImage] 📋 Thumbnail mode: ${thumbnailMode}`);
+  console.log(`[resolveNodeImage] 🖼️ Img value: "${imgVal}"`);
+  console.log(`[resolveNodeImage] 🏷️ Type value: "${typeVal}"`);
+  console.log(`[resolveNodeImage] 🎨 Layout value: "${layoutVal}"`);
+  console.log(`[resolveNodeImage] 📝 Name value: "${nameVal}"`);
 
   // Función para transformar nombre a formato de archivo de imagen
   function normalizeNameForImage(name) {
@@ -7745,24 +7782,25 @@ function resolveNodeImage(node, diagramConfig = null) {
 
               // Si thumbnailMode es 'default', solo usar thumbnails embebidos por defecto
               if (thumbnailMode === 'default') {
-                const typeName = (typeVal || 'detail').toLowerCase().replace(/\s+/g, '-');
+                // Usar layout para determinar el thumbnail, con fallback a type para compatibilidad
+                const layoutName = (layoutVal || typeVal || 'detail').toLowerCase().replace(/\s+/g, '-');
 
-                // Verificar si el type existe como thumbnail embebido
-                const embeddedThumbnail = getEmbeddedThumbnail(typeName);
+                // Verificar si el layout existe como thumbnail embebido
+                const embeddedThumbnail = getEmbeddedThumbnail(layoutName);
                 if (embeddedThumbnail) {
-                  console.log(`[resolveNodeImage] Default mode - Type "${typeName}" -> thumbnail embebido encontrado`);
+                  console.log(`[resolveNodeImage] Default mode - Layout "${layoutName}" -> thumbnail embebido encontrado`);
                   return embeddedThumbnail;
                 }
 
                 // Si no existe el thumbnail embebido, usar detail como fallback final
                 const detailThumbnail = getEmbeddedThumbnail('detail');
                 if (detailThumbnail) {
-                  console.log(`[resolveNodeImage] Default mode - Type "${typeName}" no encontrado, usando detail embebido`);
+                  console.log(`[resolveNodeImage] Default mode - Layout "${layoutName}" no encontrado, usando detail embebido`);
                   return detailThumbnail;
                 }
 
                 // Último recurso: archivo externo (el sistema de error handling se encargará del fallback)
-                return `img/${typeName}.svg`;
+                return `img/${layoutName}.svg`;
               }
 
   // Si thumbnailMode es 'custom', usar el comportamiento actual (COLUMNA IMG TIENE PRIORIDAD ABSOLUTA)
@@ -7793,39 +7831,69 @@ function resolveNodeImage(node, diagramConfig = null) {
       return `img/${fileName}`;
     }
 
-    // SI img está completamente vacío, buscar imagen automática basada en el nombre
-    const autoImage = findAutoImageByName(nameVal);
-    if (autoImage) {
-      console.log(`[resolveNodeImage] Custom mode - Auto image found for name "${nameVal}": ${autoImage}`);
-      return autoImage;
+    // LÓGICA ESPECIAL PARA TYPE "PERSON"
+    const typeName = (typeVal || 'detail').toLowerCase().replace(/\s+/g, '-');
+    if (typeName === 'person') {
+      console.log(`[resolveNodeImage] Custom mode - Type "person" detected, using special logic`);
+      
+      // Para type "person", SIEMPRE intentar buscar imagen automática basada en el nombre
+      const autoImage = findAutoImageByName(nameVal);
+      if (autoImage) {
+        console.log(`[resolveNodeImage] Person mode - Auto image found for name "${nameVal}": ${autoImage}`);
+        return autoImage;
+      }
+      
+      // Si no se encuentra imagen automática, usar thumbnail "profile" como fallback
+      const profileThumbnail = getEmbeddedThumbnail('profile');
+      if (profileThumbnail) {
+        console.log(`[resolveNodeImage] Person mode - No auto image found, using profile thumbnail as fallback`);
+        return profileThumbnail;
+      }
+      
+      // Último recurso para person
+      console.log(`[resolveNodeImage] Person mode - Profile thumbnail not found, using detail as final fallback`);
+      return getEmbeddedThumbnail('detail') || `img/profile.svg`;
     }
 
-    // SOLO si no se encontró imagen automática, usar type como fallback
-    const typeName = (typeVal || 'detail').toLowerCase().replace(/\s+/g, '-');
+    // LÓGICA NORMAL PARA OTROS TYPES
+    // SI img está completamente vacío, buscar imagen automática basada en el nombre
+    // PERO solo si las imágenes automáticas están habilitadas
+    if (isOptionEnabled('autoImages') !== false) {
+      const autoImage = findAutoImageByName(nameVal);
+      if (autoImage) {
+        console.log(`[resolveNodeImage] Custom mode - Auto image found for name "${nameVal}": ${autoImage}`);
+        return autoImage;
+      }
+    } else {
+      console.log(`[resolveNodeImage] Custom mode - Auto images disabled, skipping auto image search for "${nameVal}"`);
+    }
+
+    // SOLO si no se encontró imagen automática, usar layout como fallback (con type como respaldo)
+    const layoutName = (layoutVal || typeVal || 'detail').toLowerCase().replace(/\s+/g, '-');
     
-    // Verificar si el type existe como thumbnail embebido
-    const embeddedThumbnail = getEmbeddedThumbnail(typeName);
+    // Verificar si el layout existe como thumbnail embebido
+    const embeddedThumbnail = getEmbeddedThumbnail(layoutName);
     if (embeddedThumbnail) {
-      console.log(`[resolveNodeImage] Custom mode - Type "${typeName}" -> thumbnail embebido encontrado`);
+      console.log(`[resolveNodeImage] Custom mode - Layout "${layoutName}" -> thumbnail embebido encontrado`);
       return embeddedThumbnail;
     }
     
     // Si no existe el thumbnail embebido, usar detail como fallback final
     const detailThumbnail = getEmbeddedThumbnail('detail');
     if (detailThumbnail) {
-      console.log(`[resolveNodeImage] Custom mode - Type "${typeName}" no encontrado, usando detail embebido`);
+      console.log(`[resolveNodeImage] Custom mode - Layout "${layoutName}" no encontrado, usando detail embebido`);
       return detailThumbnail;
     }
     
     // Último recurso: archivo externo (el sistema de error handling se encargará del fallback)
-    return `img/${typeName}.svg`;
+    return `img/${layoutName}.svg`;
   }
 
   // Fallback: si thumbnailMode no es reconocido, usar 'default'
   console.log(`[resolveNodeImage] Unknown thumbnail mode "${thumbnailMode}", falling back to 'default'`);
-  const typeName = (typeVal || 'detail').toLowerCase().replace(/\s+/g, '-');
+  const layoutName = (layoutVal || typeVal || 'detail').toLowerCase().replace(/\s+/g, '-');
   const detailThumbnail = getEmbeddedThumbnail('detail');
-  return detailThumbnail || `img/${typeName}.svg`;
+  return detailThumbnail || `img/${layoutName}.svg`;
 }
 
 // Helper: determine if CSS filter should be applied (para archivos SVG)
@@ -8209,6 +8277,8 @@ function getEmbeddedThumbnailSvgString(dataUri) {
  * @returns {SVGElement} Elemento SVG creado
  */
 function createEmbeddedSVGElement(svgString, className = "image-base", attributes = {}) {
+  console.log(`[Embedded SVG] 🔧 Creating embedded SVG element with class: ${className}`);
+  
   // Crear un contenedor temporal para parsear el SVG
   const tempDiv = document.createElement('div');
   tempDiv.innerHTML = svgString.trim();
@@ -8216,7 +8286,7 @@ function createEmbeddedSVGElement(svgString, className = "image-base", attribute
   // Obtener el elemento SVG
   const svgElement = tempDiv.querySelector('svg');
   if (!svgElement) {
-    console.error('[Embedded SVG] Error al parsear SVG string');
+    console.error('[Embedded SVG] ❌ Error al parsear SVG string');
     return null;
   }
   
@@ -8286,12 +8356,12 @@ function getAppropriateEmbeddedThumbnail(node) {
  * @returns {boolean} True si se pudo crear el fallback
  */
 function createEmbeddedFallback(node, nodeSel, element) {
-  console.log(`[Embedded Fallback] Creating fallback for failed Img column image`);
-  console.log(`[Embedded Fallback] Node type: ${node.type || (node.data && node.data.type) || 'detail'}`);
+  console.log(`[Embedded Fallback] 🔄 Creating fallback for node: ${node.name || (node.data && node.data.name) || 'unknown'}`);
+  console.log(`[Embedded Fallback] 🏷️ Node type: ${node.type || (node.data && node.data.type) || 'detail'}`);
   
   // Obtener el thumbnail embebido correspondiente al type del nodo
   const fallbackThumbnail = getAppropriateEmbeddedThumbnail(node);
-  console.log(`[Embedded Fallback] Fallback thumbnail found: ${fallbackThumbnail ? 'YES' : 'NO'}`);
+  console.log(`[Embedded Fallback] 🖼️ Fallback thumbnail found: ${fallbackThumbnail ? 'YES' : 'NO'}`);
   
   if (fallbackThumbnail) {
     // Crear elemento SVG embebido
@@ -8397,13 +8467,16 @@ function shouldApplyFilter(url) {
  * @returns {Object} Selección D3 con el elemento creado
  */
 function appendAppropriateImageElement(d3Selection, imageUrl, attributes = {}, className = "image-base", node = null) {
+  console.log(`[Append Image] 🎯 Starting append for imageUrl: ${imageUrl}`);
+  
   // Si es un thumbnail embebido, crear elemento SVG directo
   if (isEmbeddedThumbnailUrl(imageUrl)) {
-    console.log(`[Append Image] Creando SVG embebido para: ${imageUrl.substring(0, 50)}...`);
+    console.log(`[Append Image] 🔧 Creating embedded SVG for: ${imageUrl.substring(0, 50)}...`);
     const svgString = getEmbeddedThumbnailSvgString(imageUrl);
     if (svgString) {
       const svgElement = createEmbeddedSVGElement(svgString, className, attributes);
       if (svgElement) {
+        console.log(`[Append Image] ✅ Embedded SVG created successfully`);
         return d3Selection.each(function() {
           this.appendChild(svgElement);
         });
@@ -8412,7 +8485,7 @@ function appendAppropriateImageElement(d3Selection, imageUrl, attributes = {}, c
   }
   
   // Para imágenes no embebidas, usar elemento image tradicional
-  console.log(`[Append Image] Usando elemento image tradicional para: ${imageUrl}`);
+  console.log(`[Append Image] 🖼️ Using traditional image element for: ${imageUrl}`);
   return d3Selection.append("image")
     .attr("href", imageUrl)
     .attr("x", attributes.x || 0)
@@ -8429,8 +8502,13 @@ function appendAppropriateImageElement(d3Selection, imageUrl, attributes = {}, c
  * @returns {string} HTML del thumbnail
  */
 function createSidePanelThumbnailHtml(nodeData, diagramConfig = null) {
+  console.log('[createSidePanelThumbnailHtml] Creating thumbnail for nodeData:', nodeData);
+  console.log('[createSidePanelThumbnailHtml] diagramConfig:', diagramConfig);
+  
   // Usar la misma lógica que resolveNodeImage para determinar qué imagen mostrar
   const imageUrl = resolveNodeImage(nodeData, diagramConfig);
+  
+  console.log('[createSidePanelThumbnailHtml] Resolved imageUrl:', imageUrl);
   
   if (!imageUrl) {
     // Si no hay imagen (thumbnailMode 'none'), mostrar un div vacío
@@ -9056,20 +9134,37 @@ function zoomToCluster(clusterInfo) {
   
   // Handle side panel based on current state
   const parentNode = getClusterParentNode(clusterInfo);
+  console.log('[ClusterClickMode] Parent node for cluster:', clusterInfo.id, ':', parentNode);
+  
   if (parentNode && isOptionEnabled('sidePanel') !== false) {
     // Check if side panel is currently visible
     const sidePanel = document.querySelector('.side-panel');
     const isSidePanelVisible = sidePanel && !sidePanel.classList.contains('hidden');
     
+    console.log('[ClusterClickMode] Side panel visible:', isSidePanelVisible);
+    console.log('[ClusterClickMode] Current diagram config:', window.$xDiagrams.currentDiagramConfig);
+    
     if (isSidePanelVisible) {
       // If side panel is already open, update content immediately
       console.log('[ClusterClickMode] Side panel is open - updating content immediately for node:', parentNode.name);
-      updateSidePanelContent(parentNode);
+      updateSidePanelContent(parentNode, window.$xDiagrams.currentDiagramConfig);
     } else {
       // If side panel is closed, store node to show after zoom
       console.log('[ClusterClickMode] Side panel is closed - storing node to show after zoom:', parentNode.name);
       window.$xDiagrams.clusterClickMode.pendingSidePanelNode = parentNode;
+      
+      // Select the parent node visually even when side panel is closed
+      console.log('[ClusterClickMode] Selecting parent node visually for cluster:', clusterInfo.id);
+      console.log('[ClusterClickMode] Parent node data structure:', {
+        id: parentNode.id,
+        name: parentNode.name,
+        img: parentNode.img,
+        originalData: parentNode.originalData
+      });
+      updateSidePanelContentCommon(parentNode, window.$xDiagrams.currentDiagramConfig);
     }
+  } else {
+    console.warn('[ClusterClickMode] No parent node found or side panel disabled for cluster:', clusterInfo.id);
   }
   
   // Disable hover and tooltips during zoom animation
@@ -10613,18 +10708,24 @@ function getCounterWordConfiguration(diagramConfig = null) {
 
 // Function to get ID/Node value for tag display
 function getNodeIdValue(nodeData) {
+  console.log('[getNodeIdValue] Getting ID value for nodeData:', nodeData);
+  
   if (!nodeData) return '';
   
   const dataToShow = nodeData.originalData || nodeData;
+  console.log('[getNodeIdValue] dataToShow:', dataToShow);
   
   // Try to get ID value first (priority order)
   const idValue = nodeData.id || dataToShow.id || dataToShow.ID || dataToShow.Id || '';
+  console.log('[getNodeIdValue] idValue:', idValue);
   if (idValue) return idValue;
   
   // If no ID, try to get Node value
   const nodeValue = dataToShow.node || dataToShow.Node || dataToShow.NODE || '';
+  console.log('[getNodeIdValue] nodeValue:', nodeValue);
   if (nodeValue) return nodeValue;
   
+  console.log('[getNodeIdValue] No ID found, returning empty string');
   return '';
 }
 
@@ -10644,12 +10745,15 @@ function getShowAllColumnsConfiguration(diagramConfig = null) {
     return globalOptions.showAllColumns;
   }
   
-  // Default fallback: hide empty columns
-  return false;
+  // Default fallback: show empty columns
+  return true;
 }
 
 // Function to get the parent node of a cluster
 function getClusterParentNode(clusterInfo) {
+  console.log('[ClusterParent] Getting parent node for cluster:', clusterInfo.id);
+  console.log('[ClusterParent] Current data length:', window.$xDiagrams.currentData ? window.$xDiagrams.currentData.length : 'undefined');
+  
   if (!clusterInfo || !clusterInfo.id) {
     console.warn('[ClusterParent] No cluster info provided');
     return null;
@@ -10658,23 +10762,44 @@ function getClusterParentNode(clusterInfo) {
   // First try to find the node in currentData that matches the cluster ID
   let parentNode = window.$xDiagrams.currentData.find(node => node.id === clusterInfo.id);
   
+  console.log('[ClusterParent] Found node by ID:', parentNode);
+  
   if (!parentNode) {
     console.warn('[ClusterParent] Parent node not found for cluster:', clusterInfo.id);
+    console.log('[ClusterParent] Available node IDs:', window.$xDiagrams.currentData ? window.$xDiagrams.currentData.map(n => n.id).slice(0, 5) : 'no data');
     return null;
   }
   
   // If the node has originalData, use that for better data completeness
   if (parentNode.originalData) {
     console.log('[ClusterParent] Found parent node with originalData for cluster:', clusterInfo.id, parentNode.originalData);
-    return parentNode.originalData;
+    
+    // Create a merged object that preserves the processed node structure but uses originalData values
+    const mergedNode = {
+      ...parentNode,
+      ...parentNode.originalData,
+      // Ensure critical fields are preserved from the processed node
+      id: parentNode.id || parentNode.originalData.id,
+      name: parentNode.name || parentNode.originalData.name,
+      img: parentNode.img || parentNode.originalData.img,
+      type: parentNode.type || parentNode.originalData.type,
+      // Keep originalData for reference
+      originalData: parentNode.originalData
+    };
+    
+    console.log('[ClusterParent] Merged node data:', mergedNode);
+    return mergedNode;
   }
   
   console.log('[ClusterParent] Found parent node for cluster:', clusterInfo.id, parentNode);
   return parentNode;
 }
 
-// Function to update side panel content without closing/opening animation
+// Unified function to update side panel content
 function updateSidePanelContent(nodeData, diagramConfig = null) {
+  console.log('[updateSidePanelContent] Updating side panel content for nodeData:', nodeData);
+  console.log('[updateSidePanelContent] diagramConfig:', diagramConfig);
+  
   const sidePanel = document.getElementById('side-panel');
   const content = document.getElementById('side-panel-content');
   const titleElement = document.getElementById('side-panel-title');
@@ -10689,126 +10814,15 @@ function updateSidePanelContent(nodeData, diagramConfig = null) {
   
   if (!isPanelOpen) {
     // If panel is not open, use the regular openSidePanel function
+    console.log('[updateSidePanelContent] Panel is closed, calling openSidePanel');
     openSidePanel(nodeData, diagramConfig);
     return;
   }
   
-  // Remove previous selection
-  d3.selectAll('.node.node-selected').classed('node-selected', false);
+  console.log('[updateSidePanelContent] Panel is open, updating content directly');
   
-  if (nodeData && nodeData.id) {
-    // Buscar el nodo por ID, pero también considerar nodos huérfanos
-    const selectedNode = d3.selectAll('.node').filter(d => {
-      // Si el nodo tiene ID, comparar por ID
-      if (d.data.id && nodeData.id) {
-        return d.data.id == nodeData.id;
-      }
-      // Si no hay ID, comparar por nombre y otros campos
-      return d.data.name === nodeData.name && 
-             d.data.subtitle === nodeData.subtitle &&
-             d.data.type === nodeData.type;
-    });
-    
-    if (!selectedNode.empty()) {
-      selectedNode.classed('node-selected', true);
-    } else {
-      // Fallback: buscar por cualquier campo que coincida
-      const fallbackNode = d3.selectAll('.node').filter(d => 
-        d.data.name === nodeData.name || 
-        d.data.id === nodeData.id ||
-        (d.data.originalData && nodeData.originalData && 
-         JSON.stringify(d.data.originalData) === JSON.stringify(nodeData.originalData))
-      );
-      fallbackNode.classed('node-selected', true);
-    }
-  }
-
-  // Update ID tag
-  const idTagElement = document.getElementById('side-panel-id-tag');
-  if (idTagElement) {
-    const nodeIdValue = getNodeIdValue(nodeData);
-    if (nodeIdValue) {
-      idTagElement.textContent = nodeIdValue;
-      idTagElement.style.display = 'block';
-    } else {
-      idTagElement.style.display = 'none';
-    }
-  }
-
-  // Update title with node name and thumbnail
-  // Use original CSV data if available, otherwise fall back to processed data
-  const dataToShow = nodeData.originalData || nodeData;
-  // Get the name value from the data
-  const nodeName = dataToShow.name || dataToShow.Name || dataToShow.NAME || nodeData.name || 'Nodo sin nombre';
-  // Create thumbnail HTML using the same logic as the node image
-  const thumbnailHtml = createSidePanelThumbnailHtml(nodeData, diagramConfig);
-
-  // Truncar el texto del título por ancho disponible antes del botón de cerrar
-  function truncateSidePanelTitle(text, maxWidth, fontSize, fontWeight, fontFamily) {
-    // Crear un elemento temporal para medir el ancho
-    const temp = document.createElement('span');
-    temp.style.position = 'absolute';
-    temp.style.visibility = 'hidden';
-    temp.style.fontSize = fontSize || '1.2em';
-    temp.style.fontWeight = fontWeight || 'bold';
-    temp.style.fontFamily = fontFamily || 'inherit';
-    temp.style.whiteSpace = 'nowrap';
-    temp.textContent = text;
-    document.body.appendChild(temp);
-    if (temp.offsetWidth <= maxWidth) {
-      document.body.removeChild(temp);
-      return text;
-    }
-    const words = text.split(' ');
-    let truncated = '';
-    for (let i = 0; i < words.length; i++) {
-      let test = truncated ? truncated + ' ' + words[i] : words[i];
-      temp.textContent = test + '...';
-      if (temp.offsetWidth > maxWidth) {
-        temp.textContent = truncated + '...';
-        document.body.removeChild(temp);
-        return truncated + '...';
-      }
-      truncated = test;
-    }
-    document.body.removeChild(temp);
-    return truncated;
-  }
-  
-  // Medir el ancho disponible en el header
-  const header = titleElement.closest('.side-panel-header');
-  const closeBtn = header ? header.querySelector('.side-panel-close') : null;
-  const headerRect = header ? header.getBoundingClientRect() : { width: 320 };
-  const closeRect = closeBtn ? closeBtn.getBoundingClientRect() : { width: 40 };
-  // Margen entre texto y botón
-  const margin = 24;
-  const availableWidth = headerRect.width - closeRect.width - margin - 48; // 48px para thumbnail y paddings
-  // Obtener estilos
-  const fontSize = getComputedStyle(titleElement).fontSize || '1.2em';
-  const fontWeight = getComputedStyle(titleElement).fontWeight || 'bold';
-  const fontFamily = getComputedStyle(titleElement).fontFamily || 'inherit';
-  // Truncar el texto si es necesario
-  const truncatedTitle = truncateSidePanelTitle(nodeName, availableWidth, fontSize, fontWeight, fontFamily);
-  
-  // Agregar tooltip si el texto está truncado
-  const titleTooltip = truncatedTitle !== nodeName ? `title="${nodeName}"` : '';
-  
-  // Update title with thumbnail and name
-  titleElement.innerHTML = `${thumbnailHtml}<span class="side-panel-title-text" ${titleTooltip}>${truncatedTitle}</span>`;
-
-  // Generate and update content
-  content.innerHTML = generateSidePanelContent(nodeData, diagramConfig);
-  
-  // Re-initialize tooltips after content is generated
-  setTimeout(() => {
-    initializeCustomTooltips();
-  }, 100);
-  
-  // Trigger onNodeClick hook
-  triggerHook('onNodeClick', { 
-    node: nodeData, 
-    timestamp: new Date().toISOString() 
-  });
+  // Use the common function to update content
+  updateSidePanelContentCommon(nodeData, diagramConfig);
   
   console.log('[SidePanel] Content updated for node:', nodeData.name || nodeData.id);
 }
@@ -10819,10 +10833,10 @@ function updateNodeCounter(diagramConfig = null) {
   const counterWordElement = document.getElementById('counter-word');
   
   if (nodeCountElement && window.$xDiagrams.currentData) {
-    // Filter out Group and Link type nodes from the count
+    // Only count nodes with type 'Section' (sections are the main countable elements)
     const filteredNodes = window.$xDiagrams.currentData.filter(node => {
       const nodeType = node.type || '';
-      return nodeType !== 'Group' && nodeType !== 'Link';
+      return nodeType === 'Section';
     });
     
     const nodeCount = filteredNodes.length;

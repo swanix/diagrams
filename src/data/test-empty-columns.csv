@@ -1,5 +1,0 @@
-Name,Role,Department,Email,Phone,Manager
-John Doe,CEO,Executive,john.doe@company.com,555-0101,
-Jane Smith,CTO,Technology,jane.smith@company.com,,John Doe
-Bob Johnson,Manager,Sales,,555-0202,Jane Smith
-Alice Brown,Developer,Technology,alice.brown@company.com,555-0303,Bob Johnson 

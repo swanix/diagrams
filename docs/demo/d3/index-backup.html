@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Swanix Diagrams</title>
+  <link href="xdiagrams.css" rel="stylesheet">
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <script src="https://unpkg.com/papaparse@5.3.0/papaparse.min.js"></script>
+  <script src="js/themeManager.js"></script>
+</head>
+<body>
+<div class="xcanvas"></div>
+
+<script>
+  window.$xDiagrams = {
+    title: "Diagrams",
+    
+    diagrams: [
+      {
+        name: "Multiclusters",
+        url: "data/companies-board.csv",
+        // maxRecords: 350,
+        layout: {
+          clustersPerRow: "4 5 7 5",
+          marginX: 40,
+          marginY: 320,
+          spacingX: 80,
+          spacingY: 80,
+          lastRowThreshold: 0
+        },
+        options: {
+          thumbnailMode: "custom"
+        },
+        counterWord: "personas"
+      },
+      {
+        name: "Google Sheets", 
+        url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vT1F3LXPwnGlnF_uOlhoR-5kK1DrWLwlCAKH8Ag6hPrNLzwqWYWU8ofE19xSv4cH1-Cq7ZYm7lPys7V/pub?output=csv",
+        edit: "https://docs.google.com/spreadsheets/d/12XSWGm6CAkv7SVSeBU0dtS3dhqc1dLasoxWqsW2AX40/edit?gid=0#gid=0"
+      },
+      {
+        name: "Thumbnails None", 
+        url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vT1F3LXPwnGlnF_uOlhoR-5kK1DrWLwlCAKH8Ag6hPrNLzwqWYWU8ofE19xSv4cH1-Cq7ZYm7lPys7V/pub?output=csv",
+        layout: {
+          clustersPerRow: "3 4 5 3 2",
+          spacingX: 90,
+          spacingY: 90
+        },
+        options: {
+          thumbnailMode: "none"
+        }
+      }, 
+      {
+        name: "One Cluster",
+        url: "data/one-cluster.csv"
+      },
+      {
+        name: "Clusters Simple",
+        url: "data/multi-clusters.csv",
+        grid: 3
+      },
+      {
+        name: "Clusters Custom Sizes",
+        url: "data/multi-clusters-20.csv",
+        layout: {
+          clustersPerRow: 5,
+          marginX: 30,
+          marginY: 30,
+          spacingX: 100,
+          spacingY: 100,
+          fullRowThreshold: 70
+        }
+      },
+      {
+        name: "Clusters Multi-Value Layout",
+        url: "data/multi-clusters-20.csv",
+        layout: {
+          clustersPerRow: "5 4 3 7 8",
+          marginX: 30,
+          marginY: 30,
+          spacingX: 100,
+          spacingY: 100,
+          fullRowThreshold: 70
+        }
+      },
+      {
+        name: "Test Full Row Clusters",
+        url: "data/test-full-row-clusters.csv",
+        layout: {
+          clustersPerRow: 3,
+          marginX: 30,
+          marginY: 30,
+          spacingX: 60,
+          spacingY: 60,
+          fullRowThreshold: 70
+        }
+      },
+      {
+        name: "Complex Clusters Demo",
+        url: "data/complex-clusters.csv",
+        layout: {
+          clustersPerRow: 3,
+          marginX: 30,
+          marginY: 30,
+          spacingX: 60,
+          spacingY: 60,
+          fullRowThreshold: 70
+        }
+      },
+      {
+        name: "Flat Diagram",
+        url: "data/flat-list-example.json",
+        grid: 5
+      },
+            {
+        name: "Hanzi Characters",
+        url: "data/characters.json",
+        grid: 19,
+        cols: {
+          name: "hanzi",
+          subtitle: "meaning",
+          img: "thumbnail"
+        },
+        counterWord: "caracteres"
+      },
+      {
+        name: "Tree - 300 Nodes",
+        url: "data/performance-test-300-nodes.json",
+        grid: 15,
+        cols: {
+          name: "name",
+          parent: "parent",
+          type: "type",
+          subtitle: "description"
+        },
+        counterWord: "elementos"
+      },
+      {
+        name: "Flat - 1000 Nodes",
+        url: "data/flat-1000-nodes.json",
+        grid: 30,
+        cols: {
+          name: "name",
+          type: "type",
+          subtitle: "description",
+          department: "department",
+          email: "email",
+          phone: "phone",
+          location: "location",
+          status: "status",
+          joinDate: "joinDate"
+        },
+        counterWord: "registros"
+      },
+      {
+        name: "Test Cluster Criteria",
+        url: "data/test-cluster-criteria.csv",
+        layout: {
+          clustersPerRow: 2,
+          marginX: 30,
+          marginY: 30,
+          spacingX: 60,
+          spacingY: 60
+        }
+      },
+      {
+        name: "Test No-Type Cluster",
+        url: "data/test-no-type-cluster.csv",
+        layout: {
+          clustersPerRow: 2,
+          marginX: 30,
+          marginY: 30,
+          spacingX: 60,
+          spacingY: 60
+        }
+      },
+      {
+        name: "Thumbnail Modes Demo",
+        url: "data/test-thumbnail-modes.csv",
+        layout: {
+          clustersPerRow: 3,
+          marginX: 30,
+          marginY: 30,
+          spacingX: 60,
+          spacingY: 60
+        }
+      },
+      {
+        name: "Última Fila Altura Modificada",
+        url: "data/multi-clusters-20.csv",
+        layout: {
+          clustersPerRow: 3,
+          marginX: 30,
+          marginY: 30,
+          spacingX: 60,
+          spacingY: 60,
+          shortLastRow: true
+        }
+      },
+      {
+        name: "Performance Test - Limited Records",
+        url: "data/flat-1000-nodes.json",
+        grid: 30,
+        maxRecords: 100, // Solo renderizar las primeras 100 filas
+        cols: {
+          name: "name",
+          type: "type",
+          subtitle: "description",
+          department: "department",
+          email: "email",
+          phone: "phone",
+          location: "location",
+          status: "status",
+          joinDate: "joinDate"
+        }
+      },
+      {
+        name: "Clusters with Record Limit",
+        url: "data/multi-clusters-20.csv",
+        maxRecords: 50, // Solo procesar las primeras 50 filas
+        layout: {
+          clustersPerRow: 3,
+          marginX: 30,
+          marginY: 30,
+          spacingX: 60,
+          spacingY: 60
+        }
+      },
+      {
+        name: "Última Fila Altura Normal (Explícito)",
+        url: "data/multi-clusters-20.csv",
+        layout: {
+          clustersPerRow: 3,
+          marginX: 30,
+          marginY: 30,
+          spacingX: 60,
+          spacingY: 60,
+          shortLastRow: false
+        }
+      }
+    ],
+    themes: {
+              light: "light",
+              dark: "dark",
+              default: "light"
+    },
+    options: {
+      autoZoom: true,
+      keyboardNavigation: true,
+      sidePanel: true,
+      tooltips: true,
+      responsive: true,
+      dragAndDrop: true,
+      counterWord: "nodos" // Palabra por defecto para el contador
+    },
+    hooks: {
+      onLoad: function(diagram) {
+        console.log('XDiagrams - Diagram loaded:', diagram.name);
+      },
+      onThemeChange: function(theme) {
+        console.log('XDiagrams - Theme changed to:', theme);
+      },
+      onNodeClick: function(node) {
+        console.log('XDiagrams - Node clicked:', node.name);
+      },
+      onFileDrop: function(file) {
+        console.log('XDiagrams - File dropped:', file.name);
+      },
+      onClusterZoom: function(clusterData) {
+        console.log('XDiagrams - Cluster zoomed to:', clusterData.clusterName);
+      }
+    }
+  };
+</script>
+<script src="xdiagrams.js"></script>
+
+
+</body>
+</html> 

@@ -1,4 +1,4 @@
-# Resumen de Cambios: Referencia Padre por Nombre, Alias de Columnas y Type Opcional
+# Resumen de Cambios: Referencia Padre por Nombre, Alias de Columnas, Type Opcional y Fallback de Imágenes por Defecto
 
 ## Cambios Realizados
 
@@ -98,6 +98,55 @@ if (node.parent && node.parent.trim() !== "") {
 
 #### `src/data/test-mixed-types.csv`
 - Organigrama que mezcla nodos con y sin Type
+
+### 5. Sistema de Fallback de Imágenes por Defecto en Sidebar
+
+**Archivo**: `src/xdiagrams.js`
+
+**Cambios principales**:
+- Creado sistema global de auto imágenes con cache compartido
+- Modificada función `generateSidePanelContent` para usar fallback a `default.png`
+- Implementado manejo asíncrono para precarga de imágenes
+- Cambiado `onerror` handler para usar imagen por defecto en lugar de ocultar
+
+**Funciones agregadas**:
+- `globalAutoImageCache`: Cache global para imágenes automáticas
+- `normalizeNameForImage()`: Normalización global de nombres
+- `preloadGlobalAutoImages()`: Precarga global de imágenes
+- `findGlobalAutoImageByName()`: Búsqueda global de imágenes
+
+**Beneficios**:
+- Mejor UX: Siempre se muestra una imagen en lugar de espacios vacíos
+- Consistencia visual en el sidebar
+- Fallback automático a `default.png` cuando no se encuentra imagen específica
+
+### 6. Soporte para Múltiples Nombres por Columna
+
+**Archivo**: `src/xdiagrams.js`
+
+**Cambios principales**:
+- Modificada función `generateSidePanelContent` para dividir nombres por comas
+- Implementado procesamiento individual de cada nombre
+- Cada nombre hereda el rol de la columna donde aparece
+- Mantiene compatibilidad con imágenes automáticas y fallback
+
+**Funcionalidad**:
+- Divide automáticamente nombres separados por comas
+- Crea un miembro del equipo individual por cada nombre
+- Asigna el rol de la columna a cada persona
+- Busca imagen automática para cada nombre individual
+
+**Ejemplo**:
+```csv
+Developer,Designer,Writer
+Alice Thompson, Bob Martinez,Emily Johnson
+```
+
+Resultado: 3 miembros del equipo con roles Developer, Designer y Writer respectivamente.
+
+**Archivos agregados**:
+- `src/data/test-multiple-names.csv`: Archivo de prueba
+- `readme/MULTIPLE-NAMES-FEATURE.md`: Documentación
 - Demuestra la flexibilidad del Type opcional
 
 #### `src/data/test-no-type-column.csv`

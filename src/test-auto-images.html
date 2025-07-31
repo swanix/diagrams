@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Test Auto Images</title>
+  <link href="xdiagrams.css" rel="stylesheet">
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <script src="https://unpkg.com/papaparse@5.3.0/papaparse.min.js"></script>
+  <script src="js/themeManager.js"></script>
+</head>
+<body>
+<div class="xcanvas"></div>
+
+<script>
+  window.$xDiagrams = {
+    title: "Test Auto Images",
+    
+    diagrams: [
+      {
+        name: "Test Auto Images Debug",
+        url: "data/test-auto-images-debug.csv",
+        options: {
+          thumbnailMode: "custom",
+          autoImages: true
+        }
+      }
+    ]
+  };
+</script>
+<script src="xdiagrams.js"></script>
+</body>
+</html> 

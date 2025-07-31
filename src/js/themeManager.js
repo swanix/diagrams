@@ -40,11 +40,16 @@ async function setTheme(themeId, forceReload = false, disableTransitions = true)
     const themeVariables = await getThemeVariables(themeId, forceReload);
     const targetElement = document.querySelector('.xcanvas') || document.documentElement;
     
-    Object.keys(themeVariables).forEach(varName => {
-      targetElement.style.setProperty(varName, themeVariables[varName]);
-      document.body.style.setProperty(varName, themeVariables[varName]);
-      document.documentElement.style.setProperty(varName, themeVariables[varName]);
-    });
+    // Verificar que themeVariables sea válido antes de usar Object.keys
+    if (themeVariables && typeof themeVariables === 'object') {
+      Object.keys(themeVariables).forEach(varName => {
+        targetElement.style.setProperty(varName, themeVariables[varName]);
+        document.body.style.setProperty(varName, themeVariables[varName]);
+        document.documentElement.style.setProperty(varName, themeVariables[varName]);
+      });
+    } else {
+      console.warn('[Theme System] themeVariables es null, undefined o no es un objeto:', themeVariables);
+    }
     
     // Update SVG colors
     updateSVGColors();
@@ -106,6 +111,8 @@ function restoreTransitions(originalTransitions) {
 
 // Get theme variables from external JSON file
 async function getThemeVariables(themeId, forceReload = false) {
+  console.log('[Theme System] getThemeVariables called with themeId:', themeId, 'forceReload:', forceReload, 'themesCache exists:', !!themesCache);
+  
   // Check if we need to reload themes (force reload or no cache)
   if (forceReload || !themesCache) {
     try {
@@ -130,6 +137,7 @@ async function getThemeVariables(themeId, forceReload = false) {
         themesCache = await response.json();
         lastThemeFileTimestamp = lastModified;
         console.log('[Theme System] Temas cargados desde archivo:', forceReload ? 'recarga forzada' : 'carga inicial');
+        console.log('[Theme System] themesCache keys:', Object.keys(themesCache || {}));
       }
     } catch (error) {
       console.warn('Error loading themes from JSON, using fallback:', error);
@@ -172,8 +180,46 @@ async function getThemeVariables(themeId, forceReload = false) {
     }
   }
   
-          let themeVariables = themesCache[themeId] || themesCache.light;
-  
+            // Verificar que themesCache existe y tiene el tema solicitado
+  if (!themesCache) {
+    console.warn('[Theme System] themesCache es undefined, usando fallback');
+    const fallbackThemes = {
+      light: {
+        '--canvas-bg': '#f6f7f9',
+        '--text-color': '#222',
+        '--node-fill': '#fff',
+        '--control-bg': '#ffffff',
+        '--control-text': '#333333',
+        '--control-focus': '#1976d2'
+      },
+      dark: {
+        '--canvas-bg': '#181c24',
+        '--text-color': '#f6f7f9',
+        '--node-fill': '#23272f',
+        '--control-bg': '#23272f',
+        '--control-text': '#f6f7f9',
+        '--control-focus': '#00eaff'
+      }
+    };
+    let themeVariables = fallbackThemes[themeId] || fallbackThemes.light;
+    return themeVariables;
+  }
+
+  let themeVariables = themesCache[themeId] || themesCache.light;
+
+  // Verificar que themeVariables sea válido
+  if (!themeVariables) {
+    console.warn('[Theme System] themeVariables es undefined para themeId:', themeId, 'usando light como fallback');
+    themeVariables = themesCache.light || {
+      '--canvas-bg': '#f6f7f9',
+      '--text-color': '#222',
+      '--node-fill': '#fff',
+      '--control-bg': '#ffffff',
+      '--control-text': '#333333',
+      '--control-focus': '#1976d2'
+    };
+  }
+
   // PRIORIDAD ABSOLUTA: Aplicar configuración personalizada de color base
   // Esta configuración SOBRESCRIBE cualquier valor definido en el tema
   if (window.$xDiagrams && window.$xDiagrams.colorBase) {
@@ -997,12 +1043,21 @@ if (!window.$xDiagrams.themeState) {
 window.$xDiagrams.isInitialized = true;
 
 // Auto-initialize loading system when DOM is ready
+// Solo inicializar si el archivo se carga explícitamente
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', () => {
-    LoadingState.init();
+    try {
+      LoadingState.init();
+    } catch (error) {
+      console.warn('[Theme Manager] Error inicializando ThemeManager, continuando sin temas:', error);
+    }
   });
 } else {
-  LoadingState.init();
+  try {
+    LoadingState.init();
+  } catch (error) {
+    console.warn('[Theme Manager] Error inicializando ThemeManager, continuando sin temas:', error);
+  }
 }
 
 console.log('[Theme Manager] Módulo cargado exitosamente'); 

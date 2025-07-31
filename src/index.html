@@ -7,7 +7,7 @@
   <link href="xdiagrams.css" rel="stylesheet">
   <script src="https://d3js.org/d3.v7.min.js"></script>
   <script src="https://unpkg.com/papaparse@5.3.0/papaparse.min.js"></script>
-  <script src="js/themeManager.js"></script>
+  <!-- <script src="js/themeManager.js"></script> -->
 </head>
 <body>
 <div class="xcanvas"></div>
@@ -33,140 +33,8 @@
         }
       },
       {
-        name: "Test Auto Images",
-        url: "data/test-auto-images.csv",
-        options: {
-          thumbnailMode: "custom"
-        }
-      },
-      {
-        name: "Test Auto Images (Special Characters)",
-        url: "data/test-auto-images-special.csv",
-        options: {
-          thumbnailMode: "custom"
-        }
-      },
-      {
-        name: "Test Auto Images (Mixed)",
-        url: "data/test-auto-images-mixed.csv",
-        options: {
-          thumbnailMode: "custom"
-        }
-      },
-      {
-        name: "Test Multiple Extensions",
-        url: "data/test-multiple-extensions.csv",
-        options: {
-          thumbnailMode: "custom"
-        }
-      },
-      {
-        name: "Test Side Panel Auto Images",
-        url: "data/test-side-panel-auto-images.csv",
-        options: {
-          thumbnailMode: "custom"
-        }
-      },
-                    {
-                name: "Test Side Panel Custom Images",
-                url: "data/test-side-panel-custom-images.csv",
-                options: {
-                  thumbnailMode: "custom"
-                }
-              },
-              {
-                name: "Test Person Type",
-                url: "data/test-person-type.csv",
-                options: {
-                  thumbnailMode: "custom"
-                }
-              },
-              {
-                name: "Test Role Column",
-                url: "data/test-role-column.csv",
-                options: {
-                  thumbnailMode: "custom"
-                }
-              },
-              {
-                name: "Test Empty Columns (Default)",
-                url: "data/test-empty-columns.csv",
-                options: {
-                  thumbnailMode: "custom"
-                }
-              },
-              {
-                name: "Test Empty Columns (Hidden)",
-                url: "data/test-empty-columns.csv",
-                options: {
-                  thumbnailMode: "custom",
-                  showAllColumns: false
-                }
-              },
-              {
-                name: "Test Description Column",
-                url: "data/test-description-column.csv",
-                options: {
-                  thumbnailMode: "custom"
-                }
-              },
-              {
-                name: "Test Description vs Subtitle",
-                url: "data/test-description-vs-subtitle.csv",
-                options: {
-                  thumbnailMode: "custom"
-                }
-              },
-              {
-                name: "Test Node Counting",
-                url: "data/test-node-counting.csv",
-                options: {
-                  thumbnailMode: "custom"
-                }
-              },
-              {
-                name: "Test New Layout & Type",
-                url: "data/test-new-layout-type.csv",
-                cols: {
-                  id: "Node",
-                  name: "Name",
-                  parent: "Parent",
-                  subtitle: "Subtitle",
-                  type: "Type",
-                  layout: "Layout",
-                  img: "Img"
-                },
-                options: {
-                  thumbnailMode: "custom"
-                }
-              },
-              {
-                name: "Multiclusters (New Structure)",
-                url: "data/companies-board-new.csv",
-                cols: {
-                  id: "Node",
-                  name: "Name",
-                  parent: "Parent",
-                  subtitle: "Description",
-                  type: "Type",
-                  layout: "Layout"
-                },
-                layout: {
-                  clustersPerRow: "4 5 7 5",
-                  marginX: 40,
-                  marginY: 320,
-                  spacingX: 80,
-                  spacingY: 80,
-                  lastRowThreshold: 0
-                },
-                options: {
-                  thumbnailMode: "custom"
-                },
-                counterWord: "personas"
-              },
-      {
         name: "Multiclusters",
-        url: "data/companies-board.csv",
+        url: "data/companies-products.csv",
         // maxRecords: 350,
         cols: {
           id: "Node",
@@ -178,7 +46,7 @@
           img: "thumbType"
         },
         layout: {
-          clustersPerRow: "4 5 7 5",
+          clustersPerRow: "3 3 3",
           marginX: 40,
           marginY: 320,
           spacingX: 80,
@@ -219,7 +87,10 @@
       {
         name: "Google Sheets", 
         url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vT1F3LXPwnGlnF_uOlhoR-5kK1DrWLwlCAKH8Ag6hPrNLzwqWYWU8ofE19xSv4cH1-Cq7ZYm7lPys7V/pub?output=csv",
-        edit: "https://docs.google.com/spreadsheets/d/12XSWGm6CAkv7SVSeBU0dtS3dhqc1dLasoxWqsW2AX40/edit?gid=0#gid=0"
+        edit: "https://docs.google.com/spreadsheets/d/12XSWGm6CAkv7SVSeBU0dtS3dhqc1dLasoxWqsW2AX40/edit?gid=0#gid=0",
+        options: {
+          thumbnailMode: "custom"
+        }
       },
       {
         name: "Thumbnails None", 
@@ -247,66 +118,6 @@
           img: "thumbnail"
         },
         counterWord: "caracteres"
-      },
-      {
-        name: "Test Custom Thumbnails",
-        url: "data/test-custom-thumbnails.csv",
-        cols: {
-          id: "ID",
-          name: "Name",
-          parent: "Parent",
-          subtitle: "Position",
-          type: "Type",
-          layout: "Type",
-          img: "Image"
-        },
-        options: {
-          thumbnailMode: "custom"
-        }
-      },
-      {
-        name: "Test Cluster Interaction",
-        url: "data/test-cluster-interaction.csv",
-        cols: {
-          id: "ID",
-          name: "Name",
-          parent: "Parent",
-          subtitle: "Position",
-          type: "Type",
-          layout: "Type"
-        }
-      },
-      {
-        name: "Test Show All Columns",
-        url: "data/test-empty-columns.csv",
-        cols: {
-          id: "ID",
-          name: "Name",
-          parent: "Parent",
-          subtitle: "Position",
-          type: "Type",
-          img: "Image"
-        },
-        options: {
-          thumbnailMode: "custom",
-          showAllColumns: true
-        }
-      },
-      {
-        name: "Test Hide Empty Columns (Default)",
-        url: "data/test-empty-columns.csv",
-        cols: {
-          id: "ID",
-          name: "Name",
-          parent: "Parent",
-          subtitle: "Position",
-          type: "Type",
-          img: "Image"
-        },
-        options: {
-          thumbnailMode: "custom"
-          // showAllColumns: false (default)
-        }
       }
     ],
     themes: {

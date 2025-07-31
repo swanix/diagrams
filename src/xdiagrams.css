@@ -42,7 +42,7 @@
 
     /* ===== Links and Labels ===== */
     --node-connector: hsl(var(--color-base) 35% / 1);
-    --node-text-secondary: hsl(var(--color-base) 30% / 1);
+    --node-text-secondary: hsl(var(--color-base) 40% / 1);
 
     /* ===== Clusters ===== */
     --cluster-bg: hsl(var(--color-base) 90% / 1);
@@ -214,7 +214,7 @@
 
   /* ===== Links and Labels ===== */
   --node-connector: hsl(var(--color-base) 55% / 1);
-  --node-text-secondary: hsl(var(--color-base) 70% / 1);
+  --node-text-secondary: hsl(var(--color-base) 60% / 1);
 
   /* ===== Clusters ===== */
   --cluster-bg: hsl(var(--color-base) 45% / 0.1);

@@ -806,7 +806,12 @@ function triggerHook(hookName, data) {
 }
 
 // Check if an option is enabled with sensible defaults
-function isOptionEnabled(optionName) {
+function isOptionEnabled(optionName, diagramConfig = null) {
+  // Try diagram-specific configuration first
+  if (diagramConfig && diagramConfig.options && diagramConfig.options.hasOwnProperty(optionName)) {
+    return diagramConfig.options[optionName] === true;
+  }
+  
   const options = getDiagramOptions();
   
   // Define default values for each option
@@ -816,7 +821,8 @@ function isOptionEnabled(optionName) {
     keyboardNavigation: true, // Keyboard navigation enabled by default
     tooltips: true,           // Tooltips enabled by default
     responsive: true,         // Responsive design enabled by default
-    dragAndDrop: true         // Drag & drop enabled by default
+    dragAndDrop: true,        // Drag & drop enabled by default
+    autoImages: false         // Auto-images disabled by default (for security/privacy)
   };
   
   // If the option is explicitly set in the configuration, use that value
@@ -1453,9 +1459,9 @@ function drawGridLayout(nodes, svg, diagramConfig = null) {
     .attr("height", hasImages ? nodeHeight : 50); // Adjust height for no-image mode
 
   // Node image with enhanced loading
-  nodeGroups.each(function(d) {
+  nodeGroups.each(async function(d) {
     const nodeGroup = d3.select(this);
-    const imageUrl = resolveNodeImage(d, diagramConfig);
+    const imageUrl = await resolveNodeImage(d, diagramConfig);
     
     // Si imageUrl es null (thumbnailMode 'none'), no crear imagen
     if (imageUrl === null) {
@@ -1726,9 +1732,9 @@ function drawGridLayout(nodes, svg, diagramConfig = null) {
           (parseFloat(themeVars.getPropertyValue('--node-bg-height-no-image')) || 50));
       
       // Node image with enhanced loading
-      node.each(function(d) {
+      node.each(async function(d) {
         const nodeSel = d3.select(this);
-        const imageUrl = resolveNodeImage(d, diagramConfig);
+        const imageUrl = await resolveNodeImage(d, diagramConfig);
         
         // Si imageUrl es null (thumbnailMode 'none'), no crear imagen
         if (imageUrl === null) {
@@ -2827,9 +2833,9 @@ function drawTrees(trees, diagramConfig = null) {
             (parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--node-bg-height-no-image')) || 50));
 
         // Node image with enhanced loading
-        node.each(function(d) {
+        node.each(async function(d) {
           const nodeSel = d3.select(this);
-          const imageUrl = resolveNodeImage(d, diagramConfig);
+          const imageUrl = await resolveNodeImage(d, diagramConfig);
           
           // Si imageUrl es null (thumbnailMode 'none'), no crear imagen
           if (imageUrl === null) {
@@ -2860,7 +2866,7 @@ function drawTrees(trees, diagramConfig = null) {
             img.crossOrigin = "anonymous";
             
             img.onload = function() {
-              console.log(`[Image Preload] ✅ Preload successful for "${d.data.name}" - ${imageUrl}`);
+              console.log(`[Image Preload] Preload successful for "${d.data.name}" - ${imageUrl}`);
               
               // Solo crear el elemento image cuando la imagen esté completamente cargada
               const imageElement = nodeSel.append("image")
@@ -2873,25 +2879,25 @@ function drawTrees(trees, diagramConfig = null) {
                 .attr("crossorigin", "anonymous")
                 .style("opacity", "1"); // Mostrar inmediatamente ya que está preload
               
-              console.log(`[Image Preload] 🎯 SVG element created and displayed for "${d.data.name}"`);
+              console.log(`[Image Preload] SVG element created and displayed for "${d.data.name}"`);
               
               // Solo aplicar el filtro si es necesario
               if (shouldApplyFilter(imageUrl)) {
                 imageElement.classed("image-filter", true);
-                console.log(`[Image Preload] 🎨 Filter applied to "${d.data.name}"`);
+                console.log(`[Image Preload] Filter applied to "${d.data.name}"`);
               }
             };
             
             img.onerror = function() {
-              console.log(`[Image Preload] ❌ Error preloading image for "${d.data.name}": ${imageUrl}`);
+              console.log(`[Image Preload] Error preloading image for "${d.data.name}": ${imageUrl}`);
               
               // Si la imagen falla, usar thumbnail embebido del type como fallback
-              console.log(`[Image Preload] 🔄 Using embedded thumbnail fallback for "${d.data.name}"`);
+              console.log(`[Image Preload] Using embedded thumbnail fallback for "${d.data.name}"`);
               createEmbeddedFallback(d, nodeSel, null);
             };
             
             // Iniciar el preload
-            console.log(`[Image Preload] 🚀 Initiating preload for "${d.data.name}" - src: ${imageUrl}`);
+            console.log(`[Image Preload] Initiating preload for "${d.data.name}" - src: ${imageUrl}`);
             img.src = imageUrl;
           }
         });
@@ -3823,7 +3829,7 @@ function createSidePanel() {
 }
 
 // Common function to update side panel content (used by both openSidePanel and updateSidePanelContent)
-function updateSidePanelContentCommon(nodeData, diagramConfig = null) {
+async function updateSidePanelContentCommon(nodeData, diagramConfig = null) {
   console.log('[updateSidePanelContentCommon] Updating side panel content for nodeData:', nodeData);
   
   const sidePanel = document.getElementById('side-panel');
@@ -3885,7 +3891,7 @@ function updateSidePanelContentCommon(nodeData, diagramConfig = null) {
     // Get the name value from the data
     const nodeName = dataToShow.name || dataToShow.Name || dataToShow.NAME || nodeData.name || 'Nodo sin nombre';
     // Create thumbnail HTML using the same logic as the node image
-    const thumbnailHtml = createSidePanelThumbnailHtml(nodeData, diagramConfig);
+    const thumbnailHtml = await createSidePanelThumbnailHtml(nodeData, diagramConfig);
 
     // Truncar el texto del título por ancho disponible antes del botón de cerrar
     function truncateSidePanelTitle(text, maxWidth, fontSize, fontWeight, fontFamily) {
@@ -3959,7 +3965,7 @@ function updateSidePanelContentCommon(nodeData, diagramConfig = null) {
 }
 
 // Open side panel
-function openSidePanel(nodeData, diagramConfig = null) {
+async function openSidePanel(nodeData, diagramConfig = null) {
   console.log('[openSidePanel] Opening side panel with nodeData:', nodeData);
   console.log('[openSidePanel] diagramConfig:', diagramConfig);
   
@@ -3996,7 +4002,7 @@ function openSidePanel(nodeData, diagramConfig = null) {
   }
 
   // Use the common function to update content
-  updateSidePanelContentCommon(nodeData, diagramConfig);
+  await updateSidePanelContentCommon(nodeData, diagramConfig);
   
   // Open the panel
   sidePanel.classList.add('open');
@@ -5965,7 +5971,7 @@ window.xDiagramsCache = {
     const keys = Object.keys(localStorage);
     const cacheKeys = keys.filter(key => key.startsWith('xdiagrams_cache_'));
     
-    console.log('📋 Cached URLs:');
+    console.log('Cached URLs:');
     cacheKeys.forEach(key => {
       try {
         const data = JSON.parse(localStorage.getItem(key));
@@ -7578,14 +7584,14 @@ function preloadCommonImages() {
       img.onload = function() {
         loadedCount++;
         if (loadedCount === totalImages) {
-          console.log('🖼️ [Preload] All common embedded thumbnails preloaded successfully');
+          console.log('[Preload] All common embedded thumbnails preloaded successfully');
         }
       };
       img.onerror = function() {
         console.warn(`[Preload] Failed to load embedded thumbnail: ${imageName}`);
         loadedCount++;
         if (loadedCount === totalImages) {
-          console.log('🖼️ [Preload] Common embedded thumbnails preload completed with some errors');
+          console.log('[Preload] Common embedded thumbnails preload completed with some errors');
         }
       };
       img.src = embeddedThumbnail;
@@ -7595,14 +7601,14 @@ function preloadCommonImages() {
       img.onload = function() {
         loadedCount++;
         if (loadedCount === totalImages) {
-          console.log('🖼️ [Preload] All common images preloaded successfully');
+          console.log('[Preload] All common images preloaded successfully');
         }
       };
       img.onerror = function() {
         console.warn(`[Preload] Failed to load image: ${imageName}.svg`);
         loadedCount++;
         if (loadedCount === totalImages) {
-          console.log('🖼️ [Preload] Common images preload completed with some errors');
+          console.log('[Preload] Common images preload completed with some errors');
         }
       };
       img.src = `img/${imageName}.svg`;
@@ -7670,7 +7676,7 @@ function createImageElement(baseUrl, fallbackUrl, className = "image-base") {
 }
 
 // Helper function to resolve node image URL - RESPETA thumbnailMode
-function resolveNodeImage(node, diagramConfig = null) {
+async function resolveNodeImage(node, diagramConfig = null) {
   const thumbnailMode = getThumbnailMode(diagramConfig);
   
   // Si thumbnailMode es 'none', no mostrar ninguna imagen
@@ -7685,12 +7691,12 @@ function resolveNodeImage(node, diagramConfig = null) {
   const layoutVal = node.layout || (node.data && node.data.layout) || "";
   const nameVal = node.name || (node.data && node.data.name) || "";
 
-  console.log(`[resolveNodeImage] 🔍 Processing node: ${nameVal || 'unknown'}`);
-  console.log(`[resolveNodeImage] 📋 Thumbnail mode: ${thumbnailMode}`);
-  console.log(`[resolveNodeImage] 🖼️ Img value: "${imgVal}"`);
-  console.log(`[resolveNodeImage] 🏷️ Type value: "${typeVal}"`);
-  console.log(`[resolveNodeImage] 🎨 Layout value: "${layoutVal}"`);
-  console.log(`[resolveNodeImage] 📝 Name value: "${nameVal}"`);
+  console.log(`[resolveNodeImage] Processing node: ${nameVal || 'unknown'}`);
+  console.log(`[resolveNodeImage] Thumbnail mode: ${thumbnailMode}`);
+  console.log(`[resolveNodeImage] Img value: "${imgVal}"`);
+  console.log(`[resolveNodeImage] Type value: "${typeVal}"`);
+  console.log(`[resolveNodeImage] Layout value: "${layoutVal}"`);
+  console.log(`[resolveNodeImage] Name value: "${nameVal}"`);
 
   // Función para transformar nombre a formato de archivo de imagen
   function normalizeNameForImage(name) {
@@ -7707,6 +7713,46 @@ function resolveNodeImage(node, diagramConfig = null) {
       .replace(/^-|-$/g, ''); // Remover guiones al inicio y final
   }
 
+  // Cache para evitar verificar la misma imagen múltiples veces
+  const autoImageCache = new Map();
+  
+  // Función para precargar imágenes automáticas disponibles
+  async function preloadAutoImages() {
+    if (autoImageCache.size > 0) {
+      console.log(`[Auto Images] Cache already populated with ${autoImageCache.size} entries`);
+      return; // Ya precargado
+    }
+    
+    console.log(`[Auto Images] Starting preload of available images...`);
+    
+    // Lista de nombres comunes que podrían tener imágenes
+    const commonNames = [
+      'alice-thompson', 'bob-martinez', 'carla-wilson', 'emily-johnson', 
+      'frank-brown', 'grace-lee', 'henry-adams', 'irene-zhang', 
+      'kelly-simmons', 'liam-turner', 'ana-robinson', 'david-white'
+    ];
+    
+    const imageExtensions = ['.jpeg', '.jpg', '.png', '.webp', '.gif'];
+    
+    for (const name of commonNames) {
+      for (const ext of imageExtensions) {
+        const imagePath = `img/photos/${name}${ext}`;
+        try {
+          const exists = await checkImageExists(imagePath);
+          if (exists) {
+            autoImageCache.set(name, imagePath);
+            console.log(`[Auto Images] Preloaded: ${imagePath}`);
+            break; // Encontró la imagen, pasar al siguiente nombre
+          }
+        } catch (error) {
+          // Continuar con la siguiente extensión
+        }
+      }
+    }
+    
+    console.log(`[Auto Images] Preload complete. Cache contains ${autoImageCache.size} images`);
+  }
+  
   // Función para verificar si existe una imagen automática basada en el nombre
   function findAutoImageByName(name) {
     if (!name || name.trim() === "") return null;
@@ -7714,21 +7760,22 @@ function resolveNodeImage(node, diagramConfig = null) {
     const normalizedName = normalizeNameForImage(name);
     if (!normalizedName) return null;
     
-    // Lista de extensiones de imagen comunes en orden de prioridad
-    const imageExtensions = ['.jpeg', '.jpg', '.png', '.webp', '.gif'];
+    // Verificar cache primero
+    if (autoImageCache.has(normalizedName)) {
+      const cachedResult = autoImageCache.get(normalizedName);
+      console.log(`[resolveNodeImage] Cache hit for "${normalizedName}": ${cachedResult}`);
+      return cachedResult;
+    }
     
-    // Generar la ruta de imagen basada en el nombre normalizado
-    // Usamos .jpeg como extensión por defecto (la más común)
-    const imagePath = `img/photos/${normalizedName}.jpeg`;
+    // Si el cache está vacío, no hacer verificación HTTP (evitar requests innecesarios)
+    if (autoImageCache.size === 0) {
+      console.log(`[resolveNodeImage] Cache empty, skipping auto image for "${normalizedName}" to avoid HTTP requests`);
+      return null;
+    }
     
-    console.log(`[resolveNodeImage] Auto image path generated: ${imagePath} for name: "${name}" (normalized: "${normalizedName}")`);
-    console.log(`[resolveNodeImage] Supported extensions: ${imageExtensions.join(', ')}`);
-    
-    // Retornamos la ruta generada. El sistema de manejo de errores de imágenes
-    // se encargará de mostrar un fallback si el archivo no existe realmente.
-    // En una implementación más avanzada, se podría verificar cada extensión
-    // usando checkImageExists de forma asíncrona.
-    return imagePath;
+    // Si no está en cache, no existe la imagen
+    console.log(`[resolveNodeImage] Cache miss for "${normalizedName}" - image not available`);
+    return null;
   }
 
   // Función asíncrona para verificar múltiples extensiones de imagen
@@ -7833,6 +7880,7 @@ function resolveNodeImage(node, diagramConfig = null) {
 
     // LÓGICA ESPECIAL PARA TYPE "PERSON"
     const typeName = (typeVal || 'detail').toLowerCase().replace(/\s+/g, '-');
+    console.log(`[resolveNodeImage] Custom mode - Type name: "${typeName}" (original: "${typeVal}")`);
     if (typeName === 'person') {
       console.log(`[resolveNodeImage] Custom mode - Type "person" detected, using special logic`);
       
@@ -7858,11 +7906,28 @@ function resolveNodeImage(node, diagramConfig = null) {
     // LÓGICA NORMAL PARA OTROS TYPES
     // SI img está completamente vacío, buscar imagen automática basada en el nombre
     // PERO solo si las imágenes automáticas están habilitadas
-    if (isOptionEnabled('autoImages') !== false) {
+    console.log(`[resolveNodeImage] Custom mode - Checking autoImages option...`);
+    const autoImagesEnabled = isOptionEnabled('autoImages', diagramConfig);
+    console.log(`[resolveNodeImage] Custom mode - autoImages enabled: ${autoImagesEnabled}`);
+    
+    if (autoImagesEnabled !== false) {
+      console.log(`[resolveNodeImage] Custom mode - Auto images enabled, searching for name "${nameVal}"`);
+      
+      // Precargar imágenes si es la primera vez
+      if (autoImageCache.size === 0) {
+        console.log(`[resolveNodeImage] Custom mode - First time with auto images, triggering preload...`);
+        // Esperar a que se complete la precarga antes de continuar
+        await preloadAutoImages();
+        console.log(`[resolveNodeImage] Custom mode - Preload complete, cache now has ${autoImageCache.size} images`);
+      }
+      
       const autoImage = findAutoImageByName(nameVal);
       if (autoImage) {
         console.log(`[resolveNodeImage] Custom mode - Auto image found for name "${nameVal}": ${autoImage}`);
         return autoImage;
+      } else {
+        console.log(`[resolveNodeImage] Custom mode - No auto image found for name "${nameVal}"`);
+        console.log(`[resolveNodeImage] Custom mode - Cache contents:`, Array.from(autoImageCache.keys()));
       }
     } else {
       console.log(`[resolveNodeImage] Custom mode - Auto images disabled, skipping auto image search for "${nameVal}"`);
@@ -8467,7 +8532,7 @@ function shouldApplyFilter(url) {
  * @returns {Object} Selección D3 con el elemento creado
  */
 function appendAppropriateImageElement(d3Selection, imageUrl, attributes = {}, className = "image-base", node = null) {
-  console.log(`[Append Image] 🎯 Starting append for imageUrl: ${imageUrl}`);
+  console.log(`[Append Image] Starting append for imageUrl: ${imageUrl}`);
   
   // Si es un thumbnail embebido, crear elemento SVG directo
   if (isEmbeddedThumbnailUrl(imageUrl)) {
@@ -8501,12 +8566,12 @@ function appendAppropriateImageElement(d3Selection, imageUrl, attributes = {}, c
  * @param {Object} diagramConfig - Configuración del diagrama
  * @returns {string} HTML del thumbnail
  */
-function createSidePanelThumbnailHtml(nodeData, diagramConfig = null) {
+async function createSidePanelThumbnailHtml(nodeData, diagramConfig = null) {
   console.log('[createSidePanelThumbnailHtml] Creating thumbnail for nodeData:', nodeData);
   console.log('[createSidePanelThumbnailHtml] diagramConfig:', diagramConfig);
   
   // Usar la misma lógica que resolveNodeImage para determinar qué imagen mostrar
-  const imageUrl = resolveNodeImage(nodeData, diagramConfig);
+  const imageUrl = await resolveNodeImage(nodeData, diagramConfig);
   
   console.log('[createSidePanelThumbnailHtml] Resolved imageUrl:', imageUrl);
   
@@ -9114,7 +9179,7 @@ function deactivateClusterClickMode() {
 }
 
 // Function to zoom to a specific cluster
-function zoomToCluster(clusterInfo) {
+async function zoomToCluster(clusterInfo) {
   console.log('[ClusterClickMode] Zooming to cluster:', clusterInfo.id);
   
   // Set flag to prevent deselection during zoom transition
@@ -9147,7 +9212,7 @@ function zoomToCluster(clusterInfo) {
     if (isSidePanelVisible) {
       // If side panel is already open, update content immediately
       console.log('[ClusterClickMode] Side panel is open - updating content immediately for node:', parentNode.name);
-      updateSidePanelContent(parentNode, window.$xDiagrams.currentDiagramConfig);
+      await updateSidePanelContent(parentNode, window.$xDiagrams.currentDiagramConfig);
     } else {
       // If side panel is closed, store node to show after zoom
       console.log('[ClusterClickMode] Side panel is closed - storing node to show after zoom:', parentNode.name);
@@ -9274,11 +9339,11 @@ function zoomToCluster(clusterInfo) {
     );
   
   // Show side panel at 60% of zoom completion
-  setTimeout(() => {
+  setTimeout(async () => {
     const pendingSidePanelNode = window.$xDiagrams.clusterClickMode.pendingSidePanelNode;
     if (pendingSidePanelNode && isOptionEnabled('sidePanel') !== false) {
       console.log('[ClusterClickMode] Showing side panel at 60% zoom completion for node:', pendingSidePanelNode.name);
-      updateSidePanelContent(pendingSidePanelNode, window.$xDiagrams.currentDiagramConfig);
+      await updateSidePanelContent(pendingSidePanelNode, window.$xDiagrams.currentDiagramConfig);
       // Clear the pending node
       window.$xDiagrams.clusterClickMode.pendingSidePanelNode = null;
     }
@@ -10796,7 +10861,7 @@ function getClusterParentNode(clusterInfo) {
 }
 
 // Unified function to update side panel content
-function updateSidePanelContent(nodeData, diagramConfig = null) {
+async function updateSidePanelContent(nodeData, diagramConfig = null) {
   console.log('[updateSidePanelContent] Updating side panel content for nodeData:', nodeData);
   console.log('[updateSidePanelContent] diagramConfig:', diagramConfig);
   
@@ -10822,7 +10887,7 @@ function updateSidePanelContent(nodeData, diagramConfig = null) {
   console.log('[updateSidePanelContent] Panel is open, updating content directly');
   
   // Use the common function to update content
-  updateSidePanelContentCommon(nodeData, diagramConfig);
+  await updateSidePanelContentCommon(nodeData, diagramConfig);
   
   console.log('[SidePanel] Content updated for node:', nodeData.name || nodeData.id);
 }

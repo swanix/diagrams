@@ -240,14 +240,14 @@
   --loading-bg: hsl(var(--color-base) 9% / 1);
 
   /* ===== UI Panel Variables ===== */
-  --ui-panel-bg: hsl(var(--color-base) 95% / 1);
+  --ui-panel-bg: hsl(var(--color-base) 98% / 1);
   --ui-panel-border: hsl(var(--color-base) 85% / 1);
   --ui-panel-text: hsl(var(--color-base) 15% / 1);
   --ui-panel-text-muted: hsl(var(--color-base) 20% / 1);
   --ui-focus: hsl(var(--color-base) 100% / 1);
 
   /* ===== UI Controls ===== */
-  --ui-control-bg: hsl(var(--color-base) 95% / 1);
+  --ui-control-bg: hsl(var(--color-base) 98% / 1);
   --ui-control-bg-hover: hsl(var(--color-base) 90% / 1);
   --ui-control-bg-active: hsl(var(--color-base) 50% / 1);
   --ui-control-text: hsl(var(--color-base) 30% / 1);

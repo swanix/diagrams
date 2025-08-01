@@ -43,6 +43,44 @@
         }
       },
       {
+        name: "Custom Image Folder - Local",
+        url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vSRXkFV0Kc67855z3cYY1qoY2crCXX2ww34quVAWIBi_ISD2uXZI0pxbGNIsZtPP35VwosZG_HFUJPW/pub?output=csv&gid=242704329",
+        options: {
+          thumbnailMode: "custom",
+          autoImages: true,
+          autoImageFolder: "assets/team-photos"
+        }
+      },
+      {
+        name: "Custom Image Folder - Remote",
+        url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vSRXkFV0Kc67855z3cYY1qoY2crCXX2ww34quVAWIBi_ISD2uXZI0pxbGNIsZtPP35VwosZG_HFUJPW/pub?output=csv&gid=242704329",
+        options: {
+          thumbnailMode: "custom",
+          autoImages: true,
+          autoImageFolder: "https://example.com/team-photos"
+        }
+      },
+      {
+        name: "Custom Image Folder - CDN",
+        url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vSRXkFV0Kc67855z3cYY1qoY2crCXX2ww34quVAWIBi_ISD2uXZI0pxbGNIsZtPP35VwosZG_HFUJPW/pub?output=csv&gid=242704329",
+        options: {
+          thumbnailMode: "custom",
+          autoImages: true,
+          autoImageFolder: "https://cdn.example.com/avatars"
+        }
+      },
+      {
+        name: "Test Custom Image Folder",
+        url: "data/test-custom-image-folder.csv",
+        options: {
+          thumbnailMode: "custom",
+          autoImages: true,
+          autoImageColumns: ["Developer", "Designer", "Writer"],
+          autoImageFolder: "assets/test-photos",
+          hideEmptyColumns: "all"
+        }
+      },
+      {
         name: "Multiclusters",
         url: "data/companies-products.csv",
         // maxRecords: 350,

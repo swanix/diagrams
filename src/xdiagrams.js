@@ -858,6 +858,29 @@ function getAutoImageColumns(diagramConfig = null) {
   return null;
 }
 
+// Get auto image folder configuration
+function getAutoImageFolder(diagramConfig = null) {
+  // Try diagram-specific configuration first
+  if (diagramConfig && diagramConfig.options && diagramConfig.options.autoImageFolder) {
+    const folder = diagramConfig.options.autoImageFolder;
+    console.log(`[getAutoImageFolder] Using diagram-specific folder: ${folder}`);
+    return folder;
+  }
+  
+  const options = getDiagramOptions();
+  
+  // If autoImageFolder is explicitly set in the configuration, use that value
+  if (options.hasOwnProperty('autoImageFolder') && options.autoImageFolder) {
+    console.log(`[getAutoImageFolder] Using global folder: ${options.autoImageFolder}`);
+    return options.autoImageFolder;
+  }
+  
+  // Otherwise, use the default value
+  const defaultFolder = 'img/photos';
+  console.log(`[getAutoImageFolder] Using default folder: ${defaultFolder}`);
+  return defaultFolder;
+}
+
 // Get thumbnail mode configuration
 function getThumbnailMode(diagramConfig = null) {
   // Try diagram-specific configuration first
@@ -1468,10 +1491,12 @@ function drawGridLayout(nodes, svg, diagramConfig = null) {
       //   }
       // }
       
-      // Open side panel only if enabled
-      if (isOptionEnabled('sidePanel') !== false && window.openSidePanel) {
-        window.openSidePanel(d.data, diagramConfig);
-      }
+             // Open side panel only if enabled
+             if (isOptionEnabled('sidePanel') !== false && window.openSidePanel) {
+               // Ensure side panel is created before trying to open it
+               createSidePanel();
+               window.openSidePanel(d.data, diagramConfig);
+             }
     });
 
   // Node rectangle
@@ -2834,10 +2859,12 @@ function drawTrees(trees, diagramConfig = null) {
             //   }
             // }
             
-            // Open side panel only if enabled
-            if (isOptionEnabled('sidePanel') !== false && window.openSidePanel) {
-              window.openSidePanel(d.data, diagramConfig);
-            }
+                  // Open side panel only if enabled
+      if (isOptionEnabled('sidePanel') !== false && window.openSidePanel) {
+        // Ensure side panel is created before trying to open it
+        createSidePanel();
+        window.openSidePanel(d.data, diagramConfig);
+      }
           });
 
         // Check if we're in 'none' mode to adjust node dimensions
@@ -3856,6 +3883,9 @@ function createSidePanel() {
 async function updateSidePanelContentCommon(nodeData, diagramConfig = null) {
   console.log('[updateSidePanelContentCommon] Updating side panel content for nodeData:', nodeData);
   
+  // Ensure side panel is created before trying to update it
+  createSidePanel();
+  
   const sidePanel = document.getElementById('side-panel');
   const content = document.getElementById('side-panel-content');
   const titleElement = document.getElementById('side-panel-title');
@@ -3993,6 +4023,9 @@ async function openSidePanel(nodeData, diagramConfig = null) {
   console.log('[openSidePanel] Opening side panel with nodeData:', nodeData);
   console.log('[openSidePanel] diagramConfig:', diagramConfig);
   
+  // Ensure side panel is created before trying to open it
+  createSidePanel();
+  
   const sidePanel = document.getElementById('side-panel');
   const content = document.getElementById('side-panel-content');
   const titleElement = document.getElementById('side-panel-title');
@@ -4056,6 +4089,9 @@ async function openSidePanel(nodeData, diagramConfig = null) {
 
 // Close side panel
 function closeSidePanel() {
+  // Ensure side panel is created before trying to close it
+  createSidePanel();
+  
   const sidePanel = document.getElementById('side-panel');
   if (sidePanel) {
     d3.selectAll('.node.node-selected').classed('node-selected', false);
@@ -4296,13 +4332,14 @@ async function generateSidePanelContent(nodeData, diagramConfig = null) {
       
       // Si no se encontró imagen automática, usar default.png como fallback
       if (!imageUrl) {
-        imageUrl = 'img/photos/default.png';
+        const imageFolder = getAutoImageFolder(diagramConfig);
+        imageUrl = `${imageFolder}/default.png`;
       }
       
       html += `
         <div class="side-panel-team-member">
           <div class="side-panel-team-member-image">
-            <img src="${imageUrl}" class="side-panel-team-avatar" width="40" height="40" onerror="this.src='img/photos/default.png'">
+            <img src="${imageUrl}" class="side-panel-team-avatar" width="40" height="40" onerror="this.src='${getAutoImageFolder(diagramConfig)}/default.png'">
           </div>
           <div class="side-panel-team-member-info">
             <div class="side-panel-team-member-name">${field.displayValue}</div>
@@ -7829,13 +7866,16 @@ function normalizeNameForImage(name) {
 }
 
 // Función global para precargar imágenes automáticas
-async function preloadGlobalAutoImages() {
+async function preloadGlobalAutoImages(diagramConfig = null) {
   if (globalAutoImageCache.size > 0) {
     console.log(`[Global Auto Images] Cache already populated with ${globalAutoImageCache.size} entries`);
     return; // Ya precargado
   }
   
   console.log(`[Global Auto Images] Starting preload of available images...`);
+  
+  // Obtener la carpeta configurada para imágenes
+  const imageFolder = getAutoImageFolder(diagramConfig);
   
   // Lista de nombres comunes que podrían tener imágenes
   const commonNames = [
@@ -7848,7 +7888,7 @@ async function preloadGlobalAutoImages() {
   
   for (const name of commonNames) {
     for (const ext of imageExtensions) {
-      const imagePath = `img/photos/${name}${ext}`;
+      const imagePath = `${imageFolder}/${name}${ext}`;
       try {
         const exists = await checkImageExists(imagePath);
         if (exists) {
@@ -7968,6 +8008,9 @@ async function resolveNodeImage(node, diagramConfig = null) {
     
     console.log(`[Auto Images] Starting preload of available images...`);
     
+    // Obtener la carpeta configurada para imágenes
+    const imageFolder = getAutoImageFolder(diagramConfig);
+    
     // Lista de nombres comunes que podrían tener imágenes
     const commonNames = [
       'alice-thompson', 'bob-martinez', 'carla-wilson', 'emily-johnson', 
@@ -7979,7 +8022,7 @@ async function resolveNodeImage(node, diagramConfig = null) {
     
     for (const name of commonNames) {
       for (const ext of imageExtensions) {
-        const imagePath = `img/photos/${name}${ext}`;
+        const imagePath = `${imageFolder}/${name}${ext}`;
         try {
           const exists = await checkImageExists(imagePath);
           if (exists) {
@@ -8028,14 +8071,17 @@ async function resolveNodeImage(node, diagramConfig = null) {
     const normalizedName = normalizeNameForImage(name);
     if (!normalizedName) return null;
     
+    // Obtener la carpeta configurada para imágenes
+    const imageFolder = getAutoImageFolder(diagramConfig);
+    
     // Lista de extensiones de imagen comunes en orden de prioridad
     const imageExtensions = ['.jpeg', '.jpg', '.png', '.webp', '.gif'];
     
-    console.log(`[resolveNodeImage] Checking multiple extensions for name: "${name}" (normalized: "${normalizedName}")`);
+    console.log(`[resolveNodeImage] Checking multiple extensions for name: "${name}" (normalized: "${normalizedName}") in folder: "${imageFolder}"`);
     
     // Verificar cada extensión
     for (const ext of imageExtensions) {
-      const imagePath = `img/photos/${normalizedName}${ext}`;
+      const imagePath = `${imageFolder}/${normalizedName}${ext}`;
       console.log(`[resolveNodeImage] Checking: ${imagePath}`);
       
       try {
@@ -9461,6 +9507,9 @@ async function zoomToCluster(clusterInfo) {
   console.log('[ClusterClickMode] Parent node for cluster:', clusterInfo.id, ':', parentNode);
   
   if (parentNode && isOptionEnabled('sidePanel') !== false) {
+    // Ensure side panel is created before trying to use it
+    createSidePanel();
+    
     // Check if side panel is currently visible
     const sidePanel = document.querySelector('.side-panel');
     const isSidePanelVisible = sidePanel && !sidePanel.classList.contains('hidden');
@@ -11143,6 +11192,9 @@ function getClusterParentNode(clusterInfo) {
 async function updateSidePanelContent(nodeData, diagramConfig = null) {
   console.log('[updateSidePanelContent] Updating side panel content for nodeData:', nodeData);
   console.log('[updateSidePanelContent] diagramConfig:', diagramConfig);
+  
+  // Ensure side panel is created before trying to update it
+  createSidePanel();
   
   const sidePanel = document.getElementById('side-panel');
   const content = document.getElementById('side-panel-content');

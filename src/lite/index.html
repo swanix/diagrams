@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Swanix Diagrams Lite</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f6f7f9;
+      color: #333;
+    }
+    
+    .xcanvas {
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+    }
+    
+    svg {
+      width: 100%;
+      height: 100%;
+    }
+    
+    .node rect {
+      fill: #fff;
+      stroke: #ccc;
+      stroke-width: 1px;
+      rx: 4px;
+    }
+    
+    .node:hover rect {
+      stroke: #999;
+    }
+    
+    .label-text {
+      font-size: 12px;
+      fill: #333;
+      text-anchor: middle;
+    }
+    
+    .label-id {
+      font-size: 10px;
+      fill: #666;
+      text-anchor: middle;
+    }
+    
+    .cluster-title {
+      font-size: 16px;
+      font-weight: bold;
+      fill: #333;
+      text-anchor: middle;
+    }
+    
+    .cluster-bg {
+      fill: #f8f9fa;
+      stroke: #dee2e6;
+      stroke-width: 3px;
+      rx: 12px;
+      opacity: 0.95;
+    }
+    
+    .cluster-container {
+      overflow: hidden;
+    }
+    
+    .info-panel {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: rgba(33, 33, 33, 0.95);
+      border: 1px solid #555;
+      border-radius: 8px;
+      padding: 15px;
+      font-family: monospace;
+      font-size: 12px;
+      z-index: 1000;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      min-width: 200px;
+    }
+    
+    .info-panel h3 {
+      margin: 0 0 10px 0;
+      font-size: 14px;
+      color: #fff;
+    }
+    
+    .info-item {
+      margin: 5px 0;
+      color: #ccc;
+    }
+    
+    .link {
+      fill: none;
+      stroke: #999;
+      stroke-width: 1px;
+    }
+    
+
+  </style>
+</head>
+<body>
+
+  
+      <div class="info-panel">
+      <h3>Información del Diagrama</h3>
+      <div class="info-item"><strong>Nodos: <span id="node-count">0</span></strong></div>
+      <div class="info-item">Clusters: <span id="cluster-count">0</span></div>
+      <div class="info-item">Zoom: <span id="zoom-level">1.00x</span></div>
+      <div class="info-item">Posición X: <span id="translate-x">0</span></div>
+      <div class="info-item">Posición Y: <span id="translate-y">0</span></div>
+      <div class="info-item">Tipo: <span id="render-type">SVG</span></div>
+    </div>
+
+  <div class="xcanvas">
+    <svg id="diagram"></svg>
+  </div>
+
+  <script src="https://unpkg.com/d3@7.9.0/dist/d3.min.js"></script>
+  <script src="https://unpkg.com/papaparse@5.3.0/papaparse.min.js"></script>
+
+  <script>
+    // Variables globales
+    let globalTrees = [];
+    let globalContainer = null;
+    let renderStartTime = 0;
+    
+    // Configuración básica
+    const config = {
+      url: "../data/companies-board-performance-medium.csv",
+      spacing: 80,
+      nodeWidth: 100,
+      nodeHeight: 60,
+      treeSpacing: 150
+    };
+
+    // Función para construir la jerarquía
+    function buildHierarchy(data) {
+      const nodeMap = new Map();
+      const trees = [];
+      
+      // Primera pasada: crear todos los nodos
+      data.forEach(row => {
+        if (row.Name && row.Name.trim()) {
+          const node = {
+            id: row.Node || row.Name,
+            name: row.Name,
+            parent: row.Parent || null,
+            data: row,
+            children: []
+          };
+          nodeMap.set(node.id, node);
+        }
+      });
+      
+      // Segunda pasada: establecer relaciones padre-hijo
+      nodeMap.forEach(node => {
+        if (node.parent && nodeMap.has(node.parent)) {
+          const parent = nodeMap.get(node.parent);
+          parent.children.push(node);
+        } else {
+          trees.push(node);
+        }
+      });
+      
+      console.log(`Árboles encontrados: ${trees.length}`);
+      trees.forEach((tree, i) => {
+        console.log(`Árbol ${i + 1}: ${tree.name} (${countNodes(tree)} nodos)`);
+      });
+      
+      return trees;
+    }
+    
+    // Función para contar nodos en un árbol
+    function countNodes(node) {
+      let count = 1;
+      node.children.forEach(child => {
+        count += countNodes(child);
+      });
+      return count;
+    }
+    
+    // Función para calcular ancho de un árbol
+    function calculateTreeWidth(node) {
+      if (node.children.length === 0) {
+        return config.nodeWidth;
+      }
+      
+      let totalWidth = 0;
+      node.children.forEach(child => {
+        totalWidth += calculateTreeWidth(child);
+      });
+      
+      return Math.max(totalWidth, config.nodeWidth);
+    }
+    
+    // Función para calcular altura de un árbol
+    function calculateTreeHeight(node) {
+      if (node.children.length === 0) {
+        return config.nodeHeight;
+      }
+      
+      let maxChildHeight = 0;
+      node.children.forEach(child => {
+        maxChildHeight = Math.max(maxChildHeight, calculateTreeHeight(child));
+      });
+      
+      return config.nodeHeight + config.spacing + maxChildHeight;
+    }
+    
+    // Función para calcular límites de un cluster
+    function calculateClusterBounds(tree) {
+      const treeWidth = calculateTreeWidth(tree);
+      const treeHeight = calculateTreeHeight(tree);
+      
+      return {
+        width: treeWidth + 40,
+        height: treeHeight + 60
+      };
+    }
+    
+    // Función para obtener profundidad de un árbol
+    function getTreeDepth(node, depth = 0) {
+      if (node.children.length === 0) {
+        return depth;
+      }
+      
+      let maxDepth = depth;
+      node.children.forEach(child => {
+        maxDepth = Math.max(maxDepth, getTreeDepth(child, depth + 1));
+      });
+      
+      return maxDepth;
+    }
+    
+    // Función principal de inicialización
+    async function initDiagram() {
+      try {
+        console.log('Iniciando diagrama...');
+        
+        // Crear contenedor SVG
+        const svg = d3.select('#diagram');
+        const container = svg.append('g');
+        
+        // Configurar zoom
+        const zoom = d3.zoom()
+          .scaleExtent([0.1, 5])
+          .on('zoom', (event) => {
+            container.attr('transform', event.transform);
+            updateInfoPanel(event.transform);
+          });
+        
+        svg.call(zoom);
+        
+        // Cargar datos
+        const response = await fetch(config.url);
+        const csvText = await response.text();
+        
+        Papa.parse(csvText, {
+          header: true,
+          complete: function(results) {
+            console.log('Datos cargados:', results.data.length, 'filas');
+            
+            // Construir jerarquía
+            const trees = buildHierarchy(results.data);
+            
+            // Guardar datos globales
+            globalTrees = trees;
+            globalContainer = container;
+            
+            // Medir tiempo de renderizado
+            renderStartTime = performance.now();
+            
+            // Renderizar árboles
+            renderTrees(trees, container);
+          }
+        });
+        
+      } catch (error) {
+        console.error('Error cargando diagrama:', error);
+      }
+    }
+    
+    // Función para renderizar árboles
+    function renderTrees(trees, container) {
+      console.log(`Renderizando ${trees.length} clusters con D3...`);
+      
+      // Calcular layout de clusters
+      const treeLayouts = [];
+      let currentX = 0;
+      const treeSpacing = config.treeSpacing;
+      
+      trees.forEach(tree => {
+        // Calcular layout temporal del árbol para obtener su ancho real
+        renderTreeSimple(tree, d3.select('body').append('g').style('display', 'none'), 0, 0);
+        
+        // Calcular ancho real del árbol basándose en las posiciones de los nodos
+        const treeBounds = calculateTreeBounds(tree);
+        const realTreeWidth = treeBounds.maxX - treeBounds.minX + config.nodeWidth;
+        const realTreeHeight = treeBounds.maxY - treeBounds.minY + config.nodeHeight;
+        
+        // Dimensiones del cluster basadas en el árbol real
+        const clusterWidth = realTreeWidth + 40;
+        const clusterHeight = realTreeHeight + 60;
+        
+        treeLayouts.push({
+          tree: tree,
+          clusterWidth: clusterWidth,
+          clusterHeight: clusterHeight,
+          realTreeWidth: realTreeWidth,
+          x: currentX
+        });
+        
+        currentX += clusterWidth + treeSpacing;
+      });
+
+      // Medir tiempo de renderizado si es la primera carga
+      if (renderStartTime === 0) {
+        renderStartTime = performance.now();
+      }
+      
+      // Renderizar clusters
+      treeLayouts.forEach((layout, index) => {
+        const { tree, clusterWidth, clusterHeight, realTreeWidth, x } = layout;
+        
+        // Crear grupo del cluster
+        const clusterGroup = container.append('g')
+          .attr('class', 'cluster')
+          .attr('transform', `translate(${x}, 30)`);
+        
+        // Crear grupo para el árbol
+        const treeGroup = clusterGroup.append('g')
+          .attr('class', 'tree-group');
+        
+        // Fondo del cluster
+        treeGroup.append('rect')
+          .attr('class', 'cluster-bg')
+          .attr('width', clusterWidth)
+          .attr('height', clusterHeight)
+          .attr('x', 0)
+          .attr('y', 0);
+        
+        // Título del cluster
+        treeGroup.append('text')
+          .attr('class', 'cluster-title')
+          .attr('x', clusterWidth / 2)
+          .attr('y', 25)
+          .text(tree.name);
+        
+        // Crear grupo para el árbol
+        const treeContentGroup = treeGroup.append('g')
+          .attr('class', 'tree-content');
+        
+        // Calcular posición centrada del árbol dentro del cluster
+        const treeX = (clusterWidth - config.nodeWidth) / 2;
+        const treeY = 35;
+        
+        // Renderizar árbol
+        renderTreeSimple(tree, treeContentGroup, treeX, treeY);
+      });
+      
+      // Calcular tiempo de renderizado
+      const renderTime = performance.now() - renderStartTime;
+      
+      // Actualizar contadores
+      const totalNodes = countTotalNodes(trees);
+      const totalClusters = trees.length;
+      const nodeCountElement = document.getElementById('node-count');
+      const clusterCountElement = document.getElementById('cluster-count');
+      const renderTypeElement = document.getElementById('render-type');
+      
+      if (nodeCountElement) {
+        nodeCountElement.textContent = totalNodes;
+      }
+      if (clusterCountElement) {
+        clusterCountElement.textContent = totalClusters;
+      }
+      if (renderTypeElement) {
+        renderTypeElement.textContent = 'SVG';
+      }
+      
+      // Guardar datos globales para re-renderizado
+      globalTrees = trees;
+      globalContainer = container;
+      
+      console.log(`Layout completado. Ancho total: ${currentX}px`);
+      console.log(`Total de nodos: ${totalNodes}`);
+      console.log(`Nodos renderizados con SVG: ${totalNodes}`);
+      console.log(`Tiempo de renderizado: ${renderTime.toFixed(2)}ms`);
+      
+
+    }
+    
+    // Función para renderizar árbol simple
+    function renderTreeSimple(node, container, x = 0, y = 0, level = 0) {
+      const nodeWidth = config.nodeWidth;
+      const nodeHeight = config.nodeHeight;
+      const spacing = config.spacing;
+      
+      // Crear grupo para el nodo
+      const nodeGroup = container.append('g')
+        .attr('class', 'node')
+        .attr('transform', `translate(${x}, ${y})`);
+      
+      // Rectángulo del nodo
+      nodeGroup.append('rect')
+        .attr('width', nodeWidth)
+        .attr('height', nodeHeight);
+      
+      // Texto principal
+      nodeGroup.append('text')
+        .attr('class', 'label-text')
+        .attr('x', nodeWidth / 2)
+        .attr('y', nodeHeight / 2 - 5)
+        .text(node.name);
+      
+      // ID del nodo
+      nodeGroup.append('text')
+        .attr('class', 'label-id')
+        .attr('x', nodeWidth / 2)
+        .attr('y', nodeHeight / 2 + 10)
+        .text(node.id);
+      
+      // Renderizar hijos
+      if (node.children.length > 0) {
+        const childY = y + nodeHeight + spacing;
+        const totalChildWidth = node.children.length * (nodeWidth + spacing) - spacing;
+        const startX = x - totalChildWidth / 2 + nodeWidth / 2;
+        
+        node.children.forEach((child, index) => {
+          const childX = startX + index * (nodeWidth + spacing);
+          
+          // Línea de conexión
+          const parentCenterX = x + nodeWidth/2;
+          const parentBottomY = y + nodeHeight;
+          const childCenterX = childX + nodeWidth/2;
+          const childTopY = childY;
+          const midY = (parentBottomY + childTopY) / 2;
+          
+          container.append('path')
+            .attr('class', 'link')
+            .attr('d', `M ${parentCenterX} ${parentBottomY} 
+                        L ${parentCenterX} ${midY} 
+                        L ${childCenterX} ${midY} 
+                        L ${childCenterX} ${childTopY}`);
+          
+          // Renderizar hijo recursivamente
+          renderTreeSimple(child, container, childX, childY, level + 1);
+        });
+      }
+    }
+    
+    // Función para contar nodos totales
+    function countTotalNodes(trees) {
+      let total = 0;
+      function countNodesRecursive(node) {
+        total++;
+        node.children.forEach(child => countNodesRecursive(child));
+      }
+      trees.forEach(tree => countNodesRecursive(tree));
+      return total;
+    }
+    
+    // Función para calcular los límites de un árbol
+    function calculateTreeBounds(node) {
+      let minX = 0, maxX = 0, minY = 0, maxY = 0;
+      
+      function traverseTree(n, x, y) {
+        minX = Math.min(minX, x);
+        maxX = Math.max(maxX, x + config.nodeWidth);
+        minY = Math.min(minY, y);
+        maxY = Math.max(maxY, y + config.nodeHeight);
+        
+        if (n.children.length > 0) {
+          const childY = y + config.nodeHeight + config.spacing;
+          const totalChildWidth = n.children.length * (config.nodeWidth + config.spacing) - config.spacing;
+          const startX = x - totalChildWidth / 2 + config.nodeWidth / 2;
+          
+          n.children.forEach((child, index) => {
+            const childX = startX + index * (config.nodeWidth + config.spacing);
+            traverseTree(child, childX, childY);
+          });
+        }
+      }
+      
+      traverseTree(node, 0, 0);
+      return { minX, maxX, minY, maxY };
+    }
+    
+    // Función para actualizar el panel de información
+    function updateInfoPanel(transform) {
+      const zoomElement = document.getElementById('zoom-level');
+      const translateXElement = document.getElementById('translate-x');
+      const translateYElement = document.getElementById('translate-y');
+      
+      if (zoomElement) {
+        zoomElement.textContent = transform.k.toFixed(2) + 'x';
+      }
+      if (translateXElement) {
+        translateXElement.textContent = Math.round(transform.x);
+      }
+      if (translateYElement) {
+        translateYElement.textContent = Math.round(transform.y);
+      }
+    }
+    
+
+    
+    // Inicializar cuando la página esté lista
+    document.addEventListener('DOMContentLoaded', initDiagram);
+  </script>
+</body>
+</html>

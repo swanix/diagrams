@@ -1,616 +1,616 @@
 Node,Name,Parent,Type,Img,Description,Position,Department
-AAPL,Apple Inc.,,company,detail,Empresa tecnológica líder en dispositivos móviles,CEO,Executive
-AAPL-1,Tim Cook,AAPL,profile,profile,CEO de Apple desde 2011,Chief Executive Officer,Executive
-AAPL-1-1,Jeff Williams,AAPL-1,profile,profile,COO de Apple,Chief Operating Officer,Operations
-AAPL-1-1-1,Sabih Khan,AAPL-1-1,profile,profile,VP de Operaciones,VP Operations,Operations
-AAPL-1-1-1-1,John Felton,AAPL-1-1-1,profile,profile,Director de Operaciones Globales,Director Global Operations,Operations
-AAPL-1-1-1-1-1,Chris Kondo,AAPL-1-1-1-1,profile,profile,Manager de Operaciones,Operations Manager,Operations
-AAPL-1-1-2,Jeffrey Maestas,AAPL-1-1,profile,profile,VP de Supply Chain,VP Supply Chain,Supply Chain
-AAPL-1-1-2-1,Isabel Ge Mahe,AAPL-1-1-2,profile,profile,Director de Supply Chain China,Director China Supply Chain,Supply Chain
-AAPL-1-1-2-1-1,Li Wei,AAPL-1-1-2-1,profile,profile,Manager de Logística China,China Logistics Manager,Supply Chain
-AAPL-1-2,Deirdre O'Brien,AAPL-1,profile,profile,VP de Recursos Humanos,VP Human Resources,HR
-AAPL-1-2-1,Denise Young Smith,AAPL-1-2,profile,profile,Directora de Diversidad,Director Diversity,HR
-AAPL-1-2-1-1,Carol Surface,AAPL-1-2-1,profile,profile,Manager de Diversidad,Manager Diversity,HR
-AAPL-1-2-1-1-1,Sarah Johnson,AAPL-1-2-1-1,profile,profile,Especialista en Diversidad,Diversity Specialist,HR
-AAPL-1-3,Kate Adams,AAPL-1,profile,profile,Secretaria General y VP Legal,General Counsel,Legal
-AAPL-1-3-1,Steve Dowling,AAPL-1-3,profile,profile,VP de Comunicaciones,VP Communications,Communications
-AAPL-1-3-1-1,Peter Stern,AAPL-1-3-1,profile,profile,Director de Comunicaciones,Director Communications,Communications
-AAPL-1-3-1-1-1,Emma Wilson,AAPL-1-3-1-1,profile,profile,Manager de Relaciones Públicas,PR Manager,Communications
-AAPL-1-4,Phil Schiller,AAPL-1,profile,profile,VP de Marketing Mundial,VP Worldwide Marketing,Marketing
-AAPL-1-4-1,Tor Myhren,AAPL-1-4,profile,profile,VP de Marketing,VP Marketing,Marketing
-AAPL-1-4-1-1,Phil Schiller,AAPL-1-4-1,profile,profile,Director de Comunicaciones de Producto,Director Product Communications,Marketing
-AAPL-1-4-1-1-1,Alex Chen,AAPL-1-4-1-1,profile,profile,Manager de Marketing Digital,Digital Marketing Manager,Marketing
-AAPL-1-5,Eddy Cue,AAPL-1,profile,profile,VP de Servicios y Software,VP Services & Software,Software
-AAPL-1-5-1,Eddy Cue,AAPL-1-5,profile,profile,VP de Apple Music,VP Apple Music,Entertainment
-AAPL-1-5-1-1,Peter Stern,AAPL-1-5-1,profile,profile,Director de Apple Music,Director Apple Music,Entertainment
-AAPL-1-5-1-1-1,David Smith,AAPL-1-5-1-1,profile,profile,Manager de Contenido Musical,Music Content Manager,Entertainment
-AAPL-1-5-2,Peter Stern,AAPL-1-5,profile,profile,VP de Apple TV+,VP Apple TV+,Entertainment
-AAPL-1-5-2-1,Zack Van Amburg,AAPL-1-5-2,profile,profile,Director de Apple TV+,Director Apple TV+,Entertainment
-AAPL-1-5-2-1-1,Jamie Erlicht,AAPL-1-5-2-1,profile,profile,Manager de Producción TV,TV Production Manager,Entertainment
-AAPL-1-6,Craig Federighi,AAPL-1,profile,profile,VP de Ingeniería de Software,VP Software Engineering,Engineering
-AAPL-1-6-1,Craig Federighi,AAPL-1-6,profile,profile,VP de iOS,VP iOS,Software
-AAPL-1-6-1-1,Dan Riccio,AAPL-1-6-1,profile,profile,Director de iOS,Director iOS,Software
-AAPL-1-6-1-1-1,Scott Forstall,AAPL-1-6-1-1,profile,profile,Manager de Desarrollo iOS,iOS Development Manager,Software
-AAPL-1-6-2,Dan Riccio,AAPL-1-6,profile,profile,VP de macOS,VP macOS,Software
-AAPL-1-6-2-1,Bertrand Serlet,AAPL-1-6-2,profile,profile,Director de macOS,Director macOS,Software
-AAPL-1-6-2-1-1,Avie Tevanian,AAPL-1-6-2-1,profile,profile,Manager de Desarrollo macOS,macOS Development Manager,Software
+AAPL,Apple Inc.,,company,business,Empresa tecnológica líder en dispositivos móviles,CEO,Executive
+AAPL-1,Tim Cook,AAPL,profile,work,CEO de Apple desde 2011,Chief Executive Officer,Executive
+AAPL-1-1,Jeff Williams,AAPL-1,profile,build,COO de Apple,Chief Operating Officer,Operations
+AAPL-1-1-1,Sabih Khan,AAPL-1-1,profile,factory,VP de Operaciones,VP Operations,Operations
+AAPL-1-1-1-1,John Felton,AAPL-1-1-1,profile,warehouse,Director de Operaciones Globales,Director Global Operations,Operations
+AAPL-1-1-1-1-1,Chris Kondo,AAPL-1-1-1-1,profile,warehouse,Manager de Operaciones,Operations Manager,Operations
+AAPL-1-1-2,Jeffrey Maestas,AAPL-1-1,profile,inventory_2,VP de Supply Chain,VP Supply Chain,Supply Chain
+AAPL-1-1-2-1,Isabel Ge Mahe,AAPL-1-1-2,profile,factory,Director de Supply Chain China,Director China Supply Chain,Supply Chain
+AAPL-1-1-2-1-1,Li Wei,AAPL-1-1-2-1,profile,local_shipping,Manager de Logística China,China Logistics Manager,Supply Chain
+AAPL-1-2,Deirdre O'Brien,AAPL-1,profile,diversity_3,VP de Recursos Humanos,VP Human Resources,HR
+AAPL-1-2-1,Denise Young Smith,AAPL-1-2,profile,school,Directora de Diversidad,Director Diversity,HR
+AAPL-1-2-1-1,Carol Surface,AAPL-1-2-1,profile,people_alt,Manager de Diversidad,Manager Diversity,HR
+AAPL-1-2-1-1-1,Sarah Johnson,AAPL-1-2-1-1,profile,people_alt,Especialista en Diversidad,Diversity Specialist,HR
+AAPL-1-3,Kate Adams,AAPL-1,profile,verified_user,Secretaria General y VP Legal,General Counsel,Legal
+AAPL-1-3-1,Steve Dowling,AAPL-1-3,profile,email,VP de Comunicaciones,VP Communications,Communications
+AAPL-1-3-1-1,Peter Stern,AAPL-1-3-1,profile,email,Director de Comunicaciones,Director Communications,Communications
+AAPL-1-3-1-1-1,Emma Wilson,AAPL-1-3-1-1,profile,email,Manager de Relaciones Públicas,PR Manager,Communications
+AAPL-1-4,Phil Schiller,AAPL-1,profile,local_offer,VP de Marketing Mundial,VP Worldwide Marketing,Marketing
+AAPL-1-4-1,Tor Myhren,AAPL-1-4,profile,storefront,VP de Marketing,VP Marketing,Marketing
+AAPL-1-4-1-1,Phil Schiller,AAPL-1-4-1,profile,point_of_sale,Director de Comunicaciones de Producto,Director Product Communications,Marketing
+AAPL-1-4-1-1-1,Alex Chen,AAPL-1-4-1-1,profile,storefront,Manager de Marketing Digital,Digital Marketing Manager,Marketing
+AAPL-1-5,Eddy Cue,AAPL-1,profile,developer_mode,VP de Servicios y Software,VP Services & Software,Software
+AAPL-1-5-1,Eddy Cue,AAPL-1-5,profile,live_tv,VP de Apple Music,VP Apple Music,Entertainment
+AAPL-1-5-1-1,Peter Stern,AAPL-1-5-1,profile,live_tv,Director de Apple Music,Director Apple Music,Entertainment
+AAPL-1-5-1-1-1,David Smith,AAPL-1-5-1-1,profile,music_note,Manager de Contenido Musical,Music Content Manager,Entertainment
+AAPL-1-5-2,Peter Stern,AAPL-1-5,profile,movie,VP de Apple TV+,VP Apple TV+,Entertainment
+AAPL-1-5-2-1,Zack Van Amburg,AAPL-1-5-2,profile,movie,Director de Apple TV+,Director Apple TV+,Entertainment
+AAPL-1-5-2-1-1,Jamie Erlicht,AAPL-1-5-2-1,profile,live_tv,Manager de Producción TV,TV Production Manager,Entertainment
+AAPL-1-6,Craig Federighi,AAPL-1,profile,settings,VP de Ingeniería de Software,VP Software Engineering,Engineering
+AAPL-1-6-1,Craig Federighi,AAPL-1-6,profile,settings,VP de iOS,VP iOS,Software
+AAPL-1-6-1-1,Dan Riccio,AAPL-1-6-1,profile,computer,Director de iOS,Director iOS,Software
+AAPL-1-6-1-1-1,Scott Forstall,AAPL-1-6-1-1,profile,settings,Manager de Desarrollo iOS,iOS Development Manager,Software
+AAPL-1-6-2,Dan Riccio,AAPL-1-6,profile,code,VP de macOS,VP macOS,Software
+AAPL-1-6-2-1,Bertrand Serlet,AAPL-1-6-2,profile,settings,Director de macOS,Director macOS,Software
+AAPL-1-6-2-1-1,Avie Tevanian,AAPL-1-6-2-1,profile,settings,Manager de Desarrollo macOS,macOS Development Manager,Software
 
 
-MSFT,Microsoft Corporation,,company,detail,Empresa líder en software y servicios en la nube,CEO,Executive
-MSFT-1,Satya Nadella,MSFT,profile,profile,CEO de Microsoft desde 2014,Chief Executive Officer,Executive
-MSFT-1-1,Brad Smith,MSFT-1,profile,profile,Presidente y VP Legal,President & Chief Legal Officer,Legal
-MSFT-1-1-1,Julie Brill,MSFT-1-1,profile,profile,VP de Privacidad,VP Privacy,Legal
-MSFT-1-1-1-1,Tom Burt,MSFT-1-1-1,profile,profile,Director de Privacidad,Director Privacy,Legal
-MSFT-1-1-1-1-1,Sarah Johnson,MSFT-1-1-1-1,profile,profile,Manager de Privacidad,Privacy Manager,Legal
-MSFT-1-1-2,Tom Burt,MSFT-1-1,profile,profile,VP de Seguridad Digital,VP Digital Security,Legal
-MSFT-1-1-2-1,Charlie Bell,MSFT-1-1-2,profile,profile,Director de Seguridad Digital,Director Digital Security,Legal
-MSFT-1-1-2-1-1,Mark Russinovich,MSFT-1-1-2-1,profile,profile,Manager de Seguridad,Security Manager,Legal
-MSFT-1-2,Amy Hood,MSFT-1,profile,profile,CFO de Microsoft,Chief Financial Officer,Finance
-MSFT-1-2-1,Frank Brod,MSFT-1-2,profile,profile,VP de Contabilidad,VP Accounting,Finance
-MSFT-1-2-1-1,Alice Jolla,MSFT-1-2-1,profile,profile,Director de Contabilidad,Director Accounting,Finance
-MSFT-1-2-1-1-1,John Smith,MSFT-1-2-1-1,profile,profile,Manager de Contabilidad,Accounting Manager,Finance
-MSFT-1-2-2,Alice Jolla,MSFT-1-2,profile,profile,VP de Relaciones con Inversores,VP Investor Relations,Finance
-MSFT-1-2-2-1,Chris Suh,MSFT-1-2-2,profile,profile,Director de Relaciones con Inversores,Director Investor Relations,Finance
-MSFT-1-2-2-1-1,Michael Spencer,MSFT-1-2-2-1,profile,profile,Manager de Relaciones con Inversores,Investor Relations Manager,Finance
-MSFT-1-3,Judson Althoff,MSFT-1,profile,profile,EVP de Comercialización,Executive VP Commercial,Commercial
-MSFT-1-3-1,Gavriella Schuster,MSFT-1-3,profile,profile,VP de One Commercial Partner,VP One Commercial,Commercial
-MSFT-1-3-1-1,Nicole Dezen,MSFT-1-3-1,profile,profile,Director de One Commercial Partner,Director One Commercial Partner,Commercial
-MSFT-1-3-1-1-1,Rodney Clark,MSFT-1-3-1-1,profile,profile,Manager de Partners,Partners Manager,Commercial
-MSFT-1-3-2,Jean-Philippe Courtois,MSFT-1-3,profile,profile,VP de Ventas,VP Sales,Sales
-MSFT-1-3-2-1,Judson Althoff,MSFT-1-3-2,profile,profile,Director de Ventas Globales,Director Global Sales,Sales
-MSFT-1-3-2-1-1,Orlando Ayala,MSFT-1-3-2-1,profile,profile,Manager de Ventas,Sales Manager,Sales
-MSFT-1-4,Scott Guthrie,MSFT-1,profile,profile,EVP de Cloud y AI,Executive VP Cloud & AI,Technology
-MSFT-1-4-1,Scott Guthrie,MSFT-1-4,profile,profile,VP de Azure,VP Azure,Cloud
-MSFT-1-4-1-1,Sam Schillace,MSFT-1-4-1,profile,profile,Director de Azure,Director Azure,Cloud
-MSFT-1-4-1-1-1,Mark Russinovich,MSFT-1-4-1-1,profile,profile,Manager de Azure,Azure Manager,Cloud
-MSFT-1-4-2,Sam Schillace,MSFT-1-4,profile,profile,VP de AI,VP AI,Technology
-MSFT-1-4-2-1,Chris Bishop,MSFT-1-4-2,profile,profile,Director de AI,Director AI,Technology
-MSFT-1-4-2-1-1,Andrew Ng,MSFT-1-4-2-1,profile,profile,Manager de Machine Learning,ML Manager,Technology
-MSFT-1-5,Chris Capossela,MSFT-1,profile,profile,EVP de Marketing,Executive VP Marketing,Marketing
-MSFT-1-5-1,Chris Capossela,MSFT-1-5,profile,profile,VP de Marketing Global,VP Global Marketing,Marketing
-MSFT-1-5-1-1,Takeshi Numoto,MSFT-1-5-1,profile,profile,Director de Marketing Global,Director Global Marketing,Marketing
-MSFT-1-5-1-1-1,Kathleen Hall,MSFT-1-5-1-1,profile,profile,Manager de Marketing,Marketing Manager,Marketing
-MSFT-1-5-2,Takeshi Numoto,MSFT-1-5,profile,profile,VP de Marketing de Producto,VP Product Marketing,Marketing
-MSFT-1-5-2-1,Frank Shaw,MSFT-1-5-2,profile,profile,Director de Comunicaciones,Director Communications,Marketing
-MSFT-1-5-2-1-1,Steve Clayton,MSFT-1-5-2-1,profile,profile,Manager de Comunicaciones,Communications Manager,Marketing
+MSFT,Microsoft Corporation,,company,business,Empresa líder en software y servicios en la nube,CEO,Executive
+MSFT-1,Satya Nadella,MSFT,profile,work,CEO de Microsoft desde 2014,Chief Executive Officer,Executive
+MSFT-1-1,Brad Smith,MSFT-1,profile,gavel,Presidente y VP Legal,President & Chief Legal Officer,Legal
+MSFT-1-1-1,Julie Brill,MSFT-1-1,profile,security,VP de Privacidad,VP Privacy,Legal
+MSFT-1-1-1-1,Tom Burt,MSFT-1-1-1,profile,security,Director de Privacidad,Director Privacy,Legal
+MSFT-1-1-1-1-1,Sarah Johnson,MSFT-1-1-1-1,profile,policy,Manager de Privacidad,Privacy Manager,Legal
+MSFT-1-1-2,Tom Burt,MSFT-1-1,profile,policy,VP de Seguridad Digital,VP Digital Security,Legal
+MSFT-1-1-2-1,Charlie Bell,MSFT-1-1-2,profile,verified_user,Director de Seguridad Digital,Director Digital Security,Legal
+MSFT-1-1-2-1-1,Mark Russinovich,MSFT-1-1-2-1,profile,gavel,Manager de Seguridad,Security Manager,Legal
+MSFT-1-2,Amy Hood,MSFT-1,profile,account_balance_wallet,CFO de Microsoft,Chief Financial Officer,Finance
+MSFT-1-2-1,Frank Brod,MSFT-1-2,profile,analytics,VP de Contabilidad,VP Accounting,Finance
+MSFT-1-2-1-1,Alice Jolla,MSFT-1-2-1,profile,payment,Director de Contabilidad,Director Accounting,Finance
+MSFT-1-2-1-1-1,John Smith,MSFT-1-2-1-1,profile,trending_up,Manager de Contabilidad,Accounting Manager,Finance
+MSFT-1-2-2,Alice Jolla,MSFT-1-2,profile,payment,VP de Relaciones con Inversores,VP Investor Relations,Finance
+MSFT-1-2-2-1,Chris Suh,MSFT-1-2-2,profile,account_balance_wallet,Director de Relaciones con Inversores,Director Investor Relations,Finance
+MSFT-1-2-2-1-1,Michael Spencer,MSFT-1-2-2-1,profile,analytics,Manager de Relaciones con Inversores,Investor Relations Manager,Finance
+MSFT-1-3,Judson Althoff,MSFT-1,profile,music_note,EVP de Comercialización,Executive VP Commercial,Commercial
+MSFT-1-3-1,Gavriella Schuster,MSFT-1-3,profile,fitness_center,VP de One Commercial Partner,VP One Commercial,Commercial
+MSFT-1-3-1-1,Nicole Dezen,MSFT-1-3-1,profile,gavel,Director de One Commercial Partner,Director One Commercial Partner,Commercial
+MSFT-1-3-1-1-1,Rodney Clark,MSFT-1-3-1-1,profile,music_note,Manager de Partners,Partners Manager,Commercial
+MSFT-1-3-2,Jean-Philippe Courtois,MSFT-1-3,profile,storefront,VP de Ventas,VP Sales,Sales
+MSFT-1-3-2-1,Judson Althoff,MSFT-1-3-2,profile,shopping_cart,Director de Ventas Globales,Director Global Sales,Sales
+MSFT-1-3-2-1-1,Orlando Ayala,MSFT-1-3-2-1,profile,loyalty,Manager de Ventas,Sales Manager,Sales
+MSFT-1-4,Scott Guthrie,MSFT-1,profile,memory,EVP de Cloud y AI,Executive VP Cloud & AI,Technology
+MSFT-1-4-1,Scott Guthrie,MSFT-1-4,profile,router,VP de Azure,VP Azure,Cloud
+MSFT-1-4-1-1,Sam Schillace,MSFT-1-4-1,profile,cloud,Director de Azure,Director Azure,Cloud
+MSFT-1-4-1-1-1,Mark Russinovich,MSFT-1-4-1-1,profile,memory,Manager de Azure,Azure Manager,Cloud
+MSFT-1-4-2,Sam Schillace,MSFT-1-4,profile,code,VP de AI,VP AI,Technology
+MSFT-1-4-2-1,Chris Bishop,MSFT-1-4-2,profile,developer_mode,Director de AI,Director AI,Technology
+MSFT-1-4-2-1-1,Andrew Ng,MSFT-1-4-2-1,profile,developer_mode,Manager de Machine Learning,ML Manager,Technology
+MSFT-1-5,Chris Capossela,MSFT-1,profile,point_of_sale,EVP de Marketing,Executive VP Marketing,Marketing
+MSFT-1-5-1,Chris Capossela,MSFT-1-5,profile,campaign,VP de Marketing Global,VP Global Marketing,Marketing
+MSFT-1-5-1-1,Takeshi Numoto,MSFT-1-5-1,profile,local_offer,Director de Marketing Global,Director Global Marketing,Marketing
+MSFT-1-5-1-1-1,Kathleen Hall,MSFT-1-5-1-1,profile,campaign,Manager de Marketing,Marketing Manager,Marketing
+MSFT-1-5-2,Takeshi Numoto,MSFT-1-5,profile,storefront,VP de Marketing de Producto,VP Product Marketing,Marketing
+MSFT-1-5-2-1,Frank Shaw,MSFT-1-5-2,profile,local_offer,Director de Comunicaciones,Director Communications,Marketing
+MSFT-1-5-2-1-1,Steve Clayton,MSFT-1-5-2-1,profile,storefront,Manager de Comunicaciones,Communications Manager,Marketing
 
 
-GOOGL,Alphabet Inc.,,company,detail,Empresa matriz de Google y otras subsidiarias,CEO,Executive
-GOOGL-1,Sundar Pichai,GOOGL,profile,profile,CEO de Alphabet y Google,Chief Executive Officer,Executive
-GOOGL-1-1,Ruth Porat,GOOGL-1,profile,profile,CFO de Alphabet,Chief Financial Officer,Finance
-GOOGL-1-1-1,Allan Thygesen,GOOGL-1-1,profile,profile,VP de Google Ads,VP Google Ads,Advertising
-GOOGL-1-1-1-1,Jerry Dischler,GOOGL-1-1-1,profile,profile,Director de Productos Publicitarios,Director Ad Products,Advertising
-GOOGL-1-1-1-1-1,John Smith,GOOGL-1-1-1-1,profile,profile,Manager de Google Ads,Google Ads Manager,Advertising
-GOOGL-1-1-2,Porat Ruth,GOOGL-1-1,profile,profile,VP de Finanzas Corporativas,VP Corporate Finance,Finance
-GOOGL-1-1-2-1,Porat Ruth,GOOGL-1-1-2,profile,profile,Director de Inversiones,Director Investments,Finance
-GOOGL-1-1-2-1-1,David Brown,GOOGL-1-1-2-1,profile,profile,Manager de Inversiones,Investments Manager,Finance
-GOOGL-1-2,Kent Walker,GOOGL-1,profile,profile,VP Legal y Asuntos Globales,VP Legal & Global Affairs,Legal
-GOOGL-1-2-1,Kent Walker,GOOGL-1-2,profile,profile,VP de Privacidad,VP Privacy,Legal
-GOOGL-1-2-1-1,Melanie Nakagawa,GOOGL-1-2-1,profile,profile,Director de Privacidad,Director Privacy,Legal
-GOOGL-1-2-2,Kent Walker,GOOGL-1-2,profile,profile,VP de Asuntos Globales,VP Global Affairs,Legal
-GOOGL-1-2-2-1,Karan Bhatia,GOOGL-1-2-2,profile,profile,Director de Asuntos Globales,Director Global Affairs,Legal
-GOOGL-1-3,Philipp Schindler,GOOGL-1,profile,profile,VP de Comercialización,VP Commercial,Commercial
-GOOGL-1-3-1,Philipp Schindler,GOOGL-1-3,profile,profile,VP de Ventas Globales,VP Global Sales,Sales
-GOOGL-1-3-1-1,Caroline Atkinson,GOOGL-1-3-1,profile,profile,Director de Ventas Globales,Director Global Sales,Sales
-GOOGL-1-3-2,Philipp Schindler,GOOGL-1-3,profile,profile,VP de Marketing,VP Marketing,Marketing
-GOOGL-1-3-2-1,Lorraine Twohill,GOOGL-1-3-2,profile,profile,Director de Marketing,Director Marketing,Marketing
-GOOGL-1-4,Prabhakar Raghavan,GOOGL-1,profile,profile,VP de Búsqueda,VP Search,Technology
-GOOGL-1-4-1,Prabhakar Raghavan,GOOGL-1-4,profile,profile,VP de Búsqueda Web,VP Web Search,Technology
-GOOGL-1-4-1-1,Ben Gomes,GOOGL-1-4-1,profile,profile,Director de Búsqueda Web,Director Web Search,Technology
-GOOGL-1-4-2,Prabhakar Raghavan,GOOGL-1-4,profile,profile,VP de Búsqueda de Imágenes,VP Image Search,Technology
-GOOGL-1-4-2-1,John Giannandrea,GOOGL-1-4-2,profile,profile,Director de Búsqueda de Imágenes,Director Image Search,Technology
-GOOGL-1-5,Hiroshi Lockheimer,GOOGL-1,profile,profile,VP de Android,VP Android,Technology
-GOOGL-1-5-1,Hiroshi Lockheimer,GOOGL-1-5,profile,profile,VP de Android Platform,VP Android Platform,Technology
-GOOGL-1-5-1-1,Dave Burke,GOOGL-1-5-1,profile,profile,Director de Android Platform,Director Android Platform,Technology
-GOOGL-1-5-2,Hiroshi Lockheimer,GOOGL-1-5,profile,profile,VP de Android Apps,VP Android Apps,Technology
-GOOGL-1-5-2-1,Stephanie Cuthbertson,GOOGL-1-5-2,profile,profile,Director de Android Apps,Director Android Apps,Technology
-GOOGL-1-6,Jeff Dean,GOOGL-1,profile,profile,VP de Google AI,VP Google AI,Technology
-GOOGL-1-6-1,Jeff Dean,GOOGL-1-6,profile,profile,VP de Machine Learning,VP Machine Learning,Technology
-GOOGL-1-6-1-1,Geoffrey Hinton,GOOGL-1-6-1,profile,profile,Director de Machine Learning,Director Machine Learning,Technology
-GOOGL-1-6-2,Jeff Dean,GOOGL-1-6,profile,profile,VP de Deep Learning,VP Deep Learning,Technology
-GOOGL-1-6-2-1,Yann LeCun,GOOGL-1-6-2,profile,profile,Director de Deep Learning,Director Deep Learning,Technology
-GOOGL-1-7,Thomas Kurian,GOOGL-1,profile,profile,VP de Google Cloud,VP Google Cloud,Cloud
-GOOGL-1-7-1,Thomas Kurian,GOOGL-1-7,profile,profile,VP de Google Cloud Platform,VP Google Cloud Platform,Cloud
-GOOGL-1-7-1-1,Urs Hölzle,GOOGL-1-7-1,profile,profile,Director de Google Cloud Platform,Director Google Cloud Platform,Cloud
-GOOGL-1-7-2,Thomas Kurian,GOOGL-1-7,profile,profile,VP de Google Workspace,VP Google Workspace,Cloud
-GOOGL-1-7-2-1,Javier Soltero,GOOGL-1-7-2,profile,profile,Director de Google Workspace,Director Google Workspace,Cloud
+GOOGL,Alphabet Inc.,,company,account_balance,Empresa matriz de Google y otras subsidiarias,CEO,Executive
+GOOGL-1,Sundar Pichai,GOOGL,profile,account_balance,CEO de Alphabet y Google,Chief Executive Officer,Executive
+GOOGL-1-1,Ruth Porat,GOOGL-1,profile,analytics,CFO de Alphabet,Chief Financial Officer,Finance
+GOOGL-1-1-1,Allan Thygesen,GOOGL-1-1,profile,point_of_sale,VP de Google Ads,VP Google Ads,Advertising
+GOOGL-1-1-1-1,Jerry Dischler,GOOGL-1-1-1,profile,verified,Director de Productos Publicitarios,Director Ad Products,Advertising
+GOOGL-1-1-1-1-1,John Smith,GOOGL-1-1-1-1,profile,grass,Manager de Google Ads,Google Ads Manager,Advertising
+GOOGL-1-1-2,Porat Ruth,GOOGL-1-1,profile,trending_up,VP de Finanzas Corporativas,VP Corporate Finance,Finance
+GOOGL-1-1-2-1,Porat Ruth,GOOGL-1-1-2,profile,account_balance_wallet,Director de Inversiones,Director Investments,Finance
+GOOGL-1-1-2-1-1,David Brown,GOOGL-1-1-2-1,profile,payment,Manager de Inversiones,Investments Manager,Finance
+GOOGL-1-2,Kent Walker,GOOGL-1,profile,security,VP Legal y Asuntos Globales,VP Legal & Global Affairs,Legal
+GOOGL-1-2-1,Kent Walker,GOOGL-1-2,profile,verified_user,VP de Privacidad,VP Privacy,Legal
+GOOGL-1-2-1-1,Melanie Nakagawa,GOOGL-1-2-1,profile,verified_user,Director de Privacidad,Director Privacy,Legal
+GOOGL-1-2-2,Kent Walker,GOOGL-1-2,profile,security,VP de Asuntos Globales,VP Global Affairs,Legal
+GOOGL-1-2-2-1,Karan Bhatia,GOOGL-1-2-2,profile,gavel,Director de Asuntos Globales,Director Global Affairs,Legal
+GOOGL-1-3,Philipp Schindler,GOOGL-1,profile,message,VP de Comercialización,VP Commercial,Commercial
+GOOGL-1-3-1,Philipp Schindler,GOOGL-1-3,profile,storefront,VP de Ventas Globales,VP Global Sales,Sales
+GOOGL-1-3-1-1,Caroline Atkinson,GOOGL-1-3-1,profile,shopping_cart,Director de Ventas Globales,Director Global Sales,Sales
+GOOGL-1-3-2,Philipp Schindler,GOOGL-1-3,profile,local_offer,VP de Marketing,VP Marketing,Marketing
+GOOGL-1-3-2-1,Lorraine Twohill,GOOGL-1-3-2,profile,point_of_sale,Director de Marketing,Director Marketing,Marketing
+GOOGL-1-4,Prabhakar Raghavan,GOOGL-1,profile,computer,VP de Búsqueda,VP Search,Technology
+GOOGL-1-4-1,Prabhakar Raghavan,GOOGL-1-4,profile,code,VP de Búsqueda Web,VP Web Search,Technology
+GOOGL-1-4-1-1,Ben Gomes,GOOGL-1-4-1,profile,developer_mode,Director de Búsqueda Web,Director Web Search,Technology
+GOOGL-1-4-2,Prabhakar Raghavan,GOOGL-1-4,profile,code,VP de Búsqueda de Imágenes,VP Image Search,Technology
+GOOGL-1-4-2-1,John Giannandrea,GOOGL-1-4-2,profile,developer_mode,Director de Búsqueda de Imágenes,Director Image Search,Technology
+GOOGL-1-5,Hiroshi Lockheimer,GOOGL-1,profile,memory,VP de Android,VP Android,Technology
+GOOGL-1-5-1,Hiroshi Lockheimer,GOOGL-1-5,profile,memory,VP de Android Platform,VP Android Platform,Technology
+GOOGL-1-5-1-1,Dave Burke,GOOGL-1-5-1,profile,memory,Director de Android Platform,Director Android Platform,Technology
+GOOGL-1-5-2,Hiroshi Lockheimer,GOOGL-1-5,profile,computer,VP de Android Apps,VP Android Apps,Technology
+GOOGL-1-5-2-1,Stephanie Cuthbertson,GOOGL-1-5-2,profile,memory,Director de Android Apps,Director Android Apps,Technology
+GOOGL-1-6,Jeff Dean,GOOGL-1,profile,developer_mode,VP de Google AI,VP Google AI,Technology
+GOOGL-1-6-1,Jeff Dean,GOOGL-1-6,profile,developer_mode,VP de Machine Learning,VP Machine Learning,Technology
+GOOGL-1-6-1-1,Geoffrey Hinton,GOOGL-1-6-1,profile,memory,Director de Machine Learning,Director Machine Learning,Technology
+GOOGL-1-6-2,Jeff Dean,GOOGL-1-6,profile,developer_mode,VP de Deep Learning,VP Deep Learning,Technology
+GOOGL-1-6-2-1,Yann LeCun,GOOGL-1-6-2,profile,computer,Director de Deep Learning,Director Deep Learning,Technology
+GOOGL-1-7,Thomas Kurian,GOOGL-1,profile,cloud,VP de Google Cloud,VP Google Cloud,Cloud
+GOOGL-1-7-1,Thomas Kurian,GOOGL-1-7,profile,memory,VP de Google Cloud Platform,VP Google Cloud Platform,Cloud
+GOOGL-1-7-1-1,Urs Hölzle,GOOGL-1-7-1,profile,cloud,Director de Google Cloud Platform,Director Google Cloud Platform,Cloud
+GOOGL-1-7-2,Thomas Kurian,GOOGL-1-7,profile,router,VP de Google Workspace,VP Google Workspace,Cloud
+GOOGL-1-7-2-1,Javier Soltero,GOOGL-1-7-2,profile,router,Director de Google Workspace,Director Google Workspace,Cloud
 
 
-AMZN,Amazon.com Inc.,,company,detail,Empresa líder en comercio electrónico y servicios en la nube,CEO,Executive
-AMZN-1,Andy Jassy,AMZN,profile,profile,CEO de Amazon desde 2021,Chief Executive Officer,Executive
-AMZN-1-1,Brian Olsavsky,AMZN-1,profile,profile,CFO de Amazon,Chief Financial Officer,Finance
-AMZN-1-1-1,John Felton,AMZN-1-1,profile,profile,VP de Finanzas Globales,VP Global Finance,Finance
-AMZN-1-1-1-1,Tom Szkutak,AMZN-1-1-1,profile,profile,Director de Finanzas Corporativas,Director Corporate Finance,Finance
-AMZN-1-1-2,Tom Szkutak,AMZN-1-1,profile,profile,VP de Contabilidad,VP Accounting,Finance
-AMZN-1-1-2-1,Alice Jolla,AMZN-1-1-2,profile,profile,Director de Relaciones con Inversores,Director Investor Relations,Finance
-AMZN-1-2,David Zapolsky,AMZN-1,profile,profile,VP Legal y Secretario General,VP Legal & General Counsel,Legal
-AMZN-1-2-1,David Zapolsky,AMZN-1-2,profile,profile,VP de Asuntos Legales,VP Legal Affairs,Legal
-AMZN-1-2-1-1,Melanie Nakagawa,AMZN-1-2-1,profile,profile,Director de Cumplimiento,Director Compliance,Legal
-AMZN-1-2-2,David Zapolsky,AMZN-1-2,profile,profile,VP de Cumplimiento,VP Compliance,Legal
-AMZN-1-2-2-1,Karan Bhatia,AMZN-1-2-2,profile,profile,Director de Asuntos Legales,Director Legal Affairs,Legal
-AMZN-1-3,Doug Herrington,AMZN-1,profile,profile,VP de Amazon Stores,VP Amazon Stores,Retail
-AMZN-1-3-1,Doug Herrington,AMZN-1-3,profile,profile,VP de Amazon.com,VP Amazon.com,Retail
-AMZN-1-3-1-1,Christie Smith,AMZN-1-3-1,profile,profile,Director de Amazon.com,Director Amazon.com,Retail
-AMZN-1-3-2,Doug Herrington,AMZN-1-3,profile,profile,VP de Amazon Fresh,VP Amazon Fresh,Retail
-AMZN-1-3-2-1,Stephenie Landry,AMZN-1-3-2,profile,profile,Director de Amazon Fresh,Director Amazon Fresh,Retail
-AMZN-1-4,Adam Selipsky,AMZN-1,profile,profile,VP de AWS,VP AWS,Cloud
-AMZN-1-4-1,Adam Selipsky,AMZN-1-4,profile,profile,VP de AWS Compute,VP AWS Compute,Cloud
-AMZN-1-4-1-1,Peter DeSantis,AMZN-1-4-1,profile,profile,Director de AWS Compute,Director AWS Compute,Cloud
-AMZN-1-4-2,Adam Selipsky,AMZN-1-4,profile,profile,VP de AWS Storage,VP AWS Storage,Cloud
-AMZN-1-4-2-1,James Hamilton,AMZN-1-4-2,profile,profile,Director de AWS Storage,Director AWS Storage,Cloud
-AMZN-1-5,Dave Clark,AMZN-1,profile,profile,VP de Operaciones Globales,VP Global Operations,Operations
-AMZN-1-5-1,Dave Clark,AMZN-1-5,profile,profile,VP de Logística,VP Logistics,Operations
-AMZN-1-5-1-1,John Felton,AMZN-1-5-1,profile,profile,Director de Logística,Director Logistics,Operations
-AMZN-1-5-2,Dave Clark,AMZN-1-5,profile,profile,VP de Fulfillment,VP Fulfillment,Operations
-AMZN-1-5-2-1,Alicia Boler Davis,AMZN-1-5-2,profile,profile,Director de Fulfillment,Director Fulfillment,Operations
-AMZN-1-6,Beth Galetti,AMZN-1,profile,profile,VP de Recursos Humanos,VP Human Resources,HR
-AMZN-1-6-1,Beth Galetti,AMZN-1-6,profile,profile,VP de Recursos Humanos,VP Human Resources,HR
-AMZN-1-6-1-1,Christie Smith,AMZN-1-6-1,profile,profile,Director de Recursos Humanos,Director Human Resources,HR
-AMZN-1-6-2,Beth Galetti,AMZN-1-6,profile,profile,VP de Diversidad,VP Diversity,HR
-AMZN-1-6-2-1,Candace Thille,AMZN-1-6-2,profile,profile,Director de Diversidad,Director Diversity,HR
+AMZN,Amazon.com Inc.,,company,account_balance,Empresa líder en comercio electrónico y servicios en la nube,CEO,Executive
+AMZN-1,Andy Jassy,AMZN,profile,work,CEO de Amazon desde 2021,Chief Executive Officer,Executive
+AMZN-1-1,Brian Olsavsky,AMZN-1,profile,trending_up,CFO de Amazon,Chief Financial Officer,Finance
+AMZN-1-1-1,John Felton,AMZN-1-1,profile,account_balance_wallet,VP de Finanzas Globales,VP Global Finance,Finance
+AMZN-1-1-1-1,Tom Szkutak,AMZN-1-1-1,profile,payment,Director de Finanzas Corporativas,Director Corporate Finance,Finance
+AMZN-1-1-2,Tom Szkutak,AMZN-1-1,profile,account_balance_wallet,VP de Contabilidad,VP Accounting,Finance
+AMZN-1-1-2-1,Alice Jolla,AMZN-1-1-2,profile,analytics,Director de Relaciones con Inversores,Director Investor Relations,Finance
+AMZN-1-2,David Zapolsky,AMZN-1,profile,gavel,VP Legal y Secretario General,VP Legal & General Counsel,Legal
+AMZN-1-2-1,David Zapolsky,AMZN-1-2,profile,verified_user,VP de Asuntos Legales,VP Legal Affairs,Legal
+AMZN-1-2-1-1,Melanie Nakagawa,AMZN-1-2-1,profile,verified_user,Director de Cumplimiento,Director Compliance,Legal
+AMZN-1-2-2,David Zapolsky,AMZN-1-2,profile,verified_user,VP de Cumplimiento,VP Compliance,Legal
+AMZN-1-2-2-1,Karan Bhatia,AMZN-1-2-2,profile,policy,Director de Asuntos Legales,Director Legal Affairs,Legal
+AMZN-1-3,Doug Herrington,AMZN-1,profile,shopping_cart,VP de Amazon Stores,VP Amazon Stores,Retail
+AMZN-1-3-1,Doug Herrington,AMZN-1-3,profile,shopping_cart,VP de Amazon.com,VP Amazon.com,Retail
+AMZN-1-3-1-1,Christie Smith,AMZN-1-3-1,profile,store,Director de Amazon.com,Director Amazon.com,Retail
+AMZN-1-3-2,Doug Herrington,AMZN-1-3,profile,store,VP de Amazon Fresh,VP Amazon Fresh,Retail
+AMZN-1-3-2-1,Stephenie Landry,AMZN-1-3-2,profile,store,Director de Amazon Fresh,Director Amazon Fresh,Retail
+AMZN-1-4,Adam Selipsky,AMZN-1,profile,router,VP de AWS,VP AWS,Cloud
+AMZN-1-4-1,Adam Selipsky,AMZN-1-4,profile,memory,VP de AWS Compute,VP AWS Compute,Cloud
+AMZN-1-4-1-1,Peter DeSantis,AMZN-1-4-1,profile,storage,Director de AWS Compute,Director AWS Compute,Cloud
+AMZN-1-4-2,Adam Selipsky,AMZN-1-4,profile,cloud,VP de AWS Storage,VP AWS Storage,Cloud
+AMZN-1-4-2-1,James Hamilton,AMZN-1-4-2,profile,cloud,Director de AWS Storage,Director AWS Storage,Cloud
+AMZN-1-5,Dave Clark,AMZN-1,profile,settings,VP de Operaciones Globales,VP Global Operations,Operations
+AMZN-1-5-1,Dave Clark,AMZN-1-5,profile,warehouse,VP de Logística,VP Logistics,Operations
+AMZN-1-5-1-1,John Felton,AMZN-1-5-1,profile,settings,Director de Logística,Director Logistics,Operations
+AMZN-1-5-2,Dave Clark,AMZN-1-5,profile,factory,VP de Fulfillment,VP Fulfillment,Operations
+AMZN-1-5-2-1,Alicia Boler Davis,AMZN-1-5-2,profile,factory,Director de Fulfillment,Director Fulfillment,Operations
+AMZN-1-6,Beth Galetti,AMZN-1,profile,people_alt,VP de Recursos Humanos,VP Human Resources,HR
+AMZN-1-6-1,Beth Galetti,AMZN-1-6,profile,school,VP de Recursos Humanos,VP Human Resources,HR
+AMZN-1-6-1-1,Christie Smith,AMZN-1-6-1,profile,psychology,Director de Recursos Humanos,Director Human Resources,HR
+AMZN-1-6-2,Beth Galetti,AMZN-1-6,profile,school,VP de Diversidad,VP Diversity,HR
+AMZN-1-6-2-1,Candace Thille,AMZN-1-6-2,profile,diversity_3,Director de Diversidad,Director Diversity,HR
 
 
-TSLA,Tesla Inc.,,company,detail,Empresa líder en vehículos eléctricos y energía sostenible,CEO,Executive
-TSLA-1,Elon Musk,TSLA,profile,profile,CEO de Tesla,Chief Executive Officer,Executive
-TSLA-1-1,Zachary Kirkhorn,TSLA-1,profile,profile,CFO de Tesla,Chief Financial Officer,Finance
-TSLA-1-1-1,Vaibhav Taneja,TSLA-1-1,profile,profile,VP de Contabilidad,VP Accounting,Finance
-TSLA-1-1-1-1,Martin Viecha,TSLA-1-1-1,profile,profile,VP de Finanzas Corporativas,VP Corporate Finance,Finance
-TSLA-1-1-2,Martin Viecha,TSLA-1-1,profile,profile,VP de Relaciones con Inversores,VP Investor Relations,Finance
-TSLA-1-1-2-1,Vaibhav Taneja,TSLA-1-1-2,profile,profile,VP de Tesorería,VP Treasury,Finance
-TSLA-1-2,Andrew Baglino,TSLA-1,profile,profile,CTO de Tesla,Chief Technology Officer,Technology
-TSLA-1-2-1,Drew Baglino,TSLA-1-2,profile,profile,VP de Ingeniería,VP Engineering,Engineering
-TSLA-1-2-1-1,Andrej Karpathy,TSLA-1-2-1,profile,profile,VP de AI,VP AI,Technology
-TSLA-1-2-2,Andrej Karpathy,TSLA-1-2,profile,profile,VP de Autopilot,VP Autopilot,Technology
-TSLA-1-2-2-1,Drew Baglino,TSLA-1-2-2,profile,profile,VP de Software,VP Software,Software
-TSLA-1-3,Tom Zhu,TSLA-1,profile,profile,VP de Producción Global,VP Global Production,Manufacturing
-TSLA-1-3-1,Chris Lister,TSLA-1-3,profile,profile,VP de Operaciones de Gigafactory,VP Gigafactory Operations,Manufacturing
-TSLA-1-3-1-1,Hansjörg Gemmingen,TSLA-1-3-1,profile,profile,VP de Calidad,VP Quality,Manufacturing
-TSLA-1-3-2,Hansjörg Gemmingen,TSLA-1-3,profile,profile,VP de Supply Chain,VP Supply Chain,Manufacturing
-TSLA-1-3-2-1,Chris Lister,TSLA-1-3-2,profile,profile,VP de Logística,VP Logistics,Manufacturing
-TSLA-1-4,Lars Moravy,TSLA-1,profile,profile,VP de Ingeniería de Vehículos,VP Vehicle Engineering,Engineering
-TSLA-1-4-1,Franz von Holzhausen,TSLA-1-4,profile,profile,VP de Diseño,VP Design,Design
-TSLA-1-4-1-1,Pete Bannon,TSLA-1-4-1,profile,profile,VP de Hardware,VP Hardware,Hardware
-TSLA-1-4-2,Pete Bannon,TSLA-1-4,profile,profile,VP de Ingeniería Mecánica,VP Mechanical Engineering,Engineering
-TSLA-1-4-2-1,Franz von Holzhausen,TSLA-1-4-2,profile,profile,VP de Aerodinámica,VP Aerodynamics,Engineering
-TSLA-1-5,Jerome Guillen,TSLA-1,profile,profile,VP de Vehículos,VP Vehicles,Vehicles
-TSLA-1-5-1,Stuart Bowers,TSLA-1-5,profile,profile,VP de Software,VP Software,Software
-TSLA-1-5-1-1,David Arnold,TSLA-1-5-1,profile,profile,VP de Servicios,VP Services,Services
-TSLA-1-5-2,David Arnold,TSLA-1-5,profile,profile,VP de Supercharger,VP Supercharger,Services
-TSLA-1-5-2-1,Stuart Bowers,TSLA-1-5-2,profile,profile,VP de Red de Carga,VP Charging Network,Services
+TSLA,Tesla Inc.,,company,account_balance,Empresa líder en vehículos eléctricos y energía sostenible,CEO,Executive
+TSLA-1,Elon Musk,TSLA,profile,work,CEO de Tesla,Chief Executive Officer,Executive
+TSLA-1-1,Zachary Kirkhorn,TSLA-1,profile,account_balance_wallet,CFO de Tesla,Chief Financial Officer,Finance
+TSLA-1-1-1,Vaibhav Taneja,TSLA-1-1,profile,trending_up,VP de Contabilidad,VP Accounting,Finance
+TSLA-1-1-1-1,Martin Viecha,TSLA-1-1-1,profile,payment,VP de Finanzas Corporativas,VP Corporate Finance,Finance
+TSLA-1-1-2,Martin Viecha,TSLA-1-1,profile,analytics,VP de Relaciones con Inversores,VP Investor Relations,Finance
+TSLA-1-1-2-1,Vaibhav Taneja,TSLA-1-1-2,profile,trending_up,VP de Tesorería,VP Treasury,Finance
+TSLA-1-2,Andrew Baglino,TSLA-1,profile,computer,CTO de Tesla,Chief Technology Officer,Technology
+TSLA-1-2-1,Drew Baglino,TSLA-1-2,profile,build,VP de Ingeniería,VP Engineering,Engineering
+TSLA-1-2-1-1,Andrej Karpathy,TSLA-1-2-1,profile,computer,VP de AI,VP AI,Technology
+TSLA-1-2-2,Andrej Karpathy,TSLA-1-2,profile,memory,VP de Autopilot,VP Autopilot,Technology
+TSLA-1-2-2-1,Drew Baglino,TSLA-1-2-2,profile,code,VP de Software,VP Software,Software
+TSLA-1-3,Tom Zhu,TSLA-1,profile,engineering,VP de Producción Global,VP Global Production,Manufacturing
+TSLA-1-3-1,Chris Lister,TSLA-1-3,profile,construction,VP de Operaciones de Gigafactory,VP Gigafactory Operations,Manufacturing
+TSLA-1-3-1-1,Hansjörg Gemmingen,TSLA-1-3-1,profile,build,VP de Calidad,VP Quality,Manufacturing
+TSLA-1-3-2,Hansjörg Gemmingen,TSLA-1-3,profile,construction,VP de Supply Chain,VP Supply Chain,Manufacturing
+TSLA-1-3-2-1,Chris Lister,TSLA-1-3-2,profile,construction,VP de Logística,VP Logistics,Manufacturing
+TSLA-1-4,Lars Moravy,TSLA-1,profile,construction,VP de Ingeniería de Vehículos,VP Vehicle Engineering,Engineering
+TSLA-1-4-1,Franz von Holzhausen,TSLA-1-4,profile,color_lens,VP de Diseño,VP Design,Design
+TSLA-1-4-1-1,Pete Bannon,TSLA-1-4-1,profile,storage,VP de Hardware,VP Hardware,Hardware
+TSLA-1-4-2,Pete Bannon,TSLA-1-4,profile,settings,VP de Ingeniería Mecánica,VP Mechanical Engineering,Engineering
+TSLA-1-4-2-1,Franz von Holzhausen,TSLA-1-4-2,profile,build,VP de Aerodinámica,VP Aerodynamics,Engineering
+TSLA-1-5,Jerome Guillen,TSLA-1,profile,local_shipping,VP de Vehículos,VP Vehicles,Vehicles
+TSLA-1-5-1,Stuart Bowers,TSLA-1-5,profile,developer_mode,VP de Software,VP Software,Software
+TSLA-1-5-1-1,David Arnold,TSLA-1-5-1,profile,headset_mic,VP de Servicios,VP Services,Services
+TSLA-1-5-2,David Arnold,TSLA-1-5,profile,help,VP de Supercharger,VP Supercharger,Services
+TSLA-1-5-2-1,Stuart Bowers,TSLA-1-5-2,profile,headset_mic,VP de Red de Carga,VP Charging Network,Services
 
-NVDA,NVIDIA Corporation,,company,detail,Empresa líder en GPUs y computación acelerada,CEO,Executive
-NVDA-1,Jensen Huang,NVDA,profile,profile,CEO y Co-fundador de NVIDIA,Chief Executive Officer,Executive
-NVDA-1-1,Colette Kress,NVDA-1,profile,profile,CFO de NVIDIA,Chief Financial Officer,Finance
-NVDA-1-1-1,Simona Jankowski,NVDA-1-1,profile,profile,VP de Relaciones con Inversores,VP Investor Relations,Finance
-NVDA-1-1-1-1,Tim Teter,NVDA-1-1-1,profile,profile,VP de Finanzas Corporativas,VP Corporate Finance,Finance
-NVDA-1-1-2,Tim Teter,NVDA-1-1,profile,profile,VP de Asuntos Legales,VP Legal Affairs,Legal
-NVDA-1-1-2-1,Simona Jankowski,NVDA-1-1-2,profile,profile,VP de Cumplimiento,VP Compliance,Legal
-NVDA-1-2,Claire Delaunay,NVDA-1,profile,profile,CTO de NVIDIA,Chief Technology Officer,Technology
-NVDA-1-2-1,Jeff Fisher,NVDA-1-2,profile,profile,VP de Gaming,VP Gaming,Gaming
-NVDA-1-2-1-1,Ian Buck,NVDA-1-2-1,profile,profile,VP de GPU Gaming,VP GPU Gaming,Gaming
-NVDA-1-2-2,Ian Buck,NVDA-1-2,profile,profile,VP de Computación,VP Computing,Computing
-NVDA-1-2-2-1,Jeff Fisher,NVDA-1-2-2,profile,profile,VP de Datacenter,VP Datacenter,Technology
-NVDA-1-3,Brian Kelleher,NVDA-1,profile,profile,VP de Productos Gaming,VP Gaming Products,Gaming
-NVDA-1-3-1,Jeff Fisher,NVDA-1-3,profile,profile,VP de Marketing Gaming,VP Gaming Marketing,Gaming
-NVDA-1-3-1-1,John Berra,NVDA-1-3-1,profile,profile,VP de Ventas Gaming,VP Gaming Sales,Sales
-NVDA-1-3-2,John Berra,NVDA-1-3,profile,profile,VP de Marketing de Producto,VP Product Marketing,Marketing
-NVDA-1-3-2-1,Jeff Fisher,NVDA-1-3-2,profile,profile,VP de Comunicaciones,VP Communications,Marketing
-NVDA-1-4,Debora Shoquist,NVDA-1,profile,profile,VP de Operaciones,VP Operations,Operations
-NVDA-1-4-1,Mark Stevens,NVDA-1-4,profile,profile,VP de Fabricación,VP Manufacturing,Manufacturing
-NVDA-1-4-1-1,Tim Teter,NVDA-1-4-1,profile,profile,VP de Supply Chain,VP Supply Chain,Supply Chain
-NVDA-1-4-2,Tim Teter,NVDA-1-4,profile,profile,VP de Logística,VP Logistics,Operations
-NVDA-1-4-2-1,Mark Stevens,NVDA-1-4-2,profile,profile,VP de Calidad,VP Quality,Operations
-NVDA-1-5,David Shannon,NVDA-1,profile,profile,VP de Recursos Humanos,VP Human Resources,HR
-NVDA-1-5-1,Shannon McFayden,NVDA-1-5,profile,profile,VP de Diversidad,VP Diversity,HR
-NVDA-1-5-1-1,Mark Stevens,NVDA-1-5-1,profile,profile,VP de Talento,VP Talent,HR
-NVDA-1-5-2,Mark Stevens,NVDA-1-5,profile,profile,VP de Desarrollo,VP Development,HR
-NVDA-1-5-2-1,David Shannon,NVDA-1-5-2,profile,profile,VP de Cultura,VP Culture,HR
+NVDA,NVIDIA Corporation,,company,work,Empresa líder en GPUs y computación acelerada,CEO,Executive
+NVDA-1,Jensen Huang,NVDA,profile,work,CEO y Co-fundador de NVIDIA,Chief Executive Officer,Executive
+NVDA-1-1,Colette Kress,NVDA-1,profile,payment,CFO de NVIDIA,Chief Financial Officer,Finance
+NVDA-1-1-1,Simona Jankowski,NVDA-1-1,profile,trending_up,VP de Relaciones con Inversores,VP Investor Relations,Finance
+NVDA-1-1-1-1,Tim Teter,NVDA-1-1-1,profile,analytics,VP de Finanzas Corporativas,VP Corporate Finance,Finance
+NVDA-1-1-2,Tim Teter,NVDA-1-1,profile,security,VP de Asuntos Legales,VP Legal Affairs,Legal
+NVDA-1-1-2-1,Simona Jankowski,NVDA-1-1-2,profile,policy,VP de Cumplimiento,VP Compliance,Legal
+NVDA-1-2,Claire Delaunay,NVDA-1,profile,code,CTO de NVIDIA,Chief Technology Officer,Technology
+NVDA-1-2-1,Jeff Fisher,NVDA-1-2,profile,sports_esports,VP de Gaming,VP Gaming,Gaming
+NVDA-1-2-1-1,Ian Buck,NVDA-1-2-1,profile,casino,VP de GPU Gaming,VP GPU Gaming,Gaming
+NVDA-1-2-2,Ian Buck,NVDA-1-2,profile,computer,VP de Computación,VP Computing,Computing
+NVDA-1-2-2-1,Jeff Fisher,NVDA-1-2-2,profile,memory,VP de Datacenter,VP Datacenter,Technology
+NVDA-1-3,Brian Kelleher,NVDA-1,profile,casino,VP de Productos Gaming,VP Gaming Products,Gaming
+NVDA-1-3-1,Jeff Fisher,NVDA-1-3,profile,videogame_asset,VP de Marketing Gaming,VP Gaming Marketing,Gaming
+NVDA-1-3-1-1,John Berra,NVDA-1-3-1,profile,point_of_sale,VP de Ventas Gaming,VP Gaming Sales,Sales
+NVDA-1-3-2,John Berra,NVDA-1-3,profile,point_of_sale,VP de Marketing de Producto,VP Product Marketing,Marketing
+NVDA-1-3-2-1,Jeff Fisher,NVDA-1-3-2,profile,storefront,VP de Comunicaciones,VP Communications,Marketing
+NVDA-1-4,Debora Shoquist,NVDA-1,profile,build,VP de Operaciones,VP Operations,Operations
+NVDA-1-4-1,Mark Stevens,NVDA-1-4,profile,engineering,VP de Fabricación,VP Manufacturing,Manufacturing
+NVDA-1-4-1-1,Tim Teter,NVDA-1-4-1,profile,local_warehouse,VP de Supply Chain,VP Supply Chain,Supply Chain
+NVDA-1-4-2,Tim Teter,NVDA-1-4,profile,factory,VP de Logística,VP Logistics,Operations
+NVDA-1-4-2-1,Mark Stevens,NVDA-1-4-2,profile,warehouse,VP de Calidad,VP Quality,Operations
+NVDA-1-5,David Shannon,NVDA-1,profile,psychology,VP de Recursos Humanos,VP Human Resources,HR
+NVDA-1-5-1,Shannon McFayden,NVDA-1-5,profile,people_alt,VP de Diversidad,VP Diversity,HR
+NVDA-1-5-1-1,Mark Stevens,NVDA-1-5-1,profile,school,VP de Talento,VP Talent,HR
+NVDA-1-5-2,Mark Stevens,NVDA-1-5,profile,diversity_3,VP de Desarrollo,VP Development,HR
+NVDA-1-5-2-1,David Shannon,NVDA-1-5-2,profile,psychology,VP de Cultura,VP Culture,HR
 
-META,Meta Platforms Inc.,,company,detail,Empresa líder en redes sociales y realidad virtual,CEO,Executive
-META-1,Mark Zuckerberg,META,profile,profile,CEO y Fundador de Meta,Chief Executive Officer,Executive
-META-1-1,Susan Li,META-1,profile,profile,CFO de Meta,Chief Financial Officer,Finance
-META-1-1-1,Dave Wehner,META-1-1,profile,profile,VP de Estrategia Financiera,VP Financial Strategy,Finance
-META-1-1-1-1,Jennifer Newstead,META-1-1-1,profile,profile,VP Legal y Secretaria General,VP Legal & General Counsel,Legal
-META-1-1-1-1-1,Colin Stretch,META-1-1-1-1,profile,profile,Director Legal,Legal Director,Legal
-META-1-1-2,Jennifer Newstead,META-1-1,profile,profile,VP de Asuntos Legales,VP Legal Affairs,Legal
-META-1-1-2-1,Colin Stretch,META-1-1-2,profile,profile,Director de Privacidad,Director Privacy,Legal
-META-1-1-2-1-1,Erin Egan,META-1-1-2-1,profile,profile,Manager de Privacidad,Privacy Manager,Legal
-META-1-2,Nick Clegg,META-1,profile,profile,VP de Asuntos Globales,VP Global Affairs,Policy
-META-1-2-1,Nick Clegg,META-1-2,profile,profile,VP de Políticas Públicas,VP Public Policy,Policy
-META-1-2-1-1,Joel Kaplan,META-1-2-1,profile,profile,Director de Políticas Públicas,Director Public Policy,Policy
-META-1-2-1-1-1,Monika Bickert,META-1-2-1-1,profile,profile,Manager de Políticas,Policy Manager,Policy
-META-1-2-2,Joel Kaplan,META-1-2,profile,profile,VP de Asuntos Gubernamentales,VP Government Affairs,Policy
-META-1-2-2-1,Monika Bickert,META-1-2-2,profile,profile,Director de Asuntos Gubernamentales,Director Government Affairs,Policy
-META-1-2-2-1-1,Guy Rosen,META-1-2-2-1,profile,profile,Manager de Asuntos Gubernamentales,Government Affairs Manager,Policy
-META-1-3,Andrew Bosworth,META-1,profile,profile,CTO de Meta,Chief Technology Officer,Technology
-META-1-3-1,John Carmack,META-1-3,profile,profile,VP de Realidad Virtual,VP Virtual Reality,Technology
-META-1-3-1-1,Mike Schroepfer,META-1-3-1,profile,profile,Director de Realidad Virtual,Director Virtual Reality,Technology
-META-1-3-1-1-1,John Carmack,META-1-3-1-1,profile,profile,Manager de Oculus,Oculus Manager,Technology
-META-1-3-2,Mike Schroepfer,META-1-3,profile,profile,VP de Inteligencia Artificial,VP Artificial Intelligence,Technology
-META-1-3-2-1,Yann LeCun,META-1-3-2,profile,profile,Director de AI Research,Director AI Research,Technology
-META-1-3-2-1-1,Jerome Pesenti,META-1-3-2-1,profile,profile,Manager de AI,AI Manager,Technology
-META-1-4,Marne Levine,META-1,profile,profile,VP de Negocios Globales,VP Global Business,Business
-META-1-4-1,Marne Levine,META-1-4,profile,profile,VP de Facebook,VP Facebook,Social Media
-META-1-4-1-1,Adam Mosseri,META-1-4-1,profile,profile,Director de Facebook,Director Facebook,Social Media
-META-1-4-1-1-1,Tom Alison,META-1-4-1-1,profile,profile,Manager de Facebook,Facebook Manager,Social Media
-META-1-4-2,Adam Mosseri,META-1-4,profile,profile,VP de Instagram,VP Instagram,Social Media
-META-1-4-2-1,Tom Alison,META-1-4-2,profile,profile,Director de Instagram,Director Instagram,Social Media
-META-1-4-2-1-1,Adam Mosseri,META-1-4-2-1,profile,profile,Manager de Instagram,Instagram Manager,Social Media
-META-1-5,David Marcus,META-1,profile,profile,VP de Novi,VP Novi,Fintech
-META-1-5-1,David Marcus,META-1-5,profile,profile,VP de WhatsApp,VP WhatsApp,Messaging
-META-1-5-1-1,Will Cathcart,META-1-5-1,profile,profile,Director de WhatsApp,Director WhatsApp,Messaging
-META-1-5-1-1-1,David Marcus,META-1-5-1-1,profile,profile,Manager de WhatsApp,WhatsApp Manager,Messaging
-META-1-5-2,Will Cathcart,META-1-5,profile,profile,VP de Messenger,VP Messenger,Messaging
-META-1-5-2-1,Stan Chudnovsky,META-1-5-2,profile,profile,Director de Messenger,Director Messenger,Messaging
-META-1-5-2-1-1,Will Cathcart,META-1-5-2-1,profile,profile,Manager de Messenger,Messenger Manager,Messaging
-META-1-6,Sheryl Sandberg,META-1,profile,profile,COO de Meta,Chief Operating Officer,Operations
-META-1-6-1,Sheryl Sandberg,META-1-6,profile,profile,VP de Operaciones,VP Operations,Operations
-META-1-6-1-1,Justin Osofsky,META-1-6-1,profile,profile,Director de Operaciones,Director Operations,Operations
-META-1-6-1-1-1,Carolyn Everson,META-1-6-1-1,profile,profile,Manager de Operaciones,Operations Manager,Operations
-META-1-6-2,Justin Osofsky,META-1-6,profile,profile,VP de Ventas Globales,VP Global Sales,Sales
-META-1-6-2-1,Carolyn Everson,META-1-6-2,profile,profile,Director de Ventas Globales,Director Global Sales,Sales
-META-1-6-2-1-1,Nicola Mendelsohn,META-1-6-2-1,profile,profile,Manager de Ventas,Sales Manager,Sales
-META-1-7,Chris Cox,META-1,profile,profile,CPO de Meta,Chief Product Officer,Product
-META-1-7-1,Chris Cox,META-1-7,profile,profile,VP de Producto,VP Product,Product
-META-1-7-1-1,Adam Mosseri,META-1-7-1,profile,profile,Director de Producto,Director Product,Product
-META-1-7-1-1-1,Tom Alison,META-1-7-1-1,profile,profile,Manager de Producto,Product Manager,Product
-META-1-7-2,Adam Mosseri,META-1-7,profile,profile,VP de Experiencia de Usuario,VP User Experience,Product
-META-1-7-2-1,Tom Alison,META-1-7-2,profile,profile,Director de UX,Director UX,Product
-META-1-7-2-1-1,Adam Mosseri,META-1-7-2-1,profile,profile,Manager de UX,UX Manager,Product
+META,Meta Platforms Inc.,,company,account_balance,Empresa líder en redes sociales y realidad virtual,CEO,Executive
+META-1,Mark Zuckerberg,META,profile,account_balance,CEO y Fundador de Meta,Chief Executive Officer,Executive
+META-1-1,Susan Li,META-1,profile,account_balance_wallet,CFO de Meta,Chief Financial Officer,Finance
+META-1-1-1,Dave Wehner,META-1-1,profile,analytics,VP de Estrategia Financiera,VP Financial Strategy,Finance
+META-1-1-1-1,Jennifer Newstead,META-1-1-1,profile,gavel,VP Legal y Secretaria General,VP Legal & General Counsel,Legal
+META-1-1-1-1-1,Colin Stretch,META-1-1-1-1,profile,verified_user,Director Legal,Legal Director,Legal
+META-1-1-2,Jennifer Newstead,META-1-1,profile,security,VP de Asuntos Legales,VP Legal Affairs,Legal
+META-1-1-2-1,Colin Stretch,META-1-1-2,profile,policy,Director de Privacidad,Director Privacy,Legal
+META-1-1-2-1-1,Erin Egan,META-1-1-2-1,profile,gavel,Manager de Privacidad,Privacy Manager,Legal
+META-1-2,Nick Clegg,META-1,profile,fitness_center,VP de Asuntos Globales,VP Global Affairs,Policy
+META-1-2-1,Nick Clegg,META-1-2,profile,support_agent,VP de Políticas Públicas,VP Public Policy,Policy
+META-1-2-1-1,Joel Kaplan,META-1-2-1,profile,support_agent,Director de Políticas Públicas,Director Public Policy,Policy
+META-1-2-1-1-1,Monika Bickert,META-1-2-1-1,profile,settings,Manager de Políticas,Policy Manager,Policy
+META-1-2-2,Joel Kaplan,META-1-2,profile,construction,VP de Asuntos Gubernamentales,VP Government Affairs,Policy
+META-1-2-2-1,Monika Bickert,META-1-2-2,profile,pie_chart,Director de Asuntos Gubernamentales,Director Government Affairs,Policy
+META-1-2-2-1-1,Guy Rosen,META-1-2-2-1,profile,fitness_center,Manager de Asuntos Gubernamentales,Government Affairs Manager,Policy
+META-1-3,Andrew Bosworth,META-1,profile,memory,CTO de Meta,Chief Technology Officer,Technology
+META-1-3-1,John Carmack,META-1-3,profile,computer,VP de Realidad Virtual,VP Virtual Reality,Technology
+META-1-3-1-1,Mike Schroepfer,META-1-3-1,profile,code,Director de Realidad Virtual,Director Virtual Reality,Technology
+META-1-3-1-1-1,John Carmack,META-1-3-1-1,profile,memory,Manager de Oculus,Oculus Manager,Technology
+META-1-3-2,Mike Schroepfer,META-1-3,profile,developer_mode,VP de Inteligencia Artificial,VP Artificial Intelligence,Technology
+META-1-3-2-1,Yann LeCun,META-1-3-2,profile,code,Director de AI Research,Director AI Research,Technology
+META-1-3-2-1-1,Jerome Pesenti,META-1-3-2-1,profile,computer,Manager de AI,AI Manager,Technology
+META-1-4,Marne Levine,META-1,profile,school,VP de Negocios Globales,VP Global Business,Business
+META-1-4-1,Marne Levine,META-1-4,profile,share,VP de Facebook,VP Facebook,Social Media
+META-1-4-1-1,Adam Mosseri,META-1-4-1,profile,language,Director de Facebook,Director Facebook,Social Media
+META-1-4-1-1-1,Tom Alison,META-1-4-1-1,profile,group_work,Manager de Facebook,Facebook Manager,Social Media
+META-1-4-2,Adam Mosseri,META-1-4,profile,public,VP de Instagram,VP Instagram,Social Media
+META-1-4-2-1,Tom Alison,META-1-4-2,profile,public,Director de Instagram,Director Instagram,Social Media
+META-1-4-2-1-1,Adam Mosseri,META-1-4-2-1,profile,share,Manager de Instagram,Instagram Manager,Social Media
+META-1-5,David Marcus,META-1,profile,account_balance_wallet,VP de Novi,VP Novi,Fintech
+META-1-5-1,David Marcus,META-1-5,profile,chat,VP de WhatsApp,VP WhatsApp,Messaging
+META-1-5-1-1,Will Cathcart,META-1-5-1,profile,forum,Director de WhatsApp,Director WhatsApp,Messaging
+META-1-5-1-1-1,David Marcus,META-1-5-1-1,profile,message,Manager de WhatsApp,WhatsApp Manager,Messaging
+META-1-5-2,Will Cathcart,META-1-5,profile,support_agent,VP de Messenger,VP Messenger,Messaging
+META-1-5-2-1,Stan Chudnovsky,META-1-5-2,profile,chat,Director de Messenger,Director Messenger,Messaging
+META-1-5-2-1-1,Will Cathcart,META-1-5-2-1,profile,chat,Manager de Messenger,Messenger Manager,Messaging
+META-1-6,Sheryl Sandberg,META-1,profile,settings,COO de Meta,Chief Operating Officer,Operations
+META-1-6-1,Sheryl Sandberg,META-1-6,profile,settings,VP de Operaciones,VP Operations,Operations
+META-1-6-1-1,Justin Osofsky,META-1-6-1,profile,settings,Director de Operaciones,Director Operations,Operations
+META-1-6-1-1-1,Carolyn Everson,META-1-6-1-1,profile,build,Manager de Operaciones,Operations Manager,Operations
+META-1-6-2,Justin Osofsky,META-1-6,profile,loyalty,VP de Ventas Globales,VP Global Sales,Sales
+META-1-6-2-1,Carolyn Everson,META-1-6-2,profile,shopping_cart,Director de Ventas Globales,Director Global Sales,Sales
+META-1-6-2-1-1,Nicola Mendelsohn,META-1-6-2-1,profile,shopping_cart,Manager de Ventas,Sales Manager,Sales
+META-1-7,Chris Cox,META-1,profile,palette,CPO de Meta,Chief Product Officer,Product
+META-1-7-1,Chris Cox,META-1-7,profile,design_services,VP de Producto,VP Product,Product
+META-1-7-1-1,Adam Mosseri,META-1-7-1,profile,design_services,Director de Producto,Director Product,Product
+META-1-7-1-1-1,Tom Alison,META-1-7-1-1,profile,inventory,Manager de Producto,Product Manager,Product
+META-1-7-2,Adam Mosseri,META-1-7,profile,design_services,VP de Experiencia de Usuario,VP User Experience,Product
+META-1-7-2-1,Tom Alison,META-1-7-2,profile,inventory,Director de UX,Director UX,Product
+META-1-7-2-1-1,Adam Mosseri,META-1-7-2-1,profile,inventory,Manager de UX,UX Manager,Product
 
-NFLX,Netflix Inc.,,company,detail,Empresa líder en streaming de entretenimiento,CEO,Executive
-NFLX-1,Ted Sarandos,NFLX,profile,profile,Co-CEO de Netflix,Co-Chief Executive Officer,Executive
-NFLX-1-1,Bela Bajaria,NFLX-1,profile,profile,VP de Contenido Global,VP Global Content,Content
-NFLX-1-1-1,Monica Lago-Kaytis,NFLX-1-1,profile,profile,VP de Contenido Original,VP Original Content,Content
-NFLX-1-1-2,Channing Dungey,NFLX-1-1,profile,profile,VP de Series Dramáticas,VP Drama Series,Content
-NFLX-1-2,Scott Stuber,NFLX-1,profile,profile,VP de Películas,VP Film,Film
-NFLX-1-2-1,Scott Stuber,NFLX-1-2,profile,profile,VP de Películas Originales,VP Original Films,Film
-NFLX-1-2-2,Scott Stuber,NFLX-1-2,profile,profile,VP de Adquisiciones,VP Acquisitions,Film
-NFLX-1-3,Spencer Neumann,NFLX-1,profile,profile,CFO de Netflix,Chief Financial Officer,Finance
-NFLX-1-3-1,Spencer Neumann,NFLX-1-3,profile,profile,VP de Finanzas,VP Finance,Finance
-NFLX-1-3-2,Spencer Neumann,NFLX-1-3,profile,profile,VP de Relaciones con Inversores,VP Investor Relations,Finance
-NFLX-1-4,Greg Peters,NFLX-1,profile,profile,Co-CEO de Netflix,Co-Chief Executive Officer,Executive
-NFLX-1-4-1,Elizabeth Stone,NFLX-1-4,profile,profile,CTO de Netflix,Chief Technology Officer,Technology
-NFLX-1-4-1-1,Elizabeth Stone,NFLX-1-4-1,profile,profile,VP de Ingeniería,VP Engineering,Technology
-NFLX-1-4-2,Jeremy Gelfand,NFLX-1-4,profile,profile,VP de Operaciones,VP Operations,Operations
-NFLX-1-4-2-1,Jeremy Gelfand,NFLX-1-4-2,profile,profile,VP de Operaciones Globales,VP Global Operations,Operations
-NFLX-1-5,Reed Hastings,NFLX-1,profile,profile,Co-fundador y Presidente Ejecutivo,Co-founder & Executive Chairman,Board
-NFLX-1-5-1,Reed Hastings,NFLX-1-5,profile,profile,Director,Director,Board
-NFLX-1-5-2,Reed Hastings,NFLX-1-5,profile,profile,Director Independiente,Independent Director,Board
-NFLX-1-6,Sharon Waxman,NFLX-1,profile,profile,VP de Comunicaciones,VP Communications,Communications
-NFLX-1-6-1,Sharon Waxman,NFLX-1-6,profile,profile,VP de Relaciones Públicas,VP Public Relations,Communications
-NFLX-1-6-2,Sharon Waxman,NFLX-1-6,profile,profile,VP de Marketing,VP Marketing,Marketing
-NFLX-1-7,Andy Rendich,NFLX-1,profile,profile,VP de Recursos Humanos,VP Human Resources,HR
-NFLX-1-7-1,Andy Rendich,NFLX-1-7,profile,profile,VP de Talento,VP Talent,HR
-NFLX-1-7-2,Andy Rendich,NFLX-1-7,profile,profile,VP de Diversidad,VP Diversity,HR
-NFLX-1-8,David Hyman,NFLX-1,profile,profile,VP Legal y Secretario General,VP Legal & General Counsel,Legal
-NFLX-1-8-1,David Hyman,NFLX-1-8,profile,profile,VP de Asuntos Legales,VP Legal Affairs,Legal
-NFLX-1-8-2,David Hyman,NFLX-1-8,profile,profile,VP de Cumplimiento,VP Compliance,Legal
+NFLX,Netflix Inc.,,company,work,Empresa líder en streaming de entretenimiento,CEO,Executive
+NFLX-1,Ted Sarandos,NFLX,profile,work,Co-CEO de Netflix,Co-Chief Executive Officer,Executive
+NFLX-1-1,Bela Bajaria,NFLX-1,profile,archive,VP de Contenido Global,VP Global Content,Content
+NFLX-1-1-1,Monica Lago-Kaytis,NFLX-1-1,profile,article,VP de Contenido Original,VP Original Content,Content
+NFLX-1-1-2,Channing Dungey,NFLX-1-1,profile,article,VP de Series Dramáticas,VP Drama Series,Content
+NFLX-1-2,Scott Stuber,NFLX-1,profile,live_tv,VP de Películas,VP Film,Film
+NFLX-1-2-1,Scott Stuber,NFLX-1-2,profile,movie,VP de Películas Originales,VP Original Films,Film
+NFLX-1-2-2,Scott Stuber,NFLX-1-2,profile,movie,VP de Adquisiciones,VP Acquisitions,Film
+NFLX-1-3,Spencer Neumann,NFLX-1,profile,payment,CFO de Netflix,Chief Financial Officer,Finance
+NFLX-1-3-1,Spencer Neumann,NFLX-1-3,profile,account_balance_wallet,VP de Finanzas,VP Finance,Finance
+NFLX-1-3-2,Spencer Neumann,NFLX-1-3,profile,analytics,VP de Relaciones con Inversores,VP Investor Relations,Finance
+NFLX-1-4,Greg Peters,NFLX-1,profile,business,Co-CEO de Netflix,Co-Chief Executive Officer,Executive
+NFLX-1-4-1,Elizabeth Stone,NFLX-1-4,profile,code,CTO de Netflix,Chief Technology Officer,Technology
+NFLX-1-4-1-1,Elizabeth Stone,NFLX-1-4-1,profile,code,VP de Ingeniería,VP Engineering,Technology
+NFLX-1-4-2,Jeremy Gelfand,NFLX-1-4,profile,build,VP de Operaciones,VP Operations,Operations
+NFLX-1-4-2-1,Jeremy Gelfand,NFLX-1-4-2,profile,settings,VP de Operaciones Globales,VP Global Operations,Operations
+NFLX-1-5,Reed Hastings,NFLX-1,profile,business,Co-fundador y Presidente Ejecutivo,Co-founder & Executive Chairman,Board
+NFLX-1-5-1,Reed Hastings,NFLX-1-5,profile,admin_panel_settings,Director,Director,Board
+NFLX-1-5-2,Reed Hastings,NFLX-1-5,profile,business,Director Independiente,Independent Director,Board
+NFLX-1-6,Sharon Waxman,NFLX-1,profile,chat,VP de Comunicaciones,VP Communications,Communications
+NFLX-1-6-1,Sharon Waxman,NFLX-1-6,profile,chat,VP de Relaciones Públicas,VP Public Relations,Communications
+NFLX-1-6-2,Sharon Waxman,NFLX-1-6,profile,storefront,VP de Marketing,VP Marketing,Marketing
+NFLX-1-7,Andy Rendich,NFLX-1,profile,psychology,VP de Recursos Humanos,VP Human Resources,HR
+NFLX-1-7-1,Andy Rendich,NFLX-1-7,profile,diversity_3,VP de Talento,VP Talent,HR
+NFLX-1-7-2,Andy Rendich,NFLX-1-7,profile,psychology,VP de Diversidad,VP Diversity,HR
+NFLX-1-8,David Hyman,NFLX-1,profile,verified_user,VP Legal y Secretario General,VP Legal & General Counsel,Legal
+NFLX-1-8-1,David Hyman,NFLX-1-8,profile,verified_user,VP de Asuntos Legales,VP Legal Affairs,Legal
+NFLX-1-8-2,David Hyman,NFLX-1-8,profile,policy,VP de Cumplimiento,VP Compliance,Legal
 
-ADBE,Adobe Inc.,,company,detail,Empresa líder en software creativo y digital,CEO,Executive
-ADBE-1,Shantanu Narayen,ADBE,profile,profile,CEO de Adobe,Chief Executive Officer,Executive
-ADBE-1-1,Dan Durn,ADBE-1,profile,profile,CFO de Adobe,Chief Financial Officer,Finance
-ADBE-1-1-1,Mark Garrett,ADBE-1-1,profile,profile,VP de Operaciones,VP Operations,Operations
-ADBE-1-1-1-1,Dana Rao,ADBE-1-1-1,profile,profile,VP Legal y Secretario General,VP Legal & General Counsel,Legal
-ADBE-1-1-1-1-1,Mark Garrett,ADBE-1-1-1-1,profile,profile,Director Legal,Legal Director,Legal
-ADBE-1-1-2,Dana Rao,ADBE-1-1,profile,profile,VP de Finanzas,VP Finance,Finance
-ADBE-1-1-2-1,Mark Garrett,ADBE-1-1-2,profile,profile,Director de Relaciones con Inversores,Director Investor Relations,Finance
-ADBE-1-1-2-1-1,Dana Rao,ADBE-1-1-2-1,profile,profile,Manager de Finanzas,Finance Manager,Finance
-ADBE-1-2,Scott Belsky,ADBE-1,profile,profile,CPO de Adobe,Chief Product Officer,Product
-ADBE-1-2-1,Anil Chakravarthy,ADBE-1-2,profile,profile,VP de Experiencia Digital,VP Digital Experience,Product
-ADBE-1-2-1-1,Abhay Parasnis,ADBE-1-2-1,profile,profile,CTO de Adobe,Chief Technology Officer,Technology
-ADBE-1-2-1-1-1,John Warnock,ADBE-1-2-1-1,profile,profile,Co-fundador y CTO Emérito,Co-founder & CTO Emeritus,Technology
-ADBE-1-2-2,David Wadhwani,ADBE-1-2,profile,profile,VP de Creative Cloud,VP Creative Cloud,Product
-ADBE-1-2-2-1,Abhay Parasnis,ADBE-1-2-2,profile,profile,VP de Document Cloud,VP Document Cloud,Product
-ADBE-1-2-2-1-1,John Warnock,ADBE-1-2-2-1,profile,profile,VP de Experience Cloud,VP Experience Cloud,Product
-ADBE-1-3,Abhay Parasnis,ADBE-1,profile,profile,CTO de Adobe,Chief Technology Officer,Technology
-ADBE-1-3-1,Abhay Parasnis,ADBE-1-3,profile,profile,VP de Ingeniería,VP Engineering,Technology
-ADBE-1-3-1-1,John Warnock,ADBE-1-3-1,profile,profile,VP de Investigación,VP Research,Technology
-ADBE-1-3-1-1-1,Abhay Parasnis,ADBE-1-3-1-1,profile,profile,Director de AI,Director AI,Technology
-ADBE-1-3-2,John Warnock,ADBE-1-3,profile,profile,Co-fundador y CTO Emérito,Co-founder & CTO Emeritus,Technology
-ADBE-1-3-2-1,Abhay Parasnis,ADBE-1-3-2,profile,profile,VP de Innovación,VP Innovation,Technology
-ADBE-1-3-2-1-1,John Warnock,ADBE-1-3-2-1,profile,profile,Director de Innovación,Director Innovation,Technology
-ADBE-1-4,David Wadhwani,ADBE-1,profile,profile,VP de Creative Cloud,VP Creative Cloud,Product
-ADBE-1-4-1,David Wadhwani,ADBE-1-4,profile,profile,VP de Photoshop,VP Photoshop,Product
-ADBE-1-4-1-1,Abhay Parasnis,ADBE-1-4-1,profile,profile,Director de Photoshop,Director Photoshop,Product
-ADBE-1-4-1-1-1,John Warnock,ADBE-1-4-1-1,profile,profile,Manager de Photoshop,Photoshop Manager,Product
-ADBE-1-4-2,David Wadhwani,ADBE-1-4,profile,profile,VP de Illustrator,VP Illustrator,Product
-ADBE-1-4-2-1,Abhay Parasnis,ADBE-1-4-2,profile,profile,Director de Illustrator,Director Illustrator,Product
-ADBE-1-4-2-1-1,John Warnock,ADBE-1-4-2-1,profile,profile,Manager de Illustrator,Illustrator Manager,Product
-ADBE-1-5,Anil Chakravarthy,ADBE-1,profile,profile,VP de Experiencia Digital,VP Digital Experience,Product
-ADBE-1-5-1,Anil Chakravarthy,ADBE-1-5,profile,profile,VP de Analytics,VP Analytics,Product
-ADBE-1-5-1-1,Abhay Parasnis,ADBE-1-5-1,profile,profile,Director de Analytics,Director Analytics,Product
-ADBE-1-5-1-1-1,John Warnock,ADBE-1-5-1-1,profile,profile,Manager de Analytics,Analytics Manager,Product
-ADBE-1-5-2,Anil Chakravarthy,ADBE-1-5,profile,profile,VP de Marketing,VP Marketing,Product
-ADBE-1-5-2-1,Abhay Parasnis,ADBE-1-5-2,profile,profile,Director de Marketing,Director Marketing,Product
-ADBE-1-5-2-1-1,John Warnock,ADBE-1-5-2-1,profile,profile,Manager de Marketing,Marketing Manager,Product
-ADBE-1-6,Mark Garrett,ADBE-1,profile,profile,VP de Operaciones,VP Operations,Operations
-ADBE-1-6-1,Mark Garrett,ADBE-1-6,profile,profile,VP de Recursos Humanos,VP Human Resources,HR
-ADBE-1-6-1-1,Dana Rao,ADBE-1-6-1,profile,profile,Director de Recursos Humanos,Director Human Resources,HR
-ADBE-1-6-1-1-1,Mark Garrett,ADBE-1-6-1-1,profile,profile,Manager de Recursos Humanos,HR Manager,HR
-ADBE-1-6-2,Dana Rao,ADBE-1-6,profile,profile,VP de Diversidad,VP Diversity,HR
-ADBE-1-6-2-1,Mark Garrett,ADBE-1-6-2,profile,profile,Director de Diversidad,Director Diversity,HR
-ADBE-1-6-2-1-1,Dana Rao,ADBE-1-6-2-1,profile,profile,Manager de Diversidad,Diversity Manager,HR
+ADBE,Adobe Inc.,,company,work,Empresa líder en software creativo y digital,CEO,Executive
+ADBE-1,Shantanu Narayen,ADBE,profile,account_balance,CEO de Adobe,Chief Executive Officer,Executive
+ADBE-1-1,Dan Durn,ADBE-1,profile,trending_up,CFO de Adobe,Chief Financial Officer,Finance
+ADBE-1-1-1,Mark Garrett,ADBE-1-1,profile,build,VP de Operaciones,VP Operations,Operations
+ADBE-1-1-1-1,Dana Rao,ADBE-1-1-1,profile,verified_user,VP Legal y Secretario General,VP Legal & General Counsel,Legal
+ADBE-1-1-1-1-1,Mark Garrett,ADBE-1-1-1-1,profile,gavel,Director Legal,Legal Director,Legal
+ADBE-1-1-2,Dana Rao,ADBE-1-1,profile,analytics,VP de Finanzas,VP Finance,Finance
+ADBE-1-1-2-1,Mark Garrett,ADBE-1-1-2,profile,account_balance_wallet,Director de Relaciones con Inversores,Director Investor Relations,Finance
+ADBE-1-1-2-1-1,Dana Rao,ADBE-1-1-2-1,profile,analytics,Manager de Finanzas,Finance Manager,Finance
+ADBE-1-2,Scott Belsky,ADBE-1,profile,category,CPO de Adobe,Chief Product Officer,Product
+ADBE-1-2-1,Anil Chakravarthy,ADBE-1-2,profile,design_services,VP de Experiencia Digital,VP Digital Experience,Product
+ADBE-1-2-1-1,Abhay Parasnis,ADBE-1-2-1,profile,memory,CTO de Adobe,Chief Technology Officer,Technology
+ADBE-1-2-1-1-1,John Warnock,ADBE-1-2-1-1,profile,memory,Co-fundador y CTO Emérito,Co-founder & CTO Emeritus,Technology
+ADBE-1-2-2,David Wadhwani,ADBE-1-2,profile,category,VP de Creative Cloud,VP Creative Cloud,Product
+ADBE-1-2-2-1,Abhay Parasnis,ADBE-1-2-2,profile,palette,VP de Document Cloud,VP Document Cloud,Product
+ADBE-1-2-2-1-1,John Warnock,ADBE-1-2-2-1,profile,inventory,VP de Experience Cloud,VP Experience Cloud,Product
+ADBE-1-3,Abhay Parasnis,ADBE-1,profile,computer,CTO de Adobe,Chief Technology Officer,Technology
+ADBE-1-3-1,Abhay Parasnis,ADBE-1-3,profile,computer,VP de Ingeniería,VP Engineering,Technology
+ADBE-1-3-1-1,John Warnock,ADBE-1-3-1,profile,memory,VP de Investigación,VP Research,Technology
+ADBE-1-3-1-1-1,Abhay Parasnis,ADBE-1-3-1-1,profile,memory,Director de AI,Director AI,Technology
+ADBE-1-3-2,John Warnock,ADBE-1-3,profile,developer_mode,Co-fundador y CTO Emérito,Co-founder & CTO Emeritus,Technology
+ADBE-1-3-2-1,Abhay Parasnis,ADBE-1-3-2,profile,computer,VP de Innovación,VP Innovation,Technology
+ADBE-1-3-2-1-1,John Warnock,ADBE-1-3-2-1,profile,memory,Director de Innovación,Director Innovation,Technology
+ADBE-1-4,David Wadhwani,ADBE-1,profile,category,VP de Creative Cloud,VP Creative Cloud,Product
+ADBE-1-4-1,David Wadhwani,ADBE-1-4,profile,design_services,VP de Photoshop,VP Photoshop,Product
+ADBE-1-4-1-1,Abhay Parasnis,ADBE-1-4-1,profile,palette,Director de Photoshop,Director Photoshop,Product
+ADBE-1-4-1-1-1,John Warnock,ADBE-1-4-1-1,profile,inventory,Manager de Photoshop,Photoshop Manager,Product
+ADBE-1-4-2,David Wadhwani,ADBE-1-4,profile,palette,VP de Illustrator,VP Illustrator,Product
+ADBE-1-4-2-1,Abhay Parasnis,ADBE-1-4-2,profile,inventory,Director de Illustrator,Director Illustrator,Product
+ADBE-1-4-2-1-1,John Warnock,ADBE-1-4-2-1,profile,inventory,Manager de Illustrator,Illustrator Manager,Product
+ADBE-1-5,Anil Chakravarthy,ADBE-1,profile,palette,VP de Experiencia Digital,VP Digital Experience,Product
+ADBE-1-5-1,Anil Chakravarthy,ADBE-1-5,profile,design_services,VP de Analytics,VP Analytics,Product
+ADBE-1-5-1-1,Abhay Parasnis,ADBE-1-5-1,profile,inventory,Director de Analytics,Director Analytics,Product
+ADBE-1-5-1-1-1,John Warnock,ADBE-1-5-1-1,profile,category,Manager de Analytics,Analytics Manager,Product
+ADBE-1-5-2,Anil Chakravarthy,ADBE-1-5,profile,palette,VP de Marketing,VP Marketing,Product
+ADBE-1-5-2-1,Abhay Parasnis,ADBE-1-5-2,profile,design_services,Director de Marketing,Director Marketing,Product
+ADBE-1-5-2-1-1,John Warnock,ADBE-1-5-2-1,profile,category,Manager de Marketing,Marketing Manager,Product
+ADBE-1-6,Mark Garrett,ADBE-1,profile,warehouse,VP de Operaciones,VP Operations,Operations
+ADBE-1-6-1,Mark Garrett,ADBE-1-6,profile,diversity_3,VP de Recursos Humanos,VP Human Resources,HR
+ADBE-1-6-1-1,Dana Rao,ADBE-1-6-1,profile,psychology,Director de Recursos Humanos,Director Human Resources,HR
+ADBE-1-6-1-1-1,Mark Garrett,ADBE-1-6-1-1,profile,psychology,Manager de Recursos Humanos,HR Manager,HR
+ADBE-1-6-2,Dana Rao,ADBE-1-6,profile,school,VP de Diversidad,VP Diversity,HR
+ADBE-1-6-2-1,Mark Garrett,ADBE-1-6-2,profile,diversity_3,Director de Diversidad,Director Diversity,HR
+ADBE-1-6-2-1-1,Dana Rao,ADBE-1-6-2-1,profile,school,Manager de Diversidad,Diversity Manager,HR
 
-CRM,Salesforce Inc.,,company,detail,Empresa líder en CRM y software empresarial en la nube,CEO,Executive
-CRM-1,Marc Benioff,CRM,profile,profile,CEO y Co-fundador de Salesforce,Chief Executive Officer,Executive
-CRM-1-1,Amy Weaver,CRM-1,profile,profile,CFO de Salesforce,Chief Financial Officer,Finance
-CRM-1-1-1,Gavin Patterson,CRM-1-1,profile,profile,VP de Relaciones con Inversores,VP Investor Relations,Finance
-CRM-1-1-1-1,Mark Hawkins,CRM-1-1-1,profile,profile,VP de Finanzas Corporativas,VP Corporate Finance,Finance
-CRM-1-1-2,Mark Hawkins,CRM-1-1,profile,profile,VP de Operaciones Financieras,VP Financial Operations,Finance
-CRM-1-1-2-1,Gavin Patterson,CRM-1-1-2,profile,profile,VP de Contabilidad,VP Accounting,Finance
-CRM-1-2,Parker Harris,CRM-1,profile,profile,Co-fundador y CTO,Co-founder & Chief Technology Officer,Technology
-CRM-1-2-1,Clara Shih,CRM-1-2,profile,profile,VP de AI y Machine Learning,VP AI & Machine Learning,Technology
-CRM-1-2-1-1,Adam Bosworth,CRM-1-2-1,profile,profile,VP de Einstein,VP Einstein,Technology
-CRM-1-2-2,Adam Bosworth,CRM-1-2,profile,profile,VP de Plataforma,VP Platform,Technology
-CRM-1-2-2-1,Clara Shih,CRM-1-2-2,profile,profile,VP de Heroku,VP Heroku,Technology
-CRM-1-3,Sarah Franklin,CRM-1,profile,profile,CPO de Salesforce,Chief Product Officer,Product
-CRM-1-3-1,Clara Shih,CRM-1-3,profile,profile,VP de Sales Cloud,VP Sales Cloud,Product
-CRM-1-3-1-1,Adam Bosworth,CRM-1-3-1,profile,profile,VP de Service Cloud,VP Service Cloud,Product
-CRM-1-3-2,Adam Bosworth,CRM-1-3,profile,profile,VP de Marketing Cloud,VP Marketing Cloud,Product
-CRM-1-3-2-1,Clara Shih,CRM-1-3-2,profile,profile,VP de Commerce Cloud,VP Commerce Cloud,Product
-CRM-1-4,Bret Taylor,CRM-1,profile,profile,Co-CEO de Salesforce,Co-Chief Executive Officer,Executive
-CRM-1-4-1,Bret Taylor,CRM-1-4,profile,profile,VP de Estrategia,VP Strategy,Executive
-CRM-1-4-1-1,Parker Harris,CRM-1-4-1,profile,profile,VP de Innovación,VP Innovation,Executive
-CRM-1-4-2,Parker Harris,CRM-1-4,profile,profile,VP de Desarrollo,VP Development,Technology
-CRM-1-4-2-1,Bret Taylor,CRM-1-4-2,profile,profile,VP de Investigación,VP Research,Technology
-CRM-1-5,Clara Shih,CRM-1,profile,profile,VP de Marketing,VP Marketing,Marketing
-CRM-1-5-1,Clara Shih,CRM-1-5,profile,profile,VP de Marketing Digital,VP Digital Marketing,Marketing
-CRM-1-5-1-1,Adam Bosworth,CRM-1-5-1,profile,profile,VP de Eventos,VP Events,Marketing
-CRM-1-5-2,Adam Bosworth,CRM-1-5,profile,profile,VP de Recursos Humanos,VP Human Resources,HR
-CRM-1-5-2-1,Clara Shih,CRM-1-5-2,profile,profile,VP de Talento,VP Talent,HR
+CRM,Salesforce Inc.,,company,business,Empresa líder en CRM y software empresarial en la nube,CEO,Executive
+CRM-1,Marc Benioff,CRM,profile,account_balance,CEO y Co-fundador de Salesforce,Chief Executive Officer,Executive
+CRM-1-1,Amy Weaver,CRM-1,profile,analytics,CFO de Salesforce,Chief Financial Officer,Finance
+CRM-1-1-1,Gavin Patterson,CRM-1-1,profile,trending_up,VP de Relaciones con Inversores,VP Investor Relations,Finance
+CRM-1-1-1-1,Mark Hawkins,CRM-1-1-1,profile,analytics,VP de Finanzas Corporativas,VP Corporate Finance,Finance
+CRM-1-1-2,Mark Hawkins,CRM-1-1,profile,payment,VP de Operaciones Financieras,VP Financial Operations,Finance
+CRM-1-1-2-1,Gavin Patterson,CRM-1-1-2,profile,trending_up,VP de Contabilidad,VP Accounting,Finance
+CRM-1-2,Parker Harris,CRM-1,profile,code,Co-fundador y CTO,Co-founder & Chief Technology Officer,Technology
+CRM-1-2-1,Clara Shih,CRM-1-2,profile,developer_mode,VP de AI y Machine Learning,VP AI & Machine Learning,Technology
+CRM-1-2-1-1,Adam Bosworth,CRM-1-2-1,profile,code,VP de Einstein,VP Einstein,Technology
+CRM-1-2-2,Adam Bosworth,CRM-1-2,profile,code,VP de Plataforma,VP Platform,Technology
+CRM-1-2-2-1,Clara Shih,CRM-1-2-2,profile,computer,VP de Heroku,VP Heroku,Technology
+CRM-1-3,Sarah Franklin,CRM-1,profile,palette,CPO de Salesforce,Chief Product Officer,Product
+CRM-1-3-1,Clara Shih,CRM-1-3,profile,design_services,VP de Sales Cloud,VP Sales Cloud,Product
+CRM-1-3-1-1,Adam Bosworth,CRM-1-3-1,profile,inventory,VP de Service Cloud,VP Service Cloud,Product
+CRM-1-3-2,Adam Bosworth,CRM-1-3,profile,category,VP de Marketing Cloud,VP Marketing Cloud,Product
+CRM-1-3-2-1,Clara Shih,CRM-1-3-2,profile,palette,VP de Commerce Cloud,VP Commerce Cloud,Product
+CRM-1-4,Bret Taylor,CRM-1,profile,account_balance,Co-CEO de Salesforce,Co-Chief Executive Officer,Executive
+CRM-1-4-1,Bret Taylor,CRM-1-4,profile,account_balance,VP de Estrategia,VP Strategy,Executive
+CRM-1-4-1-1,Parker Harris,CRM-1-4-1,profile,work,VP de Innovación,VP Innovation,Executive
+CRM-1-4-2,Parker Harris,CRM-1-4,profile,computer,VP de Desarrollo,VP Development,Technology
+CRM-1-4-2-1,Bret Taylor,CRM-1-4-2,profile,developer_mode,VP de Investigación,VP Research,Technology
+CRM-1-5,Clara Shih,CRM-1,profile,storefront,VP de Marketing,VP Marketing,Marketing
+CRM-1-5-1,Clara Shih,CRM-1-5,profile,point_of_sale,VP de Marketing Digital,VP Digital Marketing,Marketing
+CRM-1-5-1-1,Adam Bosworth,CRM-1-5-1,profile,point_of_sale,VP de Eventos,VP Events,Marketing
+CRM-1-5-2,Adam Bosworth,CRM-1-5,profile,diversity_3,VP de Recursos Humanos,VP Human Resources,HR
+CRM-1-5-2-1,Clara Shih,CRM-1-5-2,profile,psychology,VP de Talento,VP Talent,HR
 
-INTC,Intel Corporation,,company,detail,Empresa líder en semiconductores y microprocesadores,CEO,Executive
-INTC-1,Pat Gelsinger,INTC,profile,profile,CEO de Intel,Chief Executive Officer,Executive
-INTC-1-1,David Zinsner,INTC-1,profile,profile,CFO de Intel,Chief Financial Officer,Finance
-INTC-1-1-1,Steven Rodgers,INTC-1-1,profile,profile,VP Legal y Secretario General,VP Legal & General Counsel,Legal
-INTC-1-1-1-1,Ann Kelleher,INTC-1-1-1,profile,profile,VP de Operaciones,VP Operations,Manufacturing
-INTC-1-1-1-1-1,Raja Koduri,INTC-1-1-1-1,profile,profile,VP de Arquitectura y Software,VP Architecture & Software,Technology
-INTC-1-1-1-1-1-1,Jim Keller,INTC-1-1-1-1-1,profile,profile,VP de Diseño de Silicio,VP Silicon Design,Engineering
-INTC-1-1-1-1-1-1-1,Pat Gelsinger,INTC-1-1-1-1-1-1,profile,profile,Manager de Diseño,Design Manager,Engineering
-INTC-1-1-1-1-1-2,Raja Koduri,INTC-1-1-1-1-1,profile,profile,VP de GPU,VP GPU,Technology
-INTC-1-1-1-1-1-2-1,Jim Keller,INTC-1-1-1-1-1-2,profile,profile,Director de GPU,Director GPU,Technology
-INTC-1-1-1-1-1-2-1-1,Pat Gelsinger,INTC-1-1-1-1-1-2-1,profile,profile,Manager de GPU,GPU Manager,Technology
-INTC-1-1-1-1-2,Ann Kelleher,INTC-1-1-1-1,profile,profile,VP de Fabricación,VP Manufacturing,Manufacturing
-INTC-1-1-1-1-2-1,Raja Koduri,INTC-1-1-1-1-2,profile,profile,Director de Fabricación,Director Manufacturing,Manufacturing
-INTC-1-1-1-1-2-1-1,Jim Keller,INTC-1-1-1-1-2-1,profile,profile,Manager de Fabricación,Manufacturing Manager,Manufacturing
-INTC-1-1-1-2,Steven Rodgers,INTC-1-1-1,profile,profile,VP de Asuntos Legales,VP Legal Affairs,Legal
-INTC-1-1-1-2-1,Ann Kelleher,INTC-1-1-1-2,profile,profile,Director de Asuntos Legales,Director Legal Affairs,Legal
-INTC-1-1-1-2-1-1,Raja Koduri,INTC-1-1-1-2-1,profile,profile,Manager de Asuntos Legales,Legal Affairs Manager,Legal
-INTC-1-1-2,Ann Kelleher,INTC-1-1,profile,profile,VP de Operaciones,VP Operations,Manufacturing
-INTC-1-1-2-1,Raja Koduri,INTC-1-1-2,profile,profile,VP de Supply Chain,VP Supply Chain,Manufacturing
-INTC-1-1-2-1-1,Jim Keller,INTC-1-1-2-1,profile,profile,Director de Supply Chain,Director Supply Chain,Manufacturing
-INTC-1-1-2-1-1-1,Pat Gelsinger,INTC-1-1-2-1-1,profile,profile,Manager de Supply Chain,Supply Chain Manager,Manufacturing
-INTC-1-1-2-2,Jim Keller,INTC-1-1-2,profile,profile,VP de Calidad,VP Quality,Manufacturing
-INTC-1-1-2-2-1,Pat Gelsinger,INTC-1-1-2-2,profile,profile,Director de Calidad,Director Quality,Manufacturing
-INTC-1-1-2-2-1-1,Raja Koduri,INTC-1-1-2-2-1,profile,profile,Manager de Calidad,Quality Manager,Manufacturing
-INTC-1-2,Keyvan Esfarjani,INTC-1,profile,profile,CTO de Intel,Chief Technology Officer,Technology
-INTC-1-2-1,Christoph Schell,INTC-1-2,profile,profile,CPO de Intel,Chief Product Officer,Product
-INTC-1-2-1-1,Sandra Rivera,INTC-1-2-1,profile,profile,VP de Datacenter y AI,VP Datacenter & AI,Technology
-INTC-1-2-1-1-1,Raja Koduri,INTC-1-2-1-1,profile,profile,Director de Datacenter,Director Datacenter,Technology
-INTC-1-2-1-1-1-1,Jim Keller,INTC-1-2-1-1-1,profile,profile,Manager de Datacenter,Datacenter Manager,Technology
-INTC-1-2-1-2,Jim Keller,INTC-1-2-1,profile,profile,VP de AI,VP AI,Technology
-INTC-1-2-1-2-1,Pat Gelsinger,INTC-1-2-1-2,profile,profile,Director de AI,Director AI,Technology
-INTC-1-2-1-2-1-1,Raja Koduri,INTC-1-2-1-2-1,profile,profile,Manager de AI,AI Manager,Technology
-INTC-1-2-2,Sandra Rivera,INTC-1-2,profile,profile,VP de Productos,VP Products,Product
-INTC-1-2-2-1,Raja Koduri,INTC-1-2-2,profile,profile,VP de CPU,VP CPU,Product
-INTC-1-2-2-1-1,Jim Keller,INTC-1-2-2-1,profile,profile,Director de CPU,Director CPU,Product
-INTC-1-2-2-1-1-1,Pat Gelsinger,INTC-1-2-2-1-1,profile,profile,Manager de CPU,CPU Manager,Product
-INTC-1-2-2-2,Jim Keller,INTC-1-2-2,profile,profile,VP de Mobile,VP Mobile,Product
-INTC-1-2-2-2-1,Pat Gelsinger,INTC-1-2-2-2,profile,profile,Director de Mobile,Director Mobile,Product
-INTC-1-2-2-2-1-1,Raja Koduri,INTC-1-2-2-2-1,profile,profile,Manager de Mobile,Mobile Manager,Product
-INTC-1-3,Christoph Schell,INTC-1,profile,profile,CPO de Intel,Chief Product Officer,Product
-INTC-1-3-1,Sandra Rivera,INTC-1-3,profile,profile,VP de Marketing,VP Marketing,Product
-INTC-1-3-1-1,Raja Koduri,INTC-1-3-1,profile,profile,Director de Marketing,Director Marketing,Product
-INTC-1-3-1-1-1,Jim Keller,INTC-1-3-1-1,profile,profile,Manager de Marketing,Marketing Manager,Product
-INTC-1-3-2,Jim Keller,INTC-1-3,profile,profile,VP de Ventas,VP Sales,Product
-INTC-1-3-2-1,Pat Gelsinger,INTC-1-3-2,profile,profile,Director de Ventas,Director Sales,Product
-INTC-1-3-2-1-1,Raja Koduri,INTC-1-3-2-1,profile,profile,Manager de Ventas,Sales Manager,Product
-INTC-1-4,Sandra Rivera,INTC-1,profile,profile,VP de Recursos Humanos,VP Human Resources,HR
-INTC-1-4-1,Raja Koduri,INTC-1-4,profile,profile,VP de Talento,VP Talent,HR
-INTC-1-4-1-1,Jim Keller,INTC-1-4-1,profile,profile,Director de Talento,Director Talent,HR
-INTC-1-4-1-1-1,Pat Gelsinger,INTC-1-4-1-1,profile,profile,Manager de Talento,Talent Manager,HR
-INTC-1-4-2,Jim Keller,INTC-1-4,profile,profile,VP de Diversidad,VP Diversity,HR
-INTC-1-4-2-1,Pat Gelsinger,INTC-1-4-2,profile,profile,Director de Diversidad,Director Diversity,HR
-INTC-1-4-2-1-1,Raja Koduri,INTC-1-4-2-1,profile,profile,Manager de Diversidad,Diversity Manager,HR
-INTC-1-5,Raja Koduri,INTC-1,profile,profile,VP de Investigación,VP Research,Technology
-INTC-1-5-1,Jim Keller,INTC-1-5,profile,profile,VP de Investigación Avanzada,VP Advanced Research,Technology
-INTC-1-5-1-1,Pat Gelsinger,INTC-1-5-1,profile,profile,Director de Investigación,Director Research,Technology
-INTC-1-5-1-1-1,Raja Koduri,INTC-1-5-1-1,profile,profile,Manager de Investigación,Research Manager,Technology
-INTC-1-5-2,Pat Gelsinger,INTC-1-5,profile,profile,VP de Desarrollo,VP Development,Technology
-INTC-1-5-2-1,Raja Koduri,INTC-1-5-2,profile,profile,Director de Desarrollo,Director Development,Technology
-INTC-1-5-2-1-1,Jim Keller,INTC-1-5-2-1,profile,profile,Manager de Desarrollo,Development Manager,Technology
+INTC,Intel Corporation,,company,work,Empresa líder en semiconductores y microprocesadores,CEO,Executive
+INTC-1,Pat Gelsinger,INTC,profile,work,CEO de Intel,Chief Executive Officer,Executive
+INTC-1-1,David Zinsner,INTC-1,profile,payment,CFO de Intel,Chief Financial Officer,Finance
+INTC-1-1-1,Steven Rodgers,INTC-1-1,profile,gavel,VP Legal y Secretario General,VP Legal & General Counsel,Legal
+INTC-1-1-1-1,Ann Kelleher,INTC-1-1-1,profile,build,VP de Operaciones,VP Operations,Manufacturing
+INTC-1-1-1-1-1,Raja Koduri,INTC-1-1-1-1,profile,code,VP de Arquitectura y Software,VP Architecture & Software,Technology
+INTC-1-1-1-1-1-1,Jim Keller,INTC-1-1-1-1-1,profile,construction,VP de Diseño de Silicio,VP Silicon Design,Engineering
+INTC-1-1-1-1-1-1-1,Pat Gelsinger,INTC-1-1-1-1-1-1,profile,construction,Manager de Diseño,Design Manager,Engineering
+INTC-1-1-1-1-1-2,Raja Koduri,INTC-1-1-1-1-1,profile,memory,VP de GPU,VP GPU,Technology
+INTC-1-1-1-1-1-2-1,Jim Keller,INTC-1-1-1-1-1-2,profile,code,Director de GPU,Director GPU,Technology
+INTC-1-1-1-1-1-2-1-1,Pat Gelsinger,INTC-1-1-1-1-1-2-1,profile,computer,Manager de GPU,GPU Manager,Technology
+INTC-1-1-1-1-2,Ann Kelleher,INTC-1-1-1-1,profile,engineering,VP de Fabricación,VP Manufacturing,Manufacturing
+INTC-1-1-1-1-2-1,Raja Koduri,INTC-1-1-1-1-2,profile,construction,Director de Fabricación,Director Manufacturing,Manufacturing
+INTC-1-1-1-1-2-1-1,Jim Keller,INTC-1-1-1-1-2-1,profile,engineering,Manager de Fabricación,Manufacturing Manager,Manufacturing
+INTC-1-1-1-2,Steven Rodgers,INTC-1-1-1,profile,verified_user,VP de Asuntos Legales,VP Legal Affairs,Legal
+INTC-1-1-1-2-1,Ann Kelleher,INTC-1-1-1-2,profile,policy,Director de Asuntos Legales,Director Legal Affairs,Legal
+INTC-1-1-1-2-1-1,Raja Koduri,INTC-1-1-1-2-1,profile,security,Manager de Asuntos Legales,Legal Affairs Manager,Legal
+INTC-1-1-2,Ann Kelleher,INTC-1-1,profile,build,VP de Operaciones,VP Operations,Manufacturing
+INTC-1-1-2-1,Raja Koduri,INTC-1-1-2,profile,construction,VP de Supply Chain,VP Supply Chain,Manufacturing
+INTC-1-1-2-1-1,Jim Keller,INTC-1-1-2-1,profile,factory,Director de Supply Chain,Director Supply Chain,Manufacturing
+INTC-1-1-2-1-1-1,Pat Gelsinger,INTC-1-1-2-1-1,profile,factory,Manager de Supply Chain,Supply Chain Manager,Manufacturing
+INTC-1-1-2-2,Jim Keller,INTC-1-1-2,profile,construction,VP de Calidad,VP Quality,Manufacturing
+INTC-1-1-2-2-1,Pat Gelsinger,INTC-1-1-2-2,profile,construction,Director de Calidad,Director Quality,Manufacturing
+INTC-1-1-2-2-1-1,Raja Koduri,INTC-1-1-2-2-1,profile,build,Manager de Calidad,Quality Manager,Manufacturing
+INTC-1-2,Keyvan Esfarjani,INTC-1,profile,developer_mode,CTO de Intel,Chief Technology Officer,Technology
+INTC-1-2-1,Christoph Schell,INTC-1-2,profile,inventory,CPO de Intel,Chief Product Officer,Product
+INTC-1-2-1-1,Sandra Rivera,INTC-1-2-1,profile,developer_mode,VP de Datacenter y AI,VP Datacenter & AI,Technology
+INTC-1-2-1-1-1,Raja Koduri,INTC-1-2-1-1,profile,code,Director de Datacenter,Director Datacenter,Technology
+INTC-1-2-1-1-1-1,Jim Keller,INTC-1-2-1-1-1,profile,computer,Manager de Datacenter,Datacenter Manager,Technology
+INTC-1-2-1-2,Jim Keller,INTC-1-2-1,profile,developer_mode,VP de AI,VP AI,Technology
+INTC-1-2-1-2-1,Pat Gelsinger,INTC-1-2-1-2,profile,computer,Director de AI,Director AI,Technology
+INTC-1-2-1-2-1-1,Raja Koduri,INTC-1-2-1-2-1,profile,memory,Manager de AI,AI Manager,Technology
+INTC-1-2-2,Sandra Rivera,INTC-1-2,profile,category,VP de Productos,VP Products,Product
+INTC-1-2-2-1,Raja Koduri,INTC-1-2-2,profile,design_services,VP de CPU,VP CPU,Product
+INTC-1-2-2-1-1,Jim Keller,INTC-1-2-2-1,profile,palette,Director de CPU,Director CPU,Product
+INTC-1-2-2-1-1-1,Pat Gelsinger,INTC-1-2-2-1-1,profile,category,Manager de CPU,CPU Manager,Product
+INTC-1-2-2-2,Jim Keller,INTC-1-2-2,profile,inventory,VP de Mobile,VP Mobile,Product
+INTC-1-2-2-2-1,Pat Gelsinger,INTC-1-2-2-2,profile,category,Director de Mobile,Director Mobile,Product
+INTC-1-2-2-2-1-1,Raja Koduri,INTC-1-2-2-2-1,profile,category,Manager de Mobile,Mobile Manager,Product
+INTC-1-3,Christoph Schell,INTC-1,profile,palette,CPO de Intel,Chief Product Officer,Product
+INTC-1-3-1,Sandra Rivera,INTC-1-3,profile,design_services,VP de Marketing,VP Marketing,Product
+INTC-1-3-1-1,Raja Koduri,INTC-1-3-1,profile,design_services,Director de Marketing,Director Marketing,Product
+INTC-1-3-1-1-1,Jim Keller,INTC-1-3-1-1,profile,design_services,Manager de Marketing,Marketing Manager,Product
+INTC-1-3-2,Jim Keller,INTC-1-3,profile,design_services,VP de Ventas,VP Sales,Product
+INTC-1-3-2-1,Pat Gelsinger,INTC-1-3-2,profile,design_services,Director de Ventas,Director Sales,Product
+INTC-1-3-2-1-1,Raja Koduri,INTC-1-3-2-1,profile,palette,Manager de Ventas,Sales Manager,Product
+INTC-1-4,Sandra Rivera,INTC-1,profile,school,VP de Recursos Humanos,VP Human Resources,HR
+INTC-1-4-1,Raja Koduri,INTC-1-4,profile,diversity_3,VP de Talento,VP Talent,HR
+INTC-1-4-1-1,Jim Keller,INTC-1-4-1,profile,people_alt,Director de Talento,Director Talent,HR
+INTC-1-4-1-1-1,Pat Gelsinger,INTC-1-4-1-1,profile,psychology,Manager de Talento,Talent Manager,HR
+INTC-1-4-2,Jim Keller,INTC-1-4,profile,school,VP de Diversidad,VP Diversity,HR
+INTC-1-4-2-1,Pat Gelsinger,INTC-1-4-2,profile,diversity_3,Director de Diversidad,Director Diversity,HR
+INTC-1-4-2-1-1,Raja Koduri,INTC-1-4-2-1,profile,school,Manager de Diversidad,Diversity Manager,HR
+INTC-1-5,Raja Koduri,INTC-1,profile,computer,VP de Investigación,VP Research,Technology
+INTC-1-5-1,Jim Keller,INTC-1-5,profile,memory,VP de Investigación Avanzada,VP Advanced Research,Technology
+INTC-1-5-1-1,Pat Gelsinger,INTC-1-5-1,profile,memory,Director de Investigación,Director Research,Technology
+INTC-1-5-1-1-1,Raja Koduri,INTC-1-5-1-1,profile,developer_mode,Manager de Investigación,Research Manager,Technology
+INTC-1-5-2,Pat Gelsinger,INTC-1-5,profile,memory,VP de Desarrollo,VP Development,Technology
+INTC-1-5-2-1,Raja Koduri,INTC-1-5-2,profile,computer,Director de Desarrollo,Director Development,Technology
+INTC-1-5-2-1-1,Jim Keller,INTC-1-5-2-1,profile,computer,Manager de Desarrollo,Development Manager,Technology
 
-ORCL,Oracle Corporation,,company,detail,Empresa líder en bases de datos y software empresarial,CEO,Executive
-ORCL-1,Safra Catz,ORCL,profile,profile,CEO de Oracle,Chief Executive Officer,Executive
-ORCL-1-1,Larry Ellison,ORCL-1,profile,profile,CTO y Co-fundador de Oracle,Chief Technology Officer,Technology
-ORCL-1-1-1,Edward Screven,ORCL-1-1,profile,profile,VP de Arquitectura Corporativa,VP Corporate Architecture,Technology
-ORCL-1-1-1-1,John Fowler,ORCL-1-1-1,profile,profile,VP de Sistemas,VP Systems,Technology
-ORCL-1-1-2,Don Johnson,ORCL-1-1,profile,profile,VP de Cloud Infrastructure,VP Cloud Infrastructure,Cloud
-ORCL-1-1-2-1,Clay Magouyrk,ORCL-1-1-2,profile,profile,VP de Cloud Engineering,VP Cloud Engineering,Engineering
-ORCL-1-2,Michael Boskin,ORCL-1,profile,profile,CFO de Oracle,Chief Financial Officer,Finance
-ORCL-1-2-1,Jeff Henley,ORCL-1-2,profile,profile,Vicepresidente Ejecutivo,Executive Vice President,Executive
-ORCL-1-2-1-1,Dorian Daley,ORCL-1-2-1,profile,profile,VP Legal y Secretario General,VP Legal & General Counsel,Legal
-ORCL-1-2-2,Steve Miranda,ORCL-1-2,profile,profile,VP de Aplicaciones,VP Applications,Product
-ORCL-1-2-2-1,Deepak Patil,ORCL-1-2-2,profile,profile,VP de Productos Cloud,VP Cloud Products,Product
+ORCL,Oracle Corporation,,company,account_balance,Empresa líder en bases de datos y software empresarial,CEO,Executive
+ORCL-1,Safra Catz,ORCL,profile,work,CEO de Oracle,Chief Executive Officer,Executive
+ORCL-1-1,Larry Ellison,ORCL-1,profile,code,CTO y Co-fundador de Oracle,Chief Technology Officer,Technology
+ORCL-1-1-1,Edward Screven,ORCL-1-1,profile,developer_mode,VP de Arquitectura Corporativa,VP Corporate Architecture,Technology
+ORCL-1-1-1-1,John Fowler,ORCL-1-1-1,profile,memory,VP de Sistemas,VP Systems,Technology
+ORCL-1-1-2,Don Johnson,ORCL-1-1,profile,memory,VP de Cloud Infrastructure,VP Cloud Infrastructure,Cloud
+ORCL-1-1-2-1,Clay Magouyrk,ORCL-1-1-2,profile,build,VP de Cloud Engineering,VP Cloud Engineering,Engineering
+ORCL-1-2,Michael Boskin,ORCL-1,profile,account_balance_wallet,CFO de Oracle,Chief Financial Officer,Finance
+ORCL-1-2-1,Jeff Henley,ORCL-1-2,profile,work,Vicepresidente Ejecutivo,Executive Vice President,Executive
+ORCL-1-2-1-1,Dorian Daley,ORCL-1-2-1,profile,gavel,VP Legal y Secretario General,VP Legal & General Counsel,Legal
+ORCL-1-2-2,Steve Miranda,ORCL-1-2,profile,design_services,VP de Aplicaciones,VP Applications,Product
+ORCL-1-2-2-1,Deepak Patil,ORCL-1-2-2,profile,category,VP de Productos Cloud,VP Cloud Products,Product
 
-CSCO,Cisco Systems Inc.,,company,detail,Empresa líder en redes y comunicaciones,CEO,Executive
-CSCO-1,Chuck Robbins,CSCO,profile,profile,CEO de Cisco,Chief Executive Officer,Executive
-CSCO-1-1,Scott Herren,CSCO-1,profile,profile,CFO de Cisco,Chief Financial Officer,Finance
-CSCO-1-1-1,Mark Chandler,CSCO-1-1,profile,profile,VP Legal y Secretario General,VP Legal & General Counsel,Legal
-CSCO-1-1-1-1,Mark Garrett,CSCO-1-1-1,profile,profile,VP de Operaciones,VP Operations,Operations
-CSCO-1-1-2,Irving Tan,CSCO-1-1,profile,profile,VP de Asia Pacífico,VP Asia Pacific,Regional
-CSCO-1-1-2-1,Chuck Robbins,CSCO-1-1-2,profile,profile,VP de América Latina,VP Latin America,Regional
-CSCO-1-2,Jeffrey S. Reed,CSCO-1,profile,profile,CTO de Cisco,Chief Technology Officer,Technology
-CSCO-1-2-1,Jonathan Davidson,CSCO-1-2,profile,profile,VP de Infraestructura de Red,VP Network Infrastructure,Technology
-CSCO-1-2-1-1,Roland Acra,CSCO-1-2-1,profile,profile,VP de Datacenter,VP Datacenter,Technology
-CSCO-1-2-2,David Goeckeler,CSCO-1-2,profile,profile,VP de Seguridad,VP Security,Security
-CSCO-1-2-2-1,Jonathan Davidson,CSCO-1-2-2,profile,profile,VP de Ciberseguridad,VP Cybersecurity,Security
-CSCO-1-3,Francine Katsoudas,CSCO-1,profile,profile,CPO de Cisco,Chief People Officer,Human Resources
-CSCO-1-3-1,Francine Katsoudas,CSCO-1-3,profile,profile,VP de Talento,VP Talent,Human Resources
-CSCO-1-3-1-1,Mark Chandler,CSCO-1-3-1,profile,profile,VP de Diversidad,VP Diversity,Human Resources
+CSCO,Cisco Systems Inc.,,company,account_balance,Empresa líder en redes y comunicaciones,CEO,Executive
+CSCO-1,Chuck Robbins,CSCO,profile,business,CEO de Cisco,Chief Executive Officer,Executive
+CSCO-1-1,Scott Herren,CSCO-1,profile,account_balance_wallet,CFO de Cisco,Chief Financial Officer,Finance
+CSCO-1-1-1,Mark Chandler,CSCO-1-1,profile,gavel,VP Legal y Secretario General,VP Legal & General Counsel,Legal
+CSCO-1-1-1-1,Mark Garrett,CSCO-1-1-1,profile,factory,VP de Operaciones,VP Operations,Operations
+CSCO-1-1-2,Irving Tan,CSCO-1-1,profile,place,VP de Asia Pacífico,VP Asia Pacific,Regional
+CSCO-1-1-2-1,Chuck Robbins,CSCO-1-1-2,profile,navigation,VP de América Latina,VP Latin America,Regional
+CSCO-1-2,Jeffrey S. Reed,CSCO-1,profile,memory,CTO de Cisco,Chief Technology Officer,Technology
+CSCO-1-2-1,Jonathan Davidson,CSCO-1-2,profile,developer_mode,VP de Infraestructura de Red,VP Network Infrastructure,Technology
+CSCO-1-2-1-1,Roland Acra,CSCO-1-2-1,profile,computer,VP de Datacenter,VP Datacenter,Technology
+CSCO-1-2-2,David Goeckeler,CSCO-1-2,profile,shield,VP de Seguridad,VP Security,Security
+CSCO-1-2-2-1,Jonathan Davidson,CSCO-1-2-2,profile,shield,VP de Ciberseguridad,VP Cybersecurity,Security
+CSCO-1-3,Francine Katsoudas,CSCO-1,profile,people_alt,CPO de Cisco,Chief People Officer,Human Resources
+CSCO-1-3-1,Francine Katsoudas,CSCO-1-3,profile,people_alt,VP de Talento,VP Talent,Human Resources
+CSCO-1-3-1-1,Mark Chandler,CSCO-1-3-1,profile,psychology,VP de Diversidad,VP Diversity,Human Resources
 
-PEP,PepsiCo Inc.,,company,detail,Empresa líder en bebidas y snacks,CEO,Executive
-PEP-1,Ramon Laguarta,PEP,profile,profile,CEO de PepsiCo,Chief Executive Officer,Executive
-PEP-1-1,Hugh Johnston,PEP-1,profile,profile,CFO de PepsiCo,Chief Financial Officer,Finance
-PEP-1-1-1,Marie Gallagher,PEP-1-1,profile,profile,VP de Relaciones con Inversores,VP Investor Relations,Finance
-PEP-1-1-1-1,Paula Santilli,PEP-1-1-1,profile,profile,VP de Finanzas Corporativas,VP Corporate Finance,Finance
-PEP-1-1-2,Paula Santilli,PEP-1-1,profile,profile,VP de Sostenibilidad,VP Sustainability,Sustainability
-PEP-1-1-2-1,Marie Gallagher,PEP-1-1-2,profile,profile,VP de Responsabilidad Social,VP Social Responsibility,Sustainability
-PEP-1-2,Ram Krishnan,PEP-1,profile,profile,CPO de PepsiCo,Chief Product Officer,Product
-PEP-1-2-1,Ram Krishnan,PEP-1-2,profile,profile,VP de Innovación,VP Innovation,Product
-PEP-1-2-1-1,Steven Williams,PEP-1-2-1,profile,profile,VP de Desarrollo de Productos,VP Product Development,Product
-PEP-1-2-2,Steven Williams,PEP-1-2,profile,profile,VP de Operaciones,VP Operations,Operations
-PEP-1-2-2-1,Ram Krishnan,PEP-1-2-2,profile,profile,VP de Fabricación,VP Manufacturing,Operations
-PEP-1-3,Kirk Tanner,PEP-1,profile,profile,VP de Norteamérica,VP North America,Regional
-PEP-1-3-1,Kirk Tanner,PEP-1-3,profile,profile,VP de Estados Unidos,VP United States,Regional
-PEP-1-3-1-1,Silviu Popovici,PEP-1-3-1,profile,profile,VP de Canadá,VP Canada,Regional
-PEP-1-3-2,Silviu Popovici,PEP-1-3,profile,profile,VP de Europa,VP Europe,Regional
-PEP-1-3-2-1,Eugene Willemsen,PEP-1-3-2,profile,profile,VP de África, Oriente Medio y Asia del Sur,VP AMESA,Regional
+PEP,PepsiCo Inc.,,company,account_balance,Empresa líder en bebidas y snacks,CEO,Executive
+PEP-1,Ramon Laguarta,PEP,profile,work,CEO de PepsiCo,Chief Executive Officer,Executive
+PEP-1-1,Hugh Johnston,PEP-1,profile,trending_up,CFO de PepsiCo,Chief Financial Officer,Finance
+PEP-1-1-1,Marie Gallagher,PEP-1-1,profile,account_balance_wallet,VP de Relaciones con Inversores,VP Investor Relations,Finance
+PEP-1-1-1-1,Paula Santilli,PEP-1-1-1,profile,analytics,VP de Finanzas Corporativas,VP Corporate Finance,Finance
+PEP-1-1-2,Paula Santilli,PEP-1-1,profile,recycling,VP de Sostenibilidad,VP Sustainability,Sustainability
+PEP-1-1-2-1,Marie Gallagher,PEP-1-1-2,profile,recycling,VP de Responsabilidad Social,VP Social Responsibility,Sustainability
+PEP-1-2,Ram Krishnan,PEP-1,profile,design_services,CPO de PepsiCo,Chief Product Officer,Product
+PEP-1-2-1,Ram Krishnan,PEP-1-2,profile,palette,VP de Innovación,VP Innovation,Product
+PEP-1-2-1-1,Steven Williams,PEP-1-2-1,profile,inventory,VP de Desarrollo de Productos,VP Product Development,Product
+PEP-1-2-2,Steven Williams,PEP-1-2,profile,settings,VP de Operaciones,VP Operations,Operations
+PEP-1-2-2-1,Ram Krishnan,PEP-1-2-2,profile,settings,VP de Fabricación,VP Manufacturing,Operations
+PEP-1-3,Kirk Tanner,PEP-1,profile,place,VP de Norteamérica,VP North America,Regional
+PEP-1-3-1,Kirk Tanner,PEP-1-3,profile,place,VP de Estados Unidos,VP United States,Regional
+PEP-1-3-1-1,Silviu Popovici,PEP-1-3-1,profile,map,VP de Canadá,VP Canada,Regional
+PEP-1-3-2,Silviu Popovici,PEP-1-3,profile,map,VP de Europa,VP Europe,Regional
+PEP-1-3-2-1,Eugene Willemsen,PEP-1-3-2,profile,point_of_sale,VP de África, Oriente Medio y Asia del Sur,VP AMESA,Regional
 
-KO,Coca-Cola Company,,company,detail,Empresa líder en bebidas no alcohólicas,CEO,Executive
-KO-1,James Quincey,KO,profile,profile,CEO de Coca-Cola,Chief Executive Officer,Executive
-KO-1-1,John Murphy,KO-1,profile,profile,CFO de Coca-Cola,Chief Financial Officer,Finance
-KO-1-1-1,Tim Haas,KO-1-1,profile,profile,VP de Relaciones con Inversores,VP Investor Relations,Finance
-KO-1-1-1-1,Manuel Arroyo,KO-1-1-1,profile,profile,VP de Finanzas Corporativas,VP Corporate Finance,Finance
-KO-1-1-2,Manuel Arroyo,KO-1-1,profile,profile,VP de Marketing Global,VP Global Marketing,Marketing
-KO-1-1-2-1,Tim Haas,KO-1-1-2,profile,profile,VP de Comunicaciones,VP Communications,Communications
-KO-1-2,Nancy Quan,KO-1,profile,profile,CTO de Coca-Cola,Chief Technology Officer,Technology
-KO-1-2-1,Nancy Quan,KO-1-2,profile,profile,VP de Innovación,VP Innovation,Innovation
-KO-1-2-1-1,Brian Smith,KO-1-2-1,profile,profile,VP de Desarrollo Digital,VP Digital Development,Technology
-KO-1-2-2,Brian Smith,KO-1-2,profile,profile,VP de Operaciones,VP Operations,Operations
-KO-1-2-2-1,Nancy Quan,KO-1-2-2,profile,profile,VP de Supply Chain,VP Supply Chain,Operations
-KO-1-3,Alfredo Rivera,KO-1,profile,profile,VP de Norteamérica,VP North America,Regional
-KO-1-3-1,Alfredo Rivera,KO-1-3,profile,profile,VP de Estados Unidos,VP United States,Regional
-KO-1-3-1-1,Henrique Braun,KO-1-3-1,profile,profile,VP de Canadá,VP Canada,Regional
-KO-1-3-2,Henrique Braun,KO-1-3,profile,profile,VP de América Latina,VP Latin America,Regional
-KO-1-3-2-1,Beatriz Perez,KO-1-3-2,profile,profile,VP de Sostenibilidad,VP Sustainability,Sustainability
+KO,Coca-Cola Company,,company,account_balance,Empresa líder en bebidas no alcohólicas,CEO,Executive
+KO-1,James Quincey,KO,profile,account_balance,CEO de Coca-Cola,Chief Executive Officer,Executive
+KO-1-1,John Murphy,KO-1,profile,trending_up,CFO de Coca-Cola,Chief Financial Officer,Finance
+KO-1-1-1,Tim Haas,KO-1-1,profile,trending_up,VP de Relaciones con Inversores,VP Investor Relations,Finance
+KO-1-1-1-1,Manuel Arroyo,KO-1-1-1,profile,analytics,VP de Finanzas Corporativas,VP Corporate Finance,Finance
+KO-1-1-2,Manuel Arroyo,KO-1-1,profile,storefront,VP de Marketing Global,VP Global Marketing,Marketing
+KO-1-1-2-1,Tim Haas,KO-1-1-2,profile,chat,VP de Comunicaciones,VP Communications,Communications
+KO-1-2,Nancy Quan,KO-1,profile,code,CTO de Coca-Cola,Chief Technology Officer,Technology
+KO-1-2-1,Nancy Quan,KO-1-2,profile,lightbulb,VP de Innovación,VP Innovation,Innovation
+KO-1-2-1-1,Brian Smith,KO-1-2-1,profile,computer,VP de Desarrollo Digital,VP Digital Development,Technology
+KO-1-2-2,Brian Smith,KO-1-2,profile,warehouse,VP de Operaciones,VP Operations,Operations
+KO-1-2-2-1,Nancy Quan,KO-1-2-2,profile,warehouse,VP de Supply Chain,VP Supply Chain,Operations
+KO-1-3,Alfredo Rivera,KO-1,profile,navigation,VP de Norteamérica,VP North America,Regional
+KO-1-3-1,Alfredo Rivera,KO-1-3,profile,location_on,VP de Estados Unidos,VP United States,Regional
+KO-1-3-1-1,Henrique Braun,KO-1-3-1,profile,location_on,VP de Canadá,VP Canada,Regional
+KO-1-3-2,Henrique Braun,KO-1-3,profile,navigation,VP de América Latina,VP Latin America,Regional
+KO-1-3-2-1,Beatriz Perez,KO-1-3-2,profile,eco,VP de Sostenibilidad,VP Sustainability,Sustainability
 
-DIS,Walt Disney Company,,company,detail,Empresa líder en entretenimiento y medios,CEO,Executive
-DIS-1,Bob Iger,DIS,profile,profile,CEO de Disney,Chief Executive Officer,Executive
-DIS-1-1,Christine McCarthy,DIS-1,profile,profile,CFO de Disney,Chief Financial Officer,Finance
-DIS-1-1-1,Horacio Gutierrez,DIS-1-1,profile,profile,VP de Relaciones con Inversores,VP Investor Relations,Finance
-DIS-1-1-1-1,Christine McCarthy,DIS-1-1-1,profile,profile,VP de Finanzas Corporativas,VP Corporate Finance,Finance
-DIS-1-1-2,Horacio Gutierrez,DIS-1-1,profile,profile,VP Legal y Secretario General,VP Legal & General Counsel,Legal
-DIS-1-1-2-1,Christine McCarthy,DIS-1-1-2,profile,profile,VP de Cumplimiento,VP Compliance,Legal
-DIS-1-2,Alan Bergman,DIS-1,profile,profile,Co-Presidente de Disney Studios,Co-Chairman Disney Studios,Entertainment
-DIS-1-2-1,Sean Bailey,DIS-1-2,profile,profile,VP de Producción de Películas,VP Motion Picture Production,Entertainment
-DIS-1-2-1-1,Alan Bergman,DIS-1-2-1,profile,profile,VP de Desarrollo de Contenido,VP Content Development,Entertainment
-DIS-1-2-2,Sean Bailey,DIS-1-2,profile,profile,VP de Adquisiciones,VP Acquisitions,Entertainment
-DIS-1-2-2-1,Alan Bergman,DIS-1-2-2,profile,profile,VP de Distribución,VP Distribution,Entertainment
-DIS-1-3,Dana Walden,DIS-1,profile,profile,Co-Presidente de Disney Entertainment,Co-Chairman Disney Entertainment,Entertainment
-DIS-1-3-1,Kareem Daniel,DIS-1-3,profile,profile,VP de Distribución de Contenido,VP Content Distribution,Entertainment
-DIS-1-3-1-1,Peter Rice,DIS-1-3-1,profile,profile,VP de Programación,VP Programming,Entertainment
-DIS-1-3-2,Peter Rice,DIS-1-3,profile,profile,VP de Streaming,VP Streaming,Entertainment
-DIS-1-3-2-1,Kareem Daniel,DIS-1-3-2,profile,profile,VP de Plataformas Digitales,VP Digital Platforms,Entertainment
+DIS,Walt Disney Company,,company,business,Empresa líder en entretenimiento y medios,CEO,Executive
+DIS-1,Bob Iger,DIS,profile,account_balance,CEO de Disney,Chief Executive Officer,Executive
+DIS-1-1,Christine McCarthy,DIS-1,profile,account_balance_wallet,CFO de Disney,Chief Financial Officer,Finance
+DIS-1-1-1,Horacio Gutierrez,DIS-1-1,profile,analytics,VP de Relaciones con Inversores,VP Investor Relations,Finance
+DIS-1-1-1-1,Christine McCarthy,DIS-1-1-1,profile,trending_up,VP de Finanzas Corporativas,VP Corporate Finance,Finance
+DIS-1-1-2,Horacio Gutierrez,DIS-1-1,profile,verified_user,VP Legal y Secretario General,VP Legal & General Counsel,Legal
+DIS-1-1-2-1,Christine McCarthy,DIS-1-1-2,profile,security,VP de Cumplimiento,VP Compliance,Legal
+DIS-1-2,Alan Bergman,DIS-1,profile,live_tv,Co-Presidente de Disney Studios,Co-Chairman Disney Studios,Entertainment
+DIS-1-2-1,Sean Bailey,DIS-1-2,profile,live_tv,VP de Producción de Películas,VP Motion Picture Production,Entertainment
+DIS-1-2-1-1,Alan Bergman,DIS-1-2-1,profile,live_tv,VP de Desarrollo de Contenido,VP Content Development,Entertainment
+DIS-1-2-2,Sean Bailey,DIS-1-2,profile,movie,VP de Adquisiciones,VP Acquisitions,Entertainment
+DIS-1-2-2-1,Alan Bergman,DIS-1-2-2,profile,live_tv,VP de Distribución,VP Distribution,Entertainment
+DIS-1-3,Dana Walden,DIS-1,profile,movie,Co-Presidente de Disney Entertainment,Co-Chairman Disney Entertainment,Entertainment
+DIS-1-3-1,Kareem Daniel,DIS-1-3,profile,movie,VP de Distribución de Contenido,VP Content Distribution,Entertainment
+DIS-1-3-1-1,Peter Rice,DIS-1-3-1,profile,theaters,VP de Programación,VP Programming,Entertainment
+DIS-1-3-2,Peter Rice,DIS-1-3,profile,movie,VP de Streaming,VP Streaming,Entertainment
+DIS-1-3-2-1,Kareem Daniel,DIS-1-3-2,profile,music_note,VP de Plataformas Digitales,VP Digital Platforms,Entertainment
 
-JPM,JPMorgan Chase & Co.,,company,detail,Empresa líder en servicios financieros y banca,CEO,Executive
-JPM-1,Jamie Dimon,JPM,profile,profile,CEO de JPMorgan Chase,Chief Executive Officer,Executive
-JPM-1-1,Jennifer Piepszak,JPM-1,profile,profile,CFO de JPMorgan Chase,Chief Financial Officer,Finance
-JPM-1-1-1,Stacey Friedman,JPM-1-1,profile,profile,VP Legal y Secretaria General,VP Legal & General Counsel,Legal
-JPM-1-1-1-1,Mary Erdoes,JPM-1-1-1,profile,profile,VP de Cumplimiento,VP Compliance,Compliance
-JPM-1-1-2,Mary Erdoes,JPM-1-1,profile,profile,VP de Relaciones con Inversores,VP Investor Relations,Finance
-JPM-1-1-2-1,Stacey Friedman,JPM-1-1-2,profile,profile,VP de Finanzas Corporativas,VP Corporate Finance,Finance
-JPM-1-2,Daniel Pinto,JPM-1,profile,profile,Co-Presidente y COO,Co-President & Chief Operating Officer,Operations
-JPM-1-2-1,Mary Erdoes,JPM-1-2,profile,profile,VP de Asset & Wealth Management,VP Asset & Wealth Management,Wealth Management
-JPM-1-2-1-1,Daniel Pinto,JPM-1-2-1,profile,profile,VP de Gestión de Activos,VP Asset Management,Wealth Management
-JPM-1-2-2,Daniel Pinto,JPM-1-2,profile,profile,VP de Corporate & Investment Bank,VP Corporate & Investment Bank,Investment Banking
-JPM-1-2-2-1,Mary Erdoes,JPM-1-2-2,profile,profile,VP de Banca de Inversión,VP Investment Banking,Investment Banking
-JPM-1-3,Gordon Smith,JPM-1,profile,profile,Co-Presidente y CEO de Consumer & Community Banking,Co-President & CEO Consumer Banking,Banking
-JPM-1-3-1,Gordon Smith,JPM-1-3,profile,profile,VP de Banca Minorista,VP Retail Banking,Banking
-JPM-1-3-1-1,Daniel Pinto,JPM-1-3-1,profile,profile,VP de Tarjetas de Crédito,VP Credit Cards,Banking
-JPM-1-3-2,Marianne Lake,JPM-1-3,profile,profile,CPO de JPMorgan Chase,Chief Product Officer,Product
-JPM-1-3-2-1,Gordon Smith,JPM-1-3-2,profile,profile,VP de Productos Digitales,VP Digital Products,Product
-JPM-1-4,Marianne Lake,JPM-1,profile,profile,CPO de JPMorgan Chase,Chief Product Officer,Product
-JPM-1-4-1,Marianne Lake,JPM-1-4,profile,profile,VP de Innovación,VP Innovation,Product
-JPM-1-4-1-1,Gordon Smith,JPM-1-4-1,profile,profile,VP de Tecnología,VP Technology,Technology
+JPM,JPMorgan Chase & Co.,,company,work,Empresa líder en servicios financieros y banca,CEO,Executive
+JPM-1,Jamie Dimon,JPM,profile,work,CEO de JPMorgan Chase,Chief Executive Officer,Executive
+JPM-1-1,Jennifer Piepszak,JPM-1,profile,trending_up,CFO de JPMorgan Chase,Chief Financial Officer,Finance
+JPM-1-1-1,Stacey Friedman,JPM-1-1,profile,policy,VP Legal y Secretaria General,VP Legal & General Counsel,Legal
+JPM-1-1-1-1,Mary Erdoes,JPM-1-1-1,profile,verified_user,VP de Cumplimiento,VP Compliance,Compliance
+JPM-1-1-2,Mary Erdoes,JPM-1-1,profile,trending_up,VP de Relaciones con Inversores,VP Investor Relations,Finance
+JPM-1-1-2-1,Stacey Friedman,JPM-1-1-2,profile,trending_up,VP de Finanzas Corporativas,VP Corporate Finance,Finance
+JPM-1-2,Daniel Pinto,JPM-1,profile,warehouse,Co-Presidente y COO,Co-President & Chief Operating Officer,Operations
+JPM-1-2-1,Mary Erdoes,JPM-1-2,profile,trending_up,VP de Asset & Wealth Management,VP Asset & Wealth Management,Wealth Management
+JPM-1-2-1-1,Daniel Pinto,JPM-1-2-1,profile,account_balance_wallet,VP de Gestión de Activos,VP Asset Management,Wealth Management
+JPM-1-2-2,Daniel Pinto,JPM-1-2,profile,trending_up,VP de Corporate & Investment Bank,VP Corporate & Investment Bank,Investment Banking
+JPM-1-2-2-1,Mary Erdoes,JPM-1-2-2,profile,analytics,VP de Banca de Inversión,VP Investment Banking,Investment Banking
+JPM-1-3,Gordon Smith,JPM-1,profile,payment,Co-Presidente y CEO de Consumer & Community Banking,Co-President & CEO Consumer Banking,Banking
+JPM-1-3-1,Gordon Smith,JPM-1-3,profile,account_balance,VP de Banca Minorista,VP Retail Banking,Banking
+JPM-1-3-1-1,Daniel Pinto,JPM-1-3-1,profile,account_balance,VP de Tarjetas de Crédito,VP Credit Cards,Banking
+JPM-1-3-2,Marianne Lake,JPM-1-3,profile,palette,CPO de JPMorgan Chase,Chief Product Officer,Product
+JPM-1-3-2-1,Gordon Smith,JPM-1-3-2,profile,category,VP de Productos Digitales,VP Digital Products,Product
+JPM-1-4,Marianne Lake,JPM-1,profile,palette,CPO de JPMorgan Chase,Chief Product Officer,Product
+JPM-1-4-1,Marianne Lake,JPM-1-4,profile,design_services,VP de Innovación,VP Innovation,Product
+JPM-1-4-1-1,Gordon Smith,JPM-1-4-1,profile,developer_mode,VP de Tecnología,VP Technology,Technology
 
-V,Visa Inc.,,company,detail,Empresa líder en pagos digitales y procesamiento de transacciones,CEO,Executive
-V-1,Ryan McInerney,V,profile,profile,CEO de Visa,Chief Executive Officer,Executive
-V-1-1,Vasant Prabhu,V-1,profile,profile,CFO de Visa,Chief Financial Officer,Finance
-V-1-1-1,Colleen Ostrowski,V-1-1,profile,profile,VP de Relaciones con Inversores,VP Investor Relations,Finance
-V-1-1-1-1,Paul Fabara,V-1-1-1,profile,profile,VP de Finanzas Corporativas,VP Corporate Finance,Finance
-V-1-1-2,Paul Fabara,V-1-1,profile,profile,VP de Riesgo,VP Risk,Risk Management
-V-1-1-2-1,Colleen Ostrowski,V-1-1-2,profile,profile,VP de Cumplimiento,VP Compliance,Risk Management
-V-1-2,Rajat Taneja,V-1,profile,profile,CTO de Visa,Chief Technology Officer,Technology
-V-1-2-1,Rajat Taneja,V-1-2,profile,profile,VP de Ingeniería,VP Engineering,Technology
-V-1-2-1-1,Jack Forestell,V-1-2-1,profile,profile,VP de Desarrollo,VP Development,Technology
-V-1-2-2,Jack Forestell,V-1-2,profile,profile,VP de Productos y Soluciones,VP Products & Solutions,Product
-V-1-2-2-1,Rajat Taneja,V-1-2-2,profile,profile,VP de Innovación,VP Innovation,Product
-V-1-3,Antony Cahill,V-1,profile,profile,VP de Operaciones Globales,VP Global Operations,Operations
-V-1-3-1,Antony Cahill,V-1-3,profile,profile,VP de Operaciones Regionales,VP Regional Operations,Operations
-V-1-3-1-1,Jack Forestell,V-1-3-1,profile,profile,VP de Operaciones Locales,VP Local Operations,Operations
-V-1-3-2,Jack Forestell,V-1-3,profile,profile,VP de Infraestructura,VP Infrastructure,Operations
-V-1-3-2-1,Antony Cahill,V-1-3-2,profile,profile,VP de Datacenters,VP Datacenters,Operations
-V-1-4,Alfred Kelly Jr.,V-1,profile,profile,Presidente Ejecutivo,Executive Chairman,Executive
-V-1-4-1,Kelly Mahon Tullier,V-1-4,profile,profile,CPO de Visa,Chief People Officer,Human Resources
-V-1-4-1-1,Alfred Kelly Jr.,V-1-4-1,profile,profile,VP de Talento,VP Talent,Human Resources
+V,Visa Inc.,,company,work,Empresa líder en pagos digitales y procesamiento de transacciones,CEO,Executive
+V-1,Ryan McInerney,V,profile,business,CEO de Visa,Chief Executive Officer,Executive
+V-1-1,Vasant Prabhu,V-1,profile,payment,CFO de Visa,Chief Financial Officer,Finance
+V-1-1-1,Colleen Ostrowski,V-1-1,profile,payment,VP de Relaciones con Inversores,VP Investor Relations,Finance
+V-1-1-1-1,Paul Fabara,V-1-1-1,profile,analytics,VP de Finanzas Corporativas,VP Corporate Finance,Finance
+V-1-1-2,Paul Fabara,V-1-1,profile,priority_high,VP de Riesgo,VP Risk,Risk Management
+V-1-1-2-1,Colleen Ostrowski,V-1-1-2,profile,priority_high,VP de Cumplimiento,VP Compliance,Risk Management
+V-1-2,Rajat Taneja,V-1,profile,developer_mode,CTO de Visa,Chief Technology Officer,Technology
+V-1-2-1,Rajat Taneja,V-1-2,profile,code,VP de Ingeniería,VP Engineering,Technology
+V-1-2-1-1,Jack Forestell,V-1-2-1,profile,code,VP de Desarrollo,VP Development,Technology
+V-1-2-2,Jack Forestell,V-1-2,profile,category,VP de Productos y Soluciones,VP Products & Solutions,Product
+V-1-2-2-1,Rajat Taneja,V-1-2-2,profile,design_services,VP de Innovación,VP Innovation,Product
+V-1-3,Antony Cahill,V-1,profile,settings,VP de Operaciones Globales,VP Global Operations,Operations
+V-1-3-1,Antony Cahill,V-1-3,profile,warehouse,VP de Operaciones Regionales,VP Regional Operations,Operations
+V-1-3-1-1,Jack Forestell,V-1-3-1,profile,factory,VP de Operaciones Locales,VP Local Operations,Operations
+V-1-3-2,Jack Forestell,V-1-3,profile,build,VP de Infraestructura,VP Infrastructure,Operations
+V-1-3-2-1,Antony Cahill,V-1-3-2,profile,factory,VP de Datacenters,VP Datacenters,Operations
+V-1-4,Alfred Kelly Jr.,V-1,profile,account_balance,Presidente Ejecutivo,Executive Chairman,Executive
+V-1-4-1,Kelly Mahon Tullier,V-1-4,profile,diversity_3,CPO de Visa,Chief People Officer,Human Resources
+V-1-4-1-1,Alfred Kelly Jr.,V-1-4-1,profile,people_alt,VP de Talento,VP Talent,Human Resources
 
-WMT,Walmart Inc.,,company,detail,Empresa líder en retail y comercio minorista,CEO,Executive
-WMT-1,Doug McMillon,WMT,profile,profile,CEO de Walmart,Chief Executive Officer,Executive
-WMT-1-1,John David Rainey,WMT-1,profile,profile,CFO de Walmart,Chief Financial Officer,Finance
-WMT-1-1-1,Rachel Brand,WMT-1-1,profile,profile,VP de Relaciones con Inversores,VP Investor Relations,Finance
-WMT-1-1-1-1,John Furner,WMT-1-1-1,profile,profile,VP de Finanzas Corporativas,VP Corporate Finance,Finance
-WMT-1-1-2,Rachel Brand,WMT-1-1,profile,profile,VP Legal y Secretaria General,VP Legal & General Counsel,Legal
-WMT-1-1-2-1,John David Rainey,WMT-1-1-2,profile,profile,VP de Cumplimiento,VP Compliance,Legal
-WMT-1-2,Judith McKenna,WMT-1,profile,profile,Presidente de Walmart International,President Walmart International,International
-WMT-1-2-1,Leigh Hopkins,WMT-1-2,profile,profile,VP de Estrategia y Desarrollo Internacional,VP International Strategy & Development,Strategy
-WMT-1-2-1-1,Judith McKenna,WMT-1-2-1,profile,profile,VP de Mercados Emergentes,VP Emerging Markets,Strategy
-WMT-1-2-2,Leigh Hopkins,WMT-1-2,profile,profile,VP de Operaciones Internacionales,VP International Operations,Operations
-WMT-1-2-2-1,Judith McKenna,WMT-1-2-2,profile,profile,VP de Expansión,VP Expansion,Operations
-WMT-1-3,John Furner,WMT-1,profile,profile,VP de Walmart U.S.,VP Walmart U.S.,Retail
-WMT-1-3-1,John Furner,WMT-1-3,profile,profile,VP de Operaciones de Tiendas,VP Store Operations,Retail
-WMT-1-3-1-1,Kathryn McLay,WMT-1-3-1,profile,profile,VP de Gestión de Tiendas,VP Store Management,Retail
-WMT-1-3-2,Kathryn McLay,WMT-1-3,profile,profile,VP de Sam's Club,VP Sam's Club,Retail
-WMT-1-3-2-1,John Furner,WMT-1-3-2,profile,profile,VP de Membresías,VP Memberships,Retail
-WMT-1-4,Chris Nicholas,WMT-1,profile,profile,VP de Operaciones,VP Operations,Operations
-WMT-1-4-1,Chris Nicholas,WMT-1-4,profile,profile,VP de Supply Chain,VP Supply Chain,Operations
-WMT-1-4-1-1,Donna Morris,WMT-1-4-1,profile,profile,VP de Logística,VP Logistics,Operations
-WMT-1-4-2,Donna Morris,WMT-1-4,profile,profile,VP de Recursos Humanos,VP Human Resources,Human Resources
-WMT-1-4-2-1,Chris Nicholas,WMT-1-4-2,profile,profile,VP de Talento,VP Talent,Human Resources
+WMT,Walmart Inc.,,company,work,Empresa líder en retail y comercio minorista,CEO,Executive
+WMT-1,Doug McMillon,WMT,profile,business,CEO de Walmart,Chief Executive Officer,Executive
+WMT-1-1,John David Rainey,WMT-1,profile,analytics,CFO de Walmart,Chief Financial Officer,Finance
+WMT-1-1-1,Rachel Brand,WMT-1-1,profile,payment,VP de Relaciones con Inversores,VP Investor Relations,Finance
+WMT-1-1-1-1,John Furner,WMT-1-1-1,profile,analytics,VP de Finanzas Corporativas,VP Corporate Finance,Finance
+WMT-1-1-2,Rachel Brand,WMT-1-1,profile,verified_user,VP Legal y Secretaria General,VP Legal & General Counsel,Legal
+WMT-1-1-2-1,John David Rainey,WMT-1-1-2,profile,verified_user,VP de Cumplimiento,VP Compliance,Legal
+WMT-1-2,Judith McKenna,WMT-1,profile,language,Presidente de Walmart International,President Walmart International,International
+WMT-1-2-1,Leigh Hopkins,WMT-1-2,profile,insights,VP de Estrategia y Desarrollo Internacional,VP International Strategy & Development,Strategy
+WMT-1-2-1-1,Judith McKenna,WMT-1-2-1,profile,insights,VP de Mercados Emergentes,VP Emerging Markets,Strategy
+WMT-1-2-2,Leigh Hopkins,WMT-1-2,profile,settings,VP de Operaciones Internacionales,VP International Operations,Operations
+WMT-1-2-2-1,Judith McKenna,WMT-1-2-2,profile,warehouse,VP de Expansión,VP Expansion,Operations
+WMT-1-3,John Furner,WMT-1,profile,point_of_sale,VP de Walmart U.S.,VP Walmart U.S.,Retail
+WMT-1-3-1,John Furner,WMT-1-3,profile,store,VP de Operaciones de Tiendas,VP Store Operations,Retail
+WMT-1-3-1-1,Kathryn McLay,WMT-1-3-1,profile,storefront,VP de Gestión de Tiendas,VP Store Management,Retail
+WMT-1-3-2,Kathryn McLay,WMT-1-3,profile,shopping_cart,VP de Sam's Club,VP Sam's Club,Retail
+WMT-1-3-2-1,John Furner,WMT-1-3-2,profile,store,VP de Membresías,VP Memberships,Retail
+WMT-1-4,Chris Nicholas,WMT-1,profile,factory,VP de Operaciones,VP Operations,Operations
+WMT-1-4-1,Chris Nicholas,WMT-1-4,profile,build,VP de Supply Chain,VP Supply Chain,Operations
+WMT-1-4-1-1,Donna Morris,WMT-1-4-1,profile,warehouse,VP de Logística,VP Logistics,Operations
+WMT-1-4-2,Donna Morris,WMT-1-4,profile,school,VP de Recursos Humanos,VP Human Resources,Human Resources
+WMT-1-4-2-1,Chris Nicholas,WMT-1-4-2,profile,psychology,VP de Talento,VP Talent,Human Resources
 
-HD,Home Depot Inc.,,company,detail,Empresa líder en mejoras para el hogar y construcción,CEO,Executive
-HD-1,Ted Decker,HD,profile,profile,CEO de Home Depot,Chief Executive Officer,Executive
-HD-1-1,Richard McPhail,HD-1,profile,profile,CFO de Home Depot,Chief Financial Officer,Finance
-HD-1-1-1,Scott Hara,HD-1-1,profile,profile,VP de Relaciones con Inversores,VP Investor Relations,Finance
-HD-1-1-1-1,Richard McPhail,HD-1-1-1,profile,profile,VP de Finanzas Corporativas,VP Corporate Finance,Finance
-HD-1-1-2,Scott Hara,HD-1-1,profile,profile,VP de Tesorería,VP Treasury,Finance
-HD-1-1-2-1,Richard McPhail,HD-1-1-2,profile,profile,VP de Contabilidad,VP Accounting,Finance
-HD-1-2,Ann-Marie Campbell,HD-1,profile,profile,VP de Operaciones de Tiendas,VP Store Operations,Operations
-HD-1-2-1,Jeff Kinnaird,HD-1-2,profile,profile,VP de Operaciones de Tiendas Canadá,VP Store Operations Canada,Operations
-HD-1-2-1-1,Ann-Marie Campbell,HD-1-2-1,profile,profile,VP de Gestión de Tiendas,VP Store Management,Operations
-HD-1-2-2,Jeff Kinnaird,HD-1-2,profile,profile,VP de Canadá,VP Canada,Regional
-HD-1-2-2-1,Ann-Marie Campbell,HD-1-2-2,profile,profile,VP de Expansión Canadá,VP Canada Expansion,Regional
-HD-1-3,Billy Bastek,HD-1,profile,profile,VP de Merchandising,VP Merchandising,Merchandising
-HD-1-3-1,Billy Bastek,HD-1-3,profile,profile,VP de Categorías,VP Categories,Merchandising
-HD-1-3-1-1,Mark Holifield,HD-1-3-1,profile,profile,VP de Herramientas,VP Tools,Merchandising
-HD-1-3-2,Mark Holifield,HD-1-3,profile,profile,VP de Supply Chain,VP Supply Chain,Supply Chain
-HD-1-3-2-1,Billy Bastek,HD-1-3-2,profile,profile,VP de Logística,VP Logistics,Supply Chain
-HD-1-4,Timothy Hourigan,HD-1,profile,profile,VP de Recursos Humanos,VP Human Resources,Human Resources
-HD-1-4-1,Timothy Hourigan,HD-1-4,profile,profile,VP de Talento,VP Talent,Human Resources
-HD-1-4-1-1,Scott Hara,HD-1-4-1,profile,profile,VP de Reclutamiento,VP Recruitment,Human Resources
-HD-1-4-2,Scott Hara,HD-1-4,profile,profile,VP de Comunicaciones,VP Communications,Communications
-HD-1-4-2-1,Timothy Hourigan,HD-1-4-2,profile,profile,VP de Marketing,VP Marketing,Marketing
+HD,Home Depot Inc.,,company,account_balance,Empresa líder en mejoras para el hogar y construcción,CEO,Executive
+HD-1,Ted Decker,HD,profile,account_balance,CEO de Home Depot,Chief Executive Officer,Executive
+HD-1-1,Richard McPhail,HD-1,profile,account_balance_wallet,CFO de Home Depot,Chief Financial Officer,Finance
+HD-1-1-1,Scott Hara,HD-1-1,profile,payment,VP de Relaciones con Inversores,VP Investor Relations,Finance
+HD-1-1-1-1,Richard McPhail,HD-1-1-1,profile,account_balance_wallet,VP de Finanzas Corporativas,VP Corporate Finance,Finance
+HD-1-1-2,Scott Hara,HD-1-1,profile,account_balance_wallet,VP de Tesorería,VP Treasury,Finance
+HD-1-1-2-1,Richard McPhail,HD-1-1-2,profile,payment,VP de Contabilidad,VP Accounting,Finance
+HD-1-2,Ann-Marie Campbell,HD-1,profile,settings,VP de Operaciones de Tiendas,VP Store Operations,Operations
+HD-1-2-1,Jeff Kinnaird,HD-1-2,profile,build,VP de Operaciones de Tiendas Canadá,VP Store Operations Canada,Operations
+HD-1-2-1-1,Ann-Marie Campbell,HD-1-2-1,profile,settings,VP de Gestión de Tiendas,VP Store Management,Operations
+HD-1-2-2,Jeff Kinnaird,HD-1-2,profile,place,VP de Canadá,VP Canada,Regional
+HD-1-2-2-1,Ann-Marie Campbell,HD-1-2-2,profile,map,VP de Expansión Canadá,VP Canada Expansion,Regional
+HD-1-3,Billy Bastek,HD-1,profile,local_offer,VP de Merchandising,VP Merchandising,Merchandising
+HD-1-3-1,Billy Bastek,HD-1-3,profile,category,VP de Categorías,VP Categories,Merchandising
+HD-1-3-1-1,Mark Holifield,HD-1-3-1,profile,inventory,VP de Herramientas,VP Tools,Merchandising
+HD-1-3-2,Mark Holifield,HD-1-3,profile,local_warehouse,VP de Supply Chain,VP Supply Chain,Supply Chain
+HD-1-3-2-1,Billy Bastek,HD-1-3-2,profile,factory,VP de Logística,VP Logistics,Supply Chain
+HD-1-4,Timothy Hourigan,HD-1,profile,diversity_3,VP de Recursos Humanos,VP Human Resources,Human Resources
+HD-1-4-1,Timothy Hourigan,HD-1-4,profile,diversity_3,VP de Talento,VP Talent,Human Resources
+HD-1-4-1-1,Scott Hara,HD-1-4-1,profile,psychology,VP de Reclutamiento,VP Recruitment,Human Resources
+HD-1-4-2,Scott Hara,HD-1-4,profile,chat,VP de Comunicaciones,VP Communications,Communications
+HD-1-4-2-1,Timothy Hourigan,HD-1-4-2,profile,local_offer,VP de Marketing,VP Marketing,Marketing
 
-PG,Procter & Gamble Co.,,company,detail,Empresa líder en productos de consumo y cuidado personal,CEO,Executive
-PG-1,Jon Moeller,PG,profile,profile,CEO de P&G,Chief Executive Officer,Executive
-PG-1-1,Andre Schulten,PG-1,profile,profile,CFO de P&G,Chief Financial Officer,Finance
-PG-1-1-1,Heather Long,PG-1-1,profile,profile,VP de Relaciones con Inversores,VP Investor Relations,Finance
-PG-1-1-1-1,Andre Schulten,PG-1-1-1,profile,profile,VP de Finanzas Corporativas,VP Corporate Finance,Finance
-PG-1-1-2,Deborah Majoras,PG-1-1,profile,profile,VP Legal y Secretaria General,VP Legal & General Counsel,Legal
-PG-1-1-2-1,Heather Long,PG-1-1-2,profile,profile,VP de Cumplimiento,VP Compliance,Legal
-PG-1-2,Shailesh Jejurikar,PG-1,profile,profile,VP de Operaciones,VP Operations,Operations
-PG-1-2-1,Shailesh Jejurikar,PG-1-2,profile,profile,VP de Supply Chain,VP Supply Chain,Operations
-PG-1-2-1-1,Markus Strobel,PG-1-2-1,profile,profile,VP de Logística,VP Logistics,Operations
-PG-1-2-2,Markus Strobel,PG-1-2,profile,profile,VP de Fabricación,VP Manufacturing,Operations
-PG-1-2-2-1,Shailesh Jejurikar,PG-1-2-2,profile,profile,VP de Calidad,VP Quality,Operations
-PG-1-3,Marc Pritchard,PG-1,profile,profile,CPO de P&G,Chief Product Officer,Product
-PG-1-3-1,Alex Keith,PG-1-3,profile,profile,VP de Beauty,VP Beauty,Beauty
-PG-1-3-1-1,Marc Pritchard,PG-1-3-1,profile,profile,VP de Cuidado de la Piel,VP Skin Care,Beauty
-PG-1-3-2,Markus Strobel,PG-1-3,profile,profile,VP de Cuidado del Hogar,VP Home Care,Home Care
-PG-1-3-2-1,Alex Keith,PG-1-3-2,profile,profile,VP de Limpieza,VP Cleaning,Home Care
-PG-1-4,Alex Keith,PG-1,profile,profile,VP de Beauty,VP Beauty,Beauty
-PG-1-4-1,Alex Keith,PG-1-4,profile,profile,VP de Cuidado Personal,VP Personal Care,Personal Care
-PG-1-4-1-1,Marc Pritchard,PG-1-4-1,profile,profile,VP de Cuidado del Cabello,VP Hair Care,Personal Care
-PG-1-4-2,Marc Pritchard,PG-1-4,profile,profile,VP de Innovación,VP Innovation,Product
-PG-1-4-2-1,Alex Keith,PG-1-4-2,profile,profile,VP de Investigación,VP Research,Product 
+PG,Procter & Gamble Co.,,company,account_balance,Empresa líder en productos de consumo y cuidado personal,CEO,Executive
+PG-1,Jon Moeller,PG,profile,business,CEO de P&G,Chief Executive Officer,Executive
+PG-1-1,Andre Schulten,PG-1,profile,trending_up,CFO de P&G,Chief Financial Officer,Finance
+PG-1-1-1,Heather Long,PG-1-1,profile,payment,VP de Relaciones con Inversores,VP Investor Relations,Finance
+PG-1-1-1-1,Andre Schulten,PG-1-1-1,profile,account_balance_wallet,VP de Finanzas Corporativas,VP Corporate Finance,Finance
+PG-1-1-2,Deborah Majoras,PG-1-1,profile,policy,VP Legal y Secretaria General,VP Legal & General Counsel,Legal
+PG-1-1-2-1,Heather Long,PG-1-1-2,profile,gavel,VP de Cumplimiento,VP Compliance,Legal
+PG-1-2,Shailesh Jejurikar,PG-1,profile,settings,VP de Operaciones,VP Operations,Operations
+PG-1-2-1,Shailesh Jejurikar,PG-1-2,profile,settings,VP de Supply Chain,VP Supply Chain,Operations
+PG-1-2-1-1,Markus Strobel,PG-1-2-1,profile,factory,VP de Logística,VP Logistics,Operations
+PG-1-2-2,Markus Strobel,PG-1-2,profile,warehouse,VP de Fabricación,VP Manufacturing,Operations
+PG-1-2-2-1,Shailesh Jejurikar,PG-1-2-2,profile,warehouse,VP de Calidad,VP Quality,Operations
+PG-1-3,Marc Pritchard,PG-1,profile,category,CPO de P&G,Chief Product Officer,Product
+PG-1-3-1,Alex Keith,PG-1-3,profile,palette,VP de Beauty,VP Beauty,Beauty
+PG-1-3-1-1,Marc Pritchard,PG-1-3-1,profile,brush,VP de Cuidado de la Piel,VP Skin Care,Beauty
+PG-1-3-2,Markus Strobel,PG-1-3,profile,cleaning_services,VP de Cuidado del Hogar,VP Home Care,Home Care
+PG-1-3-2-1,Alex Keith,PG-1-3-2,profile,local_laundry_service,VP de Limpieza,VP Cleaning,Home Care
+PG-1-4,Alex Keith,PG-1,profile,design_services,VP de Beauty,VP Beauty,Beauty
+PG-1-4-1,Alex Keith,PG-1-4,profile,account_circle,VP de Cuidado Personal,VP Personal Care,Personal Care
+PG-1-4-1-1,Marc Pritchard,PG-1-4-1,profile,account_circle,VP de Cuidado del Cabello,VP Hair Care,Personal Care
+PG-1-4-2,Marc Pritchard,PG-1-4,profile,inventory,VP de Innovación,VP Innovation,Product
+PG-1-4-2-1,Alex Keith,PG-1-4-2,profile,inventory,VP de Investigación,VP Research,Product 

@@ -9,7 +9,7 @@
       margin: 0;
       padding: 0;
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background: #f6f7f9;
+      background: #2c3e50;
       color: #333;
     }
     
@@ -48,10 +48,10 @@
     }
     
     .cluster-title {
-      font-size: 16px;
+      font-size: 20px;
       font-weight: bold;
       fill: #333;
-      text-anchor: middle;
+      text-anchor: start;
     }
     
     .cluster-bg {
@@ -130,10 +130,13 @@
     // Configuración básica
     const config = {
       url: "../data/companies-board-performance-medium.csv",
-      spacing: 80,
+      spacing: 140,
       nodeWidth: 100,
-      nodeHeight: 60,
-      treeSpacing: 150
+      nodeHeight: 125,
+      treeSpacing: 100,
+      clustersPerRow: "6 5 4 5 5", // Configuración de clusters por fila
+      clusterGapX: 80, // Gap horizontal entre clusters
+      clusterGapY: 80 // Gap vertical entre filas de clusters
     };
 
     // Función para construir la jerarquía
@@ -287,34 +290,130 @@
     function renderTrees(trees, container) {
       console.log(`Renderizando ${trees.length} clusters con D3...`);
       
-      // Calcular layout de clusters
+      // Calcular layout de clusters con configuración flexible por fila
       const treeLayouts = [];
-      let currentX = 0;
       const treeSpacing = config.treeSpacing;
+      const clusterGapX = config.clusterGapX; // Gap horizontal entre clusters
+      const clusterGapY = config.clusterGapY; // Gap vertical entre filas
       
-      trees.forEach(tree => {
+      // Parsear configuración de clusters por fila
+      const clustersPerRowConfig = config.clustersPerRow.split(' ').map(num => parseInt(num));
+      const defaultClustersPerRow = 7;
+      
+
+      
+      // Primera pasada: calcular dimensiones de todos los clusters
+      const clusterDimensions = [];
+      trees.forEach((tree, index) => {
         // Calcular layout temporal del árbol para obtener su ancho real
         renderTreeSimple(tree, d3.select('body').append('g').style('display', 'none'), 0, 0);
         
-        // Calcular ancho real del árbol basándose en las posiciones de los nodos
+        // Calcular dimensiones del cluster de forma simple
         const treeBounds = calculateTreeBounds(tree);
-        const realTreeWidth = treeBounds.maxX - treeBounds.minX + config.nodeWidth;
-        const realTreeHeight = treeBounds.maxY - treeBounds.minY + config.nodeHeight;
+        const realTreeWidth = treeBounds.maxX - treeBounds.minX;
+        const realTreeHeight = treeBounds.maxY - treeBounds.minY;
         
-        // Dimensiones del cluster basadas en el árbol real
-        const clusterWidth = realTreeWidth + 40;
-        const clusterHeight = realTreeHeight + 60;
+        // Dimensiones del cluster con padding mínimo
+        const clusterWidth = realTreeWidth + 20; // Padding horizontal mínimo
+        const clusterHeight = Math.max(realTreeHeight, config.nodeHeight) + 140; // Más padding vertical (top y bottom)
         
-        treeLayouts.push({
+
+        
+        clusterDimensions.push({
           tree: tree,
           clusterWidth: clusterWidth,
           clusterHeight: clusterHeight,
           realTreeWidth: realTreeWidth,
-          x: currentX
+          index: index
+        });
+      });
+      
+      // Calcular el ancho máximo de cada fila usando configuración flexible
+      const rowMaxWidths = [];
+      let currentIndex = 0;
+      let row = 0;
+      
+      while (currentIndex < trees.length) {
+        // Obtener número de clusters para esta fila
+        const clustersForThisRow = clustersPerRowConfig[row] || defaultClustersPerRow;
+        const endIndex = Math.min(currentIndex + clustersForThisRow, trees.length);
+        const rowClusters = clusterDimensions.slice(currentIndex, endIndex);
+        
+
+        
+        // Calcular ancho total de la fila actual
+        const rowTotalWidth = rowClusters.reduce((sum, cluster) => sum + cluster.clusterWidth, 0) + 
+                             (rowClusters.length - 1) * clusterGapX;
+        rowMaxWidths.push(rowTotalWidth);
+        console.log(`Fila ${row}: ${rowClusters.length} clusters, ancho total: ${rowTotalWidth}`);
+        
+        currentIndex = endIndex;
+        row++;
+      }
+      
+      const totalRows = row;
+      
+      // Encontrar el ancho máximo entre todas las filas
+      const maxRowWidth = Math.max(...rowMaxWidths);
+      console.log('Ancho máximo de fila:', maxRowWidth, 'Anchos de filas:', rowMaxWidths);
+      
+
+      
+      // Segunda pasada: calcular posiciones con ancho uniforme usando configuración flexible
+      let layoutIndex = 0;
+      let layoutRow = 0;
+      
+      while (layoutIndex < clusterDimensions.length) {
+        // Obtener número de clusters para esta fila
+        const clustersForThisRow = clustersPerRowConfig[layoutRow] || defaultClustersPerRow;
+        const endIndex = Math.min(layoutIndex + clustersForThisRow, clusterDimensions.length);
+        const rowClusters = clusterDimensions.slice(layoutIndex, endIndex);
+        
+        // Calcular factor de escala para que esta fila tenga exactamente el ancho máximo
+        const rowTotalWidth = rowClusters.reduce((sum, c) => sum + c.clusterWidth, 0) + 
+                             (rowClusters.length - 1) * clusterGapX;
+        
+        console.log(`Fila ${layoutRow}: ${clustersForThisRow} clusters, ancho total: ${rowTotalWidth}, factor escala: ${maxRowWidth / rowTotalWidth}`);
+        
+        // Calcular factor de escala para ajustar el ancho
+        const scaleFactor = maxRowWidth / rowTotalWidth;
+        
+
+        
+        // Procesar cada cluster en esta fila
+        rowClusters.forEach((cluster, col) => {
+          const adjustedClusterWidth = Math.round(cluster.clusterWidth * scaleFactor);
+          
+          // Calcular posición X centrada
+          const startX = (window.innerWidth - maxRowWidth) / 2;
+          let x = startX;
+          
+          // Calcular posición X acumulando los anchos ajustados de los clusters anteriores en la fila
+          for (let i = 0; i < col; i++) {
+            const prevCluster = rowClusters[i];
+            const prevAdjustedWidth = Math.round(prevCluster.clusterWidth * scaleFactor);
+            x += prevAdjustedWidth + clusterGapX;
+          }
+          
+
+          
+          // Calcular posición Y
+          const y = 30 + layoutRow * (cluster.clusterHeight + clusterGapY);
+          
+          treeLayouts.push({
+            tree: cluster.tree,
+            clusterWidth: adjustedClusterWidth,
+            clusterHeight: cluster.clusterHeight,
+            realTreeWidth: cluster.realTreeWidth,
+            x: x,
+            y: y,
+            originalWidth: cluster.clusterWidth
+          });
         });
         
-        currentX += clusterWidth + treeSpacing;
-      });
+        layoutIndex = endIndex;
+        layoutRow++;
+      }
 
       // Medir tiempo de renderizado si es la primera carga
       if (renderStartTime === 0) {
@@ -323,12 +422,12 @@
       
       // Renderizar clusters
       treeLayouts.forEach((layout, index) => {
-        const { tree, clusterWidth, clusterHeight, realTreeWidth, x } = layout;
+        const { tree, clusterWidth, clusterHeight, realTreeWidth, x, y } = layout;
         
         // Crear grupo del cluster
         const clusterGroup = container.append('g')
           .attr('class', 'cluster')
-          .attr('transform', `translate(${x}, 30)`);
+          .attr('transform', `translate(${x}, ${y})`);
         
         // Crear grupo para el árbol
         const treeGroup = clusterGroup.append('g')
@@ -342,11 +441,11 @@
           .attr('x', 0)
           .attr('y', 0);
         
-        // Título del cluster
+        // Título del cluster en esquina superior izquierda
         treeGroup.append('text')
           .attr('class', 'cluster-title')
-          .attr('x', clusterWidth / 2)
-          .attr('y', 25)
+          .attr('x', 15) // Margen izquierdo
+          .attr('y', 28) // Margen superior aumentado
           .text(tree.name);
         
         // Crear grupo para el árbol
@@ -355,7 +454,7 @@
         
         // Calcular posición centrada del árbol dentro del cluster
         const treeX = (clusterWidth - config.nodeWidth) / 2;
-        const treeY = 35;
+        const treeY = 60; // Más espacio desde arriba para centrar mejor
         
         // Renderizar árbol
         renderTreeSimple(tree, treeContentGroup, treeX, treeY);
@@ -385,7 +484,13 @@
       globalTrees = trees;
       globalContainer = container;
       
-      console.log(`Layout completado. Ancho total: ${currentX}px`);
+      // Calcular ancho total basado en el grid
+      const maxWidth = window.innerWidth;
+      const avgClusterHeight = treeLayouts.length > 0 ? treeLayouts[0].clusterHeight : 200;
+      const maxHeight = totalRows * (avgClusterHeight + clusterGapY) + 30;
+      
+      console.log(`Layout completado. Grid: configuración flexible, ${totalRows} filas`);
+      console.log(`Dimensiones: ${maxWidth}px x ${maxHeight}px`);
       console.log(`Total de nodos: ${totalNodes}`);
       console.log(`Nodos renderizados con SVG: ${totalNodes}`);
       console.log(`Tiempo de renderizado: ${renderTime.toFixed(2)}ms`);
@@ -463,11 +568,12 @@
       return total;
     }
     
-    // Función para calcular los límites de un árbol
+    // Función para calcular los límites de un árbol usando el mismo layout que renderTreeSimple
     function calculateTreeBounds(node) {
       let minX = 0, maxX = 0, minY = 0, maxY = 0;
       
       function traverseTree(n, x, y) {
+        // Calcular límites del nodo actual
         minX = Math.min(minX, x);
         maxX = Math.max(maxX, x + config.nodeWidth);
         minY = Math.min(minY, y);
@@ -486,7 +592,38 @@
       }
       
       traverseTree(node, 0, 0);
+      
+      // Asegurar que los límites sean al menos del tamaño de un nodo
+      if (maxX - minX < config.nodeWidth) {
+        maxX = minX + config.nodeWidth;
+      }
+      if (maxY - minY < config.nodeHeight) {
+        maxY = minY + config.nodeHeight;
+      }
+      
       return { minX, maxX, minY, maxY };
+    }
+    
+    // Función para calcular el ancho real de un árbol de forma más simple y precisa
+    function calculateTreeRealWidth(node) {
+      // Si no tiene hijos, el ancho es el del nodo
+      if (node.children.length === 0) {
+        return config.nodeWidth;
+      }
+      
+      // Calcular el ancho total de todos los hijos
+      let totalChildrenWidth = 0;
+      node.children.forEach(child => {
+        totalChildrenWidth += calculateTreeRealWidth(child);
+      });
+      
+      // Agregar espaciado entre hijos
+      if (node.children.length > 1) {
+        totalChildrenWidth += (node.children.length - 1) * config.spacing;
+      }
+      
+      // El ancho del árbol es el máximo entre el nodo actual y la suma de los hijos
+      return Math.max(config.nodeWidth, totalChildrenWidth);
     }
     
     // Función para actualizar el panel de información

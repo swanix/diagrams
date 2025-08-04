@@ -61,6 +61,26 @@
       stroke-width: 3px;
       rx: 12px;
       opacity: 0.95;
+      transition: all 0.3s ease;
+    }
+    
+    .cluster-bg:hover {
+      fill: #e9ecef;
+      stroke: #007bff;
+      stroke-width: 4px;
+      filter: drop-shadow(0 4px 8px rgba(0, 123, 255, 0.3));
+    }
+    
+    .cluster-title {
+      font-size: 20px;
+      font-weight: bold;
+      fill: #333;
+      text-anchor: start;
+      transition: fill 0.3s ease;
+    }
+    
+    .cluster-title:hover {
+      fill: #007bff;
     }
     
     .cluster-container {
@@ -131,6 +151,17 @@
       <div class="info-item">Posición X: <span id="translate-x">0</span></div>
       <div class="info-item">Posición Y: <span id="translate-y">0</span></div>
       <div class="info-item">Tipo: <span id="render-type">SVG</span></div>
+      <div class="info-item" style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #555;">
+        <button id="reset-zoom-btn" style="background: #007bff; color: white; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; font-size: 12px;">
+          Resetear Zoom
+        </button>
+      </div>
+      <div class="info-item" style="font-size: 11px; color: #999; margin-top: 10px;">
+        💡 Clic en cluster para hacer zoom • Doble clic para resetear
+      </div>
+      <div id="zoom-status" class="info-item" style="font-size: 11px; color: #28a745; margin-top: 5px; display: none;">
+        🔍 Zoom aplicado al cluster
+      </div>
     </div>
 
   <div class="xcanvas">
@@ -495,6 +526,7 @@
       }
       
       // Renderizar clusters
+      const clusterGroups = [];
       treeLayouts.forEach((layout, index) => {
         const { tree, clusterWidth, clusterHeight, realTreeWidth, x, y } = layout;
         
@@ -532,7 +564,13 @@
         
         // Renderizar árbol
         renderTreeSimple(tree, treeContentGroup, treeX, treeY);
+        
+        // Agregar el cluster a la lista para eventos
+        clusterGroups.push(clusterGroup);
       });
+      
+      // Agregar eventos de clic a los clusters
+      addClusterClickEvents(clusterGroups, container);
       
       // Calcular tiempo de renderizado
       const renderTime = performance.now() - renderStartTime;
@@ -724,6 +762,168 @@
       if (translateYElement) {
         translateYElement.textContent = Math.round(transform.y);
       }
+    }
+    
+    // Función para hacer zoom a un cluster específico
+    function zoomToCluster(clusterGroup, container) {
+      console.log('=== INICIO ZOOM TO CLUSTER ===');
+      console.log('Cluster title:', clusterGroup.select('.cluster-title').text());
+      
+      // Obtener las dimensiones del SVG
+      const svg = d3.select('#diagram');
+      const svgWidth = 1910; // Ancho fijo del SVG
+      const svgHeight = 967;  // Alto fijo del SVG
+      
+      console.log('SVG dimensions:', svgWidth, 'x', svgHeight);
+      
+      // Obtener las dimensiones del cluster
+      const clusterWidth = parseFloat(clusterGroup.select('.cluster-bg').attr('width'));
+      const clusterHeight = parseFloat(clusterGroup.select('.cluster-bg').attr('height'));
+      
+      console.log('Cluster dimensions:', clusterWidth, 'x', clusterHeight);
+      
+      // Obtener la posición actual del cluster en el SVG
+      const clusterTransform = clusterGroup.attr('transform');
+      console.log('Cluster transform:', clusterTransform);
+      
+      // Extraer las coordenadas del cluster desde su transform
+      let clusterX = 0, clusterY = 0;
+      if (clusterTransform) {
+        const match = clusterTransform.match(/translate\(([^,]+),\s*([^)]+)\)/);
+        if (match) {
+          clusterX = parseFloat(match[1]);
+          clusterY = parseFloat(match[2]);
+        }
+      }
+      
+      console.log('Cluster position in SVG:', clusterX, clusterY);
+      
+      // Calcular el centro del cluster
+      const clusterCenterX = clusterX + clusterWidth / 2;
+      const clusterCenterY = clusterY + clusterHeight / 2;
+      
+      console.log('Cluster center:', clusterCenterX, clusterY);
+      
+      // Calcular el zoom necesario para que el cluster ocupe el 70% del viewport
+      const scaleX = svgWidth * 0.7 / clusterWidth;
+      const scaleY = svgHeight * 0.7 / clusterHeight;
+      const scale = Math.min(scaleX, scaleY, 4); // Limitar el zoom máximo a 4x
+      
+      console.log('Scale calculations:');
+      console.log('  scaleX:', scaleX, 'scaleY:', scaleY, 'final scale:', scale);
+      
+      // Calcular la nueva posición para centrar el cluster en el SVG
+      const newX = svgWidth / 2 - clusterCenterX * scale;
+      const newY = svgHeight / 2 - clusterCenterY * scale;
+      
+      console.log('New position to center cluster:', newX, newY);
+      
+      // Aplicar la transformación con animación
+      const finalTransform = `translate(${newX}, ${newY}) scale(${scale})`;
+      console.log('Applying transform:', finalTransform);
+      
+      container.transition()
+        .duration(1200)
+        .ease(d3.easeCubicOut)
+        .attr('transform', finalTransform);
+      
+      // Actualizar el panel de información
+      updateInfoPanel({ k: scale, x: newX, y: newY });
+      
+      // Mostrar indicador de zoom
+      const zoomStatus = document.getElementById('zoom-status');
+      if (zoomStatus) {
+        zoomStatus.style.display = 'block';
+        setTimeout(() => {
+          zoomStatus.style.display = 'none';
+        }, 2000);
+      }
+      
+      // Agregar efecto visual al cluster seleccionado
+      clusterGroup.select('.cluster-bg')
+        .transition()
+        .duration(300)
+        .style('stroke', '#007bff')
+        .style('stroke-width', '5px');
+      
+      // Remover el efecto después de un tiempo
+      setTimeout(() => {
+        clusterGroup.select('.cluster-bg')
+          .transition()
+          .duration(300)
+          .style('stroke', '#dee2e6')
+          .style('stroke-width', '3px');
+      }, 1500);
+      
+      console.log(`=== DEBUG ZOOM CLUSTER ===`);
+      console.log(`Cluster seleccionado: ${clusterGroup.select('.cluster-title').text()}`);
+      console.log(`Posición del cluster: (${clusterX}, ${clusterY})`);
+      console.log(`Centro del cluster: (${clusterCenterX}, ${clusterCenterY})`);
+      console.log(`Dimensiones del cluster: ${clusterWidth}x${clusterHeight}`);
+      console.log(`Dimensiones del SVG: ${svgWidth}x${svgHeight}`);
+      console.log(`Escala calculada: ${scale.toFixed(2)}x`);
+      console.log(`Nueva posición: (${newX.toFixed(0)}, ${newY.toFixed(0)})`);
+      console.log(`=== FIN ZOOM TO CLUSTER ===`);
+      console.log(`========================`);
+    }
+    
+    // Función para resetear el zoom
+    function resetZoom(container) {
+      container.transition()
+        .duration(1000)
+        .ease(d3.easeCubicOut)
+        .attr('transform', 'translate(0, 0) scale(1)');
+      
+      // Actualizar el panel de información
+      updateInfoPanel({ k: 1, x: 0, y: 0 });
+      
+      // Ocultar indicador de zoom
+      const zoomStatus = document.getElementById('zoom-status');
+      if (zoomStatus) {
+        zoomStatus.style.display = 'none';
+      }
+      
+      console.log('Zoom reseteado a vista completa');
+    }
+    
+    // Función para agregar eventos de clic a los clusters
+    function addClusterClickEvents(clusterGroups, container) {
+      clusterGroups.forEach(clusterGroup => {
+        // Agregar evento de clic al fondo del cluster
+        clusterGroup.select('.cluster-bg')
+          .style('cursor', 'pointer')
+          .on('click', function(event) {
+            event.stopPropagation();
+            console.log('CLICK en cluster-bg:', clusterGroup.select('.cluster-title').text());
+            zoomToCluster(clusterGroup, container);
+          });
+        
+        // Agregar evento de clic al título del cluster
+        clusterGroup.select('.cluster-title')
+          .style('cursor', 'pointer')
+          .on('click', function(event) {
+            event.stopPropagation();
+            console.log('CLICK en cluster-title:', clusterGroup.select('.cluster-title').text());
+            zoomToCluster(clusterGroup, container);
+          });
+      });
+      
+      // Agregar evento de doble clic al SVG para resetear zoom
+      d3.select('#diagram').on('dblclick', function(event) {
+        if (event.target === this) {
+          resetZoom(container);
+        }
+      });
+      
+      // Agregar evento al botón de resetear zoom
+      const resetBtn = document.getElementById('reset-zoom-btn');
+      if (resetBtn) {
+        resetBtn.addEventListener('click', function() {
+          resetZoom(container);
+        });
+      }
+      
+      console.log('Eventos de clic agregados a los clusters');
     }
     
 

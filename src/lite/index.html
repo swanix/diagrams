@@ -56,7 +56,7 @@
     }
     
     .cluster-bg {
-      fill: #f8f9fa;
+      fill: #e9ecef;
       stroke: #dee2e6;
       stroke-width: 3px;
       rx: 12px;
@@ -65,10 +65,18 @@
     }
     
     .cluster-bg:hover {
-      fill: #e9ecef;
+      fill: #dee2e6;
       stroke: #007bff;
       stroke-width: 4px;
       filter: drop-shadow(0 4px 8px rgba(0, 123, 255, 0.3));
+    }
+    
+    .cluster-bg:focus {
+      outline: none;
+      fill: #007bff;
+      stroke: #0056b3;
+      stroke-width: 4px;
+      filter: drop-shadow(0 4px 12px rgba(0, 123, 255, 0.5));
     }
     
     .cluster-title {
@@ -151,7 +159,7 @@
       <div class="info-item">Clusters: <span id="cluster-count">0</span></div>
       <div class="info-item">Zoom: <span id="zoom-level">1.00x</span></div>
       <div class="info-item" style="font-size: 10px; color: #999; margin-top: 8px;">
-        💡 Clic: zoom • Doble clic: reset
+        💡 Clic/Tab: zoom • Doble clic/Esc: reset • Shift+Tab: anterior
       </div>
       <div id="zoom-status" class="info-item" style="font-size: 10px; color: #28a745; margin-top: 3px; display: none;">
         🔍 Zoom aplicado
@@ -314,7 +322,8 @@
         
         // Crear contenedor SVG
         const svg = d3.select('#diagram');
-        const container = svg.append('g');
+        const container = svg.append('g')
+          .style('opacity', 0); // Ocultar al inicio
         
         // Configurar zoom
         const zoom = d3.zoom()
@@ -558,7 +567,8 @@
           .attr('width', clusterWidth)
           .attr('height', clusterHeight)
           .attr('x', 0)
-          .attr('y', 0);
+          .attr('y', 0)
+          .attr('tabindex', '0'); // Hacer enfocable
         
         // Título del cluster en esquina superior izquierda
         treeGroup.append('text')
@@ -787,12 +797,14 @@
       console.log('=== INICIO ZOOM TO CLUSTER ===');
       console.log('Cluster title:', clusterGroup.select('.cluster-title').text());
       
-      // Obtener las dimensiones del SVG
+      // Obtener las dimensiones reales del viewport
       const svg = d3.select('#diagram');
-      const svgWidth = 1910; // Ancho fijo del SVG
-      const svgHeight = 967;  // Alto fijo del SVG
+      const svgNode = svg.node();
+      const svgRect = svgNode.getBoundingClientRect();
+      const svgWidth = svgRect.width;
+      const svgHeight = svgRect.height;
       
-      console.log('SVG dimensions:', svgWidth, 'x', svgHeight);
+      console.log('SVG dimensions (viewport real):', svgWidth, 'x', svgHeight);
       
       // Obtener las dimensiones del cluster
       const clusterWidth = parseFloat(clusterGroup.select('.cluster-bg').attr('width'));
@@ -827,24 +839,59 @@
       const svgArea = svgWidth * svgHeight;
       const clusterSizeRatio = clusterArea / svgArea;
       
-      // Usar padding adaptativo basado en el tamaño del cluster
+      // Calcular padding adaptativo basado en el tamaño de la pantalla
+      const screenSize = Math.min(svgWidth, svgHeight);
       let padding;
-      if (clusterSizeRatio < 0.1) {
-        padding = 50; // Clusters muy pequeños - padding mínimo para máximo zoom
-      } else if (clusterSizeRatio < 0.25) {
-        padding = 100; // Clusters pequeños - padding reducido
+      
+      if (screenSize < 768) {
+        // Pantallas pequeñas (móviles)
+        if (clusterSizeRatio < 0.1) {
+          padding = 20; // Padding mínimo para máximo zoom
+        } else if (clusterSizeRatio < 0.25) {
+          padding = 30; // Padding reducido
+        } else {
+          padding = 40; // Padding estándar
+        }
+      } else if (screenSize < 1024) {
+        // Pantallas medianas (tablets)
+        if (clusterSizeRatio < 0.1) {
+          padding = 30; // Padding mínimo para máximo zoom
+        } else if (clusterSizeRatio < 0.25) {
+          padding = 50; // Padding reducido
+        } else {
+          padding = 70; // Padding estándar
+        }
       } else {
-        padding = 150; // Clusters grandes - padding estándar
+        // Pantallas grandes (desktop)
+        if (clusterSizeRatio < 0.1) {
+          padding = 50; // Padding mínimo para máximo zoom
+        } else if (clusterSizeRatio < 0.25) {
+          padding = 100; // Padding reducido
+        } else {
+          padding = 150; // Padding estándar
+        }
       }
       
-      console.log('Cluster size ratio:', clusterSizeRatio.toFixed(3), 'using padding:', padding);
+      console.log('Screen size:', screenSize, 'px, cluster size ratio:', clusterSizeRatio.toFixed(3), 'using padding:', padding);
       
+      // Calcular escala considerando el tamaño de la pantalla
       const scaleX = (svgWidth - padding * 2) / clusterWidth;
       const scaleY = (svgHeight - padding * 2) / clusterHeight;
-      const scale = Math.min(scaleX, scaleY, 1.8); // Zoom máximo aumentado a 180%
+      
+      // Ajustar zoom máximo según el tamaño de la pantalla
+      let maxZoom;
+      if (screenSize < 768) {
+        maxZoom = 2.5; // Zoom máximo más alto en móviles
+      } else if (screenSize < 1024) {
+        maxZoom = 2.0; // Zoom máximo medio en tablets
+      } else {
+        maxZoom = 1.8; // Zoom máximo estándar en desktop
+      }
+      
+      const scale = Math.min(scaleX, scaleY, maxZoom);
       
       console.log('Scale calculations:');
-      console.log('  scaleX:', scaleX, 'scaleY:', scaleY, 'final scale:', scale);
+      console.log('  scaleX:', scaleX, 'scaleY:', scaleY, 'maxZoom:', maxZoom, 'final scale:', scale);
       
       // Calcular la nueva posición para centrar el cluster en el SVG
       const newX = svgWidth / 2 - clusterCenterX * scale;
@@ -907,7 +954,8 @@
       console.log(`Posición del cluster: (${clusterX}, ${clusterY})`);
       console.log(`Centro del cluster: (${clusterCenterX}, ${clusterCenterY})`);
       console.log(`Dimensiones del cluster: ${clusterWidth}x${clusterHeight}`);
-      console.log(`Dimensiones del SVG: ${svgWidth}x${svgHeight}`);
+      console.log(`Dimensiones del viewport: ${svgWidth}x${svgHeight}`);
+      console.log(`Tamaño de pantalla: ${screenSize}px`);
       console.log(`Escala calculada: ${scale.toFixed(2)}x`);
       console.log(`Nueva posición: (${newX.toFixed(0)}, ${newY.toFixed(0)})`);
       console.log(`=== FIN ZOOM TO CLUSTER ===`);
@@ -923,7 +971,7 @@
       const svgWidth = svgRect.width;
       const svgHeight = svgRect.height;
       
-      console.log('Dimensiones reales del SVG:', svgWidth, 'x', svgHeight);
+      console.log('Dimensiones reales del viewport:', svgWidth, 'x', svgHeight);
       
       // Calcular escala para que el ancho del diagrama quepa en el viewport
       const scaleX = svgWidth / diagramWidth;
@@ -957,6 +1005,12 @@
       
       // Actualizar el panel de información
       updateInfoPanel(initialTransform);
+      
+      // Fade in suave después de aplicar la transformación
+      container.transition()
+        .duration(800)
+        .ease(d3.easeCubicOut)
+        .style('opacity', 1);
       
       console.log('Zoom inicial aplicado:', {
         scale: scale.toFixed(3),
@@ -995,17 +1049,18 @@
         .translate(translateX, translateY)
         .scale(scale);
       
+      // Sincronizar el estado interno de D3 con la transformación aplicada
+      svg.call(zoom.transform, initialTransform);
+      
       // Aplicar transformación con animación
       container.transition()
         .duration(1000)
         .ease(d3.easeCubicOut)
-        .attr('transform', initialTransform);
-      
-      // Sincronizar el estado interno de D3 con la transformación aplicada
-      svg.call(zoom.transform, initialTransform);
-      
-      // Actualizar el panel de información
-      updateInfoPanel(initialTransform);
+        .attr('transform', initialTransform)
+        .on('end', function() {
+          // Actualizar el panel de información al final de la animación
+          updateInfoPanel(initialTransform);
+        });
       
       console.log('Zoom inicial con animación aplicado:', {
         scale: scale.toFixed(3),
@@ -1023,8 +1078,35 @@
       const diagramWidth = 8360;
       const diagramHeight = 8565;
       
-      // Aplicar zoom inicial con animación
-      applyInitialZoomWithAnimation(container, diagramWidth, diagramHeight, zoom);
+      // Obtener las dimensiones reales del viewport
+      const svg = d3.select('#diagram');
+      const svgNode = svg.node();
+      const svgRect = svgNode.getBoundingClientRect();
+      const svgWidth = svgRect.width;
+      const svgHeight = svgRect.height;
+      
+      // Calcular escala para que el ancho del diagrama quepa en el viewport
+      const scaleX = svgWidth / diagramWidth;
+      const scaleY = svgHeight / diagramHeight;
+      const scale = Math.min(scaleX, scaleY) * 0.95; // 95% para aprovechar mejor el espacio
+      
+      // Calcular el ancho del diagrama escalado
+      const scaledDiagramWidth = diagramWidth * scale;
+      
+      // Centrar horizontalmente en el viewport disponible
+      const translateX = (svgWidth - scaledDiagramWidth) / 2;
+      const translateY = 30; // Margen superior fijo
+      
+      // Crear la transformación objetivo
+      const targetTransform = d3.zoomIdentity
+        .translate(translateX, translateY)
+        .scale(scale);
+      
+      // Aplicar animación suave usando D3 zoom
+      svg.transition()
+        .duration(1000)
+        .ease(d3.easeCubicOut)
+        .call(zoom.transform, targetTransform);
       
       // Ocultar indicador de zoom
       const zoomStatus = document.getElementById('zoom-status');
@@ -1032,7 +1114,7 @@
         zoomStatus.style.display = 'none';
       }
       
-      console.log('Zoom reseteado a vista completa');
+      console.log('Zoom reseteado a vista completa con animación suave');
     }
     
     // Función para agregar eventos de clic a los clusters
@@ -1062,6 +1144,65 @@
         // Hacer reset desde cualquier parte del diagrama
         console.log('Doble clic - reseteando zoom');
         resetZoom(container, zoom);
+      });
+      
+      // Agregar navegación por teclado
+      d3.select('body').on('keydown', function(event) {
+        if (event.key === 'Tab') {
+          event.preventDefault(); // Prevenir el comportamiento por defecto del Tab
+          
+          const currentCluster = d3.select('.cluster-bg:focus');
+          const allClusters = d3.selectAll('.cluster-bg');
+          
+          if (allClusters.empty()) return;
+          
+          let nextCluster;
+          
+          if (event.shiftKey) {
+            // Shift+Tab: ir al cluster anterior
+            if (currentCluster.empty()) {
+              nextCluster = allClusters.nodes()[allClusters.size() - 1];
+            } else {
+              const currentIndex = Array.from(allClusters.nodes()).indexOf(currentCluster.node());
+              const prevIndex = currentIndex > 0 ? currentIndex - 1 : allClusters.size() - 1;
+              nextCluster = allClusters.nodes()[prevIndex];
+            }
+          } else {
+            // Tab: ir al siguiente cluster
+            if (currentCluster.empty()) {
+              nextCluster = allClusters.nodes()[0];
+            } else {
+              const currentIndex = Array.from(allClusters.nodes()).indexOf(currentCluster.node());
+              const nextIndex = currentIndex < allClusters.size() - 1 ? currentIndex + 1 : 0;
+              nextCluster = allClusters.nodes()[nextIndex];
+            }
+          }
+          
+          // Enfocar el cluster seleccionado
+          d3.select(nextCluster).node().focus();
+          
+          // Simular un clic en el cluster (igual que hacer clic manual)
+          const clusterGroup = d3.select(nextCluster.parentNode);
+          console.log('NAVEGACIÓN POR TECLADO - Cluster seleccionado:', clusterGroup.select('.cluster-title').text());
+          
+          // Efecto visual adicional para navegación por teclado
+          clusterGroup.select('.cluster-bg')
+            .transition()
+            .duration(200)
+            .style('stroke', '#28a745')
+            .style('stroke-width', '6px')
+            .transition()
+            .duration(300)
+            .style('stroke', '#007bff')
+            .style('stroke-width', '4px');
+          
+          zoomToCluster(clusterGroup, container, zoom);
+        } else if (event.key === 'Escape') {
+          // Esc: resetear zoom
+          event.preventDefault();
+          console.log('TECLA ESC - Reseteando zoom');
+          resetZoom(container, zoom);
+        }
       });
       
       // El botón de reset se eliminó, ahora se usa doble clic

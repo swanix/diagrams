@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Swanix Diagrams Lite</title>
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
   <style>
     body {
       margin: 0;
@@ -98,6 +99,24 @@
       stroke-width: 1px;
     }
     
+    .material-icons {
+      font-family: 'Material Icons';
+      font-weight: normal;
+      font-style: normal;
+      font-size: 48px;
+      line-height: 1;
+      letter-spacing: normal;
+      text-transform: none;
+      display: inline-block;
+      white-space: nowrap;
+      word-wrap: normal;
+      direction: ltr;
+      -webkit-font-feature-settings: 'liga';
+      -webkit-font-smoothing: antialiased;
+      fill: #666;
+      text-anchor: middle;
+    }
+    
 
   </style>
 </head>
@@ -127,16 +146,40 @@
     let globalContainer = null;
     let renderStartTime = 0;
     
+    // Lista de íconos válidos de Material Icons
+    const validMaterialIcons = [
+      'person', 'business', 'computer', 'supervisor_account', 'manage_accounts', 
+      'code', 'star', 'school', 'settings', 'campaign', 'point_of_sale',
+      'account_balance', 'work', 'home', 'search', 'favorite', 'info',
+      'warning', 'error', 'check_circle', 'cancel', 'add', 'remove',
+      'edit', 'delete', 'visibility', 'visibility_off', 'lock', 'unlock',
+      'download', 'upload', 'share', 'print', 'email', 'phone',
+      'location_on', 'schedule', 'calendar_today', 'notifications',
+      'dashboard', 'analytics', 'trending_up', 'trending_down',
+      'attach_file', 'link', 'cloud', 'wifi', 'bluetooth', 'gps_fixed'
+    ];
+
+    // Función para validar si un ícono existe en Material Icons
+    function isValidMaterialIcon(iconName) {
+      return validMaterialIcons.includes(iconName);
+    }
+
+    // Función para obtener el ícono por defecto (del sistema o config)
+    function getDefaultIcon() {
+      return config.defaultIcon || 'person'; // Usar config o 'person' como fallback del sistema
+    }
+    
     // Configuración básica
     const config = {
-      url: "../data/companies-board-performance-medium.csv",
+      url: "../data/companies-board.csv",
       spacing: 140,
       nodeWidth: 100,
       nodeHeight: 125,
       treeSpacing: 100,
-      clustersPerRow: "6 5 4 5 5", // Configuración de clusters por fila
+      clustersPerRow: "7 4 5 5", // Configuración de clusters por fila (20 empresas: 5+5+5+5)
       clusterGapX: 80, // Gap horizontal entre clusters
-      clusterGapY: 80 // Gap vertical entre filas de clusters
+      clusterGapY: 80, // Gap vertical entre filas de clusters
+      defaultIcon: '' // Ícono por defecto cuando no es válido
     };
 
     // Función para construir la jerarquía
@@ -151,6 +194,7 @@
             id: row.Node || row.Name,
             name: row.Name,
             parent: row.Parent || null,
+            img: isValidMaterialIcon(row.Img) ? row.Img : getDefaultIcon(), // Validar ícono o usar ícono por defecto del sistema
             data: row,
             children: []
           };
@@ -296,9 +340,26 @@
       const clusterGapX = config.clusterGapX; // Gap horizontal entre clusters
       const clusterGapY = config.clusterGapY; // Gap vertical entre filas
       
-      // Parsear configuración de clusters por fila
-      const clustersPerRowConfig = config.clustersPerRow.split(' ').map(num => parseInt(num));
+      // Parsear configuración de clusters por fila o calcular automáticamente
+      let clustersPerRowConfig;
       const defaultClustersPerRow = 7;
+      
+      if (config.clustersPerRow) {
+        clustersPerRowConfig = config.clustersPerRow.split(' ').map(num => parseInt(num));
+      } else {
+        // Calcular distribución automática basada en el número de árboles
+        const totalTrees = trees.length;
+        const optimalClustersPerRow = Math.ceil(Math.sqrt(totalTrees)); // Distribución cuadrada aproximada
+        const rows = Math.ceil(totalTrees / optimalClustersPerRow);
+        
+        clustersPerRowConfig = [];
+        for (let i = 0; i < rows; i++) {
+          const clustersInThisRow = Math.min(optimalClustersPerRow, totalTrees - i * optimalClustersPerRow);
+          clustersPerRowConfig.push(clustersInThisRow);
+        }
+        
+        console.log(`Distribución automática calculada: ${clustersPerRowConfig.join(' ')} para ${totalTrees} árboles`);
+      }
       
 
       
@@ -328,8 +389,9 @@
         });
       });
       
-      // Calcular el ancho máximo de cada fila usando configuración flexible
+      // Calcular el ancho máximo y altura máxima de cada fila usando configuración flexible
       const rowMaxWidths = [];
+      const rowMaxHeights = [];
       let currentIndex = 0;
       let row = 0;
       
@@ -341,11 +403,14 @@
         
 
         
-        // Calcular ancho total de la fila actual
+        // Calcular ancho total y altura máxima de la fila actual
         const rowTotalWidth = rowClusters.reduce((sum, cluster) => sum + cluster.clusterWidth, 0) + 
                              (rowClusters.length - 1) * clusterGapX;
+        const rowMaxHeight = Math.max(...rowClusters.map(cluster => cluster.clusterHeight));
+        
         rowMaxWidths.push(rowTotalWidth);
-        console.log(`Fila ${row}: ${rowClusters.length} clusters, ancho total: ${rowTotalWidth}`);
+        rowMaxHeights.push(rowMaxHeight);
+        console.log(`Fila ${row}: ${rowClusters.length} clusters, ancho total: ${rowTotalWidth}, altura máxima: ${rowMaxHeight}`);
         
         currentIndex = endIndex;
         row++;
@@ -362,6 +427,7 @@
       // Segunda pasada: calcular posiciones con ancho uniforme usando configuración flexible
       let layoutIndex = 0;
       let layoutRow = 0;
+      let accumulatedY = 30; // Posición Y acumulada desde el inicio
       
       while (layoutIndex < clusterDimensions.length) {
         // Obtener número de clusters para esta fila
@@ -377,6 +443,9 @@
         
         // Calcular factor de escala para ajustar el ancho
         const scaleFactor = maxRowWidth / rowTotalWidth;
+        
+        // Obtener altura uniforme para esta fila
+        const uniformClusterHeight = rowMaxHeights[layoutRow];
         
 
         
@@ -397,19 +466,22 @@
           
 
           
-          // Calcular posición Y
-          const y = 30 + layoutRow * (cluster.clusterHeight + clusterGapY);
+          // Usar posición Y acumulada para esta fila
+          const y = accumulatedY;
           
           treeLayouts.push({
             tree: cluster.tree,
             clusterWidth: adjustedClusterWidth,
-            clusterHeight: cluster.clusterHeight,
+            clusterHeight: uniformClusterHeight, // Usar altura uniforme de la fila
             realTreeWidth: cluster.realTreeWidth,
             x: x,
             y: y,
             originalWidth: cluster.clusterWidth
           });
         });
+        
+        // Actualizar posición Y acumulada para la siguiente fila
+        accumulatedY += uniformClusterHeight + clusterGapY;
         
         layoutIndex = endIndex;
         layoutRow++;
@@ -486,11 +558,12 @@
       
       // Calcular ancho total basado en el grid
       const maxWidth = window.innerWidth;
-      const avgClusterHeight = treeLayouts.length > 0 ? treeLayouts[0].clusterHeight : 200;
-      const maxHeight = totalRows * (avgClusterHeight + clusterGapY) + 30;
+      const totalHeight = rowMaxHeights.reduce((sum, height, index) => {
+        return sum + height + (index < rowMaxHeights.length - 1 ? clusterGapY : 0);
+      }, 30); // 30px de margen superior
       
       console.log(`Layout completado. Grid: configuración flexible, ${totalRows} filas`);
-      console.log(`Dimensiones: ${maxWidth}px x ${maxHeight}px`);
+      console.log(`Dimensiones: ${maxWidth}px x ${totalHeight}px`);
       console.log(`Total de nodos: ${totalNodes}`);
       console.log(`Nodos renderizados con SVG: ${totalNodes}`);
       console.log(`Tiempo de renderizado: ${renderTime.toFixed(2)}ms`);
@@ -514,18 +587,26 @@
         .attr('width', nodeWidth)
         .attr('height', nodeHeight);
       
-      // Texto principal
+      // Ícono de Material Icons (arriba del texto)
+      const iconName = isValidMaterialIcon(node.img) ? node.img : getDefaultIcon(); // Validar ícono o usar ícono por defecto del sistema
+      nodeGroup.append('text')
+        .attr('class', 'material-icons')
+        .attr('x', nodeWidth / 2)
+        .attr('y', nodeHeight / 2 + 5)
+        .text(iconName);
+      
+      // Texto principal (desplazado hacia abajo)
       nodeGroup.append('text')
         .attr('class', 'label-text')
         .attr('x', nodeWidth / 2)
-        .attr('y', nodeHeight / 2 - 5)
+        .attr('y', nodeHeight / 2 + 25)
         .text(node.name);
       
-      // ID del nodo
+      // ID del nodo (desplazado hacia abajo)
       nodeGroup.append('text')
         .attr('class', 'label-id')
         .attr('x', nodeWidth / 2)
-        .attr('y', nodeHeight / 2 + 10)
+        .attr('y', nodeHeight / 2 + 40)
         .text(node.id);
       
       // Renderizar hijos

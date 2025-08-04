@@ -1,4 +1,4 @@
-Node,Name,Parent,Type,thumbType,Description,Position,Department
+Node,Name,Parent,Type,Img,Description,Position,Department
 AAPL,Apple Inc.,,company,detail,Empresa tecnológica líder en dispositivos móviles,CEO,Executive
 AAPL-1,Tim Cook,AAPL,profile,profile,CEO de Apple desde 2011,Chief Executive Officer,Executive
 AAPL-1-1,Jeff Williams,AAPL-1,profile,profile,COO de Apple,Chief Operating Officer,Operations

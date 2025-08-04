@@ -435,34 +435,25 @@
         const endIndex = Math.min(layoutIndex + clustersForThisRow, clusterDimensions.length);
         const rowClusters = clusterDimensions.slice(layoutIndex, endIndex);
         
-        // Calcular factor de escala para que esta fila tenga exactamente el ancho máximo
-        const rowTotalWidth = rowClusters.reduce((sum, c) => sum + c.clusterWidth, 0) + 
-                             (rowClusters.length - 1) * clusterGapX;
-        
-        console.log(`Fila ${layoutRow}: ${clustersForThisRow} clusters, ancho total: ${rowTotalWidth}, factor escala: ${maxRowWidth / rowTotalWidth}`);
-        
-        // Calcular factor de escala para ajustar el ancho
-        const scaleFactor = maxRowWidth / rowTotalWidth;
-        
         // Obtener altura uniforme para esta fila
         const uniformClusterHeight = rowMaxHeights[layoutRow];
         
-
+        // Calcular ancho uniforme para cada cluster en esta fila
+        const totalGaps = rowClusters.length - 1;
+        const totalGapWidth = totalGaps * clusterGapX;
+        const availableWidth = maxRowWidth - totalGapWidth;
+        const uniformClusterWidth = Math.floor(availableWidth / rowClusters.length);
+        
+        console.log(`Fila ${layoutRow}: ${clustersForThisRow} clusters, ancho uniforme por cluster: ${uniformClusterWidth}px`);
         
         // Procesar cada cluster en esta fila
         rowClusters.forEach((cluster, col) => {
-          const adjustedClusterWidth = Math.round(cluster.clusterWidth * scaleFactor);
+          // Usar ancho uniforme para todos los clusters de la fila
+          const adjustedClusterWidth = uniformClusterWidth;
           
-          // Calcular posición X centrada
+          // Calcular posición X centrada para toda la fila
           const startX = (window.innerWidth - maxRowWidth) / 2;
-          let x = startX;
-          
-          // Calcular posición X acumulando los anchos ajustados de los clusters anteriores en la fila
-          for (let i = 0; i < col; i++) {
-            const prevCluster = rowClusters[i];
-            const prevAdjustedWidth = Math.round(prevCluster.clusterWidth * scaleFactor);
-            x += prevAdjustedWidth + clusterGapX;
-          }
+          const x = startX + col * (uniformClusterWidth + clusterGapX);
           
 
           

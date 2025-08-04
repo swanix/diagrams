@@ -89,23 +89,25 @@
     
     .info-panel {
       position: fixed;
-      top: 20px;
-      right: 20px;
-      background: rgba(33, 33, 33, 0.95);
-      border: 1px solid #555;
-      border-radius: 8px;
-      padding: 15px;
+      top: 15px;
+      right: 15px;
+      background: rgba(33, 33, 33, 0.85);
+      border: 1px solid #444;
+      border-radius: 6px;
+      padding: 10px;
       font-family: monospace;
-      font-size: 12px;
+      font-size: 11px;
       z-index: 1000;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-      min-width: 200px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+      min-width: 150px;
+      backdrop-filter: blur(5px);
     }
     
     .info-panel h3 {
-      margin: 0 0 10px 0;
-      font-size: 14px;
+      margin: 0 0 8px 0;
+      font-size: 12px;
       color: #fff;
+      font-weight: normal;
     }
     
     .info-item {
@@ -144,23 +146,15 @@
 
   
       <div class="info-panel">
-      <h3>Información del Diagrama</h3>
-      <div class="info-item"><strong>Nodos: <span id="node-count">0</span></strong></div>
+      <h3>Diagrama</h3>
+      <div class="info-item">Nodos: <span id="node-count">0</span></div>
       <div class="info-item">Clusters: <span id="cluster-count">0</span></div>
       <div class="info-item">Zoom: <span id="zoom-level">1.00x</span></div>
-      <div class="info-item">Posición X: <span id="translate-x">0</span></div>
-      <div class="info-item">Posición Y: <span id="translate-y">0</span></div>
-      <div class="info-item">Tipo: <span id="render-type">SVG</span></div>
-      <div class="info-item" style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #555;">
-        <button id="reset-zoom-btn" style="background: #007bff; color: white; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; font-size: 12px;">
-          Resetear Zoom
-        </button>
+      <div class="info-item" style="font-size: 10px; color: #999; margin-top: 8px;">
+        💡 Clic: zoom • Doble clic: reset
       </div>
-      <div class="info-item" style="font-size: 11px; color: #999; margin-top: 10px;">
-        💡 Clic en cluster para hacer zoom • Doble clic para resetear
-      </div>
-      <div id="zoom-status" class="info-item" style="font-size: 11px; color: #28a745; margin-top: 5px; display: none;">
-        🔍 Zoom aplicado al cluster
+      <div id="zoom-status" class="info-item" style="font-size: 10px; color: #28a745; margin-top: 3px; display: none;">
+        🔍 Zoom aplicado
       </div>
     </div>
 
@@ -330,7 +324,9 @@
             updateInfoPanel(event.transform);
           });
         
+        // Aplicar zoom y desactivar doble clic
         svg.call(zoom);
+        svg.on('dblclick.zoom', null);
         
         // Cargar datos
         const response = await fetch(config.url);
@@ -608,6 +604,11 @@
       console.log(`Nodos renderizados con SVG: ${totalNodes}`);
       console.log(`Tiempo de renderizado: ${renderTime.toFixed(2)}ms`);
       console.log(`Ancho uniforme aplicado: ${maxRowWidth}px para todas las filas`);
+      
+      // Aplicar zoom inicial automáticamente después del renderizado
+      setTimeout(() => {
+        applyInitialZoom(container, maxRowWidth, totalHeight);
+      }, 100);
 
     }
     
@@ -825,7 +826,26 @@
       container.transition()
         .duration(1200)
         .ease(d3.easeCubicOut)
-        .attr('transform', finalTransform);
+        .attr('transform', finalTransform)
+        .on('end', function() {
+          // Actualizar el estado del zoom de D3 después de la animación
+          const svg = d3.select('#diagram');
+          const zoom = d3.zoomTransform(svg.node());
+          
+          // Crear la nueva transformación
+          const newTransform = d3.zoomIdentity
+            .translate(newX, newY)
+            .scale(scale);
+          
+          // Aplicar la transformación al estado del zoom de D3
+          svg.call(d3.zoom().transform, newTransform);
+          
+          console.log('Estado del zoom de D3 actualizado:', {
+            x: newX.toFixed(0),
+            y: newY.toFixed(0),
+            k: scale.toFixed(3)
+          });
+        });
       
       // Actualizar el panel de información
       updateInfoPanel({ k: scale, x: newX, y: newY });
@@ -867,15 +887,101 @@
       console.log(`========================`);
     }
     
-    // Función para resetear el zoom
-    function resetZoom(container) {
+    // Función para aplicar zoom inicial automático
+    function applyInitialZoom(container, diagramWidth, diagramHeight) {
+      // Obtener las dimensiones reales del viewport
+      const svg = d3.select('#diagram');
+      const svgNode = svg.node();
+      const svgRect = svgNode.getBoundingClientRect();
+      const svgWidth = svgRect.width;
+      const svgHeight = svgRect.height;
+      
+      console.log('Dimensiones reales del SVG:', svgWidth, 'x', svgHeight);
+      
+      // Calcular escala para que el ancho del diagrama quepa en el viewport
+      const scaleX = svgWidth / diagramWidth;
+      const scaleY = svgHeight / diagramHeight;
+      const scale = Math.min(scaleX, scaleY) * 0.9; // 90% para dejar un poco de margen
+      
+      // Calcular el ancho del diagrama escalado
+      const scaledDiagramWidth = diagramWidth * scale;
+      
+      // Centrar horizontalmente en el viewport disponible
+      const translateX = (svgWidth - scaledDiagramWidth) / 2;
+      const translateY = 30; // Margen superior fijo
+      
+      console.log('Cálculos de centrado:', {
+        diagramWidth: diagramWidth,
+        scaledDiagramWidth: scaledDiagramWidth.toFixed(0),
+        svgWidth: svgWidth,
+        translateX: translateX.toFixed(0)
+      });
+      
+      // Aplicar transformación inicial sin animación
+      container.attr('transform', `translate(${translateX}, ${translateY}) scale(${scale})`);
+      
+      // Actualizar el panel de información
+      updateInfoPanel({ k: scale, x: translateX, y: translateY });
+      
+      console.log('Zoom inicial aplicado:', {
+        scale: scale.toFixed(3),
+        translateX: translateX.toFixed(0),
+        translateY: translateY.toFixed(0),
+        diagramWidth: diagramWidth,
+        diagramHeight: diagramHeight,
+        svgWidth: svgWidth,
+        svgHeight: svgHeight
+      });
+    }
+    
+    // Función para aplicar zoom inicial con animación
+    function applyInitialZoomWithAnimation(container, diagramWidth, diagramHeight) {
+      // Obtener las dimensiones reales del viewport
+      const svg = d3.select('#diagram');
+      const svgNode = svg.node();
+      const svgRect = svgNode.getBoundingClientRect();
+      const svgWidth = svgRect.width;
+      const svgHeight = svgRect.height;
+      
+      // Calcular escala para que el ancho del diagrama quepa en el viewport
+      const scaleX = svgWidth / diagramWidth;
+      const scaleY = svgHeight / diagramHeight;
+      const scale = Math.min(scaleX, scaleY) * 0.9; // 90% para dejar un poco de margen
+      
+      // Calcular el ancho del diagrama escalado
+      const scaledDiagramWidth = diagramWidth * scale;
+      
+      // Centrar horizontalmente en el viewport disponible
+      const translateX = (svgWidth - scaledDiagramWidth) / 2;
+      const translateY = 30; // Margen superior fijo
+      
+      // Aplicar transformación con animación
       container.transition()
         .duration(1000)
         .ease(d3.easeCubicOut)
-        .attr('transform', 'translate(0, 0) scale(1)');
+        .attr('transform', `translate(${translateX}, ${translateY}) scale(${scale})`);
       
       // Actualizar el panel de información
-      updateInfoPanel({ k: 1, x: 0, y: 0 });
+      updateInfoPanel({ k: scale, x: translateX, y: translateY });
+      
+      console.log('Zoom inicial con animación aplicado:', {
+        scale: scale.toFixed(3),
+        translateX: translateX.toFixed(0),
+        translateY: translateY.toFixed(0),
+        svgWidth: svgWidth,
+        svgHeight: svgHeight,
+        scaledDiagramWidth: scaledDiagramWidth.toFixed(0)
+      });
+    }
+    
+    // Función para resetear el zoom
+    function resetZoom(container) {
+      // Usar las dimensiones reales del diagrama (aproximadamente 8360x8565 según los logs)
+      const diagramWidth = 8360;
+      const diagramHeight = 8565;
+      
+      // Aplicar zoom inicial con animación
+      applyInitialZoomWithAnimation(container, diagramWidth, diagramHeight);
       
       // Ocultar indicador de zoom
       const zoomStatus = document.getElementById('zoom-status');
@@ -910,18 +1016,12 @@
       
       // Agregar evento de doble clic al SVG para resetear zoom
       d3.select('#diagram').on('dblclick', function(event) {
-        if (event.target === this) {
-          resetZoom(container);
-        }
+        // Hacer reset desde cualquier parte del diagrama
+        console.log('Doble clic - reseteando zoom');
+        resetZoom(container);
       });
       
-      // Agregar evento al botón de resetear zoom
-      const resetBtn = document.getElementById('reset-zoom-btn');
-      if (resetBtn) {
-        resetBtn.addEventListener('click', function() {
-          resetZoom(container);
-        });
-      }
+      // El botón de reset se eliminó, ahora se usa doble clic
       
       console.log('Eventos de clic agregados a los clusters');
     }

@@ -176,7 +176,7 @@
       nodeWidth: 100,
       nodeHeight: 125,
       treeSpacing: 100,
-      clustersPerRow: "7 4 5 5", // Configuración de clusters por fila (20 empresas: 5+5+5+5)
+      clustersPerRow: "4 5 5 5", // Configuración de clusters por fila (20 empresas: 5+5+5+5)
       clusterGapX: 80, // Gap horizontal entre clusters
       clusterGapY: 80, // Gap vertical entre filas de clusters
       defaultIcon: '' // Ícono por defecto cuando no es válido
@@ -361,8 +361,6 @@
         console.log(`Distribución automática calculada: ${clustersPerRowConfig.join(' ')} para ${totalTrees} árboles`);
       }
       
-
-      
       // Primera pasada: calcular dimensiones de todos los clusters
       const clusterDimensions = [];
       trees.forEach((tree, index) => {
@@ -377,8 +375,6 @@
         // Dimensiones del cluster con padding mínimo
         const clusterWidth = realTreeWidth + 20; // Padding horizontal mínimo
         const clusterHeight = Math.max(realTreeHeight, config.nodeHeight) + 140; // Más padding vertical (top y bottom)
-        
-
         
         clusterDimensions.push({
           tree: tree,
@@ -401,16 +397,14 @@
         const endIndex = Math.min(currentIndex + clustersForThisRow, trees.length);
         const rowClusters = clusterDimensions.slice(currentIndex, endIndex);
         
-
-        
-        // Calcular ancho total y altura máxima de la fila actual
+        // Calcular ancho total basado en el ancho del cluster (con padding)
         const rowTotalWidth = rowClusters.reduce((sum, cluster) => sum + cluster.clusterWidth, 0) + 
                              (rowClusters.length - 1) * clusterGapX;
         const rowMaxHeight = Math.max(...rowClusters.map(cluster => cluster.clusterHeight));
         
         rowMaxWidths.push(rowTotalWidth);
         rowMaxHeights.push(rowMaxHeight);
-        console.log(`Fila ${row}: ${rowClusters.length} clusters, ancho total: ${rowTotalWidth}, altura máxima: ${rowMaxHeight}`);
+        console.log(`Fila ${row}: ${rowClusters.length} clusters, ancho real total: ${rowTotalWidth}, altura máxima: ${rowMaxHeight}`);
         
         currentIndex = endIndex;
         row++;
@@ -418,11 +412,9 @@
       
       const totalRows = row;
       
-      // Encontrar el ancho máximo entre todas las filas
+      // Encontrar el ancho máximo entre todas las filas - ESTA ES LA CLAVE
       const maxRowWidth = Math.max(...rowMaxWidths);
       console.log('Ancho máximo de fila:', maxRowWidth, 'Anchos de filas:', rowMaxWidths);
-      
-
       
       // Segunda pasada: calcular posiciones con ancho uniforme usando configuración flexible
       let layoutIndex = 0;
@@ -438,24 +430,43 @@
         // Obtener altura uniforme para esta fila
         const uniformClusterHeight = rowMaxHeights[layoutRow];
         
-        // Calcular ancho uniforme para cada cluster en esta fila
+        // Calcular ancho mínimo requerido para cada cluster en esta fila
+        const minClusterWidths = rowClusters.map(cluster => cluster.clusterWidth); // Usar el ancho del cluster ya calculado
+        const totalMinWidth = minClusterWidths.reduce((sum, width) => sum + width, 0);
         const totalGaps = rowClusters.length - 1;
         const totalGapWidth = totalGaps * clusterGapX;
-        const availableWidth = maxRowWidth - totalGapWidth;
-        const uniformClusterWidth = Math.floor(availableWidth / rowClusters.length);
+        const totalRequiredWidth = totalMinWidth + totalGapWidth;
         
-        console.log(`Fila ${layoutRow}: ${clustersForThisRow} clusters, ancho uniforme por cluster: ${uniformClusterWidth}px`);
+        // USAR EL ANCHO MÁXIMO DE TODAS LAS FILAS PARA MANTENER UNIFORMIDAD
+        const effectiveRowWidth = maxRowWidth;
+        const availableWidth = effectiveRowWidth - totalGapWidth;
+        
+        // Distribuir el espacio extra proporcionalmente si hay más espacio disponible
+        let extraSpace = 0;
+        if (availableWidth > totalMinWidth) {
+          extraSpace = availableWidth - totalMinWidth;
+        }
+        
+        console.log(`Fila ${layoutRow}: ${clustersForThisRow} clusters, ancho requerido: ${totalRequiredWidth}px, ancho efectivo: ${effectiveRowWidth}px, espacio extra: ${extraSpace}px`);
         
         // Procesar cada cluster en esta fila
         rowClusters.forEach((cluster, col) => {
-          // Usar ancho uniforme para todos los clusters de la fila
-          const adjustedClusterWidth = uniformClusterWidth;
+          // Calcular ancho del cluster: mínimo requerido + espacio extra proporcional
+          const minWidth = minClusterWidths[col];
+          const extraSpaceForThisCluster = extraSpace > 0 ? Math.floor(extraSpace / rowClusters.length) : 0;
+          const adjustedClusterWidth = minWidth + extraSpaceForThisCluster;
           
           // Calcular posición X centrada para toda la fila
-          const startX = (window.innerWidth - maxRowWidth) / 2;
-          const x = startX + col * (uniformClusterWidth + clusterGapX);
+          const startX = (window.innerWidth - effectiveRowWidth) / 2;
+          let x = startX;
           
-
+          // Acumular el ancho de los clusters anteriores
+          for (let i = 0; i < col; i++) {
+            const prevMinWidth = minClusterWidths[i];
+            const prevExtraSpace = extraSpace > 0 ? Math.floor(extraSpace / rowClusters.length) : 0;
+            const prevClusterWidth = prevMinWidth + prevExtraSpace;
+            x += prevClusterWidth + clusterGapX;
+          }
           
           // Usar posición Y acumulada para esta fila
           const y = accumulatedY;
@@ -558,7 +569,7 @@
       console.log(`Total de nodos: ${totalNodes}`);
       console.log(`Nodos renderizados con SVG: ${totalNodes}`);
       console.log(`Tiempo de renderizado: ${renderTime.toFixed(2)}ms`);
-      
+      console.log(`Ancho uniforme aplicado: ${maxRowWidth}px para todas las filas`);
 
     }
     

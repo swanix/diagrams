@@ -1,0 +1,57 @@
+{
+  "name": "@swanix/diagrams",
+  "version": "0.9.0",
+  "description": "Experimental diagram library that uses **D3.js**",
+  "main": "dist/xdiagrams.min.js",
+  "module": "dist/xdiagrams.js",
+  "style": "dist/xdiagrams.css",
+  "exports": {
+    ".": {
+      "import": "./dist/xdiagrams.js",
+      "require": "./dist/xdiagrams.min.js"
+    },
+    "./css": "./dist/xdiagrams.css"
+  },
+  "files": [
+    "dist",
+    "css",
+    "img"
+  ],
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "dev": "vite",
+    "docs": "VITE_SERVER=docs vite",
+    "build": "vite build",
+    "build:lib": "vite build --mode production",
+    "build:docs": "VITE_SERVER=docs vite build",
+    "preview": "vite preview",
+    "preview:docs": "VITE_SERVER=docs vite preview",
+    "build:analyze": "vite build --mode analyze",
+    "serve:prod": "npm run build && vite preview --port 8001",
+    "serve:demo": "npm run build && vite preview --port 8002 --outDir docs/demo",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/swanix/diagrams.git"
+  },
+  "keywords": [],
+  "author": "Sebastian Serna",
+  "license": "MIT",
+  "type": "module",
+  "bugs": {
+    "url": "https://github.com/swanix/diagrams/issues"
+  },
+  "homepage": "https://github.com/swanix/diagrams#readme",
+  "devDependencies": {
+    "cssnano": "7.1.0",
+    "terser": "5.43.1",
+    "vite": "5.0.0"
+  },
+  "dependencies": {
+    "d3": "7.9.0",
+    "papaparse": "5.5.3"
+  }
+}

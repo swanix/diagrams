@@ -1,22 +1,50 @@
-# ignore os/app generated files
-.vscode/settings.json
-*.esproj
-*.project
-*.sublime-project
-*.sublime-workspac
-.DS_Store
-.DS_Store?
-._*
-.Spotlight-V100
-.Trashes
-ehthumbs.db
-Thumbs.db
-*.scssc
-*.blend1
-*.jpg~
-*.kra~
-*.png~
+# Logs and reports
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
 
-# Ignore Node files
-node_modules/*
+# Dependencies
+node_modules/
+
+# Build output (soon)
+# dist/
+# dist-ssr/
+# build/
+
+# Coverage reports from tests
+coverage/
+
+# Environment variable files
+.env
+.env.*
+!.env.example
+
+# OS-specific files and folders
+.DS_Store
+Thumbs.db
+
+# Editor/IDE settings
+.vscode/*
+!.vscode/extensions.json
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+
+# System and temporary files
+*.swp
+*.tmp
+*.local
+
+# Vitest preview output
+.vitest/
+
+# Dependency lockfiles
+yarn.lock
 package-lock.json
+pnpm-lock.yaml

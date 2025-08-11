@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta charset="UTF-8" />
+  <meta name="robots" content="noindex, nofollow, noarchive" />
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
+  <!-- Contexto para LLMs -->
+  <meta name="llm-context" content="data/context.md">
+  <meta name="ai-context" content="data/context.md">
+  <link rel="context" href="data/context.md" type="text/markdown">
+  <!-- Descripción -->
+  <meta name="description" content="Diagrama interactivo de secciones. Contexto completo en data/context.md">
+  <title>XDiagrams - Versión Producción (Demo)</title>
+      <link href="xdiagrams.min.css" rel="stylesheet" />
+</head>
+<body>
+
+<div id="app"></div>
+
+<script>
+  window.$xDiagrams = {
+    url: "data/companies-board.csv",
+    title: "Diagrams",
+    clustersPerRow: "6 3 7 6 3",
+    showThemeToggle: false 
+  };
+</script>
+
+<!-- Módulo principal ES6 (archivo principal de desarrollo) -->
+<script src="xdiagrams.min.js"></script>
+
+</body>
+</html>

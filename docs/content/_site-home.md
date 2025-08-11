@@ -16,7 +16,7 @@ Diagram showcasing multiple examples including:
 - Support for flat lists and hierarchical tree structures
 - Data loading from CSV, JSON and external APIs
 
-[View Fullscreen](https://swanix.org/diagrams/demo/d3)
+[View Fullscreen](http://localhost:4000/demo/index.html)
 
 ### Clusters layout examples
 
@@ -24,7 +24,7 @@ Diagram showcasing multiple examples including:
 
 Example showing different ways to configure cluster layouts per row using single values, multi-value strings (CSS-like syntax), and arrays. The test cases demonstrate various combinations including explicit row definitions and automatic row distribution.
 
-[View Fullscreen](https://swanix.org/diagrams/demo/d3/layout)
+[View Fullscreen](https://swanix.org/diagrams/demo)
 
 
 ## Node Images
@@ -67,3 +67,5 @@ There are two ways to set images for nodes:
 - cover-message
 - cover-search
 - cover-settings
+
+<!-- 🔥 Hot reload test - $(date) -->

@@ -1,7 +1,4 @@
 /**
- * @swanix/diagrams v0.9.0
- */
-/**
  * XDiagrams CSS 
  * Módulo reutilizable de estilos
  */
@@ -16,7 +13,7 @@
  */
 @font-face {
   font-family: 'xdiagrams-icons';
-  src: url('xdiagrams.woff') format('woff');
+  src: url('../icons/xdiagrams.woff?thaw8n') format('woff');
   font-weight: normal;
   font-style: normal;
   font-display: block;

@@ -97,8 +97,8 @@ text[font-family="xdiagrams-icons"] {
   --image-filter: none;
 
   /* ===== Thumbnails ===== */
-  --thumb-fill: hsl(var(--color-base) 80% / 1);
-  --thumb-fill-hover: hsl(var(--color-base) 75% / 1);
+  --thumb-fill: hsl(var(--color-base) 65% / 1);
+  --thumb-fill-hover: hsl(var(--color-base) 55% / 1);
   --thumb-fill-focus: hsl(var(--color-base) 10% / 1);
   --thumb-stroke: 6px;
   --thumb-opacity: 1;
@@ -170,6 +170,18 @@ text[font-family="xdiagrams-icons"] {
   --cluster-tooltip-border: hsl(var(--color-base) 40% / 1) 2px solid;
   --cluster-tooltip-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 
+  /* ===== Texto Gigante de Cluster en Hover ===== */
+  --cluster-hover-title-large-font-size: 360px;
+  --cluster-hover-title-large-font-weight: bold;
+  --cluster-hover-title-large-font-family: Arial, Helvetica, sans-serif;
+  --cluster-hover-title-large-color: hsl(var(--color-base) 80% / 1);
+  --cluster-hover-title-large-bg-color: hsl(var(--color-base) 10% / 1);
+  --cluster-hover-title-large-border-color: hsl(var(--color-base) 40% / 1);
+  --cluster-hover-title-large-border-width: 30px;
+  --cluster-hover-title-large-padding-x: 160px;
+  --cluster-hover-title-large-padding-y: 90px;
+  --cluster-hover-title-large-border-radius: 80px;
+
   /* ===== Loading ===== */
   --loading-color: hsl(var(--color-base) 60% / 1);
   --loading-bg: hsl(var(--color-base) 15% / 1);
@@ -179,10 +191,10 @@ text[font-family="xdiagrams-icons"] {
   --title-pill-logo-filter: invert(1) brightness(1) contrast(1);
 
   /* ===== UI Panel Variables ===== */
-  --ui-panel-bg: hsl(var(--color-base) 20% / 1);
-  --ui-panel-border: hsl(var(--color-base) 30% / 1);
-  --ui-panel-text: hsl(var(--color-base) 80% / 1);
-  --ui-panel-text-muted: hsl(var(--color-base) 60% / 1);
+  --ui-panel-bg: hsl(var(--color-base) 15% / 1);
+  --ui-panel-border: hsl(var(--color-base) 25% / 1);
+  --ui-panel-text: hsl(var(--color-base) 95% / 1); /* Texto casi blanco */
+  --ui-panel-text-muted: hsl(var(--color-base) 85% / 1); /* Texto muted más claro */
   
   /* ===== UI Focus Color ===== */
   --ui-focus: hsl(var(--color-base) 100% / 1);
@@ -256,7 +268,7 @@ text[font-family="xdiagrams-icons"] {
   --logo-filter: invert(1);
 
   /* ===== Node text colors ===== */
-  --node-name-text-color: #ffffff;  /* Color blanco para nombres de nodos */
+  --node-name-text-color: hsl(var(--color-base) 15% / 1);  /* Color blanco para nombres de nodos */
 
   /* ===== Node dimensions ===== */
   --node-bg-width: 80px;
@@ -371,8 +383,8 @@ text[font-family="xdiagrams-icons"] {
   /* ===== UI Panel Variables ===== */
   --ui-panel-bg: hsl(var(--color-base) 95% / 1);
   --ui-panel-border: hsl(var(--color-base) 85% / 1);
-  --ui-panel-text: hsl(var(--color-base) 15% / 1);
-  --ui-panel-text-muted: hsl(var(--color-base) 20% / 1);
+  --ui-panel-text: hsl(var(--color-base) 5% / 1); /* Texto casi negro para tema claro */
+  --ui-panel-text-muted: hsl(var(--color-base) 10% / 1); /* Texto muted más oscuro para tema claro */
 
   /* ===== UI Controls ===== */
   --ui-control-bg: hsl(var(--color-base) 95% / 1);
@@ -415,7 +427,6 @@ text[font-family="xdiagrams-icons"] {
   z-index: 9999 !important;
   backdrop-filter: blur(10px);
   box-shadow: var(--side-panel-shadow);
-  transition: all var(--transition-normal);
   max-width: 300px;
   min-height: 40px;
   /* Asegurar que el pill sea siempre visible */
@@ -426,7 +437,6 @@ text[font-family="xdiagrams-icons"] {
 
 .floating-title-pill:hover {
   box-shadow: var(--topbar-shadow);
-  transform: translateY(-1px);
   border-color: var(--ui-control-border-hover);
   background: var(--ui-control-bg-hover);
 }
@@ -437,7 +447,6 @@ text[font-family="xdiagrams-icons"] {
   object-fit: contain;
   flex-shrink: 0;
   filter: var(--title-pill-logo-filter);
-  transition: filter var(--transition-normal);
 }
 
 .floating-title-pill .floating-title {
@@ -449,7 +458,6 @@ text[font-family="xdiagrams-icons"] {
   text-overflow: ellipsis;
   margin: 0;
   line-height: 1.2;
-  transition: color var(--transition-normal);
 }
 
 /* Dark theme adjustments for floating pill */
@@ -721,6 +729,7 @@ svg .node.node-selected .embedded-thumbnail,
   font-size: 12px;
   fill: var(--node-name-text-color, var(--node-text, var(--text-color)));
   text-anchor: middle;
+  dominant-baseline: middle;
   transition: fill 0.3s ease;
 }
 
@@ -739,6 +748,7 @@ svg .node.node-selected .embedded-thumbnail,
   font-size: 10px;
   fill: var(--node-text-secondary);
   text-anchor: middle;
+  dominant-baseline: middle;
   transition: fill 0.3s ease;
 }
 
@@ -769,6 +779,8 @@ svg .node.node-selected .embedded-thumbnail,
 /* Estilos base para texto inteligente */
 .smart-text {
   fill: var(--node-name-text-color, var(--node-text, var(--text-color))) !important;
+  text-anchor: middle;
+  dominant-baseline: middle;
   transition: fill 0.3s ease !important;
 }
 
@@ -788,6 +800,7 @@ svg .node.node-selected .embedded-thumbnail,
   font-weight: normal;
   fill: var(--node-text-secondary, #666);
   text-anchor: end;
+  dominant-baseline: middle;
   transition: fill 0.3s ease;
 }
 
@@ -811,15 +824,15 @@ svg .node.node-selected .embedded-thumbnail,
 .cluster-title-bg {
   fill: var(--cluster-title-bg);
   stroke: var(--cluster-title-bg-border);
-  stroke-width: 1px;
-  rx: 16px;
-  ry: 16px;
+  stroke-width: 2px; /* Duplicado de 1px a 2px */
+  rx: 32px; /* Duplicado de 16px a 32px */
+  ry: 32px; /* Duplicado de 16px a 32px */
   /* Las dimensiones se calculan dinámicamente en JavaScript */
   transform-origin: top left;
 }
 
 .cluster-title {
-  font-size: 48px;
+  font-size: 96px; /* Duplicado de 48px a 96px */
   font-weight: bold;
   font-family: Arial, Helvetica, sans-serif; /* Fuente web-safe consistente en Mac y Windows */
   fill: var(--cluster-title-color);
@@ -909,6 +922,44 @@ svg .cluster-bg.zoom-in:hover:not(.cluster-focused):not(:focus),
   overflow: hidden;
 }
 
+/* ===== TEXTO GRANDE DE CLUSTER EN HOVER ===== */
+/* Base de fondo para el texto grande */
+.cluster-hover-title-large-bg {
+  fill: var(--cluster-hover-title-large-bg-color);
+  stroke: var(--cluster-hover-title-large-border-color);
+  stroke-width: var(--cluster-hover-title-large-border-width);
+  opacity: 0; /* Oculto por defecto */
+  pointer-events: none;
+}
+
+/* Contenedor para el texto grande que aparece en hover */
+.cluster-hover-title-large {
+  font-size: var(--cluster-hover-title-large-font-size);
+  font-weight: var(--cluster-hover-title-large-font-weight);
+  font-family: var(--cluster-hover-title-large-font-family);
+  fill: var(--cluster-hover-title-large-color);
+  text-anchor: start; /* Mismo anchor que el título original */
+  dominant-baseline: middle;
+  opacity: 0; /* Oculto por defecto */
+  pointer-events: none;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Estilos base para el texto grande - controlado por JavaScript */
+.cluster-hover-title-large {
+  fill: var(--cluster-hover-title-large-color);
+  font-size: var(--cluster-hover-title-large-font-size);
+}
+
+/* Efecto hover adicional para el texto grande */
+.cluster:hover .cluster-hover-title-large:hover {
+  fill: #f8f8f8; /* Mismo color que el título original en hover */
+}
+
+
+
 /* ===== PANEL DE INFORMACIÓN ===== */
 .info-panel {
   position: fixed;
@@ -917,11 +968,11 @@ svg .cluster-bg.zoom-in:hover:not(.cluster-focused):not(:focus),
   background: var(--ui-panel-bg);
   border: 1px solid var(--ui-panel-border);
   border-radius: var(--ui-control-border-radius);
-  padding: var(--ui-control-padding);
+  padding: 15px 25px 15px 15px; /* Padding derecho aumentado de 15px a 25px */
   font-family: monospace;
   font-size: 11px;
   z-index: 1000;
-  box-shadow: var(--side-panel-shadow);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15), 0 4px 16px rgba(0, 0, 0, 0.1); /* Sombra aumentada */
   min-width: 150px;
   backdrop-filter: blur(5px);
 }
@@ -931,11 +982,35 @@ svg .cluster-bg.zoom-in:hover:not(.cluster-focused):not(:focus),
   font-size: 12px;
   color: var(--ui-panel-text);
   font-weight: normal;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .info-item {
   margin: 5px 0;
   color: var(--ui-panel-text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Asegurar que todos los elementos dentro del info panel se trunquen */
+.info-panel * {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Estilos específicos para enlaces y URLs en el info panel */
+.info-panel a,
+.info-panel .url,
+.info-panel [href] {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: block;
+  max-width: 100%;
 }
 
 /* ===== LÍNEAS DE CONEXIÓN ===== */
@@ -1302,8 +1377,8 @@ text[font-family="icomoon"] {
 }
 
 .zoom-input {
-  background: var(--ui-control-bg);
-  border: 1px solid var(--ui-control-border);
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 20px;
   color: var(--ui-control-text);
   font-size: 12px;
@@ -1330,9 +1405,9 @@ text[font-family="icomoon"] {
 }
 
 .zoom-input:focus {
-  background: var(--ui-control-bg-hover);
-  border-color: var(--ui-control-border-focus);
-  box-shadow: 0 0 0 2px var(--ui-control-shadow-focus);
+  background: rgba(0, 0, 0, 0.4);
+  border-color: rgba(255, 255, 255, 0.3);
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.1);
 }
 
 .zoom-input::placeholder {
@@ -1340,7 +1415,7 @@ text[font-family="icomoon"] {
 }
 
 .zoom-btn {
-  background: var(--ui-control-bg-active);
+  background: rgba(0, 0, 0, 0.3);
   border: none;
   border-radius: 50%;
   color: var(--ui-control-text);
@@ -1357,12 +1432,12 @@ text[font-family="icomoon"] {
 }
 
 .zoom-btn:hover {
-  background: var(--ui-control-bg-hover);
+  background: rgba(0, 0, 0, 0.5);
   transform: scale(1.05);
 }
 
 .zoom-btn:active {
-  background: var(--ui-control-bg-active);
+  background: rgba(0, 0, 0, 0.7);
   transform: scale(0.95);
 }
 

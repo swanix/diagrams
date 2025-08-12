@@ -158,9 +158,61 @@ class XDiagramsTextHandler {
         .style('display', 'none');
     }
 
+    // Calcular el número de líneas que tendrá el texto
+    const words = text.split(/\s+/);
+    const lines = [];
+    let currentLine = '';
+
+    for (let i = 0; i < words.length; i++) {
+      const testLine = currentLine ? currentLine + ' ' + words[i] : words[i];
+      const testElement = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+      testElement.style.fontFamily = config.fontFamily;
+      testElement.style.fontSize = config.fontSize + 'px';
+      testElement.style.fontWeight = config.fontWeight || 'normal';
+      testElement.textContent = testLine;
+      
+      let textWidth = 0;
+      if (testElement.getComputedTextLength) {
+        textWidth = testElement.getComputedTextLength();
+      } else {
+        const avgCharWidth = config.fontSize * 0.6;
+        textWidth = testLine.length * avgCharWidth;
+      }
+      
+      if (textWidth > config.maxWidth && currentLine !== '') {
+        lines.push(currentLine);
+        currentLine = words[i];
+      } else {
+        currentLine = testLine;
+      }
+    }
+    
+    if (currentLine) {
+      lines.push(currentLine);
+    }
+
+    // Limitar el número de líneas
+    if (lines.length > config.maxLines) {
+      lines.splice(config.maxLines);
+    }
+
+    // Ajustar posición Y según el número de líneas
+    let adjustedY = y;
+    let baseline = config.dominantBaseline;
+    
+    if (lines.length === 1) {
+      // Para texto de una línea, usar hanging baseline y ajustar posición
+      adjustedY = y + 8;
+      baseline = 'hanging';
+    } else {
+      // Para texto de múltiples líneas, ajustar hacia arriba para mejor centrado
+      adjustedY = y - 5;
+      baseline = 'middle';
+    }
+
     const textGroup = container.append('g')
       .attr('class', 'text-group')
-      .attr('transform', `translate(${x}, ${y})`);
+      .attr('transform', `translate(${x}, ${adjustedY})`);
 
     const textElement = textGroup.append('text')
       .attr('class', 'smart-text')
@@ -168,7 +220,7 @@ class XDiagramsTextHandler {
       .style('font-size', config.fontSize + 'px')
       .style('font-weight', config.fontWeight || 'normal')
       .style('text-anchor', config.textAnchor)
-      .style('dominant-baseline', config.dominantBaseline);
+      .style('dominant-baseline', baseline);
 
     // Implementar wrap de texto optimizado
     this.wrapText(textElement, text, config);

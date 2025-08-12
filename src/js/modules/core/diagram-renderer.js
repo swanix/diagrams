@@ -81,8 +81,8 @@ class XDiagramsDiagramRenderer {
       
       const titleText = titleContainer.append('text')
         .attr('class', 'cluster-title')
-        .attr('x', 5)
-        .attr('y', 65)
+        .attr('x', 50) // Corrido hacia la derecha de 5 a 50
+        .attr('y', 150) // Bajado de 130 a 150
         .text(tree.id || tree.name);
       
       titleText.attr('data-cluster-name', tree.name);
@@ -90,10 +90,85 @@ class XDiagramsDiagramRenderer {
       // Ajustar fondo del título
       const titleBBox = titleText.node().getBBox();
       titleBg
-        .attr('x', titleBBox.x - 28)
-        .attr('y', titleBBox.y - 16)
-        .attr('width', titleBBox.width + 56)
-        .attr('height', titleBBox.height + 32);
+        .attr('x', titleBBox.x - 56) // Duplicado de 28 a 56
+        .attr('y', titleBBox.y - 32) // Duplicado de 16 a 32
+        .attr('width', titleBBox.width + 112) // Duplicado de 56 a 112
+        .attr('height', titleBBox.height + 64); // Duplicado de 32 a 64
+      
+      // Base de fondo para el texto grande del cluster
+      const largeTitleBg = titleContainer.append('rect')
+        .attr('class', 'cluster-hover-title-large-bg')
+        .attr('x', 0)
+        .attr('y', 0)
+        .attr('rx', 80) // Bordes redondeados reducidos para el padding más pequeño
+        .attr('ry', 80);
+      
+      // Texto grande del cluster que aparece en hover (misma posición que el título)
+      const largeTitleText = titleContainer.append('text')
+        .attr('class', 'cluster-hover-title-large')
+        .attr('x', 150) // Posición X más a la derecha
+        .attr('y', 350) // Posición Y subida más (de 400 a 350)
+        .text(tree.id || tree.name)
+        .attr('data-cluster-name', tree.name);
+      
+      // Ajustar el fondo del texto grande basado en el tamaño del texto
+      const largeTitleBBox = largeTitleText.node().getBBox();
+      const paddingX = 120; // Padding horizontal (se puede hacer variable CSS)
+      const paddingY = 90; // Padding vertical (se puede hacer variable CSS)
+      largeTitleBg
+        .attr('x', largeTitleBBox.x - paddingX)
+        .attr('y', largeTitleBBox.y - paddingY)
+        .attr('width', largeTitleBBox.width + (paddingX * 2))
+        .attr('height', largeTitleBBox.height + (paddingY * 2));
+      
+      console.log('🔍 [DiagramRenderer] Texto grande creado para cluster:', tree.name, largeTitleText.node());
+      
+      // Variable para controlar si el texto gigante debe estar oculto permanentemente
+      let hideLargeTitlePermanently = false;
+
+      // Agregar eventos de hover para controlar la visibilidad del texto grande
+      clusterGroup.on('mouseenter', () => {
+        if (hideLargeTitlePermanently) return; // No mostrar si está marcado como oculto permanentemente
+        
+        const currentZoom = this.core.navigation.zoomManager.getCurrentZoom();
+        if (currentZoom <= 0.10) { // Cambiado de 0.12 a 0.10 (10%)
+          // Mostrar inmediatamente sin transición
+          largeTitleText.style('opacity', 1);
+          largeTitleBg.style('opacity', 1);
+        }
+      }).on('mouseleave', () => {
+        if (hideLargeTitlePermanently) return; // No ocultar si ya está marcado como oculto
+        
+        // Ocultar inmediatamente sin transición
+        largeTitleText.style('opacity', 0);
+        largeTitleBg.style('opacity', 0);
+      }).on('click', () => {
+        // Marcar como oculto permanentemente
+        hideLargeTitlePermanently = true;
+        
+        // Ocultar texto gigante inmediatamente al hacer clic (sin transición)
+        largeTitleText.style('opacity', 0);
+        largeTitleBg.style('opacity', 0);
+        
+        // Resetear la bandera después de un tiempo para permitir futuros hovers
+        setTimeout(() => {
+          hideLargeTitlePermanently = false;
+        }, 2000); // 2 segundos deberían ser suficientes para completar el zoom
+      });
+
+      // Listener para cambios de zoom - ocultar texto cuando zoom > 10%
+      const zoomListener = () => {
+        const currentZoom = this.core.navigation.zoomManager.getCurrentZoom();
+        if (currentZoom > 0.10) { // Cambiado de 0.12 a 0.10 (10%)
+          largeTitleText.style('opacity', 0);
+          largeTitleBg.style('opacity', 0);
+        }
+      };
+
+      // Agregar listener al zoom manager
+      if (this.core.navigation && this.core.navigation.zoomManager) {
+        this.core.navigation.zoomManager.onZoomChange(zoomListener);
+      }
       
       // Contenido del árbol
       const treeContent = treeGroup.append('g')
@@ -375,7 +450,7 @@ class XDiagramsDiagramRenderer {
       nodeGroup,
       node.data.name,
       nodeWidth / 2,
-      nodeHeight / 2 + 35,
+      nodeHeight * 0.7,
       {
         maxWidth: this.core.config.textConfig.maxWidth,
         fontSize: this.core.config.textConfig.nodeNameFontSize,

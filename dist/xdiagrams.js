@@ -1,5 +1,5 @@
 /**
- * @swanix/diagrams v0.9.0
+ * @swanix/diagrams v0.9.1
  */
 var xhtml = "http://www.w3.org/1999/xhtml";
 const namespaces = {
@@ -4559,8 +4559,47 @@ class XDiagramsTextHandler {
     if (!text || text.trim() === "") {
       return container.append("text").attr("class", "empty-text").attr("x", x).attr("y", y).style("display", "none");
     }
-    const textGroup = container.append("g").attr("class", "text-group").attr("transform", `translate(${x}, ${y})`);
-    const textElement = textGroup.append("text").attr("class", "smart-text").style("font-family", config.fontFamily).style("font-size", config.fontSize + "px").style("font-weight", config.fontWeight || "normal").style("text-anchor", config.textAnchor).style("dominant-baseline", config.dominantBaseline);
+    const words = text.split(/\s+/);
+    const lines = [];
+    let currentLine = "";
+    for (let i = 0; i < words.length; i++) {
+      const testLine = currentLine ? currentLine + " " + words[i] : words[i];
+      const testElement = document.createElementNS("http://www.w3.org/2000/svg", "text");
+      testElement.style.fontFamily = config.fontFamily;
+      testElement.style.fontSize = config.fontSize + "px";
+      testElement.style.fontWeight = config.fontWeight || "normal";
+      testElement.textContent = testLine;
+      let textWidth = 0;
+      if (testElement.getComputedTextLength) {
+        textWidth = testElement.getComputedTextLength();
+      } else {
+        const avgCharWidth = config.fontSize * 0.6;
+        textWidth = testLine.length * avgCharWidth;
+      }
+      if (textWidth > config.maxWidth && currentLine !== "") {
+        lines.push(currentLine);
+        currentLine = words[i];
+      } else {
+        currentLine = testLine;
+      }
+    }
+    if (currentLine) {
+      lines.push(currentLine);
+    }
+    if (lines.length > config.maxLines) {
+      lines.splice(config.maxLines);
+    }
+    let adjustedY = y;
+    let baseline = config.dominantBaseline;
+    if (lines.length === 1) {
+      adjustedY = y + 8;
+      baseline = "hanging";
+    } else {
+      adjustedY = y - 5;
+      baseline = "middle";
+    }
+    const textGroup = container.append("g").attr("class", "text-group").attr("transform", `translate(${x}, ${adjustedY})`);
+    const textElement = textGroup.append("text").attr("class", "smart-text").style("font-family", config.fontFamily).style("font-size", config.fontSize + "px").style("font-weight", config.fontWeight || "normal").style("text-anchor", config.textAnchor).style("dominant-baseline", baseline);
     this.wrapText(textElement, text, config);
     return textElement;
   }
@@ -4756,6 +4795,7 @@ class XDiagramsZoomManager {
     this.zoom = null;
     this.currentTransform = null;
     this.initialTransform = null;
+    this.zoomChangeListeners = [];
   }
   setupZoom(diagram, navigation) {
     this.zoom = d3.zoom().scaleExtent([0.05, 2]).wheelDelta((event2) => -event2.deltaY * 2e-3).on("zoom", (event2) => {
@@ -4766,6 +4806,7 @@ class XDiagramsZoomManager {
         container.attr("transform", transform2);
       }
       this.applyZoomBasedClusterClasses(transform2.k);
+      this.notifyZoomChangeListeners(transform2.k);
       this.updateInfoPanel(transform2);
       if (navigation && navigation.zoomControlsInstance) {
         navigation.zoomControlsInstance.updateZoomInput(transform2.k);
@@ -4848,13 +4889,33 @@ class XDiagramsZoomManager {
       return;
     }
     clusterBgs.classed("zoom-out", false).classed("zoom-in", false);
-    if (zoomLevel <= 0.07) {
+    if (zoomLevel <= 0.1) {
       clusterBgs.classed("zoom-out", true);
-      console.log("[ZoomClasses] Applied zoom-out class (zoom <= 7%):", zoomLevel);
+      console.log("[ZoomClasses] Applied zoom-out class (zoom <= 10%):", zoomLevel);
     } else {
       clusterBgs.classed("zoom-in", true);
-      console.log("[ZoomClasses] Applied zoom-in class (zoom > 7%):", zoomLevel);
+      console.log("[ZoomClasses] Applied zoom-in class (zoom > 10%):", zoomLevel);
     }
+  }
+  /**
+   * Registrar un listener para cambios de zoom
+   * @param {Function} listener - Función a llamar cuando cambie el zoom
+   */
+  onZoomChange(listener) {
+    this.zoomChangeListeners.push(listener);
+  }
+  /**
+   * Notificar a todos los listeners de cambio de zoom
+   * @param {number} zoomLevel - Nivel de zoom actual
+   */
+  notifyZoomChangeListeners(zoomLevel) {
+    this.zoomChangeListeners.forEach((listener) => {
+      try {
+        listener(zoomLevel);
+      } catch (error) {
+        console.error("[ZoomManager] Error en listener de zoom:", error);
+      }
+    });
   }
 }
 class XDiagramsKeyboardNav {
@@ -6269,7 +6330,7 @@ class XDiagramsInfoPanel {
         box-shadow: var(--side-panel-shadow);
         z-index: 10050; 
         transform: translateX(100%); 
-        transition: transform var(--transition-normal); 
+        transition: transform var(--transition-normal);
       }
       .side-panel.open { transform: translateX(0); }
       
@@ -6459,6 +6520,106 @@ class XDiagramsInfoPanel {
       .side-panel-url-link:hover {
         text-decoration: underline;
       }
+      
+      /* ===== SECCIÓN DE URL ===== */
+      .side-panel-url-section {
+        padding: 16px 20px;
+        border-bottom: 1px solid var(--ui-panel-border);
+        background: var(--ui-panel-bg);
+      }
+      
+      .side-panel-url-input-container {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      
+      .side-panel-url-input {
+        flex: 1;
+        padding: 8px 12px;
+        border: 1px solid var(--ui-panel-border);
+        border-radius: 4px;
+        background: var(--ui-panel-bg);
+        color: var(--ui-panel-text-muted);
+        font-size: 10px;
+        font-family: monospace;
+        outline: none;
+        transition: border-color var(--transition-fast);
+        opacity: 0.7;
+      }
+      
+      .side-panel-url-input:focus {
+        opacity: 1;
+      }
+      
+      .side-panel-url-input:read-only {
+        background: var(--ui-panel-bg-muted);
+        color: var(--ui-panel-text-muted);
+        cursor: default;
+      }
+      
+      .side-panel-url-button {
+        background: hsl(var(--color-base) 15% / 1);
+        border: none;
+        border-radius: 50%;
+        color: var(--ui-panel-text);
+        font-size: 14px;
+        font-weight: bold;
+        width: 28px;
+        height: 28px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s ease;
+        user-select: none;
+      }
+      
+      .side-panel-url-button:hover {
+        background: hsl(var(--color-base) 10% / 1);
+        transform: scale(1.05);
+      }
+      
+      .side-panel-url-button:active {
+        background: hsl(var(--color-base) 10% / 1);
+        transform: scale(0.95);
+      }
+      
+      .side-panel-url-button-icon {
+        width: 14px;
+        height: 14px;
+        color: currentColor;
+        display: block;
+      }
+      
+      /* ===== BOTÓN DE COLAPSAR ===== */
+      .side-panel-collapse-btn {
+        position: fixed;
+        bottom: 12px;
+        right: 318px;
+        background: transparent;
+        border: none;
+        border-radius: 6px;
+        color: var(--ui-control-text);
+        width: 40px;
+        height: 40px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s ease;
+        z-index: 10051;
+      }
+      
+      .side-panel-collapse-btn:hover {
+        background: var(--ui-control-bg-hover);
+        transform: scale(1.05);
+      }
+      
+      .side-panel-collapse-btn:active {
+        background: var(--ui-control-bg-active);
+        transform: scale(0.95);
+      }
     `;
     document.head.appendChild(style);
   }
@@ -6477,12 +6638,27 @@ class XDiagramsInfoPanel {
             <span class="side-panel-title-id" id="side-panel-title-id"></span>
           </div>
         </h3>
-        <span class="side-panel-close" id="side-panel-close" role="button" aria-label="Cerrar">×</span>
+      </div>
+      <div class="side-panel-url-section" id="side-panel-url-section" style="display: none;">
+        <div class="side-panel-url-input-container">
+          <input type="text" class="side-panel-url-input" id="side-panel-url-input" placeholder="URL del nodo" readonly>
+          <button class="side-panel-url-button" id="side-panel-url-button" type="button">
+            <svg class="side-panel-url-button-icon" width="14" height="14" viewBox="0 0 640 640" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+              <path d="M384 64C366.3 64 352 78.3 352 96C352 113.7 366.3 128 384 128L466.7 128L265.3 329.4C252.8 341.9 252.8 362.2 265.3 374.7C277.8 387.2 298.1 387.2 310.6 374.7L512 173.3L512 256C512 273.7 526.3 288 544 288C561.7 288 576 273.7 576 256L576 96C576 78.3 561.7 64 544 64L384 64zM144 160C99.8 160 64 195.8 64 240L64 496C64 540.2 99.8 576 144 576L400 576C444.2 576 480 540.2 480 496L480 416C480 398.3 465.7 384 448 384C430.3 384 416 398.3 416 416L416 496C416 504.8 408.8 512 400 512L144 512C135.2 512 128 504.8 128 496L128 240C128 231.2 135.2 224 144 224L224 224C241.7 224 256 209.7 256 192C256 174.3 241.7 160 224 160L144 160z"/>
+            </svg>
+          </button>
+        </div>
       </div>
       <div class="side-panel-content" id="side-panel-content"></div>
+      <button class="side-panel-collapse-btn" id="side-panel-collapse-btn" type="button" aria-label="Colapsar panel">
+        <svg width="24" height="24" viewBox="0 0 30 30" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M13.7695 19.0498C13.7273 19.425 13.7305 19.8043 13.7812 20.1787H8.56445C8.25269 20.1786 8 19.926 8 19.6143C8.00008 19.3025 8.25274 19.0499 8.56445 19.0498H13.7695ZM18.7002 19.96C18.4806 20.1796 18.125 20.1795 17.9053 19.96C17.6856 19.7403 17.6856 19.3847 17.9053 19.165L18.0205 19.0498H19.6104L18.7002 19.96ZM16.3506 15.0625L15.751 15.6621H8.56445C8.25269 15.662 8 15.4085 8 15.0967C8.00023 14.7851 8.25284 14.5323 8.56445 14.5322H15.8203L16.3506 15.0625ZM13.7734 10.0156C13.7283 10.3906 13.7295 10.7699 13.7773 11.1445H8.56445C8.25279 11.1444 8.00015 10.8917 8 10.5801C8 10.2683 8.25269 10.0157 8.56445 10.0156H13.7734ZM18.4268 10.0156C18.5267 10.0383 18.6223 10.0872 18.7002 10.165L19.6797 11.1445H18.0898L17.9053 10.96C17.6856 10.7403 17.6856 10.3847 17.9053 10.165C17.9833 10.0871 18.0786 10.0382 18.1787 10.0156H18.4268Z" fill="currentColor"/>
+          <path fill-rule="evenodd" clip-rule="evenodd" d="M17.905 10.1648C17.6853 10.3844 17.6853 10.7406 17.905 10.9602L22.0072 15.0625L17.905 19.1648C17.6853 19.3844 17.6853 19.7406 17.905 19.9602C18.1247 20.1799 18.4808 20.1799 18.7005 19.9602L23.2005 15.4602C23.4202 15.2406 23.4202 14.8844 23.2005 14.6648L18.7005 10.1648C18.4808 9.94508 18.1247 9.94508 17.905 10.1648Z" fill="currentColor"/>
+        </svg>
+      </button>
     `;
     document.body.appendChild(panel);
-    panel.querySelector("#side-panel-close")?.addEventListener("click", () => this.close());
+    panel.querySelector("#side-panel-collapse-btn")?.addEventListener("click", () => this.close());
   }
   async open(nodeData, diagramConfig = {}) {
     this.ensurePanel();
@@ -6491,6 +6667,9 @@ class XDiagramsInfoPanel {
     const titleEl = document.getElementById("side-panel-title-text");
     const titleIdEl = document.getElementById("side-panel-title-id");
     const thumbnailEl = document.getElementById("side-panel-thumbnail");
+    const urlSection = document.getElementById("side-panel-url-section");
+    const urlInput = document.getElementById("side-panel-url-input");
+    const urlButton = document.getElementById("side-panel-url-button");
     if (!panel || !content || !titleEl || !titleIdEl || !thumbnailEl)
       return;
     const title = nodeData?.name || nodeData?.Name || nodeData.data && nodeData.data.name || nodeData.data && nodeData.data.Name || nodeData?.title || "Nodo";
@@ -6498,6 +6677,19 @@ class XDiagramsInfoPanel {
     console.log("[InfoPanel] nodeData:", JSON.stringify(nodeData, null, 2));
     titleEl.textContent = String(title);
     titleIdEl.textContent = nodeIdValue || "";
+    const url = this.findUrl(nodeData);
+    console.log("[InfoPanel] URL encontrada:", url);
+    if (url && urlSection && urlInput) {
+      urlInput.value = url;
+      urlSection.style.display = "block";
+      if (urlButton) {
+        urlButton.onclick = () => {
+          window.open(url, "_blank", "noopener,noreferrer");
+        };
+      }
+    } else if (urlSection) {
+      urlSection.style.display = "none";
+    }
     await this.createThumbnail(thumbnailEl, nodeData, diagramConfig);
     content.innerHTML = await this.buildFieldsHtml(nodeData, diagramConfig);
     panel.classList.add("open");
@@ -6607,10 +6799,14 @@ class XDiagramsInfoPanel {
         const headerFields = ["name", "Name"];
         const idFields = ["id", "ID", "Node"];
         const internalFields = ["parent", "Parent", "img", "Img"];
-        if (headerFields.includes(key) || idFields.includes(key) || internalFields.includes(key))
+        const urlFields = ["url", "URL", "Url"];
+        const isUrlField = urlFields.includes(key);
+        if (headerFields.includes(key) || idFields.includes(key) || internalFields.includes(key) || isUrlField) {
+          console.log(`[InfoPanel] Excluyendo campo: ${key} (valor: ${value})`);
           continue;
+        }
         if (!showAllColumns) {
-          const allowedFields = ["title", "description", "desc", "url", "link"];
+          const allowedFields = ["title", "description", "desc"];
           if (!allowedFields.includes(key.toLowerCase()))
             continue;
         }
@@ -6675,6 +6871,15 @@ class XDiagramsInfoPanel {
     } catch {
       return false;
     }
+  }
+  findUrl(nodeData) {
+    const data = nodeData.data || nodeData;
+    const urlValue = data["url"] || data["URL"] || data["Url"];
+    if (urlValue && this.isUrl(urlValue)) {
+      console.log(`[InfoPanel] URL encontrada en campo URL: ${urlValue}`);
+      return urlValue;
+    }
+    return null;
   }
   // ===== MÉTODOS DE COMPATIBILIDAD =====
   updateInfoPanel(transform2) {
@@ -7020,10 +7225,49 @@ class XDiagramsDiagramRenderer {
       });
       const titleContainer = treeGroup.append("g").attr("class", "cluster-title-container");
       const titleBg = titleContainer.append("rect").attr("class", "cluster-title-bg").attr("rx", 8).attr("ry", 8);
-      const titleText = titleContainer.append("text").attr("class", "cluster-title").attr("x", 5).attr("y", 65).text(tree2.id || tree2.name);
+      const titleText = titleContainer.append("text").attr("class", "cluster-title").attr("x", 50).attr("y", 150).text(tree2.id || tree2.name);
       titleText.attr("data-cluster-name", tree2.name);
       const titleBBox = titleText.node().getBBox();
-      titleBg.attr("x", titleBBox.x - 28).attr("y", titleBBox.y - 16).attr("width", titleBBox.width + 56).attr("height", titleBBox.height + 32);
+      titleBg.attr("x", titleBBox.x - 56).attr("y", titleBBox.y - 32).attr("width", titleBBox.width + 112).attr("height", titleBBox.height + 64);
+      const largeTitleBg = titleContainer.append("rect").attr("class", "cluster-hover-title-large-bg").attr("x", 0).attr("y", 0).attr("rx", 80).attr("ry", 80);
+      const largeTitleText = titleContainer.append("text").attr("class", "cluster-hover-title-large").attr("x", 150).attr("y", 350).text(tree2.id || tree2.name).attr("data-cluster-name", tree2.name);
+      const largeTitleBBox = largeTitleText.node().getBBox();
+      const paddingX = 120;
+      const paddingY = 90;
+      largeTitleBg.attr("x", largeTitleBBox.x - paddingX).attr("y", largeTitleBBox.y - paddingY).attr("width", largeTitleBBox.width + paddingX * 2).attr("height", largeTitleBBox.height + paddingY * 2);
+      console.log("🔍 [DiagramRenderer] Texto grande creado para cluster:", tree2.name, largeTitleText.node());
+      let hideLargeTitlePermanently = false;
+      clusterGroup.on("mouseenter", () => {
+        if (hideLargeTitlePermanently)
+          return;
+        const currentZoom = this.core.navigation.zoomManager.getCurrentZoom();
+        if (currentZoom <= 0.1) {
+          largeTitleText.style("opacity", 1);
+          largeTitleBg.style("opacity", 1);
+        }
+      }).on("mouseleave", () => {
+        if (hideLargeTitlePermanently)
+          return;
+        largeTitleText.style("opacity", 0);
+        largeTitleBg.style("opacity", 0);
+      }).on("click", () => {
+        hideLargeTitlePermanently = true;
+        largeTitleText.style("opacity", 0);
+        largeTitleBg.style("opacity", 0);
+        setTimeout(() => {
+          hideLargeTitlePermanently = false;
+        }, 2e3);
+      });
+      const zoomListener = () => {
+        const currentZoom = this.core.navigation.zoomManager.getCurrentZoom();
+        if (currentZoom > 0.1) {
+          largeTitleText.style("opacity", 0);
+          largeTitleBg.style("opacity", 0);
+        }
+      };
+      if (this.core.navigation && this.core.navigation.zoomManager) {
+        this.core.navigation.zoomManager.onZoomChange(zoomListener);
+      }
       const treeContent = treeGroup.append("g").attr("class", "tree-content");
       const hierarchy2 = d3.hierarchy(tree2);
       d3.tree().nodeSize([
@@ -7216,7 +7460,7 @@ class XDiagramsDiagramRenderer {
       nodeGroup,
       node.data.name,
       nodeWidth / 2,
-      nodeHeight / 2 + 35,
+      nodeHeight * 0.7,
       {
         maxWidth: this.core.config.textConfig.maxWidth,
         fontSize: this.core.config.textConfig.nodeNameFontSize,

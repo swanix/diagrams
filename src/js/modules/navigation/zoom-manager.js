@@ -8,6 +8,7 @@ class XDiagramsZoomManager {
     this.zoom = null;
     this.currentTransform = null;
     this.initialTransform = null;
+    this.zoomChangeListeners = [];
   }
 
   setupZoom(diagram, navigation) {
@@ -29,6 +30,9 @@ class XDiagramsZoomManager {
         
         // Apply zoom-based cluster hover classes
         this.applyZoomBasedClusterClasses(transform.k);
+        
+        // Notificar a los listeners de cambio de zoom
+        this.notifyZoomChangeListeners(transform.k);
         
         // Actualizar panel de información
         this.updateInfoPanel(transform);
@@ -151,15 +155,37 @@ class XDiagramsZoomManager {
     clusterBgs.classed('zoom-out', false).classed('zoom-in', false);
     
     // Apply appropriate class based on zoom level
-    // Zoom <= 7% (0.07) = vista general (color naranja)
-    // Zoom > 7% (0.07) = vista detallada (color verde)
-    if (zoomLevel <= 0.07) {
+    // Zoom <= 10% (0.10) = vista general (color naranja)
+    // Zoom > 10% (0.10) = vista detallada (color verde)
+    if (zoomLevel <= 0.10) {
       clusterBgs.classed('zoom-out', true);
-      console.log('[ZoomClasses] Applied zoom-out class (zoom <= 7%):', zoomLevel);
+      console.log('[ZoomClasses] Applied zoom-out class (zoom <= 10%):', zoomLevel);
     } else {
       clusterBgs.classed('zoom-in', true);
-      console.log('[ZoomClasses] Applied zoom-in class (zoom > 7%):', zoomLevel);
+      console.log('[ZoomClasses] Applied zoom-in class (zoom > 10%):', zoomLevel);
     }
+  }
+
+  /**
+   * Registrar un listener para cambios de zoom
+   * @param {Function} listener - Función a llamar cuando cambie el zoom
+   */
+  onZoomChange(listener) {
+    this.zoomChangeListeners.push(listener);
+  }
+
+  /**
+   * Notificar a todos los listeners de cambio de zoom
+   * @param {number} zoomLevel - Nivel de zoom actual
+   */
+  notifyZoomChangeListeners(zoomLevel) {
+    this.zoomChangeListeners.forEach(listener => {
+      try {
+        listener(zoomLevel);
+      } catch (error) {
+        console.error('[ZoomManager] Error en listener de zoom:', error);
+      }
+    });
   }
 }
 

@@ -1,6 +1,6 @@
 {
   "name": "@swanix/diagrams",
-  "version": "0.9.0",
+  "version": "0.9.1",
   "description": "Experimental diagram library that uses **D3.js**",
   "main": "dist/xdiagrams.min.js",
   "module": "dist/xdiagrams.js",

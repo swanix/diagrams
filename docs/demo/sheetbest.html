@@ -37,7 +37,10 @@
 </script>
 
 <!-- Archivo bundle de producción -->
-<script src="xdiagrams.min.js"></script>
+<script>
+  console.log('📦 [SheetBest] Intentando cargar xdiagrams.min.js...');
+</script>
+<script src="xdiagrams.min.js" onload="console.log('✅ [SheetBest] xdiagrams.min.js cargado exitosamente')" onerror="console.error('❌ [SheetBest] Error cargando xdiagrams.min.js')"></script>
 
 </body>
 </html>

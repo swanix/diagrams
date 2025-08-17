@@ -3,7 +3,8 @@
  * Maneja la autenticación para APIs protegidas
  */
 
-import { apiKeysConfig } from './config/api-keys.js';
+// Configuración de API Keys movida a Netlify Functions
+// No necesitamos importar api-keys.js aquí
 
 class XDiagramsAuthManager {
   constructor() {
@@ -44,38 +45,8 @@ class XDiagramsAuthManager {
    * @returns {Object|null} Headers de autenticación o null si no requiere autenticación
    */
   getAuthHeaders(url) {
-    if (!url) return null;
-
-    try {
-      const urlObj = new URL(url);
-      const hostname = urlObj.hostname;
-      const apiKey = apiKeysConfig.getApiKey(url);
-
-      if (!apiKey) {
-        return null;
-      }
-
-      // Determinar el método de autenticación basado en el hostname
-      let authMethod = 'default';
-      
-      for (const [pattern, method] of Object.entries(this.authMethods)) {
-        if (hostname.includes(pattern)) {
-          authMethod = method;
-          break;
-        }
-      }
-
-      // Crear headers usando el método apropiado
-      if (typeof authMethod === 'function') {
-        return authMethod.call(this, apiKey);
-      } else {
-        return this.authMethods.default.call(this, apiKey);
-      }
-
-    } catch (error) {
-      console.warn('Error creating auth headers:', error);
-      return null;
-    }
+    // Ahora manejado por Netlify Functions - no necesitamos headers aquí
+    return null;
   }
 
   /**
@@ -84,7 +55,10 @@ class XDiagramsAuthManager {
    * @returns {boolean} True si requiere autenticación
    */
   requiresAuthentication(url) {
-    return apiKeysConfig.requiresAuthentication(url);
+    // Detectar APIs protegidas basándose en patrones de URL
+    if (!url) return false;
+    const urlLower = url.toLowerCase();
+    return urlLower.includes('sheet.best') || urlLower.includes('sheetbest.com');
   }
 
   /**
@@ -103,13 +77,12 @@ class XDiagramsAuthManager {
    */
   getAuthInfo(url) {
     const requiresAuth = this.requiresAuthentication(url);
-    const hasApiKey = apiKeysConfig.getApiKey(url) !== null;
     
     return {
       url,
       requiresAuthentication: requiresAuth,
-      hasApiKey,
-      configuredPatterns: apiKeysConfig.getConfiguredPatterns(),
+      hasApiKey: requiresAuth, // Ahora manejado por Netlify Functions
+      configuredPatterns: ['sheet.best', 'sheetbest.com'],
       authMethod: requiresAuth ? this.getAuthMethodName(url) : null
     };
   }

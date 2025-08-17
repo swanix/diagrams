@@ -11,8 +11,8 @@
   <meta name="llm-context" content="../../src/data/context.md">
   <meta name="ai-context" content="../../src/data/context.md">
   <link rel="context" href="../../src/data/context.md" type="text/markdown">
-  <meta name="description" content="Diagrama interactivo cargado desde SheetBest usando archivos bundle de producción">
-  <title>XDiagrams - SheetBest (Bundle de Producción)</title>
+  <meta name="description" content="Prueba con datos locales">
+  <title>XDiagrams - Test Local</title>
   <link href="xdiagrams.min.css" rel="stylesheet" />
 </head>
 <body>
@@ -20,12 +20,12 @@
 <div id="app"></div>
 
 <script>
-  console.log('🚀 [SheetBest HTML] Script iniciado');
+  console.log('🚀 [Test Local] Script iniciado');
   
   window.$xDiagrams = {
-    url: "https://api.sheetbest.com/sheets/28f15681-b2ab-47a0-bbcb-205d142d9ef7/tabs/All", // Tu URL de SheetBest
-    title: "Diagrama desde SheetBest (Bundle de Producción)",
-    clustersPerRow: "6 3 7 6 3", // Ajusta según tu estructura de datos
+    url: "companies-board.csv", // Datos locales
+    title: "Prueba con Datos Locales",
+    clustersPerRow: "6 3 7 6 3",
     showThemeToggle: true,
     spacing: 80,
     verticalSpacing: 170,
@@ -33,7 +33,7 @@
     nodeHeight: 125
   };
   
-  console.log('📋 [SheetBest HTML] Configuración:', window.$xDiagrams);
+  console.log('📋 [Test Local] Configuración:', window.$xDiagrams);
 </script>
 
 <!-- Archivo bundle de producción -->

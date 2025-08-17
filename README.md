@@ -135,6 +135,37 @@ The following Node.js modules are used for development
 |d3|7.9.0|Library for data manipulation and creation of dynamic and interactive visualizations on the web.|
 |papaparse|5.5.3|Library for parsing CSV files and manipulating tabular data easily in JavaScript.|
 
+## 🔐 APIs Protegidas
+
+XDiagrams ahora soporta APIs protegidas con autenticación, incluyendo:
+
+- **SheetBest**: Soporte completo con header `X-Api-Key`
+- **APIs REST**: Autenticación con Bearer tokens
+- **Configuración segura**: Variables de entorno y configuración en JavaScript
+
+### Configuración Rápida
+
+```javascript
+// Configurar API Key antes de cargar XDiagrams
+window.__XDIAGRAMS_CONFIG__ = {
+  API_KEYS: {
+    'sheet.best': 'tu_api_key_aqui'
+  }
+};
+```
+
+### Uso
+
+```javascript
+// Cargar datos desde SheetBest (autenticación automática)
+xdiagrams.loadData('https://sheet.best/api/sheets/tu-sheet-id', (data, error) => {
+  if (error) console.error('Error:', error.message);
+  else console.log('Datos cargados:', data);
+});
+```
+
+📖 **Documentación completa**: [Configuración de API Keys](docs/API_KEYS_SETUP.md)
+
 
 ## License
 

@@ -23,6 +23,11 @@ coverage/
 .env.*
 !.env.example
 
+# API Keys and sensitive configuration
+src/js/modules/loader/config/api-keys.js
+src/js/modules/loader/config/api-keys.local.js
+src/js/modules/loader/config/api-keys.production.js
+
 # OS-specific files and folders
 .DS_Store
 Thumbs.db

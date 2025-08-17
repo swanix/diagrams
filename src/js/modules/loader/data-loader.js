@@ -4,10 +4,12 @@
  */
 
 import { XDiagramsSourceDetector } from './source-detector.js';
+import { XDiagramsAuthManager } from './auth-manager.js';
 
 class XDiagramsDataLoader {
   constructor() {
     this.sourceDetector = new XDiagramsSourceDetector();
+    this.authManager = new XDiagramsAuthManager();
   }
 
   /**
@@ -71,9 +73,21 @@ class XDiagramsDataLoader {
    * @returns {Promise<Array>} Datos cargados
    */
   async loadFromRestApi(url, options = {}) {
-    const response = await fetch(url);
+    const authHeaders = this.authManager.getAuthHeaders(url);
+    const fetchOptions = {
+      headers: {
+        'Content-Type': 'application/json',
+        ...authHeaders
+      }
+    };
+
+    const response = await fetch(url, fetchOptions);
     
     if (!response.ok) {
+      // Manejar errores de autenticación específicamente
+      if (response.status === 401 || response.status === 403) {
+        throw this.authManager.handleAuthError(response, url);
+      }
       throw new Error(`Error HTTP: ${response.status}`);
     }
     
@@ -88,9 +102,21 @@ class XDiagramsDataLoader {
    * @returns {Promise<Array>} Datos cargados
    */
   async loadFromCsvUrl(url, options = {}) {
-    const response = await fetch(url);
+    const authHeaders = this.authManager.getAuthHeaders(url);
+    const fetchOptions = {
+      headers: {
+        'Content-Type': 'text/csv',
+        ...authHeaders
+      }
+    };
+
+    const response = await fetch(url, fetchOptions);
     
     if (!response.ok) {
+      // Manejar errores de autenticación específicamente
+      if (response.status === 401 || response.status === 403) {
+        throw this.authManager.handleAuthError(response, url);
+      }
       throw new Error(`Error HTTP: ${response.status}`);
     }
     
@@ -105,14 +131,83 @@ class XDiagramsDataLoader {
    * @returns {Promise<Array>} Datos cargados
    */
   async loadFromJsonUrl(url, options = {}) {
-    const response = await fetch(url);
+    const authHeaders = this.authManager.getAuthHeaders(url);
+    const fetchOptions = {
+      headers: {
+        'Content-Type': 'application/json',
+        ...authHeaders
+      }
+    };
+
+    const response = await fetch(url, fetchOptions);
     
     if (!response.ok) {
+      // Manejar errores de autenticación específicamente
+      if (response.status === 401 || response.status === 403) {
+        throw this.authManager.handleAuthError(response, url);
+      }
       throw new Error(`Error HTTP: ${response.status}`);
     }
     
     const jsonData = await response.json();
     return this.convertJsonToCsvFormat(jsonData, options);
+  }
+
+  /**
+   * Carga datos desde una API protegida (como SheetBest)
+   * @param {string} url - URL de la API protegida
+   * @param {Object} options - Opciones de carga
+   * @returns {Promise<Array>} Datos cargados
+   */
+  async loadFromProtectedApi(url, options = {}) {
+    // Verificar si requiere autenticación
+    if (!this.authManager.requiresAuthentication(url)) {
+      console.warn('API protegida detectada pero no se encontró API Key configurada');
+      throw new Error('Esta API requiere autenticación. Configura una API Key para continuar.');
+    }
+
+    const authHeaders = this.authManager.getAuthHeaders(url);
+    if (!authHeaders) {
+      throw new Error('No se pudo obtener headers de autenticación para esta URL');
+    }
+
+    const fetchOptions = {
+      headers: {
+        'Content-Type': 'application/json',
+        ...authHeaders
+      }
+    };
+
+    try {
+      const response = await fetch(url, fetchOptions);
+      
+      if (!response.ok) {
+        // Manejar errores de autenticación específicamente
+        if (response.status === 401 || response.status === 403) {
+          throw this.authManager.handleAuthError(response, url);
+        }
+        throw new Error(`Error HTTP: ${response.status} - ${response.statusText}`);
+      }
+      
+      const contentType = response.headers.get('content-type');
+      
+      if (contentType && contentType.includes('application/json')) {
+        const jsonData = await response.json();
+        return this.convertJsonToCsvFormat(jsonData, options);
+      } else {
+        // Si no es JSON, intentar como CSV
+        const textData = await response.text();
+        return this.parseCsv(textData, options);
+      }
+      
+    } catch (error) {
+      if (error.isAuthError) {
+        throw error;
+      }
+      
+      console.error('Error cargando API protegida:', error);
+      throw new Error(`Error cargando API protegida: ${error.message}`);
+    }
   }
 
   /**
@@ -291,6 +386,9 @@ class XDiagramsDataLoader {
       let data;
       
       switch (sourceType) {
+        case 'protected-api':
+          data = await this.loadFromProtectedApi(source, options);
+          break;
         case 'google-sheets':
           data = await this.loadFromGoogleSheets(source, options);
           break;
@@ -323,7 +421,11 @@ class XDiagramsDataLoader {
       
       let errorMessage = error.message;
       
-      if (sourceType === 'google-sheets') {
+      if (error.isAuthError) {
+        errorMessage = `Error de autenticación: ${error.message}\n\nSugerencias:\n- Verifica que tu API Key esté configurada correctamente\n- Asegúrate de que la API Key tenga los permisos necesarios\n- Verifica que la URL sea correcta\n- Revisa la documentación de la API para más detalles`;
+      } else if (sourceType === 'protected-api') {
+        errorMessage = `Error cargando API protegida: ${error.message}\n\nSugerencias:\n- Verifica que tu API Key esté configurada\n- Asegúrate de que la URL sea correcta\n- Verifica los permisos de tu API Key\n- Revisa la documentación de la API`;
+      } else if (sourceType === 'google-sheets') {
         errorMessage = `Error cargando Google Sheets: ${error.message}\n\nSugerencias:\n- Verifica que la URL sea correcta\n- Asegúrate de que el archivo esté publicado públicamente\n- Verifica tu conexión a internet\n- Intenta usar un archivo CSV local como alternativa`;
       } else if (sourceType === 'csv-url') {
         errorMessage = `Error cargando archivo CSV: ${error.message}\n\nSugerencias:\n- Verifica que la URL sea correcta\n- Asegúrate de que el archivo sea accesible\n- Verifica tu conexión a internet`;

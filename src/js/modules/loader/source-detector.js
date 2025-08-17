@@ -3,6 +3,8 @@
  * Detecta el tipo de fuente de datos
  */
 
+import { apiKeysConfig } from './config/api-keys.js';
+
 class XDiagramsSourceDetector {
   constructor() {
     // Configuración para detección de fuentes
@@ -21,6 +23,10 @@ class XDiagramsSourceDetector {
       ],
       jsonUrl: [
         '.json'
+      ],
+      protectedApi: [
+        'sheet.best',
+        'sheetbest.com'
       ]
     };
   }
@@ -53,6 +59,11 @@ class XDiagramsSourceDetector {
    */
   detectStringSource(source) {
     const url = source.toLowerCase();
+    
+    // Detectar APIs protegidas primero (más específico)
+    if (this.sourcePatterns.protectedApi.some(pattern => url.includes(pattern))) {
+      return 'protected-api';
+    }
     
     // Detectar Google Sheets
     if (this.sourcePatterns.googleSheets.some(pattern => url.includes(pattern))) {
@@ -108,6 +119,28 @@ class XDiagramsSourceDetector {
     } catch {
       return false;
     }
+  }
+
+  /**
+   * Verifica si una URL requiere autenticación
+   * @param {string} url - La URL a verificar
+   * @returns {boolean} True si requiere autenticación
+   */
+  requiresAuthentication(url) {
+    return apiKeysConfig.requiresAuthentication(url);
+  }
+
+  /**
+   * Obtiene información de autenticación para una URL
+   * @param {string} url - La URL a analizar
+   * @returns {Object} Información de autenticación
+   */
+  getAuthInfo(url) {
+    return {
+      requiresAuth: this.requiresAuthentication(url),
+      hasApiKey: apiKeysConfig.getApiKey(url) !== null,
+      configuredPatterns: apiKeysConfig.getConfiguredPatterns()
+    };
   }
 
   /**

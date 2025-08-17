@@ -27,7 +27,8 @@ class XDiagramsSourceDetector {
       ],
       protectedApi: [
         'sheet.best',
-        'sheetbest.com'
+        'sheetbest.com',
+        'api.sheetbest.com'
       ]
     };
   }

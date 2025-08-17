@@ -34,13 +34,15 @@
   };
   
   console.log('📋 [SheetBest HTML] Configuración:', window.$xDiagrams);
+  console.log('🔍 [SheetBest HTML] URL a verificar:', window.$xDiagrams.url);
+  console.log('🔍 [SheetBest HTML] URL contiene api.sheetbest.com:', window.$xDiagrams.url.includes('api.sheetbest.com'));
 </script>
 
 <!-- Archivo bundle de producción -->
 <script>
   console.log('📦 [SheetBest] Intentando cargar xdiagrams.min.js...');
 </script>
-<script src="xdiagrams.min.js" onload="console.log('✅ [SheetBest] xdiagrams.min.js cargado exitosamente')" onerror="console.error('❌ [SheetBest] Error cargando xdiagrams.min.js')"></script>
+<script src="xdiagrams.min.js?v=2" onload="console.log('✅ [SheetBest] xdiagrams.min.js cargado exitosamente')" onerror="console.error('❌ [SheetBest] Error cargando xdiagrams.min.js')"></script>
 
 </body>
 </html>

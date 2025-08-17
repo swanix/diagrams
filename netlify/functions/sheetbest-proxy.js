@@ -1,6 +1,13 @@
 const fetch = require('node-fetch');
 
 exports.handler = async (event, context) => {
+  console.log('🚀 [Netlify Function] Function invoked');
+  console.log('📋 [Netlify Function] Event:', {
+    httpMethod: event.httpMethod,
+    path: event.path,
+    queryStringParameters: event.queryStringParameters
+  });
+  
   // Configurar CORS para Netlify Functions
   const headers = {
     'Access-Control-Allow-Origin': '*',
@@ -20,6 +27,13 @@ exports.handler = async (event, context) => {
   try {
     // Obtener API Key desde variables de entorno de Netlify
     const apiKey = process.env.VITE_SHEETBEST_API_KEY;
+    
+    console.log('🔍 [Netlify Function] Environment check:', {
+      hasApiKey: !!apiKey,
+      apiKeyLength: apiKey ? apiKey.length : 0,
+      apiKeyPreview: apiKey ? `${apiKey.substring(0, 10)}...` : 'undefined',
+      allEnvVars: Object.keys(process.env).filter(key => key.includes('SHEETBEST'))
+    });
     
     if (!apiKey) {
       console.error('❌ [Netlify Function] API Key no configurada');

@@ -165,6 +165,7 @@ class XDiagramsDataLoader {
       
       // Usar Netlify Function como proxy
       const proxyUrl = `/api/sheetbest-proxy?url=${encodeURIComponent(url)}`;
+      console.log(`🌐 [DataLoader] Proxy URL: ${proxyUrl}`);
       
       const response = await fetch(proxyUrl, {
         method: 'GET',
@@ -172,6 +173,9 @@ class XDiagramsDataLoader {
           'Content-Type': 'application/json'
         }
       });
+      
+      console.log(`📡 [DataLoader] Response status: ${response.status}`);
+      console.log(`📡 [DataLoader] Response headers:`, Object.fromEntries(response.headers.entries()));
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));

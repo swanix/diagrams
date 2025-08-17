@@ -3925,12 +3925,15 @@ class XDiagramsDataLoader {
     try {
       console.log(`🔐 [DataLoader] Cargando desde API protegida via Netlify Function: ${url}`);
       const proxyUrl = `/api/sheetbest-proxy?url=${encodeURIComponent(url)}`;
+      console.log(`🌐 [DataLoader] Proxy URL: ${proxyUrl}`);
       const response = await fetch(proxyUrl, {
         method: "GET",
         headers: {
           "Content-Type": "application/json"
         }
       });
+      console.log(`📡 [DataLoader] Response status: ${response.status}`);
+      console.log(`📡 [DataLoader] Response headers:`, Object.fromEntries(response.headers.entries()));
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
         throw new Error(errorData.error || `Error HTTP: ${response.status}`);

@@ -3,7 +3,8 @@
  * Detecta el tipo de fuente de datos
  */
 
-import { apiKeysConfig } from './config/api-keys.js';
+// Configuración de API Keys movida a Netlify Functions
+// No necesitamos importar api-keys.js aquí
 
 class XDiagramsSourceDetector {
   constructor() {
@@ -127,7 +128,9 @@ class XDiagramsSourceDetector {
    * @returns {boolean} True si requiere autenticación
    */
   requiresAuthentication(url) {
-    return apiKeysConfig.requiresAuthentication(url);
+    // Detectar APIs protegidas basándose en patrones de URL
+    const urlLower = url.toLowerCase();
+    return this.sourcePatterns.protectedApi.some(pattern => urlLower.includes(pattern));
   }
 
   /**
@@ -136,10 +139,11 @@ class XDiagramsSourceDetector {
    * @returns {Object} Información de autenticación
    */
   getAuthInfo(url) {
+    const requiresAuth = this.requiresAuthentication(url);
     return {
-      requiresAuth: this.requiresAuthentication(url),
-      hasApiKey: apiKeysConfig.getApiKey(url) !== null,
-      configuredPatterns: apiKeysConfig.getConfiguredPatterns()
+      requiresAuth: requiresAuth,
+      hasApiKey: requiresAuth, // Ahora manejado por Netlify Functions
+      configuredPatterns: this.sourcePatterns.protectedApi
     };
   }
 

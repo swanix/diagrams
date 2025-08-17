@@ -1,21 +1,6 @@
 /**
  * @swanix/diagrams v0.9.1
  */
-/**
- * @swanix/diagrams v0.9.1
- */
-/**
- * @swanix/diagrams v0.9.1
- */
-/**
- * @swanix/diagrams v0.9.1
- */
-/**
- * @swanix/diagrams v0.9.1
- */
-/**
- * @swanix/diagrams v0.9.1
- */
 var xhtml = "http://www.w3.org/1999/xhtml";
 const namespaces = {
   svg: "http://www.w3.org/2000/svg",
@@ -3547,99 +3532,6 @@ if (typeof window !== "undefined" && window.Papa) {
 if (typeof window !== "undefined") {
   window.Papa = PapaInstance;
 }
-class XDiagramsApiKeysConfig {
-  constructor() {
-    this.apiKeys = this.loadApiKeys();
-  }
-  /**
-   * Carga las API Keys desde variables de entorno
-   * @returns {Object} Configuración de API Keys
-   */
-  loadApiKeys() {
-    const windowConfig = typeof window !== "undefined" && window.__XDIAGRAMS_CONFIG__ ? window.__XDIAGRAMS_CONFIG__.API_KEYS : {};
-    console.log("🔐 [API Keys] Usando Netlify Functions para APIs protegidas");
-    return {
-      // SheetBest API Keys - Ahora manejadas por Netlify Functions
-      "sheet.best": "",
-      "sheetbest.com": "",
-      "api.sheetbest.com": "",
-      // Otras APIs
-      "api.example.com": windowConfig.EXAMPLE_API_KEY || "",
-      // Configuración por URL específica
-      "https://sheet.best/api/sheets/": "",
-      "https://api.sheetbest.com/sheets/": "",
-      // Configuración personalizada por dominio
-      ...windowConfig
-    };
-  }
-  /**
-   * Obtiene la API Key para una URL específica
-   * @param {string} url - La URL para la cual buscar la API Key
-   * @returns {string|null} La API Key o null si no se encuentra
-   */
-  getApiKey(url) {
-    if (!url)
-      return null;
-    try {
-      const urlObj = new URL(url);
-      const hostname = urlObj.hostname;
-      const fullUrl = urlObj.origin + urlObj.pathname;
-      for (const [pattern, apiKey] of Object.entries(this.apiKeys)) {
-        if (fullUrl.startsWith(pattern) && apiKey) {
-          return apiKey;
-        }
-      }
-      for (const [pattern, apiKey] of Object.entries(this.apiKeys)) {
-        if (hostname.includes(pattern) && apiKey) {
-          return apiKey;
-        }
-      }
-      return null;
-    } catch (error) {
-      console.warn("Error parsing URL for API key lookup:", error);
-      return null;
-    }
-  }
-  /**
-   * Verifica si una URL requiere autenticación
-   * @param {string} url - La URL a verificar
-   * @returns {boolean} True si requiere autenticación
-   */
-  requiresAuthentication(url) {
-    const apiKey = this.getApiKey(url);
-    return apiKey !== null && apiKey.trim() !== "";
-  }
-  /**
-   * Agrega una API Key temporalmente (no persiste)
-   * @param {string} pattern - Patrón de URL o hostname
-   * @param {string} apiKey - La API Key
-   */
-  addTemporaryApiKey(pattern, apiKey) {
-    this.apiKeys[pattern] = apiKey;
-  }
-  /**
-   * Remueve una API Key temporal
-   * @param {string} pattern - Patrón de URL o hostname
-   */
-  removeApiKey(pattern) {
-    delete this.apiKeys[pattern];
-  }
-  /**
-   * Obtiene todas las configuraciones de API Keys (sin mostrar las keys)
-   * @returns {Array} Lista de patrones configurados
-   */
-  getConfiguredPatterns() {
-    return Object.keys(this.apiKeys).filter((pattern) => this.apiKeys[pattern]);
-  }
-  /**
-   * Verifica si hay API Keys configuradas
-   * @returns {boolean} True si hay al menos una API Key configurada
-   */
-  hasConfiguredKeys() {
-    return this.getConfiguredPatterns().length > 0;
-  }
-}
-const apiKeysConfig = new XDiagramsApiKeysConfig();
 class XDiagramsSourceDetector {
   constructor() {
     this.sourcePatterns = {
@@ -3738,7 +3630,8 @@ class XDiagramsSourceDetector {
    * @returns {boolean} True si requiere autenticación
    */
   requiresAuthentication(url) {
-    return apiKeysConfig.requiresAuthentication(url);
+    const urlLower = url.toLowerCase();
+    return this.sourcePatterns.protectedApi.some((pattern) => urlLower.includes(pattern));
   }
   /**
    * Obtiene información de autenticación para una URL
@@ -3746,10 +3639,12 @@ class XDiagramsSourceDetector {
    * @returns {Object} Información de autenticación
    */
   getAuthInfo(url) {
+    const requiresAuth = this.requiresAuthentication(url);
     return {
-      requiresAuth: this.requiresAuthentication(url),
-      hasApiKey: apiKeysConfig.getApiKey(url) !== null,
-      configuredPatterns: apiKeysConfig.getConfiguredPatterns()
+      requiresAuth,
+      hasApiKey: requiresAuth,
+      // Ahora manejado por Netlify Functions
+      configuredPatterns: this.sourcePatterns.protectedApi
     };
   }
   /**
@@ -3809,31 +3704,7 @@ class XDiagramsAuthManager {
    * @returns {Object|null} Headers de autenticación o null si no requiere autenticación
    */
   getAuthHeaders(url) {
-    if (!url)
-      return null;
-    try {
-      const urlObj = new URL(url);
-      const hostname = urlObj.hostname;
-      const apiKey = apiKeysConfig.getApiKey(url);
-      if (!apiKey) {
-        return null;
-      }
-      let authMethod = "default";
-      for (const [pattern, method] of Object.entries(this.authMethods)) {
-        if (hostname.includes(pattern)) {
-          authMethod = method;
-          break;
-        }
-      }
-      if (typeof authMethod === "function") {
-        return authMethod.call(this, apiKey);
-      } else {
-        return this.authMethods.default.call(this, apiKey);
-      }
-    } catch (error) {
-      console.warn("Error creating auth headers:", error);
-      return null;
-    }
+    return null;
   }
   /**
    * Verifica si una URL requiere autenticación
@@ -3841,7 +3712,10 @@ class XDiagramsAuthManager {
    * @returns {boolean} True si requiere autenticación
    */
   requiresAuthentication(url) {
-    return apiKeysConfig.requiresAuthentication(url);
+    if (!url)
+      return false;
+    const urlLower = url.toLowerCase();
+    return urlLower.includes("sheet.best") || urlLower.includes("sheetbest.com");
   }
   /**
    * Agrega un método de autenticación personalizado
@@ -3858,12 +3732,12 @@ class XDiagramsAuthManager {
    */
   getAuthInfo(url) {
     const requiresAuth = this.requiresAuthentication(url);
-    const hasApiKey = apiKeysConfig.getApiKey(url) !== null;
     return {
       url,
       requiresAuthentication: requiresAuth,
-      hasApiKey,
-      configuredPatterns: apiKeysConfig.getConfiguredPatterns(),
+      hasApiKey: requiresAuth,
+      // Ahora manejado por Netlify Functions
+      configuredPatterns: ["sheet.best", "sheetbest.com"],
       authMethod: requiresAuth ? this.getAuthMethodName(url) : null
     };
   }

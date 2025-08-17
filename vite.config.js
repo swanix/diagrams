@@ -520,7 +520,8 @@ export default defineConfig(({ mode, command }) => {
     return {
       plugins: [generateLLMStaticPlugin(), copyBundleToDocs(), productionCheckPlugin()],
       define: {
-        'process.env': JSON.stringify(process.env)
+        // No inyectar variables de entorno en el cliente por seguridad
+        'process.env': JSON.stringify({})
       },
       server: {
         port: process.env.NETLIFY_DEV ? 8888 : 3000,
@@ -573,8 +574,8 @@ export default defineConfig(({ mode, command }) => {
   return {
     plugins: [generateLLMStaticPlugin(), copyBundleToDocs()],
     define: {
-      'process.env.SHEETBEST_API_KEY': JSON.stringify(process.env.SHEETBEST_API_KEY),
-      'process.env': JSON.stringify(process.env)
+      // No inyectar variables de entorno en el cliente por seguridad
+      'process.env': JSON.stringify({})
     },
     build: {
       lib: {

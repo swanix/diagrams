@@ -412,6 +412,17 @@ export default defineConfig(({ mode, command }) => {
             console.log(`✅ Copiado: ${fontSourcePath} → ${fontDistPath}`)
           }
           
+          // Copiar archivo CSV de datos a docs/demo para el demo de SheetBest
+          const csvSourcePath = join('src', 'data', 'companies-board.csv')
+          const csvDemoPath = join(demoDir, 'companies-board.csv')
+          if (existsSync(csvSourcePath)) {
+            copyFileSync(csvSourcePath, csvDemoPath)
+            console.log(`✅ Copiado: ${csvSourcePath} → ${csvDemoPath}`)
+          }
+          
+          // Verificar configuración de API Keys (ahora solo variables de entorno)
+          console.log(`✅ Configuración de API Keys: Variables de entorno del archivo .env`)
+          
           // El módulo de temas ahora está integrado en xdiagrams.js, no necesita copiarse por separado
           
           // Generar automáticamente el archivo de demo basado en src/index.html
@@ -509,11 +520,10 @@ export default defineConfig(({ mode, command }) => {
     return {
       plugins: [generateLLMStaticPlugin(), copyBundleToDocs(), productionCheckPlugin()],
       define: {
-        'process.env.SHEETBEST_API_KEY': JSON.stringify(process.env.SHEETBEST_API_KEY),
         'process.env': JSON.stringify(process.env)
       },
       server: {
-        port: 3000,
+        port: process.env.NETLIFY_DEV ? 8888 : 3000,
         open: '/',
         host: true,
         watch: {

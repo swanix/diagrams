@@ -160,52 +160,36 @@ class XDiagramsDataLoader {
    * @returns {Promise<Array>} Datos cargados
    */
   async loadFromProtectedApi(url, options = {}) {
-    // Verificar si requiere autenticación
-    if (!this.authManager.requiresAuthentication(url)) {
-      console.warn('API protegida detectada pero no se encontró API Key configurada');
-      throw new Error('Esta API requiere autenticación. Configura una API Key para continuar.');
-    }
-
-    const authHeaders = this.authManager.getAuthHeaders(url);
-    if (!authHeaders) {
-      throw new Error('No se pudo obtener headers de autenticación para esta URL');
-    }
-
-    const fetchOptions = {
-      headers: {
-        'Content-Type': 'application/json',
-        ...authHeaders
-      }
-    };
-
     try {
-      const response = await fetch(url, fetchOptions);
+      console.log(`🔐 [DataLoader] Cargando desde API protegida via Netlify Function: ${url}`);
       
-      if (!response.ok) {
-        // Manejar errores de autenticación específicamente
-        if (response.status === 401 || response.status === 403) {
-          throw this.authManager.handleAuthError(response, url);
+      // Usar Netlify Function como proxy
+      const proxyUrl = `/api/sheetbest-proxy?url=${encodeURIComponent(url)}`;
+      
+      const response = await fetch(proxyUrl, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json'
         }
-        throw new Error(`Error HTTP: ${response.status} - ${response.statusText}`);
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || `Error HTTP: ${response.status}`);
       }
+
+      const data = await response.json();
+      console.log(`✅ [DataLoader] Datos cargados exitosamente desde proxy`);
       
-      const contentType = response.headers.get('content-type');
-      
-      if (contentType && contentType.includes('application/json')) {
-        const jsonData = await response.json();
-        return this.convertJsonToCsvFormat(jsonData, options);
+      // Convertir a formato CSV si es necesario
+      if (Array.isArray(data)) {
+        return data;
       } else {
-        // Si no es JSON, intentar como CSV
-        const textData = await response.text();
-        return this.parseCsv(textData, options);
+        return this.convertJsonToCsvFormat(data, options);
       }
       
     } catch (error) {
-      if (error.isAuthError) {
-        throw error;
-      }
-      
-      console.error('Error cargando API protegida:', error);
+      console.error(`❌ [DataLoader] Error cargando desde API protegida:`, error);
       throw new Error(`Error cargando API protegida: ${error.message}`);
     }
   }

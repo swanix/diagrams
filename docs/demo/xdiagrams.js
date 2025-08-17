@@ -10,12 +10,6 @@
 /**
  * @swanix/diagrams v0.9.1
  */
-/**
- * @swanix/diagrams v0.9.1
- */
-/**
- * @swanix/diagrams v0.9.1
- */
 var xhtml = "http://www.w3.org/1999/xhtml";
 const namespaces = {
   svg: "http://www.w3.org/2000/svg",
@@ -3547,6 +3541,99 @@ if (typeof window !== "undefined" && window.Papa) {
 if (typeof window !== "undefined") {
   window.Papa = PapaInstance;
 }
+class XDiagramsApiKeysConfig {
+  constructor() {
+    this.apiKeys = this.loadApiKeys();
+  }
+  /**
+   * Carga las API Keys desde variables de entorno
+   * @returns {Object} Configuración de API Keys
+   */
+  loadApiKeys() {
+    const windowConfig = typeof window !== "undefined" && window.__XDIAGRAMS_CONFIG__ ? window.__XDIAGRAMS_CONFIG__.API_KEYS : {};
+    console.log("🔐 [API Keys] Usando Netlify Functions para APIs protegidas");
+    return {
+      // SheetBest API Keys - Ahora manejadas por Netlify Functions
+      "sheet.best": "",
+      "sheetbest.com": "",
+      "api.sheetbest.com": "",
+      // Otras APIs
+      "api.example.com": windowConfig.EXAMPLE_API_KEY || "",
+      // Configuración por URL específica
+      "https://sheet.best/api/sheets/": "",
+      "https://api.sheetbest.com/sheets/": "",
+      // Configuración personalizada por dominio
+      ...windowConfig
+    };
+  }
+  /**
+   * Obtiene la API Key para una URL específica
+   * @param {string} url - La URL para la cual buscar la API Key
+   * @returns {string|null} La API Key o null si no se encuentra
+   */
+  getApiKey(url) {
+    if (!url)
+      return null;
+    try {
+      const urlObj = new URL(url);
+      const hostname = urlObj.hostname;
+      const fullUrl = urlObj.origin + urlObj.pathname;
+      for (const [pattern, apiKey] of Object.entries(this.apiKeys)) {
+        if (fullUrl.startsWith(pattern) && apiKey) {
+          return apiKey;
+        }
+      }
+      for (const [pattern, apiKey] of Object.entries(this.apiKeys)) {
+        if (hostname.includes(pattern) && apiKey) {
+          return apiKey;
+        }
+      }
+      return null;
+    } catch (error) {
+      console.warn("Error parsing URL for API key lookup:", error);
+      return null;
+    }
+  }
+  /**
+   * Verifica si una URL requiere autenticación
+   * @param {string} url - La URL a verificar
+   * @returns {boolean} True si requiere autenticación
+   */
+  requiresAuthentication(url) {
+    const apiKey = this.getApiKey(url);
+    return apiKey !== null && apiKey.trim() !== "";
+  }
+  /**
+   * Agrega una API Key temporalmente (no persiste)
+   * @param {string} pattern - Patrón de URL o hostname
+   * @param {string} apiKey - La API Key
+   */
+  addTemporaryApiKey(pattern, apiKey) {
+    this.apiKeys[pattern] = apiKey;
+  }
+  /**
+   * Remueve una API Key temporal
+   * @param {string} pattern - Patrón de URL o hostname
+   */
+  removeApiKey(pattern) {
+    delete this.apiKeys[pattern];
+  }
+  /**
+   * Obtiene todas las configuraciones de API Keys (sin mostrar las keys)
+   * @returns {Array} Lista de patrones configurados
+   */
+  getConfiguredPatterns() {
+    return Object.keys(this.apiKeys).filter((pattern) => this.apiKeys[pattern]);
+  }
+  /**
+   * Verifica si hay API Keys configuradas
+   * @returns {boolean} True si hay al menos una API Key configurada
+   */
+  hasConfiguredKeys() {
+    return this.getConfiguredPatterns().length > 0;
+  }
+}
+const apiKeysConfig = new XDiagramsApiKeysConfig();
 class XDiagramsSourceDetector {
   constructor() {
     this.sourcePatterns = {
@@ -3564,6 +3651,10 @@ class XDiagramsSourceDetector {
       ],
       jsonUrl: [
         ".json"
+      ],
+      protectedApi: [
+        "sheet.best",
+        "sheetbest.com"
       ]
     };
   }
@@ -3591,6 +3682,9 @@ class XDiagramsSourceDetector {
    */
   detectStringSource(source) {
     const url = source.toLowerCase();
+    if (this.sourcePatterns.protectedApi.some((pattern) => url.includes(pattern))) {
+      return "protected-api";
+    }
     if (this.sourcePatterns.googleSheets.some((pattern) => url.includes(pattern))) {
       return "google-sheets";
     }
@@ -3633,6 +3727,26 @@ class XDiagramsSourceDetector {
     }
   }
   /**
+   * Verifica si una URL requiere autenticación
+   * @param {string} url - La URL a verificar
+   * @returns {boolean} True si requiere autenticación
+   */
+  requiresAuthentication(url) {
+    return apiKeysConfig.requiresAuthentication(url);
+  }
+  /**
+   * Obtiene información de autenticación para una URL
+   * @param {string} url - La URL a analizar
+   * @returns {Object} Información de autenticación
+   */
+  getAuthInfo(url) {
+    return {
+      requiresAuth: this.requiresAuthentication(url),
+      hasApiKey: apiKeysConfig.getApiKey(url) !== null,
+      configuredPatterns: apiKeysConfig.getConfiguredPatterns()
+    };
+  }
+  /**
    * Normaliza una URL de Google Sheets para CSV
    * @param {string} url - La URL original de Google Sheets
    * @returns {string} La URL convertida para CSV
@@ -3653,9 +3767,162 @@ class XDiagramsSourceDetector {
     return `${url}?output=csv`;
   }
 }
+class XDiagramsAuthManager {
+  constructor() {
+    this.authMethods = {
+      "sheet.best": this.createSheetBestAuth,
+      "sheetbest.com": this.createSheetBestAuth,
+      "default": this.createDefaultAuth
+    };
+  }
+  /**
+   * Crea headers de autenticación para SheetBest
+   * @param {string} apiKey - La API Key
+   * @returns {Object} Headers de autenticación
+   */
+  createSheetBestAuth(apiKey) {
+    return {
+      "X-Api-Key": apiKey,
+      "Content-Type": "application/json"
+    };
+  }
+  /**
+   * Crea headers de autenticación por defecto
+   * @param {string} apiKey - La API Key
+   * @returns {Object} Headers de autenticación
+   */
+  createDefaultAuth(apiKey) {
+    return {
+      "Authorization": `Bearer ${apiKey}`,
+      "Content-Type": "application/json"
+    };
+  }
+  /**
+   * Obtiene los headers de autenticación para una URL
+   * @param {string} url - La URL para la cual obtener headers
+   * @returns {Object|null} Headers de autenticación o null si no requiere autenticación
+   */
+  getAuthHeaders(url) {
+    if (!url)
+      return null;
+    try {
+      const urlObj = new URL(url);
+      const hostname = urlObj.hostname;
+      const apiKey = apiKeysConfig.getApiKey(url);
+      if (!apiKey) {
+        return null;
+      }
+      let authMethod = "default";
+      for (const [pattern, method] of Object.entries(this.authMethods)) {
+        if (hostname.includes(pattern)) {
+          authMethod = method;
+          break;
+        }
+      }
+      if (typeof authMethod === "function") {
+        return authMethod.call(this, apiKey);
+      } else {
+        return this.authMethods.default.call(this, apiKey);
+      }
+    } catch (error) {
+      console.warn("Error creating auth headers:", error);
+      return null;
+    }
+  }
+  /**
+   * Verifica si una URL requiere autenticación
+   * @param {string} url - La URL a verificar
+   * @returns {boolean} True si requiere autenticación
+   */
+  requiresAuthentication(url) {
+    return apiKeysConfig.requiresAuthentication(url);
+  }
+  /**
+   * Agrega un método de autenticación personalizado
+   * @param {string} pattern - Patrón de hostname
+   * @param {Function} authMethod - Función que crea headers de autenticación
+   */
+  addAuthMethod(pattern, authMethod) {
+    this.authMethods[pattern] = authMethod;
+  }
+  /**
+   * Obtiene información de autenticación para debugging
+   * @param {string} url - La URL a analizar
+   * @returns {Object} Información de autenticación
+   */
+  getAuthInfo(url) {
+    const requiresAuth = this.requiresAuthentication(url);
+    const hasApiKey = apiKeysConfig.getApiKey(url) !== null;
+    return {
+      url,
+      requiresAuthentication: requiresAuth,
+      hasApiKey,
+      configuredPatterns: apiKeysConfig.getConfiguredPatterns(),
+      authMethod: requiresAuth ? this.getAuthMethodName(url) : null
+    };
+  }
+  /**
+   * Obtiene el nombre del método de autenticación para una URL
+   * @param {string} url - La URL
+   * @returns {string} Nombre del método de autenticación
+   */
+  getAuthMethodName(url) {
+    try {
+      const urlObj = new URL(url);
+      const hostname = urlObj.hostname;
+      for (const [pattern, method] of Object.entries(this.authMethods)) {
+        if (hostname.includes(pattern)) {
+          return pattern;
+        }
+      }
+      return "default";
+    } catch (error) {
+      return "unknown";
+    }
+  }
+  /**
+   * Valida si una API Key es válida (formato básico)
+   * @param {string} apiKey - La API Key a validar
+   * @returns {boolean} True si el formato parece válido
+   */
+  validateApiKeyFormat(apiKey) {
+    if (!apiKey || typeof apiKey !== "string") {
+      return false;
+    }
+    return apiKey.trim().length >= 10;
+  }
+  /**
+   * Maneja errores de autenticación
+   * @param {Response} response - Respuesta del fetch
+   * @param {string} url - URL que causó el error
+   * @returns {Error} Error con información específica de autenticación
+   */
+  handleAuthError(response, url) {
+    let errorMessage = "Error de autenticación";
+    switch (response.status) {
+      case 401:
+        errorMessage = "API Key inválida o expirada. Verifica tu configuración.";
+        break;
+      case 403:
+        errorMessage = "Acceso denegado. Verifica que tu API Key tenga los permisos necesarios.";
+        break;
+      case 429:
+        errorMessage = "Límite de requests excedido. Intenta más tarde.";
+        break;
+      default:
+        errorMessage = `Error de autenticación: ${response.status} ${response.statusText}`;
+    }
+    const error = new Error(errorMessage);
+    error.status = response.status;
+    error.url = url;
+    error.isAuthError = true;
+    return error;
+  }
+}
 class XDiagramsDataLoader {
   constructor() {
     this.sourceDetector = new XDiagramsSourceDetector();
+    this.authManager = new XDiagramsAuthManager();
   }
   /**
    * Carga datos desde Google Sheets
@@ -3703,8 +3970,18 @@ class XDiagramsDataLoader {
    * @returns {Promise<Array>} Datos cargados
    */
   async loadFromRestApi(url, options = {}) {
-    const response = await fetch(url);
+    const authHeaders = this.authManager.getAuthHeaders(url);
+    const fetchOptions = {
+      headers: {
+        "Content-Type": "application/json",
+        ...authHeaders
+      }
+    };
+    const response = await fetch(url, fetchOptions);
     if (!response.ok) {
+      if (response.status === 401 || response.status === 403) {
+        throw this.authManager.handleAuthError(response, url);
+      }
       throw new Error(`Error HTTP: ${response.status}`);
     }
     const jsonData = await response.json();
@@ -3717,8 +3994,18 @@ class XDiagramsDataLoader {
    * @returns {Promise<Array>} Datos cargados
    */
   async loadFromCsvUrl(url, options = {}) {
-    const response = await fetch(url);
+    const authHeaders = this.authManager.getAuthHeaders(url);
+    const fetchOptions = {
+      headers: {
+        "Content-Type": "text/csv",
+        ...authHeaders
+      }
+    };
+    const response = await fetch(url, fetchOptions);
     if (!response.ok) {
+      if (response.status === 401 || response.status === 403) {
+        throw this.authManager.handleAuthError(response, url);
+      }
       throw new Error(`Error HTTP: ${response.status}`);
     }
     const csvText = await response.text();
@@ -3731,12 +4018,54 @@ class XDiagramsDataLoader {
    * @returns {Promise<Array>} Datos cargados
    */
   async loadFromJsonUrl(url, options = {}) {
-    const response = await fetch(url);
+    const authHeaders = this.authManager.getAuthHeaders(url);
+    const fetchOptions = {
+      headers: {
+        "Content-Type": "application/json",
+        ...authHeaders
+      }
+    };
+    const response = await fetch(url, fetchOptions);
     if (!response.ok) {
+      if (response.status === 401 || response.status === 403) {
+        throw this.authManager.handleAuthError(response, url);
+      }
       throw new Error(`Error HTTP: ${response.status}`);
     }
     const jsonData = await response.json();
     return this.convertJsonToCsvFormat(jsonData, options);
+  }
+  /**
+   * Carga datos desde una API protegida (como SheetBest)
+   * @param {string} url - URL de la API protegida
+   * @param {Object} options - Opciones de carga
+   * @returns {Promise<Array>} Datos cargados
+   */
+  async loadFromProtectedApi(url, options = {}) {
+    try {
+      console.log(`🔐 [DataLoader] Cargando desde API protegida via Netlify Function: ${url}`);
+      const proxyUrl = `/api/sheetbest-proxy?url=${encodeURIComponent(url)}`;
+      const response = await fetch(proxyUrl, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json"
+        }
+      });
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || `Error HTTP: ${response.status}`);
+      }
+      const data = await response.json();
+      console.log(`✅ [DataLoader] Datos cargados exitosamente desde proxy`);
+      if (Array.isArray(data)) {
+        return data;
+      } else {
+        return this.convertJsonToCsvFormat(data, options);
+      }
+    } catch (error) {
+      console.error(`❌ [DataLoader] Error cargando desde API protegida:`, error);
+      throw new Error(`Error cargando API protegida: ${error.message}`);
+    }
   }
   /**
    * Carga datos desde un objeto
@@ -3875,6 +4204,9 @@ class XDiagramsDataLoader {
       sourceType = this.sourceDetector.detectSourceType(source);
       let data;
       switch (sourceType) {
+        case "protected-api":
+          data = await this.loadFromProtectedApi(source, options);
+          break;
         case "google-sheets":
           data = await this.loadFromGoogleSheets(source, options);
           break;
@@ -3902,7 +4234,23 @@ class XDiagramsDataLoader {
     } catch (error) {
       console.error("Error cargando datos:", error);
       let errorMessage = error.message;
-      if (sourceType === "google-sheets") {
+      if (error.isAuthError) {
+        errorMessage = `Error de autenticación: ${error.message}
+
+Sugerencias:
+- Verifica que tu API Key esté configurada correctamente
+- Asegúrate de que la API Key tenga los permisos necesarios
+- Verifica que la URL sea correcta
+- Revisa la documentación de la API para más detalles`;
+      } else if (sourceType === "protected-api") {
+        errorMessage = `Error cargando API protegida: ${error.message}
+
+Sugerencias:
+- Verifica que tu API Key esté configurada
+- Asegúrate de que la URL sea correcta
+- Verifica los permisos de tu API Key
+- Revisa la documentación de la API`;
+      } else if (sourceType === "google-sheets") {
         errorMessage = `Error cargando Google Sheets: ${error.message}
 
 Sugerencias:
@@ -8803,6 +9151,30 @@ if (typeof window !== "undefined") {
   }
 }
 if (typeof window !== "undefined") {
+  let initializeDiagram = function() {
+    const config2 = window.$xDiagrams || {};
+    if (Object.keys(config2).length > 0) {
+      try {
+        const diagram = new XDiagrams(config2);
+        diagram.initDiagram();
+        window.$xDiagrams = {
+          ...config2,
+          instance: diagram,
+          navigation: diagram.navigation,
+          core: diagram,
+          uiManager: diagram.uiManager,
+          themeManager,
+          // Métodos para acceso a datos LLM
+          getLLMData: () => diagram.core.llmDataGenerator.getStoredData(),
+          exportLLMFile: () => diagram.core.llmDataGenerator.exportLLMFile(),
+          clearLLMData: () => diagram.core.llmDataGenerator.clearStoredData()
+        };
+        diagram.navigation.setupResizeHandler();
+      } catch (error) {
+        console.error("❌ [XDiagrams] Error al inicializar diagrama:", error);
+      }
+    }
+  };
   window.XDiagramsLoader = XDiagramsLoader;
   window.XDiagramsCache = XDiagramsCache;
   window.XDiagramsThumbs = XDiagramsThumbs;
@@ -8817,30 +9189,11 @@ if (typeof window !== "undefined") {
   };
   const themeManager = initThemes(themeOptions);
   window.ThemeManager = themeManager;
-  document.addEventListener("DOMContentLoaded", () => {
-    console.log("🔥 Hot reload funcionando! - XDiagrams cargado con sistema de temas");
-    console.log("🔍 Verificando módulos cargados...");
-    const config2 = window.$xDiagrams || {};
-    if (Object.keys(config2).length > 0) {
-      console.log("🔍 Creando instancia de XDiagrams...");
-      const diagram = new XDiagrams(config2);
-      console.log("🔍 Instancia creada, inicializando diagrama...");
-      diagram.initDiagram();
-      window.$xDiagrams = {
-        ...config2,
-        instance: diagram,
-        navigation: diagram.navigation,
-        core: diagram,
-        uiManager: diagram.uiManager,
-        themeManager,
-        // Métodos para acceso a datos LLM
-        getLLMData: () => diagram.core.llmDataGenerator.getStoredData(),
-        exportLLMFile: () => diagram.core.llmDataGenerator.exportLLMFile(),
-        clearLLMData: () => diagram.core.llmDataGenerator.clearStoredData()
-      };
-      diagram.navigation.setupResizeHandler();
-    }
-  });
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", initializeDiagram);
+  } else {
+    initializeDiagram();
+  }
 }
 export {
   ThemeManager,

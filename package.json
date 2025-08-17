@@ -30,7 +30,7 @@
     "preview:docs": "VITE_SERVER=docs vite preview",
     "build:analyze": "vite build --mode analyze",
     "serve:prod": "npm run build && vite preview --port 8001",
-    "serve:demo": "npm run build && vite preview --port 8002 --outDir docs/demo",
+    "serve:demo": "npm run build && vite serve --config vite.demo.config.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {

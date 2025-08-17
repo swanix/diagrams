@@ -27,7 +27,7 @@ XDiagrams v2.0.0 introduce **APIs Protegidas** como funcionalidad principal, imp
 ### Antes (v1.x) - ❌ Inseguro
 ```javascript
 // API Key expuesta en el frontend
-const apiKey = process.env.VITE_SHEETBEST_API_KEY;
+const apiKey = process.env.SHEETBEST_API_KEY;
 const response = await fetch(url, {
   headers: { 'X-Api-Key': apiKey }
 });
@@ -68,7 +68,7 @@ const protectedPatterns = [
 ```javascript
 // netlify/functions/sheetbest-proxy.js
 exports.handler = async (event, context) => {
-  const apiKey = process.env.VITE_SHEETBEST_API_KEY; // Solo en servidor
+  const apiKey = process.env.SHEETBEST_API_KEY; // Solo en servidor
   // Manejo seguro de la API externa
 };
 ```

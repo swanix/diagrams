@@ -83,7 +83,7 @@ npm install xdiagrams
 
 ```bash
 # En Netlify Dashboard > Environment Variables
-VITE_SHEETBEST_API_KEY = tu_api_key_real_aqui
+SHEETBEST_API_KEY = tu_api_key_real_aqui
 ```
 
 ## ⚙️ Configuración Avanzada

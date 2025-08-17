@@ -78,7 +78,7 @@ exports.handler = async (event, context) => {
 
   try {
     // Obtener API Key desde variables de entorno de Netlify
-    const apiKey = process.env.VITE_SHEETBEST_API_KEY;
+    const apiKey = process.env.SHEETBEST_API_KEY;
     
     if (!apiKey) {
       return {
@@ -143,7 +143,7 @@ exports.handler = async (event, context) => {
 #### Variables de Entorno en Netlify
 ```bash
 # En el dashboard de Netlify > Site settings > Environment variables
-VITE_SHEETBEST_API_KEY = tu_api_key_real_aqui
+SHEETBEST_API_KEY = tu_api_key_real_aqui
 ```
 
 ## 📝 Uso para Desarrolladores
@@ -174,13 +174,13 @@ touch netlify/functions/sheetbest-proxy.js
 #### Desarrollo Local
 ```bash
 # .env.local
-VITE_SHEETBEST_API_KEY=tu_api_key_aqui
+SHEETBEST_API_KEY=tu_api_key_aqui
 ```
 
 #### Producción (Netlify)
 ```bash
 # En Netlify Dashboard
-VITE_SHEETBEST_API_KEY=tu_api_key_real_aqui
+SHEETBEST_API_KEY=tu_api_key_real_aqui
 ```
 
 ### 3. Uso en el Frontend
@@ -301,7 +301,7 @@ Para agregar nuevas APIs protegidas:
 netlify env:list
 
 # Verificar en función
-console.log('API Key presente:', !!process.env.VITE_SHEETBEST_API_KEY);
+console.log('API Key presente:', !!process.env.SHEETBEST_API_KEY);
 ```
 
 ### Error: "You do not have permission"

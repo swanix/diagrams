@@ -42,7 +42,7 @@ export function getApiKeys() {
 **Opción B: Variables de entorno**
 ```bash
 # 1. Crear archivo .env en la raíz del proyecto
-echo "VITE_SHEETBEST_API_KEY=tu-api-key-real-aqui" > .env
+echo "SHEETBEST_API_KEY=tu-api-key-real-aqui" > .env
 
 # 2. Reiniciar el servidor de desarrollo
 npm run dev

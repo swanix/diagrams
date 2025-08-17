@@ -56,7 +56,7 @@ echo "src/js/config/api-keys.js" >> .gitignore
 
 ```bash
 # Crear archivo .env en la raíz del proyecto
-echo "VITE_SHEETBEST_API_KEY=tu-api-key-de-sheetbest-aqui" > .env
+echo "SHEETBEST_API_KEY=tu-api-key-de-sheetbest-aqui" > .env
 ```
 
 #### 2. Reiniciar servidor
@@ -71,7 +71,7 @@ El sistema carga las API Keys en el siguiente orden:
 
 1. **Archivo de configuración externo** (`src/js/config/api-keys.js`)
 2. **Configuración de window** (`window.__XDIAGRAMS_CONFIG__`)
-3. **Variables de entorno** (`VITE_SHEETBEST_API_KEY`)
+3. **Variables de entorno** (`SHEETBEST_API_KEY`)
 
 ## 📋 Checklist de Configuración
 

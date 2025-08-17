@@ -28,7 +28,7 @@ Edita el archivo `.env` en la raíz del proyecto:
 
 ```bash
 # API Keys para XDiagrams
-VITE_SHEETBEST_API_KEY="tu_api_key_real_aqui"
+SHEETBEST_API_KEY="tu_api_key_real_aqui"
 ```
 
 ### 3. Verificar Configuración

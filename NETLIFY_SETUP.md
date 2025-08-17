@@ -20,7 +20,7 @@ netlify.toml              # Configuración de Netlify
 En tu dashboard de Netlify, ve a **Site settings > Environment variables** y agrega:
 
 ```
-VITE_SHEETBEST_API_KEY = tu_api_key_de_sheetbest
+SHEETBEST_API_KEY = tu_api_key_de_sheetbest
 ```
 
 ### 2. Despliegue
@@ -40,7 +40,7 @@ fetch('/api/sheetbest-proxy?url=https://api.sheetbest.com/...')
 ### Backend (Seguro)
 ```javascript
 // La Netlify Function usa la API Key desde variables de entorno
-const apiKey = process.env.VITE_SHEETBEST_API_KEY;
+const apiKey = process.env.SHEETBEST_API_KEY;
 fetch(url, { headers: { 'X-Api-Key': apiKey } })
 ```
 
@@ -71,7 +71,7 @@ Para probar localmente:
 ## 🛠 **Troubleshooting**
 
 ### Error: "API Key no configurada"
-- Verifica que `VITE_SHEETBEST_API_KEY` esté configurada en Netlify
+- Verifica que `SHEETBEST_API_KEY` esté configurada en Netlify
 - Revisa los logs de la función en Netlify
 
 ### Error: "CORS"

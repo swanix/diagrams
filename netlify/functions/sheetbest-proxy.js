@@ -26,7 +26,7 @@ exports.handler = async (event, context) => {
 
   try {
     // Obtener API Key desde variables de entorno de Netlify
-    const apiKey = process.env.VITE_SHEETBEST_API_KEY;
+    const apiKey = process.env.SHEETBEST_API_KEY;
     
     console.log('🔍 [Netlify Function] Environment check:', {
       hasApiKey: !!apiKey,
@@ -42,7 +42,7 @@ exports.handler = async (event, context) => {
         headers,
         body: JSON.stringify({
           error: 'API Key no configurada en el servidor',
-          suggestion: 'Verifica que VITE_SHEETBEST_API_KEY esté configurada en Netlify'
+                       suggestion: 'Verifica que SHEETBEST_API_KEY esté configurada en Netlify'
         })
       };
     }

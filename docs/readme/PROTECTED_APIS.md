@@ -265,7 +265,7 @@ netlify env:list
 ### Antes (Inseguro)
 ```javascript
 // ❌ API Key expuesta en el frontend
-const apiKey = process.env.VITE_SHEETBEST_API_KEY;
+const apiKey = process.env.SHEETBEST_API_KEY;
 const response = await fetch(url, {
   headers: { 'X-Api-Key': apiKey }
 });

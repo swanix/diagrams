@@ -21,6 +21,10 @@ class XDiagramsSourceDetector {
       ],
       jsonUrl: [
         '.json'
+      ],
+      protectedApi: [
+        'api.sheetbest.com',
+        'sheetbest.com'
       ]
     };
   }
@@ -53,6 +57,11 @@ class XDiagramsSourceDetector {
    */
   detectStringSource(source) {
     const url = source.toLowerCase();
+    
+    // Detectar APIs protegidas (más específico, debe ir primero)
+    if (this.sourcePatterns.protectedApi.some(pattern => url.includes(pattern))) {
+      return 'protected-api';
+    }
     
     // Detectar Google Sheets
     if (this.sourcePatterns.googleSheets.some(pattern => url.includes(pattern))) {

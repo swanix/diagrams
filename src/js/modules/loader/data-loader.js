@@ -4,10 +4,12 @@
  */
 
 import { XDiagramsSourceDetector } from './source-detector.js';
+import { XDiagramsAuthManager } from './auth-manager.js';
 
 class XDiagramsDataLoader {
   constructor() {
     this.sourceDetector = new XDiagramsSourceDetector();
+    this.authManager = new XDiagramsAuthManager();
   }
 
   /**
@@ -71,6 +73,12 @@ class XDiagramsDataLoader {
    * @returns {Promise<Array>} Datos cargados
    */
   async loadFromRestApi(url, options = {}) {
+    // Verificar si es una API protegida
+    if (this.authManager.requiresAuthentication(url)) {
+      return await this.authManager.loadData(url, options);
+    }
+    
+    // API pública - usar fetch directo
     const response = await fetch(url);
     
     if (!response.ok) {
@@ -291,6 +299,9 @@ class XDiagramsDataLoader {
       let data;
       
       switch (sourceType) {
+        case 'protected-api':
+          data = await this.authManager.loadData(source, options);
+          break;
         case 'google-sheets':
           data = await this.loadFromGoogleSheets(source, options);
           break;

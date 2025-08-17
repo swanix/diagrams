@@ -5,11 +5,13 @@
 
 import { XDiagramsDataLoader } from './data-loader.js';
 import { XDiagramsCache } from './cache.js';
+import { XDiagramsAuthManager } from './auth-manager.js';
 
 class XDiagramsLoader {
   constructor() {
     this.dataLoader = new XDiagramsDataLoader();
     this.cache = new XDiagramsCache();
+    this.authManager = new XDiagramsAuthManager();
   }
 
   /**
@@ -73,6 +75,10 @@ class XDiagramsLoader {
 
   get cacheInstance() {
     return this.cache;
+  }
+
+  get authManagerInstance() {
+    return this.authManager;
   }
 }
 

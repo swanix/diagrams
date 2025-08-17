@@ -31,6 +31,8 @@
     "build:analyze": "vite build --mode analyze",
     "serve:prod": "npm run build && vite preview --port 8001",
     "serve:demo": "npm run build && vite preview --port 8002 --outDir docs/demo",
+    "api-server": "node dev-server.js",
+    "dev:full": "concurrently \"npm run dev\" \"npm run api-server\"",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
@@ -46,6 +48,7 @@
   },
   "homepage": "https://github.com/swanix/diagrams#readme",
   "devDependencies": {
+    "concurrently": "^8.2.2",
     "cssnano": "7.1.0",
     "terser": "5.43.1",
     "vite": "5.0.0"

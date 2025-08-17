@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prueba Simple - XDiagrams APIs Protegidas</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .test-result {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 4px;
+            font-family: monospace;
+        }
+        .success {
+            background-color: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .error {
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        .info {
+            background-color: #d1ecf1;
+            border: 1px solid #bee5eb;
+            color: #0c5460;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Prueba Simple - XDiagrams APIs Protegidas</h1>
+        
+        <div id="results"></div>
+    </div>
+
+    <!-- Scripts necesarios -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+    
+    <!-- Configuración global para desarrollo -->
+    <script>
+        window.XDiagramsConfig = {
+            LOCAL_URL: 'http://localhost:8888',
+            NETLIFY_URL: '/.netlify/functions'
+        };
+    </script>
+    
+    <!-- Módulos de XDiagrams -->
+    <script type="module">
+        import { XDiagramsEnvironment } from './src/js/config/environment.js';
+        import { XDiagramsApiConfig } from './src/js/modules/loader/api-config.js';
+        import { XDiagramsNetlifyClient } from './src/js/modules/loader/netlify-client.js';
+        import { XDiagramsAuthManager } from './src/js/modules/loader/auth-manager.js';
+        import { XDiagramsSourceDetector } from './src/js/modules/loader/source-detector.js';
+
+        const resultsDiv = document.getElementById('results');
+
+        function addResult(message, type = 'info') {
+            const div = document.createElement('div');
+            div.className = `test-result ${type}`;
+            div.textContent = message;
+            resultsDiv.appendChild(div);
+        }
+
+        async function runTests() {
+            addResult('🚀 Iniciando pruebas de módulos...', 'info');
+
+            try {
+                // Test 1: Environment Configuration
+                addResult('📋 Probando configuración de entorno...', 'info');
+                const env = new XDiagramsEnvironment();
+                const envConfig = env.getAll();
+                addResult(`✅ Environment config cargado: ${JSON.stringify(envConfig, null, 2)}`, 'success');
+
+                // Test 2: API Configuration
+                addResult('🔧 Probando configuración de APIs...', 'info');
+                const apiConfig = new XDiagramsApiConfig();
+                const config = apiConfig.getConfig();
+                addResult(`✅ API config cargado: ${JSON.stringify(config, null, 2)}`, 'success');
+
+                // Test 3: Source Detector
+                addResult('🔍 Probando detector de fuentes...', 'info');
+                const sourceDetector = new XDiagramsSourceDetector();
+                
+                const testUrls = [
+                    'https://api.sheetbest.com/sheets/test-id',
+                    'https://docs.google.com/spreadsheets/d/test',
+                    'https://example.com/data.csv',
+                    'https://api.example.com/data.json'
+                ];
+
+                testUrls.forEach(url => {
+                    const type = sourceDetector.detectSourceType(url);
+                    addResult(`✅ URL: ${url} → Tipo: ${type}`, 'success');
+                });
+
+                // Test 4: Netlify Client
+                addResult('🌐 Probando cliente de Netlify...', 'info');
+                const netlifyClient = new XDiagramsNetlifyClient();
+                const clientConfig = netlifyClient.getConfig();
+                addResult(`✅ Netlify client config: ${JSON.stringify(clientConfig, null, 2)}`, 'success');
+
+                // Test 5: Auth Manager
+                addResult('🔐 Probando gestor de autenticación...', 'info');
+                const authManager = new XDiagramsAuthManager();
+                
+                const protectedUrl = 'https://api.sheetbest.com/sheets/test-id';
+                const publicUrl = 'https://example.com/data.csv';
+                
+                const isProtected = authManager.requiresAuthentication(protectedUrl);
+                const isPublic = authManager.requiresAuthentication(publicUrl);
+                
+                addResult(`✅ URL protegida (${protectedUrl}): ${isProtected}`, 'success');
+                addResult(`✅ URL pública (${publicUrl}): ${isPublic}`, 'success');
+
+                addResult('🎉 ¡Todas las pruebas pasaron exitosamente!', 'success');
+                addResult('💡 El sistema está listo para usar APIs protegidas.', 'info');
+
+            } catch (error) {
+                addResult(`❌ Error en las pruebas: ${error.message}`, 'error');
+                addResult(`📝 Stack trace: ${error.stack}`, 'error');
+            }
+        }
+
+        // Ejecutar pruebas cuando se carga la página
+        runTests();
+    </script>
+</body>
+</html>

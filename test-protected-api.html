@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prueba de APIs Protegidas - XDiagrams</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input[type="url"] {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 4px;
+            white-space: pre-wrap;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        .success {
+            background-color: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .error {
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        .info {
+            background-color: #d1ecf1;
+            border: 1px solid #bee5eb;
+            color: #0c5460;
+        }
+        .loading {
+            background-color: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+        }
+        .config-info {
+            background-color: #e2e3e5;
+            border: 1px solid #d6d8db;
+            color: #383d41;
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Prueba de APIs Protegidas - XDiagrams</h1>
+        
+        <div class="config-info">
+            <h3>Información de Configuración</h3>
+            <div id="config-info">Cargando...</div>
+        </div>
+
+        <form id="test-form">
+            <div class="form-group">
+                <label for="url-input">URL de la API:</label>
+                <input type="url" id="url-input" placeholder="https://api.sheetbest.com/sheets/tu-sheet-id" required>
+            </div>
+            
+            <button type="submit" id="test-button">Probar Carga de Datos</button>
+        </form>
+
+        <div id="result" class="result" style="display: none;"></div>
+    </div>
+
+    <!-- Scripts necesarios -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+    
+    <!-- Configuración global para desarrollo -->
+    <script>
+        // Configuración global para variables de entorno en desarrollo
+        window.XDiagramsConfig = {
+            LOCAL_URL: 'http://localhost:8888',
+            NETLIFY_URL: '/.netlify/functions'
+        };
+    </script>
+    
+    <!-- Módulos de XDiagrams -->
+    <script type="module">
+        import { XDiagramsLoader } from './src/js/modules/loader/index.js';
+        import { XDiagramsApiConfig } from './src/js/modules/loader/api-config.js';
+
+        // Elementos del DOM
+        const form = document.getElementById('test-form');
+        const urlInput = document.getElementById('url-input');
+        const testButton = document.getElementById('test-button');
+        const resultDiv = document.getElementById('result');
+        const configInfo = document.getElementById('config-info');
+
+        // Inicializar el loader
+        const loader = new XDiagramsLoader();
+        const apiConfig = new XDiagramsApiConfig();
+
+        // Mostrar información de configuración
+        function showConfigInfo() {
+            const config = apiConfig.getConfig();
+            configInfo.innerHTML = `
+                <strong>Entorno:</strong> ${config.environment}<br>
+                <strong>URL de Función:</strong> ${config.functionUrl}<br>
+                <strong>Endpoints Protegidos:</strong> ${config.protectedEndpoints.join(', ')}
+            `;
+        }
+
+        // Mostrar resultado
+        function showResult(message, type = 'info') {
+            resultDiv.className = `result ${type}`;
+            resultDiv.textContent = message;
+            resultDiv.style.display = 'block';
+        }
+
+        // Manejar el envío del formulario
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const url = urlInput.value.trim();
+            if (!url) {
+                showResult('Por favor, ingresa una URL válida', 'error');
+                return;
+            }
+
+            // Verificar si la URL requiere autenticación
+            const requiresAuth = apiConfig.requiresAuthentication(url);
+            
+            testButton.disabled = true;
+            testButton.textContent = 'Cargando...';
+            
+            showResult(`Iniciando carga de datos...\nURL: ${url}\nRequiere autenticación: ${requiresAuth ? 'Sí' : 'No'}`, 'loading');
+
+            try {
+                // Cargar datos
+                await new Promise((resolve, reject) => {
+                    loader.loadData(url, (data, error) => {
+                        if (error) {
+                            reject(error);
+                        } else {
+                            resolve(data);
+                        }
+                    });
+                });
+
+                // Si llegamos aquí, la carga fue exitosa
+                showResult(`✅ Datos cargados exitosamente!\n\nURL: ${url}\nTipo: ${requiresAuth ? 'API Protegida' : 'API Pública'}\n\nLos datos están disponibles para usar en el diagrama.`, 'success');
+
+            } catch (error) {
+                console.error('Error en la carga:', error);
+                showResult(`❌ Error cargando datos:\n\n${error.message}\n\nDetalles técnicos:\n${error.stack || 'No disponible'}`, 'error');
+            } finally {
+                testButton.disabled = false;
+                testButton.textContent = 'Probar Carga de Datos';
+            }
+        });
+
+        // Mostrar configuración al cargar la página
+        showConfigInfo();
+
+        // Ejemplo de URL de SheetBest para pruebas
+        urlInput.value = 'https://api.sheetbest.com/sheets/ejemplo-sheet-id';
+    </script>
+</body>
+</html>

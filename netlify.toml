@@ -1,0 +1,23 @@
+[build]
+  # Directorio de funciones
+  functions = "netlify/functions"
+  
+  # Directorio de publicación
+  publish = "src"
+
+[functions]
+  # Configuración para las funciones
+  node_bundler = "esbuild"
+
+[[headers]]
+  # Headers para las funciones
+  for = "/.netlify/functions/*"
+  [headers.values]
+    Access-Control-Allow-Origin = "*"
+    Access-Control-Allow-Headers = "Content-Type"
+    Access-Control-Allow-Methods = "POST, OPTIONS"
+
+[dev]
+  # Configuración para desarrollo local
+  port = 8888
+  targetPort = 3000

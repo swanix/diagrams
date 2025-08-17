@@ -38,8 +38,13 @@ class XDiagramsSourceDetector {
    * @returns {string} El tipo de fuente detectado
    */
   detectSourceType(source) {
+    console.log(`🔍 [SourceDetector] detectSourceType llamado con:`, source);
+    console.log(`🔍 [SourceDetector] Tipo de source:`, typeof source);
+    
     if (typeof source === 'string') {
-      return this.detectStringSource(source);
+      const result = this.detectStringSource(source);
+      console.log(`🔍 [SourceDetector] Resultado para string: ${result}`);
+      return result;
     }
     
     if (Array.isArray(source)) {
@@ -61,8 +66,13 @@ class XDiagramsSourceDetector {
   detectStringSource(source) {
     const url = source.toLowerCase();
     
+    console.log(`🔍 [SourceDetector] Analizando URL: ${source}`);
+    console.log(`🔍 [SourceDetector] URL en minúsculas: ${url}`);
+    console.log(`🔍 [SourceDetector] Patrones protegidos:`, this.sourcePatterns.protectedApi);
+    
     // Detectar APIs protegidas primero (más específico)
     if (this.sourcePatterns.protectedApi.some(pattern => url.includes(pattern))) {
+      console.log(`✅ [SourceDetector] Detectada como API protegida`);
       return 'protected-api';
     }
     

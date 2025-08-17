@@ -39,36 +39,45 @@ if (typeof window !== 'undefined') {
   const themeManager = initThemes(themeOptions);
   window.ThemeManager = themeManager;
 
-  // Inicializar diagrama cuando el DOM esté listo
-  document.addEventListener('DOMContentLoaded', () => {
-    console.log('🔥 Hot reload funcionando! - XDiagrams cargado con sistema de temas');
-    console.log('🔍 Verificando módulos cargados...');
+    // Función para inicializar el diagrama
+  function initializeDiagram() {
     const config = window.$xDiagrams || {};
     
     if (Object.keys(config).length > 0) {
-      console.log('🔍 Creando instancia de XDiagrams...');
-      const diagram = new XDiagrams(config);
-      console.log('🔍 Instancia creada, inicializando diagrama...');
-      diagram.initDiagram();
-      
-      // Asignar la instancia del diagrama al objeto global para acceso desde otros módulos
-      window.$xDiagrams = {
-        ...config,
-        instance: diagram,
-        navigation: diagram.navigation,
-        core: diagram,
-        uiManager: diagram.uiManager,
-        themeManager: themeManager,
-        // Métodos para acceso a datos LLM
-        getLLMData: () => diagram.core.llmDataGenerator.getStoredData(),
-        exportLLMFile: () => diagram.core.llmDataGenerator.exportLLMFile(),
-        clearLLMData: () => diagram.core.llmDataGenerator.clearStoredData()
-      };
-      
-      // Configurar listener de resize con debounce
-      diagram.navigation.setupResizeHandler();
+      try {
+        const diagram = new XDiagrams(config);
+        diagram.initDiagram();
+        
+        // Asignar la instancia del diagrama al objeto global para acceso desde otros módulos
+        window.$xDiagrams = {
+          ...config,
+          instance: diagram,
+          navigation: diagram.navigation,
+          core: diagram,
+          uiManager: diagram.uiManager,
+          themeManager: themeManager,
+          // Métodos para acceso a datos LLM
+          getLLMData: () => diagram.core.llmDataGenerator.getStoredData(),
+          exportLLMFile: () => diagram.core.llmDataGenerator.exportLLMFile(),
+          clearLLMData: () => diagram.core.llmDataGenerator.clearStoredData()
+        };
+        
+        // Configurar listener de resize con debounce
+        diagram.navigation.setupResizeHandler();
+      } catch (error) {
+        console.error('❌ [XDiagrams] Error al inicializar diagrama:', error);
+      }
     }
-  });
+  }
+
+  // Inicializar diagrama cuando el DOM esté listo
+  if (document.readyState === 'loading') {
+    // El DOM aún no está cargado, esperar el evento
+    document.addEventListener('DOMContentLoaded', initializeDiagram);
+  } else {
+    // El DOM ya está cargado, inicializar inmediatamente
+    initializeDiagram();
+  }
 }
 
 // Exportar módulos para uso ES6

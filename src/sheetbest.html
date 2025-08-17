@@ -11,8 +11,8 @@
   <meta name="llm-context" content="data/context.md">
   <meta name="ai-context" content="data/context.md">
   <link rel="context" href="data/context.md" type="text/markdown">
-  <meta name="description" content="Diagrama interactivo cargado desde SheetBest con autenticación">
-  <title>XDiagrams - SheetBest Test</title>
+  <meta name="description" content="Diagrama interactivo cargado desde SheetBest usando variables de entorno">
+  <title>XDiagrams - SheetBest (Variables de Entorno)</title>
   <link href="styles/xdiagrams.css" rel="stylesheet" />
 </head>
 <body>
@@ -20,28 +20,17 @@
 <div id="app"></div>
 
 <script>
-  // Configuración de API Keys para SheetBest
-  // IMPORTANTE: Configura tu API Key en el archivo .env o en window.__XDIAGRAMS_CONFIG__
-  window.__XDIAGRAMS_CONFIG__ = {
-    API_KEYS: {
-      // Configura aquí tu API Key real o usa variables de entorno
-      'sheet.best': '', // Reemplaza con tu API Key real
-      'sheetbest.com': '', // Reemplaza con tu API Key real
-      'api.sheetbest.com': '' // Reemplaza con tu API Key real
-    }
-  };
-
-  // Configuración de XDiagrams para cargar desde SheetBest
   window.$xDiagrams = {
-    url: "https://api.sheetbest.com/sheets/28f15681-b2ab-47a0-bbcb-205d142d9ef7", // Tu URL de SheetBest
-    title: "Diagrama desde SheetBest",
-    clustersPerRow: "4 5 5 5", // Ajusta según tu estructura de datos
+    url: "https://api.sheetbest.com/sheets/28f15681-b2ab-47a0-bbcb-205d142d9ef7/tabs/All", // Tu URL de SheetBest
+    title: "Diagrama desde SheetBest (Variables de Entorno)",
+    clustersPerRow: "6 3 7 6 3", // Ajusta según tu estructura de datos
     showThemeToggle: true,
     spacing: 80,
     verticalSpacing: 170,
     nodeWidth: 100,
     nodeHeight: 125
   };
+  
 </script>
 
 <!-- Módulo principal ES6 (archivo principal de desarrollo) -->

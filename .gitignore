@@ -52,4 +52,4 @@ Thumbs.db
 # Dependency lockfiles
 yarn.lock
 package-lock.json
-pnpm-lock.yaml
+pnpm-lock.yamlsrc/js/config/api-keys.js

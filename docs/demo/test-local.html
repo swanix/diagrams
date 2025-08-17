@@ -37,7 +37,10 @@
 </script>
 
 <!-- Archivo bundle de producción -->
-<script src="xdiagrams.min.js"></script>
+<script>
+  console.log('📦 [Test Local] Intentando cargar xdiagrams.min.js...');
+</script>
+<script src="xdiagrams.min.js" onload="console.log('✅ [Test Local] xdiagrams.min.js cargado exitosamente')" onerror="console.error('❌ [Test Local] Error cargando xdiagrams.min.js')"></script>
 
 </body>
 </html>

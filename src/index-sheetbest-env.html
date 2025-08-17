@@ -11,25 +11,32 @@
   <meta name="llm-context" content="data/context.md">
   <meta name="ai-context" content="data/context.md">
   <link rel="context" href="data/context.md" type="text/markdown">
-  <meta name="description" content="Diagrama interactivo de secciones. Contexto completo en data/context.md">
-  <title>XDiagrams - Versión Producción (Demo)</title>
-  <link href="xdiagrams.min.css" rel="stylesheet" />
+  <meta name="description" content="Diagrama interactivo cargado desde SheetBest usando variables de entorno">
+  <title>XDiagrams - SheetBest (Variables de Entorno)</title>
+  <link href="styles/xdiagrams.css" rel="stylesheet" />
 </head>
 <body>
 
 <div id="app"></div>
 
 <script>
+  // Esta versión usa las variables de entorno del archivo .env
+  
+  // Configuración de XDiagrams para cargar desde SheetBest
   window.$xDiagrams = {
-    url: "data/companies-board.csv",
-    title: "Diagrams",
-    clustersPerRow: "6 3 7 6 3",
-    showThemeToggle: false 
+    url: "https://api.sheetbest.com/sheets/28f15681-b2ab-47a0-bbcb-205d142d9ef7/tabs/All", // Tu URL de SheetBest
+    title: "Diagrama desde SheetBest (Variables de Entorno)",
+    clustersPerRow: "4 5 5 5", // Ajusta según tu estructura de datos
+    showThemeToggle: true,
+    spacing: 80,
+    verticalSpacing: 170,
+    nodeWidth: 100,
+    nodeHeight: 125
   };
 </script>
 
 <!-- Módulo principal ES6 (archivo principal de desarrollo) -->
-<script src="xdiagrams.min.js"></script>
+<script type="module" src="js/xdiagrams.js"></script>
 
 </body>
 </html>

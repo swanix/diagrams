@@ -1,6 +1,18 @@
 /**
  * @swanix/diagrams v0.9.1
  */
+/**
+ * @swanix/diagrams v0.9.1
+ */
+/**
+ * @swanix/diagrams v0.9.1
+ */
+/**
+ * @swanix/diagrams v0.9.1
+ */
+/**
+ * @swanix/diagrams v0.9.1
+ */
 var xhtml = "http://www.w3.org/1999/xhtml";
 const namespaces = {
   svg: "http://www.w3.org/2000/svg",

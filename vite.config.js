@@ -507,7 +507,11 @@ export default defineConfig(({ mode, command }) => {
   if (isDev) {
     // Configuración para servidor de desarrollo
     return {
-              plugins: [generateLLMStaticPlugin(), copyBundleToDocs(), productionCheckPlugin()],
+      plugins: [generateLLMStaticPlugin(), copyBundleToDocs(), productionCheckPlugin()],
+      define: {
+        'process.env.SHEETBEST_API_KEY': JSON.stringify(process.env.SHEETBEST_API_KEY),
+        'process.env': JSON.stringify(process.env)
+      },
       server: {
         port: 3000,
         open: '/',
@@ -557,7 +561,11 @@ export default defineConfig(({ mode, command }) => {
   
   // Configuración por defecto (build de librería)
   return {
-            plugins: [generateLLMStaticPlugin(), copyBundleToDocs()],
+    plugins: [generateLLMStaticPlugin(), copyBundleToDocs()],
+    define: {
+      'process.env.SHEETBEST_API_KEY': JSON.stringify(process.env.SHEETBEST_API_KEY),
+      'process.env': JSON.stringify(process.env)
+    },
     build: {
       lib: {
         entry: 'src/js/xdiagrams.js',

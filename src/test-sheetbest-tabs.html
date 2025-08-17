@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>XDiagrams - Prueba SheetBest con Tabs</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+    .container {
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      margin-bottom: 20px;
+    }
+    .test-section {
+      border: 1px solid #ddd;
+      padding: 15px;
+      margin: 10px 0;
+      border-radius: 5px;
+    }
+    .success { border-color: #4CAF50; background: #f1f8e9; }
+    .error { border-color: #f44336; background: #ffebee; }
+    .info { border-color: #2196F3; background: #e3f2fd; }
+    button {
+      background: #2196F3;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 5px;
+      cursor: pointer;
+      margin: 5px;
+    }
+    button:hover { background: #1976D2; }
+    input[type="text"] {
+      width: 100%;
+      padding: 8px;
+      margin: 5px 0;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+    }
+    .log {
+      background: #f8f9fa;
+      border: 1px solid #dee2e6;
+      padding: 10px;
+      border-radius: 4px;
+      font-family: monospace;
+      font-size: 12px;
+      max-height: 300px;
+      overflow-y: auto;
+      white-space: pre-wrap;
+    }
+  </style>
+</head>
+<body>
+  <h1>🧪 Prueba SheetBest con Tabs - XDiagrams</h1>
+  
+  <div class="container">
+    <h2>🔐 Configuración de API Key</h2>
+    <div class="test-section info">
+      <label for="apiKey">API Key de SheetBest:</label>
+      <input type="text" id="apiKey" placeholder="Ingresa tu API Key aquí...">
+      <button onclick="setApiKey()">Configurar API Key</button>
+    </div>
+  </div>
+
+  <div class="container">
+    <h2>🔗 URLs de Prueba con Tabs</h2>
+    
+    <div class="test-section">
+      <h3>URL Base (sin tabs)</h3>
+      <input type="text" id="urlBase" value="https://api.sheetbest.com/sheets/28f15681-b2ab-47a0-bbcb-205d142d9ef7" readonly>
+      <button onclick="testUrl('base')">Probar URL Base</button>
+    </div>
+
+    <div class="test-section">
+      <h3>URL con Tab "ALL"</h3>
+      <input type="text" id="urlTabsAll" value="https://api.sheetbest.com/sheets/28f15681-b2ab-47a0-bbcb-205d142d9ef7/tabs/ALL" readonly>
+      <button onclick="testUrl('tabs-all')">Probar URL con /tabs/ALL</button>
+    </div>
+
+    <div class="test-section">
+      <h3>URL con Tab Personalizado</h3>
+      <input type="text" id="urlTabsCustom" placeholder="https://api.sheetbest.com/sheets/28f15681-b2ab-47a0-bbcb-205d142d9ef7/tabs/TU_TAB">
+      <button onclick="testUrl('tabs-custom')">Probar URL con Tab Personalizado</button>
+    </div>
+
+    <div class="test-section">
+      <h3>URL con Parámetros</h3>
+      <input type="text" id="urlParams" value="https://api.sheetbest.com/sheets/28f15681-b2ab-47a0-bbcb-205d142d9ef7?format=json" readonly>
+      <button onclick="testUrl('params')">Probar URL con Parámetros</button>
+    </div>
+
+    <div class="test-section">
+      <h3>URL Completa (Tabs + Parámetros)</h3>
+      <input type="text" id="urlComplete" value="https://api.sheetbest.com/sheets/28f15681-b2ab-47a0-bbcb-205d142d9ef7/tabs/ALL?format=json" readonly>
+      <button onclick="testUrl('complete')">Probar URL Completa</button>
+    </div>
+  </div>
+
+  <div class="container">
+    <h2>📊 Resultados de Pruebas</h2>
+    <div id="results" class="log"></div>
+  </div>
+
+  <div class="container">
+    <h2>🔧 Información del Sistema</h2>
+    <div id="systemInfo" class="log"></div>
+  </div>
+
+  <script type="module">
+    import { XDiagrams } from './js/xdiagrams.js';
+    import { apiKeysConfig } from './js/modules/loader/config/api-keys.js';
+
+    // Variables globales
+    window.xdiagrams = null;
+    window.apiKeysConfig = apiKeysConfig;
+    window.testResults = [];
+
+    // Función para configurar API Key
+    window.setApiKey = function() {
+      const apiKey = document.getElementById('apiKey').value.trim();
+      if (!apiKey) {
+        log('❌ Error: API Key no puede estar vacía', 'error');
+        return;
+      }
+
+      // Agregar API Key temporal
+      apiKeysConfig.addTemporaryApiKey('sheetbest.com', apiKey);
+      apiKeysConfig.addTemporaryApiKey('api.sheetbest.com', apiKey);
+      
+      log('✅ API Key configurada correctamente', 'success');
+      log(`🔑 API Key: ${apiKey.substring(0, 8)}...${apiKey.substring(apiKey.length - 4)}`, 'info');
+      
+      // Inicializar XDiagrams
+      initializeXDiagrams();
+    };
+
+    // Función para probar URLs
+    window.testUrl = async function(type) {
+      if (!window.xdiagrams) {
+        log('❌ Error: XDiagrams no está inicializado. Configura la API Key primero.', 'error');
+        return;
+      }
+
+      let url = '';
+      let description = '';
+
+      switch(type) {
+        case 'base':
+          url = document.getElementById('urlBase').value;
+          description = 'URL Base (sin tabs)';
+          break;
+        case 'tabs-all':
+          url = document.getElementById('urlTabsAll').value;
+          description = 'URL con /tabs/ALL';
+          break;
+        case 'tabs-custom':
+          url = document.getElementById('urlTabsCustom').value;
+          description = 'URL con Tab Personalizado';
+          break;
+        case 'params':
+          url = document.getElementById('urlParams').value;
+          description = 'URL con Parámetros';
+          break;
+        case 'complete':
+          url = document.getElementById('urlComplete').value;
+          description = 'URL Completa (Tabs + Parámetros)';
+          break;
+      }
+
+      if (!url) {
+        log('❌ Error: URL no puede estar vacía', 'error');
+        return;
+      }
+
+      log(`\n🧪 Probando: ${description}`, 'info');
+      log(`🔗 URL: ${url}`, 'info');
+
+             try {
+         // Detectar tipo de fuente
+         const sourceType = window.xdiagrams.loader.dataLoaderInstance.sourceDetector.detectSourceType(url);
+         log(`🔍 Tipo detectado: ${sourceType}`, 'info');
+
+         // Verificar si requiere autenticación
+         const requiresAuth = window.xdiagrams.loader.dataLoaderInstance.sourceDetector.requiresAuthentication(url);
+         log(`🔐 Requiere autenticación: ${requiresAuth}`, 'info');
+
+         if (requiresAuth) {
+           const authInfo = window.xdiagrams.loader.dataLoaderInstance.sourceDetector.getAuthInfo(url);
+           log(`🔑 Info de autenticación: ${JSON.stringify(authInfo, null, 2)}`, 'info');
+         }
+
+         // Intentar cargar datos
+         log('📥 Cargando datos...', 'info');
+         const data = await new Promise((resolve, reject) => {
+           window.xdiagrams.loader.loadData(url, (data, error) => {
+             if (error) reject(error);
+             else resolve(data);
+           });
+         });
+        
+        log(`✅ Datos cargados exitosamente!`, 'success');
+        log(`📊 Registros: ${Array.isArray(data) ? data.length : 'N/A'}`, 'success');
+        log(`📋 Estructura: ${JSON.stringify(data.slice(0, 2), null, 2)}`, 'info');
+
+        // Guardar resultado
+        window.testResults.push({
+          type,
+          url,
+          description,
+          success: true,
+          records: Array.isArray(data) ? data.length : 'N/A',
+          sourceType
+        });
+
+      } catch (error) {
+        log(`❌ Error al cargar datos: ${error.message}`, 'error');
+        log(`🔍 Stack: ${error.stack}`, 'error');
+
+        // Guardar resultado
+                 window.testResults.push({
+           type,
+           url,
+           description,
+           success: false,
+           error: error.message,
+           sourceType: window.xdiagrams.loader.dataLoaderInstance?.sourceDetector?.detectSourceType(url) || 'unknown'
+         });
+      }
+
+      updateResults();
+    };
+
+    // Función para inicializar XDiagrams
+    async function initializeXDiagrams() {
+      try {
+        log('🚀 Inicializando XDiagrams...', 'info');
+        
+        window.xdiagrams = new XDiagrams();
+        
+                 log('✅ XDiagrams inicializado correctamente', 'success');
+         log(`🔧 Loader disponible: ${!!window.xdiagrams.loader}`, 'info');
+         log(`🔍 Source Detector disponible: ${!!window.xdiagrams.loader.dataLoaderInstance?.sourceDetector}`, 'info');
+         log(`🔐 Auth Manager disponible: ${!!window.xdiagrams.loader.dataLoaderInstance?.authManager}`, 'info');
+        
+        updateSystemInfo();
+        
+      } catch (error) {
+        log(`❌ Error al inicializar XDiagrams: ${error.message}`, 'error');
+      }
+    }
+
+    // Función para mostrar logs
+    function log(message, type = 'info') {
+      const resultsDiv = document.getElementById('results');
+      const timestamp = new Date().toLocaleTimeString();
+      const logEntry = `[${timestamp}] ${message}\n`;
+      
+      resultsDiv.textContent += logEntry;
+      resultsDiv.scrollTop = resultsDiv.scrollHeight;
+    }
+
+    // Función para actualizar resultados
+    function updateResults() {
+      const resultsDiv = document.getElementById('results');
+      const summary = window.testResults.map(result => {
+        const status = result.success ? '✅' : '❌';
+        return `${status} ${result.description}: ${result.success ? `${result.records} registros` : result.error}`;
+      }).join('\n');
+      
+      if (summary) {
+        log('\n📊 RESUMEN DE PRUEBAS:', 'info');
+        log(summary, 'info');
+      }
+    }
+
+    // Función para mostrar información del sistema
+    function updateSystemInfo() {
+      const systemInfoDiv = document.getElementById('systemInfo');
+      
+             const info = {
+         'XDiagrams Version': window.xdiagrams ? 'Disponible' : 'No disponible',
+         'Source Detector': window.xdiagrams?.loader?.dataLoaderInstance?.sourceDetector ? 'Disponible' : 'No disponible',
+         'Auth Manager': window.xdiagrams?.loader?.dataLoaderInstance?.authManager ? 'Disponible' : 'No disponible',
+         'API Keys Config': window.apiKeysConfig ? 'Disponible' : 'No disponible',
+         'Patrones Protegidos': window.xdiagrams?.loader?.dataLoaderInstance?.sourceDetector?.sourcePatterns?.protectedApi || 'No disponible'
+       };
+
+      systemInfoDiv.textContent = JSON.stringify(info, null, 2);
+    }
+
+    // Inicializar cuando el DOM esté listo
+    document.addEventListener('DOMContentLoaded', function() {
+      log('🚀 Sistema de prueba iniciado', 'info');
+      log('📝 Instrucciones:', 'info');
+      log('1. Ingresa tu API Key de SheetBest', 'info');
+      log('2. Haz clic en "Configurar API Key"', 'info');
+      log('3. Prueba las diferentes URLs con tabs', 'info');
+    });
+  </script>
+</body>
+</html>

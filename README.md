@@ -149,7 +149,7 @@ XDiagrams ahora soporta APIs protegidas con autenticación, incluyendo:
 // Configurar API Key antes de cargar XDiagrams
 window.__XDIAGRAMS_CONFIG__ = {
   API_KEYS: {
-    'sheet.best': 'tu_api_key_aqui'
+    'sheet.best': 'TU_API_KEY_AQUI'
   }
 };
 ```

@@ -1,6 +1,6 @@
 [build]
   functions = "netlify/functions"
-  publish = "src"
+  publish = "docs/demo"
 
 [build.environment]
   NODE_VERSION = "18"

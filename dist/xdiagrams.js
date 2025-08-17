@@ -9043,10 +9043,15 @@ if (typeof window !== "undefined") {
 }
 if (typeof window !== "undefined") {
   let initializeDiagram = function() {
+    console.log("🚀 [XDiagrams] initializeDiagram llamado");
     const config2 = window.$xDiagrams || {};
+    console.log("📋 [XDiagrams] Configuración encontrada:", config2);
+    console.log("📋 [XDiagrams] Configuración tiene keys:", Object.keys(config2));
     if (Object.keys(config2).length > 0) {
+      console.log("✅ [XDiagrams] Configuración válida, creando diagrama...");
       try {
         const diagram = new XDiagrams(config2);
+        console.log("✅ [XDiagrams] Diagrama creado, inicializando...");
         diagram.initDiagram();
         window.$xDiagrams = {
           ...config2,
@@ -9080,9 +9085,12 @@ if (typeof window !== "undefined") {
   };
   const themeManager = initThemes(themeOptions);
   window.ThemeManager = themeManager;
+  console.log("📋 [XDiagrams] Estado del DOM:", document.readyState);
   if (document.readyState === "loading") {
+    console.log("⏳ [XDiagrams] DOM cargando, esperando DOMContentLoaded...");
     document.addEventListener("DOMContentLoaded", initializeDiagram);
   } else {
+    console.log("✅ [XDiagrams] DOM ya cargado, inicializando inmediatamente...");
     initializeDiagram();
   }
 }

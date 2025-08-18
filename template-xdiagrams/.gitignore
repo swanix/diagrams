@@ -1,0 +1,45 @@
+# 🔒 Archivos de seguridad
+.env
+.env.local
+.env.production
+.env.staging
+
+# 📦 Dependencias
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# 🏗️ Build
+dist/
+build/
+.netlify/
+
+# 🔧 Configuración local
+.netlify.toml.local
+vercel.json.local
+
+# 💻 Sistema
+.DS_Store
+Thumbs.db
+
+# 📝 Logs
+*.log
+logs/
+
+# 🧪 Testing
+coverage/
+.nyc_output/
+
+# 🚀 Deploy
+.netlify/
+.vercel/
+
+# 📊 Datos locales (opcional)
+datos.csv
+datos.json
+local-data/
+
+# 🔑 API Keys (por seguridad)
+api-keys.js
+config/keys.js

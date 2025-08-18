@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Diagrama interactivo creado con XDiagrams">
+  <title>Mi Proyecto XDiagrams</title>
+  
+  <!-- CDN de XDiagrams -->
+  <link href="https://cdn.jsdelivr.net/npm/xdiagrams@2.0.0/dist/xdiagrams.min.css" rel="stylesheet">
+  
+  <style>
+    /* Estilos personalizados opcionales */
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+    
+    #app {
+      width: 100vw;
+      height: 100vh;
+    }
+  </style>
+</head>
+<body>
+  <div id="app"></div>
+  
+  <script>
+    // Configuración de XDiagrams
+    window.$xDiagrams = {
+      // 🔗 URL de datos - ELIGE UNA OPCIÓN:
+      
+      // Opción 1: Datos locales (CSV/JSON)
+      // url: "datos.csv",
+      
+      // Opción 2: API pública
+      // url: "https://api.ejemplo.com/datos",
+      
+      // Opción 3: API protegida (SheetBest) - RECOMENDADO
+      url: "/.netlify/functions/sheetbest-proxy?url=https://api.sheetbest.com/sheets/TU-SHEET-ID/tabs/TU-TAB",
+      
+      // 📝 Configuración básica
+      title: "Mi Diagrama Interactivo",
+      clustersPerRow: "6 3 7 6 3",  // Ajusta según tu estructura de datos
+      
+      // 🎨 Personalización visual
+      showThemeToggle: true,         // Mostrar toggle de tema claro/oscuro
+      spacing: 80,                   // Espaciado horizontal entre nodos
+      verticalSpacing: 170,          // Espaciado vertical entre filas
+      nodeWidth: 100,                // Ancho de cada nodo
+      nodeHeight: 125,               // Alto de cada nodo
+      
+      // 🔧 Configuración avanzada (opcional)
+      // enableAnimations: true,     // Habilitar animaciones
+      // enableZoom: true,           // Habilitar zoom
+      // enablePan: true,            // Habilitar pan
+      // enableTooltips: true,       // Habilitar tooltips
+    };
+    
+    // 🚀 Logs para debugging
+    console.log('🚀 [Template] XDiagrams configurado:', window.$xDiagrams);
+    console.log('📋 [Template] URL configurada:', window.$xDiagrams.url);
+  </script>
+  
+  <!-- Cargar XDiagrams desde CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/xdiagrams@2.0.0/dist/xdiagrams.min.js"></script>
+  
+  <script>
+    // ✅ Confirmar que XDiagrams se cargó correctamente
+    window.addEventListener('load', function() {
+      console.log('✅ [Template] XDiagrams cargado exitosamente');
+      console.log('🎯 [Template] Tu diagrama está listo para usar');
+    });
+  </script>
+</body>
+</html>

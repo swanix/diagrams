@@ -1,0 +1,39 @@
+{
+  "name": "xdiagrams-template",
+  "version": "1.0.0",
+  "description": "Template para usar XDiagrams con APIs protegidas",
+  "main": "index.html",
+  "scripts": {
+    "dev": "npx serve . -p 3000",
+    "build": "echo 'No build step required for static site'",
+    "deploy": "netlify deploy --prod",
+    "deploy:preview": "netlify deploy"
+  },
+  "keywords": [
+    "xdiagrams",
+    "template",
+    "diagrams",
+    "visualization",
+    "sheetbest",
+    "netlify"
+  ],
+  "author": "Tu Nombre",
+  "license": "MIT",
+  "devDependencies": {
+    "serve": "^14.2.0"
+  },
+  "dependencies": {
+    "node-fetch": "^2.7.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/tu-usuario/tu-repositorio"
+  },
+  "bugs": {
+    "url": "https://github.com/tu-usuario/tu-repositorio/issues"
+  },
+  "homepage": "https://github.com/tu-usuario/tu-repositorio#readme"
+}

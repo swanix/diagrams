@@ -1,5 +1,5 @@
 /**
- * @swanix/diagrams v0.9.1
+ * @swanix/diagrams v0.9.2
  */
 var xhtml = "http://www.w3.org/1999/xhtml";
 const namespaces = {

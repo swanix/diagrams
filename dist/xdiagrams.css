@@ -1821,6 +1821,11 @@ text[font-family="icomoon"] {
   font-style: italic; 
 }
 
+.empty-dash {
+  opacity: 0.9;
+  color: var(--ui-panel-text-muted);
+}
+
 .side-panel-url-link {
   color: var(--ui-focus);
   text-decoration: none;

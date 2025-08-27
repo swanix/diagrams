@@ -429,14 +429,19 @@ class XDiagramsInfoPanel {
         const tooltipValue = field.value ? field.value : field.valueTitle;
         const tooltipAttr = tooltipValue ? `title="${this.escapeHtml(tooltipValue)}"` : '';
         
+        // Mostrar guion medio si el valor está vacío
+        const displayContent = field.value ? 
+          (field.isUrl ? 
+            `<a href="${field.value}" target="_blank" rel="noreferrer" class="side-panel-url-link">${field.displayValue}</a>` : 
+            field.displayValue
+          ) : 
+          '<span class="empty-dash">-</span>';
+        
         html += `
           <div class="side-panel-field">
             <div class="side-panel-label" ${field.labelTitle ? `title="${this.escapeHtml(field.labelTitle)}"` : ''}>${field.label}</div>
             <div class="side-panel-value ${!field.value ? 'empty' : ''}" ${tooltipAttr}>
-              ${field.isUrl ? 
-                `<a href="${field.value}" target="_blank" rel="noreferrer" class="side-panel-url-link">${field.displayValue}</a>` : 
-                field.displayValue
-              }
+              ${displayContent}
             </div>
           </div>
         `;

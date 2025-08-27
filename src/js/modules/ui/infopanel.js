@@ -425,10 +425,14 @@ class XDiagramsInfoPanel {
       let html = '<div class="side-panel-fields-table">';
       
       fields.forEach(field => {
+        // Agregar tooltip con el valor completo siempre que haya un valor
+        const tooltipValue = field.value ? field.value : field.valueTitle;
+        const tooltipAttr = tooltipValue ? `title="${this.escapeHtml(tooltipValue)}"` : '';
+        
         html += `
           <div class="side-panel-field">
-            <div class="side-panel-label" ${field.labelTitle ? `data-tooltip="${field.labelTitle}"` : ''}>${field.label}</div>
-            <div class="side-panel-value ${!field.value ? 'empty' : ''}" ${field.valueTitle ? `data-tooltip="${field.valueTitle}"` : ''}>
+            <div class="side-panel-label" ${field.labelTitle ? `title="${this.escapeHtml(field.labelTitle)}"` : ''}>${field.label}</div>
+            <div class="side-panel-value ${!field.value ? 'empty' : ''}" ${tooltipAttr}>
               ${field.isUrl ? 
                 `<a href="${field.value}" target="_blank" rel="noreferrer" class="side-panel-url-link">${field.displayValue}</a>` : 
                 field.displayValue

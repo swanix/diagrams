@@ -13,6 +13,7 @@ class XDiagramsInfoPanel {
     };
     this.isClosing = false;
     this.infoPanelElements = new Map();
+    this.thumbsSystem = options.thumbsSystem || null;
     this.ensureStylesInjected();
     this.ensurePanel();
   }
@@ -20,313 +21,8 @@ class XDiagramsInfoPanel {
   // ===== GESTIÓN DEL PANEL =====
 
   ensureStylesInjected() {
-    if (document.getElementById('xdiagrams-infopanel-styles')) return;
-    const style = document.createElement('style');
-    style.id = 'xdiagrams-infopanel-styles';
-    style.textContent = `
-      .side-panel { 
-        position: fixed; 
-        top: 0; 
-        right: 0; 
-        width: 360px; 
-        height: 100%;
-        background: var(--ui-panel-bg); 
-        color: var(--ui-panel-text); 
-        box-shadow: var(--side-panel-shadow);
-        z-index: 10050; 
-        transform: translateX(100%); 
-        transition: transform var(--transition-normal);
-      }
-      .side-panel.open { transform: translateX(0); }
-      
-      .side-panel-header { 
-        display: flex; 
-        align-items: center; 
-        justify-content: space-between;
-        padding: 28px 20px 24px; 
-        border-bottom: 1px solid var(--ui-panel-border); 
-      }
-      
-      .side-panel-title { 
-        margin: 0; 
-        font-size: 18px; 
-        font-weight: 600; 
-        display: flex; 
-        gap: 16px; 
-        align-items: flex-start; 
-        flex: 1;
-        min-width: 0;
-        position: relative;
-      }
-      
-
-      
-      .side-panel-title-content {
-        display: flex;
-        flex-direction: column;
-        gap: 4px;
-        flex: 1;
-        min-width: 0;
-      }
-      
-      .side-panel-title-text {
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        flex: 1;
-      }
-      
-      .side-panel-title-id {
-        font-size: 11px;
-        color: var(--ui-panel-text-muted);
-        font-weight: normal;
-        opacity: 0.8;
-      }
-      
-      .side-panel-title-text {
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        flex: 1;
-      }
-      
-      .side-panel-title-thumbnail {
-        width: 36px;
-        height: 36px;
-        object-fit: contain;
-        flex-shrink: 0;
-        border-radius: 8px;
-        background: var(--ui-control-bg);
-        border: 1px solid var(--ui-control-border);
-        margin-left: 8px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        padding-top: 2px;
-      }
-      
-      .side-panel-title-thumbnail.embedded-thumbnail {
-        background: transparent;
-        border: none;
-      }
-      
-      .side-panel-title-thumbnail.custom-image {
-        border-radius: 6px;
-      }
-      
-      .side-panel-title-thumbnail .detail:before {
-        content: "\\e900";
-        font-family: 'xdiagrams-icons';
-      }
-      
-      .side-panel-title-thumbnail .document:before {
-        content: "\\e901";
-        font-family: 'xdiagrams-icons';
-      }
-      
-      .side-panel-title-thumbnail .form:before {
-        content: "\\e934";
-        font-family: 'xdiagrams-icons';
-      }
-      
-      .side-panel-title-thumbnail .grid:before {
-        content: "\\e938";
-        font-family: 'xdiagrams-icons';
-      }
-      
-      .side-panel-title-thumbnail .home:before {
-        content: "\\e939";
-        font-family: 'xdiagrams-icons';
-      }
-      
-      .side-panel-title-thumbnail .list:before {
-        content: "\\e93b";
-        font-family: 'xdiagrams-icons';
-      }
-      
-      .side-panel-title-thumbnail .modal:before {
-        content: "\\e93c";
-        font-family: 'xdiagrams-icons';
-      }
-      
-      .side-panel-title-thumbnail .profile:before {
-        content: "\\e941";
-        font-family: 'xdiagrams-icons';
-      }
-      
-      .side-panel-title-thumbnail .report:before {
-        content: "\\e942";
-        font-family: 'xdiagrams-icons';
-      }
-      
-      .side-panel-title-thumbnail .settings:before {
-        content: "\\e943";
-        font-family: 'xdiagrams-icons';
-      }
-      
-      .side-panel-close { 
-        cursor: pointer; 
-        font-size: 24px; 
-        line-height: 1; 
-        opacity: .8; 
-        color: var(--ui-panel-text);
-        transition: opacity var(--transition-fast);
-      }
-      .side-panel-close:hover { opacity: 1; }
-      
-      .side-panel-id-tag { 
-        padding: 6px 16px; 
-        font-size: 12px; 
-        opacity: .8; 
-        color: var(--ui-panel-text-muted);
-      }
-      
-      .side-panel-content { 
-        padding: 20px 32px 28px; 
-        overflow: auto; 
-        height: calc(100% - 92px); 
-      }
-      
-      .side-panel-fields-table { 
-        display: grid; 
-        grid-template-columns: 1fr; 
-        gap: 10px; 
-      }
-      
-      .side-panel-field { 
-        display: grid; 
-        grid-template-columns: 30% 70%; 
-        gap: 8px; 
-        align-items: start; 
-      }
-      
-      .side-panel-label { 
-        color: var(--ui-panel-text-muted); 
-        font-size: 12px; 
-      }
-      
-      .side-panel-value { 
-        color: var(--ui-panel-text); 
-        font-size: 12px; 
-        word-break: break-word; 
-      }
-      
-      .side-panel-value.empty { 
-        opacity: .5; 
-        font-style: italic; 
-      }
-      
-      .side-panel-url-link {
-        color: var(--ui-focus);
-        text-decoration: none;
-        transition: color var(--transition-fast);
-      }
-      
-      .side-panel-url-link:hover {
-        text-decoration: underline;
-      }
-      
-      /* ===== SECCIÓN DE URL ===== */
-      .side-panel-url-section {
-        padding: 16px 20px;
-        border-bottom: 1px solid var(--ui-panel-border);
-        background: var(--ui-panel-bg);
-      }
-      
-      .side-panel-url-input-container {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-      }
-      
-      .side-panel-url-input {
-        flex: 1;
-        padding: 8px 12px;
-        border: 1px solid var(--ui-panel-border);
-        border-radius: 4px;
-        background: var(--ui-panel-bg);
-        color: var(--ui-panel-text-muted);
-        font-size: 10px;
-        font-family: monospace;
-        outline: none;
-        transition: border-color var(--transition-fast);
-        opacity: 0.7;
-      }
-      
-      .side-panel-url-input:focus {
-        opacity: 1;
-      }
-      
-      .side-panel-url-input:read-only {
-        background: var(--ui-panel-bg-muted);
-        color: var(--ui-panel-text-muted);
-        cursor: default;
-      }
-      
-      .side-panel-url-button {
-        background: hsl(var(--color-base) 15% / 1);
-        border: none;
-        border-radius: 50%;
-        color: var(--ui-panel-text);
-        font-size: 14px;
-        font-weight: bold;
-        width: 28px;
-        height: 28px;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        transition: all 0.2s ease;
-        user-select: none;
-      }
-      
-      .side-panel-url-button:hover {
-        background: hsl(var(--color-base) 10% / 1);
-        transform: scale(1.05);
-      }
-      
-      .side-panel-url-button:active {
-        background: hsl(var(--color-base) 10% / 1);
-        transform: scale(0.95);
-      }
-      
-      .side-panel-url-button-icon {
-        width: 14px;
-        height: 14px;
-        color: currentColor;
-        display: block;
-      }
-      
-      /* ===== BOTÓN DE COLAPSAR ===== */
-      .side-panel-collapse-btn {
-        position: fixed;
-        bottom: 12px;
-        right: 318px;
-        background: transparent;
-        border: none;
-        border-radius: 6px;
-        color: var(--ui-control-text);
-        width: 40px;
-        height: 40px;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        transition: all 0.2s ease;
-        z-index: 10051;
-      }
-      
-      .side-panel-collapse-btn:hover {
-        background: var(--ui-control-bg-hover);
-        transform: scale(1.05);
-      }
-      
-      .side-panel-collapse-btn:active {
-        background: var(--ui-control-bg-active);
-        transform: scale(0.95);
-      }
-    `;
-    document.head.appendChild(style);
+    // Los estilos ahora están en el CSS principal
+    // No necesitamos inyectar estilos dinámicamente
   }
 
   ensurePanel() {
@@ -355,12 +51,7 @@ class XDiagramsInfoPanel {
         </div>
       </div>
       <div class="side-panel-content" id="side-panel-content"></div>
-      <button class="side-panel-collapse-btn" id="side-panel-collapse-btn" type="button" aria-label="Colapsar panel">
-        <svg width="24" height="24" viewBox="0 0 30 30" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M13.7695 19.0498C13.7273 19.425 13.7305 19.8043 13.7812 20.1787H8.56445C8.25269 20.1786 8 19.926 8 19.6143C8.00008 19.3025 8.25274 19.0499 8.56445 19.0498H13.7695ZM18.7002 19.96C18.4806 20.1796 18.125 20.1795 17.9053 19.96C17.6856 19.7403 17.6856 19.3847 17.9053 19.165L18.0205 19.0498H19.6104L18.7002 19.96ZM16.3506 15.0625L15.751 15.6621H8.56445C8.25269 15.662 8 15.4085 8 15.0967C8.00023 14.7851 8.25284 14.5323 8.56445 14.5322H15.8203L16.3506 15.0625ZM13.7734 10.0156C13.7283 10.3906 13.7295 10.7699 13.7773 11.1445H8.56445C8.25279 11.1444 8.00015 10.8917 8 10.5801C8 10.2683 8.25269 10.0157 8.56445 10.0156H13.7734ZM18.4268 10.0156C18.5267 10.0383 18.6223 10.0872 18.7002 10.165L19.6797 11.1445H18.0898L17.9053 10.96C17.6856 10.7403 17.6856 10.3847 17.9053 10.165C17.9833 10.0871 18.0786 10.0382 18.1787 10.0156H18.4268Z" fill="currentColor"/>
-          <path fill-rule="evenodd" clip-rule="evenodd" d="M17.905 10.1648C17.6853 10.3844 17.6853 10.7406 17.905 10.9602L22.0072 15.0625L17.905 19.1648C17.6853 19.3844 17.6853 19.7406 17.905 19.9602C18.1247 20.1799 18.4808 20.1799 18.7005 19.9602L23.2005 15.4602C23.4202 15.2406 23.4202 14.8844 23.2005 14.6648L18.7005 10.1648C18.4808 9.94508 18.1247 9.94508 17.905 10.1648Z" fill="currentColor"/>
-        </svg>
-      </button>
+      <button class="side-panel-collapse-btn" id="side-panel-collapse-btn" type="button" aria-label="Colapsar panel"></button>
     `;
     document.body.appendChild(panel);
 
@@ -395,19 +86,16 @@ class XDiagramsInfoPanel {
                         (nodeData.data && nodeData.data.Node) ?? 
                         '';
     
-    console.log('[InfoPanel] nodeData:', JSON.stringify(nodeData, null, 2));
-
     // Actualizar título
     titleEl.textContent = String(title);
     
     // Actualizar ID en el header
     titleIdEl.textContent = nodeIdValue || '';
     
-    // Manejar URL
-    const url = this.findUrl(nodeData);
-    console.log('[InfoPanel] URL encontrada:', url);
-    if (url && urlSection && urlInput) {
-      urlInput.value = url;
+          // Manejar URL
+      const url = this.findUrl(nodeData);
+      if (url && urlSection && urlInput) {
+        urlInput.value = url;
       urlSection.style.display = 'block';
       
       // Configurar evento del botón
@@ -432,7 +120,38 @@ class XDiagramsInfoPanel {
 
   async createThumbnail(thumbnailEl, nodeData, diagramConfig = {}) {
     try {
-      // Verificar si hay imagen en la columna img
+      // Usar el sistema de thumbs que se pasó al constructor
+      let thumbnailResolver = null;
+      
+      // Intentar obtener el resolver desde el sistema de thumbs
+      if (this.thumbsSystem && this.thumbsSystem.resolverInstance) {
+        thumbnailResolver = this.thumbsSystem.resolverInstance;
+      } else {
+        // Fallback: buscar en el contexto global
+        if (window.xDiagramsLoader && window.xDiagramsLoader.instance && window.xDiagramsLoader.instance.thumbs) {
+          thumbnailResolver = window.xDiagramsLoader.instance.thumbs.resolverInstance;
+        } else if (window.XDiagrams && window.XDiagrams.instance && window.XDiagrams.instance.thumbs) {
+          thumbnailResolver = window.XDiagrams.instance.thumbs.resolverInstance;
+        }
+      }
+      
+      if (thumbnailResolver) {
+        // Usar el resolver para obtener el thumbnail
+        const thumbnail = thumbnailResolver.resolveThumbnail(nodeData);
+        
+        if (thumbnail.type === 'external-image') {
+          // Mostrar imagen externa
+          thumbnailEl.innerHTML = `<img src="${thumbnail.value}" class="custom-image" width="36" height="36" style="opacity: 1; transition: opacity 0.2s ease-in-out;" onerror="this.style.display='none'">`;
+          return;
+        } else if (thumbnail.type === 'custom-icon') {
+          // Mostrar icono personalizado
+          const iconUnicode = this.getIconUnicode(thumbnail.value);
+          thumbnailEl.innerHTML = `<span style="display: flex; align-items: center; justify-content: center; font-family: 'xdiagrams-icons'; font-size: 18px; color: var(--ui-panel-text);">${iconUnicode}</span>`;
+          return;
+        }
+      }
+      
+      // Fallback: usar la lógica anterior si no se encuentra el resolver
       const imgVal = nodeData.img || (nodeData.data && nodeData.data.img) || "";
       
       // Si hay imagen personalizada, mostrarla
@@ -441,15 +160,23 @@ class XDiagramsInfoPanel {
         return;
       }
 
-      // Si no hay imagen personalizada, mostrar icono por defecto
-      const defaultIcon = this.getDefaultIcon(nodeData, diagramConfig);
-      thumbnailEl.innerHTML = defaultIcon;
+      // Obtener el ícono del nodo usando la fuente de íconos
+      const iconElement = this.getNodeIconFromDiagram(nodeData);
+      if (iconElement) {
+        thumbnailEl.innerHTML = iconElement;
+        return;
+      }
+
+      // Si no se encuentra ícono específico, usar ícono por defecto de la configuración
+      const defaultIconName = diagramConfig.defaultIcon || 'detail';
+      const iconUnicode = this.getIconUnicode(defaultIconName);
+      thumbnailEl.innerHTML = `<span style="display: flex; align-items: center; justify-content: center; font-family: 'xdiagrams-icons'; font-size: 18px; color: var(--ui-panel-text);">${iconUnicode}</span>`;
       
     } catch (error) {
       console.error('[InfoPanel] Error creating thumbnail:', error);
-      // Fallback: mostrar icono por defecto
-      const defaultIcon = this.getDefaultIcon(nodeData, diagramConfig);
-      thumbnailEl.innerHTML = defaultIcon;
+      // Fallback: mostrar ícono por defecto
+      const iconUnicode = this.getIconUnicode('detail');
+      thumbnailEl.innerHTML = `<span style="display: flex; align-items: center; justify-content: center; font-family: 'xdiagrams-icons'; font-size: 18px; color: var(--ui-panel-text);">${iconUnicode}</span>`;
     }
   }
 
@@ -480,12 +207,27 @@ class XDiagramsInfoPanel {
 
   getNodeIconFromDiagram(nodeData) {
     try {
-      // Obtener el icono directamente de los datos del nodo
-      const iconName = nodeData.icon || nodeData.Icon || (nodeData.data && nodeData.data.icon) || (nodeData.data && nodeData.data.Icon);
+      // Buscar el ícono en diferentes ubicaciones posibles
+      const iconName = nodeData.icon || 
+                      nodeData.Icon || 
+                      nodeData.type ||
+                      nodeData.Type ||
+                      (nodeData.data && nodeData.data.icon) || 
+                      (nodeData.data && nodeData.data.Icon) ||
+                      (nodeData.data && nodeData.data.type) ||
+                      (nodeData.data && nodeData.data.Type);
       
       if (iconName) {
-        // Si hay un icono definido, usar la fuente de iconos
+        // Si hay un ícono definido, usar la fuente de íconos
         const iconUnicode = this.getIconUnicode(iconName);
+        return `<span style="display: flex; align-items: center; justify-content: center; font-family: 'xdiagrams-icons'; font-size: 18px; color: var(--ui-panel-text);">${iconUnicode}</span>`;
+      }
+
+      // Si no hay ícono específico, intentar inferir basado en el nombre o tipo
+      const nodeName = nodeData.name || nodeData.Name || (nodeData.data && nodeData.data.name) || (nodeData.data && nodeData.data.Name) || '';
+      const inferredIcon = this.inferIconFromName(nodeName);
+      if (inferredIcon) {
+        const iconUnicode = this.getIconUnicode(inferredIcon);
         return `<span style="display: flex; align-items: center; justify-content: center; font-family: 'xdiagrams-icons'; font-size: 18px; color: var(--ui-panel-text);">${iconUnicode}</span>`;
       }
 
@@ -530,6 +272,77 @@ class XDiagramsInfoPanel {
       .replace(/^-|-$/g, '');  // Remover guiones al inicio y final
     
     return normalized;
+  }
+
+  inferIconFromName(nodeName) {
+    if (!nodeName || typeof nodeName !== 'string') return null;
+    
+    const name = nodeName.toLowerCase();
+    
+    // Mapeo de palabras clave a íconos
+    const iconMappings = {
+      // Formularios y entradas
+      'form': 'form',
+      'formulario': 'form',
+      'input': 'form',
+      'entrada': 'form',
+      
+      // Documentos y archivos
+      'document': 'document',
+      'documento': 'document',
+      'file': 'document',
+      'archivo': 'document',
+      'pdf': 'document',
+      'report': 'report',
+      'reporte': 'report',
+      
+      // Listas y tablas
+      'list': 'list',
+      'lista': 'list',
+      'table': 'list',
+      'tabla': 'list',
+      'grid': 'grid',
+      'cuadricula': 'grid',
+      
+      // Navegación
+      'home': 'home',
+      'inicio': 'home',
+      'dashboard': 'home',
+      'panel': 'home',
+      
+      // Usuarios y perfiles
+      'profile': 'profile',
+      'perfil': 'profile',
+      'user': 'profile',
+      'usuario': 'profile',
+      
+      // Configuración
+      'settings': 'settings',
+      'configuracion': 'settings',
+      'config': 'settings',
+      'ajustes': 'settings',
+      
+      // Modales y ventanas
+      'modal': 'modal',
+      'popup': 'modal',
+      'ventana': 'modal',
+      'dialog': 'modal',
+      
+      // Detalles y información
+      'detail': 'detail',
+      'detalle': 'detail',
+      'info': 'detail',
+      'informacion': 'detail'
+    };
+    
+    // Buscar coincidencias en el nombre
+    for (const [keyword, icon] of Object.entries(iconMappings)) {
+      if (name.includes(keyword)) {
+        return icon;
+      }
+    }
+    
+    return null;
   }
 
   close() {
@@ -583,7 +396,6 @@ class XDiagramsInfoPanel {
         const isUrlField = urlFields.includes(key);
         
         if (headerFields.includes(key) || idFields.includes(key) || internalFields.includes(key) || isUrlField) {
-          console.log(`[InfoPanel] Excluyendo campo: ${key} (valor: ${value})`);
           continue;
         }
         
@@ -668,7 +480,6 @@ class XDiagramsInfoPanel {
     const urlValue = data['url'] || data['URL'] || data['Url'];
     
     if (urlValue && this.isUrl(urlValue)) {
-      console.log(`[InfoPanel] URL encontrada en campo URL: ${urlValue}`);
       return urlValue;
     }
     
@@ -679,7 +490,6 @@ class XDiagramsInfoPanel {
 
   updateInfoPanel(transform) {
     // Método de compatibilidad con el sistema anterior
-    console.warn('[InfoPanel] updateInfoPanel is deprecated, use open() instead');
   }
 
   getInfoPanelData() {

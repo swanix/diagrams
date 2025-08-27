@@ -261,7 +261,7 @@ text[font-family="xdiagrams-icons"] {
   --btn-text-hover: #000000;
 
   /* ===== Error message ===== */
-  --error-message-color: #999999;
+  --error-message-color: hsl(var(--color-base) 50% / 0.5);
   --label-max-width: 60px;
 
   /* ===== Logo filter ===== */
@@ -1279,19 +1279,102 @@ text[font-family="icomoon"] {
   justify-content: center;
   align-items: center;
   height: 100vh;
-  font-family: monospace;
+  font-family: var(--font-family);
   color: var(--error-message-color);
   text-align: center;
   padding: 20px;
   background: var(--ui-panel-bg);
   border-radius: var(--ui-control-border-radius);
   box-shadow: var(--side-panel-shadow);
+  opacity: 0.5;
+  font-size: 14px;
+  font-weight: 400;
 }
 
 .diagram-error::before {
-  content: "⚠️ Error al cargar el diagrama";
+  content: "No se pudo cargar el diagrama";
   display: block;
   margin-bottom: 10px;
+  font-size: 12px;
+  opacity: 0.7;
+}
+
+/* ===== ERROR DIALOG ===== */
+.xdiagrams-error-dialog {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: var(--ui-panel-bg);
+  color: var(--text-color);
+  padding: 20px;
+  border-radius: var(--ui-control-border-radius);
+  font-family: var(--font-family);
+  font-size: 14px;
+  max-width: 500px;
+  z-index: 10000;
+  box-shadow: var(--side-panel-shadow);
+  text-align: center;
+  border: 1px solid var(--ui-control-border);
+  opacity: 0.9;
+}
+
+.xdiagrams-error-title {
+  margin: 0 0 15px 0;
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--text-color);
+  opacity: 0.8;
+}
+
+.xdiagrams-error-message {
+  margin: 0 0 15px 0;
+  line-height: 1.4;
+  color: var(--text-color);
+  opacity: 0.7;
+  font-size: 13px;
+}
+
+.xdiagrams-error-buttons {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  margin-top: 20px;
+}
+
+.xdiagrams-error-retry-btn {
+  background: var(--ui-control-bg);
+  color: var(--text-color);
+  border: 1px solid var(--ui-control-border);
+  padding: 8px 16px;
+  border-radius: var(--ui-control-border-radius);
+  cursor: pointer;
+  font-size: 14px;
+  font-family: var(--font-family);
+  transition: all 0.2s ease;
+}
+
+.xdiagrams-error-retry-btn:hover {
+  background: var(--ui-control-bg-hover);
+  border-color: var(--ui-control-border-hover);
+}
+
+.xdiagrams-error-close-btn {
+  background: transparent;
+  color: var(--text-color);
+  border: 1px solid var(--ui-control-border);
+  padding: 8px 16px;
+  border-radius: var(--ui-control-border-radius);
+  cursor: pointer;
+  font-size: 14px;
+  font-family: var(--font-family);
+  transition: all 0.2s ease;
+  opacity: 0.7;
+}
+
+.xdiagrams-error-close-btn:hover {
+  opacity: 1;
+  background: var(--ui-control-bg-hover);
 }
 
 /* ===== UTILIDADES ===== */
@@ -1594,4 +1677,278 @@ text[font-family="icomoon"] {
     width: 14px;
     height: 14px;
   }
-} 
+}
+
+/* ===== SIDE PANEL STYLES ===== */
+.side-panel { 
+  position: fixed !important; 
+  top: 0 !important; 
+  right: 0 !important; 
+  left: auto !important;
+  width: 360px; 
+  height: 100%;
+  background: var(--ui-panel-bg); 
+  color: var(--ui-panel-text); 
+  box-shadow: var(--side-panel-shadow);
+  z-index: 10050; 
+  transform: translateX(100%); 
+  transition: transform var(--transition-normal);
+}
+
+.side-panel.open { 
+  transform: translateX(0) !important; 
+}
+
+.side-panel-header { 
+  display: flex; 
+  align-items: center; 
+  justify-content: space-between;
+  padding: 28px 20px 24px; 
+  border-bottom: 1px solid var(--ui-panel-border); 
+}
+
+.side-panel-title { 
+  margin: 0; 
+  font-size: 18px; 
+  font-weight: 600; 
+  display: flex; 
+  gap: 16px; 
+  align-items: flex-start; 
+  flex: 1;
+  min-width: 0;
+  position: relative;
+}
+
+.side-panel-title-content {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+  min-width: 0;
+}
+
+.side-panel-title-text {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1;
+}
+
+.side-panel-title-id {
+  font-size: 11px;
+  color: var(--ui-panel-text-muted);
+  font-weight: normal;
+  opacity: 0.8;
+}
+
+.side-panel-title-thumbnail {
+  width: 36px;
+  height: 36px;
+  object-fit: contain;
+  flex-shrink: 0;
+  border-radius: 8px;
+  background: var(--ui-control-bg);
+  border: 1px solid var(--ui-control-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+}
+
+.side-panel-content {
+  padding: 20px;
+  overflow-y: auto;
+  height: calc(100% - 200px);
+}
+
+.side-panel-field {
+  margin-bottom: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-items: start; 
+}
+
+.side-panel-label { 
+  color: var(--ui-panel-text-muted); 
+  font-size: 12px; 
+}
+
+.side-panel-value { 
+  color: var(--ui-panel-text); 
+  font-size: 12px; 
+  word-break: break-word; 
+}
+
+.side-panel-value.empty { 
+  opacity: .5; 
+  font-style: italic; 
+}
+
+.side-panel-url-link {
+  color: var(--ui-focus);
+  text-decoration: none;
+  transition: color var(--transition-fast);
+}
+
+.side-panel-url-link:hover {
+  text-decoration: underline;
+}
+
+.side-panel-url-section {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--ui-panel-border);
+  background: var(--ui-panel-bg);
+}
+
+.side-panel-url-input-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.side-panel-url-input {
+  flex: 1;
+  padding: 8px 12px;
+  border: 1px solid var(--ui-panel-border);
+  border-radius: 4px;
+  background: var(--ui-panel-bg);
+  color: var(--ui-panel-text-muted);
+  font-size: 10px;
+  font-family: monospace;
+  outline: none;
+  transition: border-color var(--transition-fast);
+  opacity: 0.7;
+}
+
+.side-panel-url-input:focus {
+  opacity: 1;
+}
+
+.side-panel-url-input:read-only {
+  background: var(--ui-panel-bg-muted);
+  color: var(--ui-panel-text-muted);
+  cursor: default;
+}
+
+.side-panel-url-button {
+  background: hsl(var(--color-base) 15% / 1);
+  border: none;
+  border-radius: 50%;
+  color: var(--ui-panel-text);
+  font-size: 14px;
+  font-weight: bold;
+  width: 28px;
+  height: 28px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  user-select: none;
+}
+
+.side-panel-url-button:hover {
+  background: hsl(var(--color-base) 10% / 1);
+  transform: scale(1.05);
+}
+
+.side-panel-url-button:active {
+  background: hsl(var(--color-base) 10% / 1);
+  transform: scale(0.95);
+}
+
+.side-panel-url-button-icon {
+  width: 14px;
+  height: 14px;
+  color: currentColor;
+  display: block;
+}
+
+.side-panel-collapse-btn {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 32px;
+  height: 32px;
+  background: var(--ui-panel-bg);
+  border: 1px solid var(--ui-panel-border);
+  border-radius: 0 0 0 var(--ui-control-border-radius);
+  color: var(--ui-panel-text);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  z-index: 10051;
+  font-size: 16px;
+  font-weight: 300;
+  line-height: 1;
+}
+
+.side-panel-collapse-btn::before {
+  content: "×";
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  transform: scale(1);
+  opacity: 0.7;
+}
+
+.side-panel-collapse-btn:hover {
+  background: var(--ui-control-bg-hover);
+  color: var(--ui-panel-text);
+}
+
+.side-panel-collapse-btn:active {
+  transform: scale(0.95);
+}
+
+/* ===== ICONOS DEL SIDE PANEL ===== */
+.side-panel-title-thumbnail .document:before {
+  content: "\\e901";
+  font-family: 'xdiagrams-icons';
+}
+
+.side-panel-title-thumbnail .form:before {
+  content: "\\e934";
+  font-family: 'xdiagrams-icons';
+}
+
+.side-panel-title-thumbnail .grid:before {
+  content: "\\e938";
+  font-family: 'xdiagrams-icons';
+}
+
+.side-panel-title-thumbnail .home:before {
+  content: "\\e939";
+  font-family: 'xdiagrams-icons';
+}
+
+.side-panel-title-thumbnail .list:before {
+  content: "\\e93b";
+  font-family: 'xdiagrams-icons';
+}
+
+.side-panel-title-thumbnail .modal:before {
+  content: "\\e93c";
+  font-family: 'xdiagrams-icons';
+}
+
+.side-panel-title-thumbnail .profile:before {
+  content: "\\e941";
+  font-family: 'xdiagrams-icons';
+}
+
+.side-panel-title-thumbnail .report:before {
+  content: "\\e942";
+  font-family: 'xdiagrams-icons';
+}
+
+.side-panel-title-thumbnail .settings:before {
+  content: "\\e943";
+  font-family: 'xdiagrams-icons';
+}
+
+.side-panel-title-thumbnail .detail:before {
+  content: "\\e900";
+  font-family: 'xdiagrams-icons';
+}

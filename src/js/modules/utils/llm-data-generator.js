@@ -16,22 +16,27 @@ class XDiagramsLLMDataGenerator {
    * @param {Array} csvData - Datos del CSV
    * @param {Object} config - Configuración del diagrama
    */
-  async initialize(csvData, config = {}) {
+  async initialize(data, config) {
+    // Verificar si los datos LLM ya están actualizados
+    const lastUpdate = localStorage.getItem('xdiagrams_llm_last_update');
+    const now = Date.now();
+    const timeSinceLastUpdate = now - (lastUpdate ? parseInt(lastUpdate) : 0);
+    
+    // Si los datos se actualizaron hace menos de 1 hora, usar caché
+    if (lastUpdate && timeSinceLastUpdate < 3600000) {
+      return;
+    }
+    
     try {
-      console.log('[LLMDataGenerator] Inicializando generador de datos LLM...');
+      // Generar datos LLM
+      const llmData = this.generateLLMData(data, config);
       
-      // Verificar si necesitamos actualizar los datos
-      if (this.shouldUpdateData()) {
-        await this.generateLLMData(csvData, config);
-      } else {
-        console.log('[LLMDataGenerator] Datos LLM actualizados recientemente, usando caché');
-      }
-      
-      // Programar actualización periódica en segundo plano
-      this.scheduleBackgroundUpdate(csvData, config);
+      // Almacenar en localStorage
+      localStorage.setItem('xdiagrams_llm_data', JSON.stringify(llmData));
+      localStorage.setItem('xdiagrams_llm_last_update', now.toString());
       
     } catch (error) {
-      console.error('[LLMDataGenerator] Error inicializando:', error);
+      console.error('[LLMDataGenerator] Error generando datos LLM:', error);
     }
   }
 

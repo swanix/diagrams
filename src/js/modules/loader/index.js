@@ -7,9 +7,9 @@ import { XDiagramsDataLoader } from './data-loader.js';
 import { XDiagramsCache } from './cache.js';
 
 class XDiagramsLoader {
-  constructor() {
+  constructor(options = {}) {
     this.dataLoader = new XDiagramsDataLoader();
-    this.cache = new XDiagramsCache();
+    this.cache = new XDiagramsCache(options);
   }
 
   /**

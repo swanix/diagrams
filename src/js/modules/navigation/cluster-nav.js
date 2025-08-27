@@ -16,6 +16,15 @@ class XDiagramsClusterNav {
 
   zoomToCluster(clusterGroup, container, isTabNavigation = false, shouldDeselectNode = true) {
     try {
+      // Log para debugging
+      if (this.core.config && this.core.config.enableNavigationLogs !== false) {
+        console.log('🔍 [ClusterNav] zoomToCluster llamado:', {
+          isTabNavigation,
+          shouldDeselectNode,
+          clusterTitle: clusterGroup.select('.cluster-title').text()
+        });
+      }
+      
       const selectedNode = d3.select('.node-selected');
       if (!selectedNode.empty() && shouldDeselectNode) {
         this.core.uiManager.closeInfoPanel();
@@ -110,19 +119,16 @@ class XDiagramsClusterNav {
         // Primero limpiar selección de TODOS los clusters existentes
         this.clearClusterSelection();
         
-        // Seleccionar el nuevo cluster
-        bg.classed('cluster-focused', true);
-        bg.attr('data-selected', 'true');
-        bg.style('outline', 'none');
-        bg.node().focus();
-        
-        // Cluster seleccionado
-        
         // Remover bloqueadores para permitir interacción con nodos
         this.removeNodeBlockerOverlay();
         
-        // Aplicar estilo de cluster seleccionado
-        this.applySelectedClusterStyle(clusterGroup);
+              // Aplicar estilo de cluster seleccionado (esto maneja todo)
+      this.applySelectedClusterStyle(clusterGroup);
+      
+      // Log para debugging
+      if (this.core.config && this.core.config.enableNavigationLogs !== false) {
+        console.log('🎯 [ClusterNav] zoomToCluster completado para:', clusterGroup.select('.cluster-title').text());
+      }
       }
       
     } catch (error) {
@@ -155,12 +161,6 @@ class XDiagramsClusterNav {
       return;
     }
     
-    this.applyClusterStyle(clusterGroup, '#28a745', '6px');
-    
-    setTimeout(() => {
-      this.applyClusterStyle(clusterGroup, '#007bff', '4px');
-    }, 200);
-    
     this.zoomToCluster(clusterGroup, this.core.globalContainer, true);
   }
 
@@ -178,7 +178,6 @@ class XDiagramsClusterNav {
       if (firstCluster) {
         d3.select(firstCluster).node().focus();
         const clusterGroup = d3.select(firstCluster.parentNode);
-        this.highlightCluster(clusterGroup);
         this.zoomToCluster(clusterGroup, this.core.globalContainer, true);
       }
       return;
@@ -209,7 +208,6 @@ class XDiagramsClusterNav {
     }
 
     d3.select(nextCluster).node().focus();
-    this.highlightCluster(d3.select(nextCluster.parentNode));
     
     this.zoomToCluster(d3.select(nextCluster.parentNode), this.core.globalContainer, true);
   }
@@ -366,18 +364,13 @@ class XDiagramsClusterNav {
   }
 
   highlightCluster(clusterGroup) {
-    d3.selectAll('.cluster-bg:not(.cluster-focused)')
-      .style('stroke', 'var(--cluster-stroke)')
-      .style('stroke-width', '3px');
-    
-    this.applyClusterStyle(clusterGroup, 'var(--cluster-selected-stroke)', '6px');
-    
-    setTimeout(() => {
-      this.applyClusterStyle(clusterGroup, 'var(--cluster-hover-stroke)', '4px');
-    }, 200);
+    // Este método ya no se usa, pero se mantiene por compatibilidad
+    // La navegación ahora se maneja directamente en zoomToCluster
+    console.warn('highlightCluster is deprecated, use zoomToCluster instead');
   }
 
   deselectActiveCluster() {
+    // Limpiar focus de todos los clusters
     d3.selectAll('.cluster-bg').each(function() {
       this.blur();
     });
@@ -386,58 +379,60 @@ class XDiagramsClusterNav {
     d3.selectAll('.cluster-bg').classed('cluster-focused', false);
     d3.selectAll('.cluster-bg').classed('cluster-hover-simulated', false);
     d3.selectAll('.cluster-bg').attr('data-selected', 'false');
-    
-    // Restaurar estilos normales de todos los clusters
-    d3.selectAll('.cluster-bg')
-      .style('fill', 'var(--cluster-bg)')
-      .style('stroke', 'var(--cluster-stroke)')
-      .style('stroke-width', '3px');
-    
-    // Cluster deseleccionado
+    d3.selectAll('.cluster-bg').style('outline', null);
     
     // Recrear bloqueadores para volver a bloquear nodos
     this.createNodeBlockerOverlay();
-    
-    console.log('🔧 [ClusterNav] Cluster deseleccionado, bloqueadores recreados');
   }
 
   clearClusterSelection() {
-    // Solo limpiar selección sin recrear bloqueadores
+    // Remover selección de todos los clusters
+    d3.selectAll('.cluster-bg').classed('cluster-focused', false);
+    d3.selectAll('.cluster-bg').attr('data-selected', 'false');
+    d3.selectAll('.cluster-bg').style('outline', null);
+    d3.selectAll('.cluster-bg').classed('cluster-hover-simulated', false);
+    
+    // Limpiar focus de todos los clusters
     d3.selectAll('.cluster-bg').each(function() {
       this.blur();
     });
     
-    // Limpiar selección de todos los clusters
-    d3.selectAll('.cluster-bg').classed('cluster-focused', false);
-    d3.selectAll('.cluster-bg').classed('cluster-hover-simulated', false);
-    d3.selectAll('.cluster-bg').attr('data-selected', 'false');
+    // Recrear bloqueadores
+    this.recreateNodeBlockerOverlay();
+  }
+
+  recreateNodeBlockerOverlay() {
+    // Remover bloqueadores existentes
+    this.removeNodeBlockerOverlay();
     
-    // Restaurar estilos normales de todos los clusters
-    d3.selectAll('.cluster-bg')
-      .style('fill', 'var(--cluster-bg)')
-      .style('stroke', 'var(--cluster-stroke)')
-      .style('stroke-width', '3px');
-    
-    console.log('🔧 [ClusterNav] Selección de clusters limpiada');
+    // Crear nuevos bloqueadores
+    this.createNodeBlockerOverlay();
   }
 
   applyClusterStyle(clusterGroup, strokeColor, strokeWidth) {
-    // Solo aplicar estilo si el cluster no está seleccionado
-    const clusterBg = clusterGroup.select('.cluster-bg');
-    if (!clusterBg.empty() && clusterBg.attr('data-selected') !== 'true') {
-      clusterBg
-        .style('stroke', strokeColor)
-        .style('stroke-width', strokeWidth);
-    }
+    // Este método ya no se usa, pero se mantiene por compatibilidad
+    // Los estilos ahora se manejan principalmente a través de CSS
+    console.warn('applyClusterStyle is deprecated, styles are now handled by CSS');
   }
 
   applySelectedClusterStyle(clusterGroup) {
     const clusterBg = clusterGroup.select('.cluster-bg');
     if (!clusterBg.empty()) {
-      clusterBg
-        .style('fill', 'var(--cluster-selected-bg)')
-        .style('stroke', 'var(--cluster-selected-stroke)')
-        .style('stroke-width', '5px');
+      // Limpiar cualquier estado anterior del cluster
+      clusterBg.classed('cluster-hover-simulated', false);
+      
+      // Aplicar la clase CSS para activar los estilos de selección
+      clusterBg.classed('cluster-focused', true);
+      clusterBg.attr('data-selected', 'true');
+      clusterBg.style('outline', 'none');
+      
+      // Asegurar que el elemento tenga focus para accesibilidad
+      clusterBg.node().focus();
+      
+      // Log para debugging
+      if (this.core.config && this.core.config.enableNavigationLogs !== false) {
+        console.log('✅ [ClusterNav] Cluster seleccionado:', clusterGroup.select('.cluster-title').text());
+      }
     }
   }
 
@@ -495,21 +490,24 @@ class XDiagramsClusterNav {
               clusterBg.classed('cluster-hover-simulated', false);
             }
           })
-          .on('click', () => {
+          .on('click', (event) => {
+            // Prevenir que el evento se propague al cluster subyacente
+            event.stopPropagation();
+            event.preventDefault();
+            
             // Seleccionar el cluster y remover bloqueadores
-            this.zoomToCluster(cluster, null, false, true);
+            this.zoomToCluster(cluster, this.core.globalContainer, false, true);
             this.removeNodeBlockerOverlay();
           });
       }
     });
     
-    console.log('🔧 [ClusterNav] Rects SVG bloqueadores creados para cada cluster');
   }
 
   // Remover rects bloqueadores
   removeNodeBlockerOverlay() {
+    // Remover todos los bloqueadores existentes
     d3.selectAll('.cluster-node-blocker').remove();
-    console.log('🔧 [ClusterNav] Rects SVG bloqueadores removidos');
   }
 
   // Actualizar posición de los rects bloqueadores cuando cambia el tamaño de la ventana

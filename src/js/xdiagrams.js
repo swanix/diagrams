@@ -29,10 +29,12 @@ if (typeof window !== 'undefined') {
   window.XDiagrams = XDiagrams;
   
   // Crear instancia global para compatibilidad
-  window.xDiagramsLoader = new XDiagramsLoader();
+  const config = window.$xDiagrams || {};
+  window.xDiagramsLoader = new XDiagramsLoader({
+    disableCache: config.disableCache || false
+  });
 
   // Inicializar el sistema de temas
-  const config = window.$xDiagrams || {};
   const themeOptions = {
     showThemeToggle: config.showThemeToggle !== false
   };
@@ -41,16 +43,11 @@ if (typeof window !== 'undefined') {
 
     // Función para inicializar el diagrama
   function initializeDiagram() {
-    console.log('🚀 [XDiagrams] initializeDiagram llamado');
     const config = window.$xDiagrams || {};
-    console.log('📋 [XDiagrams] Configuración encontrada:', config);
-    console.log('📋 [XDiagrams] Configuración tiene keys:', Object.keys(config));
     
     if (Object.keys(config).length > 0) {
-      console.log('✅ [XDiagrams] Configuración válida, creando diagrama...');
       try {
         const diagram = new XDiagrams(config);
-        console.log('✅ [XDiagrams] Diagrama creado, inicializando...');
         diagram.initDiagram();
         
         // Asignar la instancia del diagrama al objeto global para acceso desde otros módulos
@@ -76,15 +73,11 @@ if (typeof window !== 'undefined') {
   }
 
   // Inicializar diagrama cuando el DOM esté listo
-  console.log('📋 [XDiagrams] Estado del DOM:', document.readyState);
-  
   if (document.readyState === 'loading') {
     // El DOM aún no está cargado, esperar el evento
-    console.log('⏳ [XDiagrams] DOM cargando, esperando DOMContentLoaded...');
     document.addEventListener('DOMContentLoaded', initializeDiagram);
   } else {
     // El DOM ya está cargado, inicializar inmediatamente
-    console.log('✅ [XDiagrams] DOM ya cargado, inicializando inmediatamente...');
     initializeDiagram();
   }
 }

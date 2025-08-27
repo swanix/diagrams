@@ -299,9 +299,6 @@ class XDiagramsDataLoader {
         skipEmptyLines: true,
         ...options,
         complete: (results) => {
-          if (results.errors.length > 0) {
-            console.warn('Errores en parsing CSV:', results.errors);
-          }
           resolve(results.data);
         },
         error: (error) => {
@@ -368,7 +365,7 @@ class XDiagramsDataLoader {
     try {
       // Starting data load from source
       
-      sourceType = this.sourceDetector.detectSourceType(source);
+      sourceType = this.sourceDetector.detectSourceType(source, options);
       // Detected source type
       
       let data;

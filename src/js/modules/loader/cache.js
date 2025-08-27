@@ -4,11 +4,12 @@
  */
 
 class XDiagramsCache {
-  constructor() {
+  constructor(options = {}) {
     this.config = {
       ttl: 3600000, // 1 hora por defecto
       maxSize: 10, // 10MB
-      version: '1.0'
+      version: '1.0',
+      disabled: options.disableCache || false // Nueva opción para desactivar caché
     };
     
     // Estado de carga
@@ -27,6 +28,11 @@ class XDiagramsCache {
   }
 
   shouldCache(url) {
+    // Si la caché está desactivada, no cachear nada
+    if (this.config.disabled) {
+      return false;
+    }
+    
     try {
       const parsed = new URL(url, window.location.href);
       if (parsed.origin === window.location.origin) return false;

@@ -35,6 +35,10 @@ class XDiagramsZoomControls {
     zoomInput.onchange = (e) => this.setZoomFromInput(e.target.value);
     zoomInput.onkeydown = (e) => {
       if (e.key === 'Enter') {
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+        this.setZoomFromInput(e.target.value);
         e.target.blur();
       }
     };

@@ -193,9 +193,9 @@ class XDiagramsNodeNav {
     d3.selectAll('.node-selected')
       .classed('node-selected', false);
     
-    if (parentClusterGroup) {
+    if (parentClusterGroup && !parentClusterGroup.empty()) {
       try {
-        this.navigation.clusterNavInstance.zoomToCluster(parentClusterGroup, this.core.globalContainer, false, true);
+        this.core.navigation.clusterNavInstance.zoomToCluster(parentClusterGroup, this.core.globalContainer, false, true);
       } catch (error) {
         console.error('Error calling zoomToCluster from exitNodeNavigationMode:', error);
       }

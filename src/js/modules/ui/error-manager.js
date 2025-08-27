@@ -17,45 +17,21 @@ class XDiagramsErrorManager {
 
     const errorContainer = document.createElement('div');
     errorContainer.id = 'xdiagrams-error';
-    errorContainer.style.cssText = `
-      position: fixed;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      background: #dc3545;
-      color: white;
-      padding: 20px;
-      border-radius: 8px;
-      font-family: Arial, sans-serif;
-      font-size: 14px;
-      max-width: 500px;
-      z-index: 10000;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.3);
-      text-align: center;
-    `;
+    errorContainer.className = 'xdiagrams-error-dialog';
 
     const title = document.createElement('h3');
-    title.textContent = 'Error al cargar el diagrama';
-    title.style.cssText = 'margin: 0 0 15px 0; font-size: 18px;';
+    title.textContent = 'No se pudo cargar el diagrama';
+    title.className = 'xdiagrams-error-title';
     errorContainer.appendChild(title);
 
     const message = document.createElement('p');
     message.textContent = error.message || 'Error desconocido al cargar los datos';
-    message.style.cssText = 'margin: 0 0 15px 0; line-height: 1.4;';
+    message.className = 'xdiagrams-error-message';
     errorContainer.appendChild(message);
 
     const retryButton = document.createElement('button');
     retryButton.textContent = 'Reintentar';
-    retryButton.style.cssText = `
-      background: white;
-      color: #dc3545;
-      border: none;
-      padding: 8px 16px;
-      border-radius: 4px;
-      cursor: pointer;
-      font-size: 14px;
-      margin-right: 10px;
-    `;
+    retryButton.className = 'xdiagrams-error-retry-btn';
     retryButton.onclick = () => {
       errorContainer.remove();
       // Emitir evento para reintentar
@@ -64,20 +40,13 @@ class XDiagramsErrorManager {
 
     const closeButton = document.createElement('button');
     closeButton.textContent = 'Cerrar';
-    closeButton.style.cssText = `
-      background: transparent;
-      color: white;
-      border: 1px solid white;
-      padding: 8px 16px;
-      border-radius: 4px;
-      cursor: pointer;
-      font-size: 14px;
-    `;
+    closeButton.className = 'xdiagrams-error-close-btn';
     closeButton.onclick = () => {
       errorContainer.remove();
     };
 
     const buttonContainer = document.createElement('div');
+    buttonContainer.className = 'xdiagrams-error-buttons';
     buttonContainer.appendChild(retryButton);
     buttonContainer.appendChild(closeButton);
     errorContainer.appendChild(buttonContainer);

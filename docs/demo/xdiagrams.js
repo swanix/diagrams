@@ -1,5 +1,5 @@
 /**
- * @swanix/diagrams v0.9.2
+ * @swanix/diagrams v0.9.3
  */
 var xhtml = "http://www.w3.org/1999/xhtml";
 const namespaces = {
@@ -3017,7 +3017,6 @@ function tree() {
 let d3$2;
 if (typeof window !== "undefined" && window.d3) {
   d3$2 = window.d3;
-  console.log("✅ Usando D3 desde CDN (GitHub Pages)");
 } else {
   try {
     d3$2 = {
@@ -3030,7 +3029,6 @@ if (typeof window !== "undefined" && window.d3) {
       tree,
       easeCubicOut: cubicOut
     };
-    console.log("✅ Usando D3 desde módulos ES6 (desarrollo)");
   } catch (error) {
     console.error("❌ Error cargando D3:", error);
     throw new Error("D3 no está disponible ni globalmente ni como módulo ES6");
@@ -3519,11 +3517,9 @@ const Papa$1 = /* @__PURE__ */ getDefaultExportFromCjs(papaparse_minExports);
 let PapaInstance;
 if (typeof window !== "undefined" && window.Papa) {
   PapaInstance = window.Papa;
-  console.log("✅ Usando PapaParse desde CDN (GitHub Pages)");
 } else {
   try {
     PapaInstance = Papa$1;
-    console.log("✅ Usando PapaParse desde módulos ES6 (desarrollo)");
   } catch (error) {
     console.error("❌ Error cargando PapaParse:", error);
     throw new Error("PapaParse no está disponible ni globalmente ni como módulo ES6");
@@ -3551,23 +3547,20 @@ class XDiagramsSourceDetector {
         ".json"
       ],
       protectedApi: [
-        "sheet.best",
-        "sheetbest.com",
-        "api.sheetbest.com"
+        "sheet.best"
+        // Removido sheetbest.com y api.sheetbest.com para permitir URLs públicas
       ]
     };
   }
   /**
    * Detecta el tipo de fuente de datos
    * @param {string|Array|Object} source - La fuente de datos
+   * @param {Object} options - Opciones adicionales (ej: privateApi)
    * @returns {string} El tipo de fuente detectado
    */
-  detectSourceType(source) {
-    console.log(`🔍 [SourceDetector] detectSourceType llamado con:`, source);
-    console.log(`🔍 [SourceDetector] Tipo de source:`, typeof source);
+  detectSourceType(source, options = {}) {
     if (typeof source === "string") {
-      const result = this.detectStringSource(source);
-      console.log(`🔍 [SourceDetector] Resultado para string: ${result}`);
+      const result = this.detectStringSource(source, options);
       return result;
     }
     if (Array.isArray(source)) {
@@ -3581,15 +3574,15 @@ class XDiagramsSourceDetector {
   /**
    * Detecta el tipo de fuente cuando es un string (URL)
    * @param {string} source - La URL o string fuente
+   * @param {Object} options - Opciones adicionales (ej: privateApi)
    * @returns {string} El tipo de fuente detectado
    */
-  detectStringSource(source) {
+  detectStringSource(source, options = {}) {
     const url = source.toLowerCase();
-    console.log(`🔍 [SourceDetector] Analizando URL: ${source}`);
-    console.log(`🔍 [SourceDetector] URL en minúsculas: ${url}`);
-    console.log(`🔍 [SourceDetector] Patrones protegidos:`, this.sourcePatterns.protectedApi);
+    if (options.privateApi && (url.includes("sheetbest.com") || url.includes("api.sheetbest.com"))) {
+      return "protected-api";
+    }
     if (this.sourcePatterns.protectedApi.some((pattern) => url.includes(pattern))) {
-      console.log(`✅ [SourceDetector] Detectada como API protegida`);
       return "protected-api";
     }
     if (this.sourcePatterns.googleSheets.some((pattern) => url.includes(pattern))) {
@@ -4041,9 +4034,6 @@ class XDiagramsDataLoader {
         skipEmptyLines: true,
         ...options,
         complete: (results) => {
-          if (results.errors.length > 0) {
-            console.warn("Errores en parsing CSV:", results.errors);
-          }
           resolve(results.data);
         },
         error: (error) => {
@@ -4093,7 +4083,7 @@ class XDiagramsDataLoader {
   async loadData(source, onComplete, options = {}) {
     let sourceType;
     try {
-      sourceType = this.sourceDetector.detectSourceType(source);
+      sourceType = this.sourceDetector.detectSourceType(source, options);
       let data;
       switch (sourceType) {
         case "protected-api":
@@ -4167,13 +4157,15 @@ Sugerencias:
   }
 }
 class XDiagramsCache {
-  constructor() {
+  constructor(options = {}) {
     this.config = {
       ttl: 36e5,
       // 1 hora por defecto
       maxSize: 10,
       // 10MB
-      version: "1.0"
+      version: "1.0",
+      disabled: options.disableCache || false
+      // Nueva opción para desactivar caché
     };
     this.isLoading = false;
     this.currentUrl = null;
@@ -4188,6 +4180,9 @@ class XDiagramsCache {
     return `xdiagrams_cache_${Math.abs(hash)}`;
   }
   shouldCache(url) {
+    if (this.config.disabled) {
+      return false;
+    }
     try {
       const parsed = new URL(url, window.location.href);
       if (parsed.origin === window.location.origin)
@@ -4281,9 +4276,9 @@ class XDiagramsCache {
   }
 }
 class XDiagramsLoader {
-  constructor() {
+  constructor(options = {}) {
     this.dataLoader = new XDiagramsDataLoader();
-    this.cache = new XDiagramsCache();
+    this.cache = new XDiagramsCache(options);
   }
   /**
    * Carga datos desde cualquier fuente
@@ -4892,6 +4887,10 @@ class XDiagramsZoomControls {
     zoomInput.onchange = (e) => this.setZoomFromInput(e.target.value);
     zoomInput.onkeydown = (e) => {
       if (e.key === "Enter") {
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+        this.setZoomFromInput(e.target.value);
         e.target.blur();
       }
     };
@@ -5146,10 +5145,14 @@ class XDiagramsZoomManager {
     clusterBgs.classed("zoom-out", false).classed("zoom-in", false);
     if (zoomLevel <= 0.1) {
       clusterBgs.classed("zoom-out", true);
-      console.log("[ZoomClasses] Applied zoom-out class (zoom <= 10%):", zoomLevel);
+      if (this.navigation && this.navigation.core && this.navigation.core.config && this.navigation.core.config.enableNavigationLogs !== false) {
+        console.log("[ZoomClasses] Applied zoom-out class (zoom <= 10%):", zoomLevel);
+      }
     } else {
       clusterBgs.classed("zoom-in", true);
-      console.log("[ZoomClasses] Applied zoom-in class (zoom > 10%):", zoomLevel);
+      if (this.navigation && this.navigation.core && this.navigation.core.config && this.navigation.core.config.enableNavigationLogs !== false) {
+        console.log("[ZoomClasses] Applied zoom-in class (zoom > 10%):", zoomLevel);
+      }
     }
   }
   /**
@@ -5302,6 +5305,13 @@ class XDiagramsClusterNav {
   }
   zoomToCluster(clusterGroup, container, isTabNavigation = false, shouldDeselectNode = true) {
     try {
+      if (this.core.config && this.core.config.enableNavigationLogs !== false) {
+        console.log("🔍 [ClusterNav] zoomToCluster llamado:", {
+          isTabNavigation,
+          shouldDeselectNode,
+          clusterTitle: clusterGroup.select(".cluster-title").text()
+        });
+      }
       const selectedNode = d3.select(".node-selected");
       if (!selectedNode.empty() && shouldDeselectNode) {
         this.core.uiManager.closeInfoPanel();
@@ -5371,12 +5381,11 @@ class XDiagramsClusterNav {
       const bg = clusterGroup.select(".cluster-bg");
       if (!bg.empty()) {
         this.clearClusterSelection();
-        bg.classed("cluster-focused", true);
-        bg.attr("data-selected", "true");
-        bg.style("outline", "none");
-        bg.node().focus();
         this.removeNodeBlockerOverlay();
         this.applySelectedClusterStyle(clusterGroup);
+        if (this.core.config && this.core.config.enableNavigationLogs !== false) {
+          console.log("🎯 [ClusterNav] zoomToCluster completado para:", clusterGroup.select(".cluster-title").text());
+        }
       }
     } catch (error) {
     }
@@ -5398,10 +5407,6 @@ class XDiagramsClusterNav {
     if (clusterGroup.empty()) {
       return;
     }
-    this.applyClusterStyle(clusterGroup, "#28a745", "6px");
-    setTimeout(() => {
-      this.applyClusterStyle(clusterGroup, "#007bff", "4px");
-    }, 200);
     this.zoomToCluster(clusterGroup, this.core.globalContainer, true);
   }
   handleArrowNavigation(arrowKey) {
@@ -5416,7 +5421,6 @@ class XDiagramsClusterNav {
       if (firstCluster) {
         d3.select(firstCluster).node().focus();
         const clusterGroup = d3.select(firstCluster.parentNode);
-        this.highlightCluster(clusterGroup);
         this.zoomToCluster(clusterGroup, this.core.globalContainer, true);
       }
       return;
@@ -5443,7 +5447,6 @@ class XDiagramsClusterNav {
       return;
     }
     d3.select(nextCluster).node().focus();
-    this.highlightCluster(d3.select(nextCluster.parentNode));
     this.zoomToCluster(d3.select(nextCluster.parentNode), this.core.globalContainer, true);
   }
   getPreviousClusterInRow(currentIndex, allClusters) {
@@ -5564,11 +5567,7 @@ class XDiagramsClusterNav {
     return bestIndex;
   }
   highlightCluster(clusterGroup) {
-    d3.selectAll(".cluster-bg:not(.cluster-focused)").style("stroke", "var(--cluster-stroke)").style("stroke-width", "3px");
-    this.applyClusterStyle(clusterGroup, "var(--cluster-selected-stroke)", "6px");
-    setTimeout(() => {
-      this.applyClusterStyle(clusterGroup, "var(--cluster-hover-stroke)", "4px");
-    }, 200);
+    console.warn("highlightCluster is deprecated, use zoomToCluster instead");
   }
   deselectActiveCluster() {
     d3.selectAll(".cluster-bg").each(function() {
@@ -5577,30 +5576,37 @@ class XDiagramsClusterNav {
     d3.selectAll(".cluster-bg").classed("cluster-focused", false);
     d3.selectAll(".cluster-bg").classed("cluster-hover-simulated", false);
     d3.selectAll(".cluster-bg").attr("data-selected", "false");
-    d3.selectAll(".cluster-bg").style("fill", "var(--cluster-bg)").style("stroke", "var(--cluster-stroke)").style("stroke-width", "3px");
+    d3.selectAll(".cluster-bg").style("outline", null);
     this.createNodeBlockerOverlay();
-    console.log("🔧 [ClusterNav] Cluster deseleccionado, bloqueadores recreados");
   }
   clearClusterSelection() {
+    d3.selectAll(".cluster-bg").classed("cluster-focused", false);
+    d3.selectAll(".cluster-bg").attr("data-selected", "false");
+    d3.selectAll(".cluster-bg").style("outline", null);
+    d3.selectAll(".cluster-bg").classed("cluster-hover-simulated", false);
     d3.selectAll(".cluster-bg").each(function() {
       this.blur();
     });
-    d3.selectAll(".cluster-bg").classed("cluster-focused", false);
-    d3.selectAll(".cluster-bg").classed("cluster-hover-simulated", false);
-    d3.selectAll(".cluster-bg").attr("data-selected", "false");
-    d3.selectAll(".cluster-bg").style("fill", "var(--cluster-bg)").style("stroke", "var(--cluster-stroke)").style("stroke-width", "3px");
-    console.log("🔧 [ClusterNav] Selección de clusters limpiada");
+    this.recreateNodeBlockerOverlay();
+  }
+  recreateNodeBlockerOverlay() {
+    this.removeNodeBlockerOverlay();
+    this.createNodeBlockerOverlay();
   }
   applyClusterStyle(clusterGroup, strokeColor, strokeWidth) {
-    const clusterBg = clusterGroup.select(".cluster-bg");
-    if (!clusterBg.empty() && clusterBg.attr("data-selected") !== "true") {
-      clusterBg.style("stroke", strokeColor).style("stroke-width", strokeWidth);
-    }
+    console.warn("applyClusterStyle is deprecated, styles are now handled by CSS");
   }
   applySelectedClusterStyle(clusterGroup) {
     const clusterBg = clusterGroup.select(".cluster-bg");
     if (!clusterBg.empty()) {
-      clusterBg.style("fill", "var(--cluster-selected-bg)").style("stroke", "var(--cluster-selected-stroke)").style("stroke-width", "5px");
+      clusterBg.classed("cluster-hover-simulated", false);
+      clusterBg.classed("cluster-focused", true);
+      clusterBg.attr("data-selected", "true");
+      clusterBg.style("outline", "none");
+      clusterBg.node().focus();
+      if (this.core.config && this.core.config.enableNavigationLogs !== false) {
+        console.log("✅ [ClusterNav] Cluster seleccionado:", clusterGroup.select(".cluster-title").text());
+      }
     }
   }
   // Método para deseleccionar cluster cuando se hace clic fuera
@@ -5631,18 +5637,18 @@ class XDiagramsClusterNav {
           if (clusterBg.attr("data-selected") !== "true") {
             clusterBg.classed("cluster-hover-simulated", false);
           }
-        }).on("click", () => {
-          this.zoomToCluster(cluster, null, false, true);
+        }).on("click", (event2) => {
+          event2.stopPropagation();
+          event2.preventDefault();
+          this.zoomToCluster(cluster, this.core.globalContainer, false, true);
           this.removeNodeBlockerOverlay();
         });
       }
     });
-    console.log("🔧 [ClusterNav] Rects SVG bloqueadores creados para cada cluster");
   }
   // Remover rects bloqueadores
   removeNodeBlockerOverlay() {
     d3.selectAll(".cluster-node-blocker").remove();
-    console.log("🔧 [ClusterNav] Rects SVG bloqueadores removidos");
   }
   // Actualizar posición de los rects bloqueadores cuando cambia el tamaño de la ventana
   updateOverlayPosition() {
@@ -5801,9 +5807,9 @@ class XDiagramsNodeNav {
       }
     }
     d3.selectAll(".node-selected").classed("node-selected", false);
-    if (parentClusterGroup) {
+    if (parentClusterGroup && !parentClusterGroup.empty()) {
       try {
-        this.navigation.clusterNavInstance.zoomToCluster(parentClusterGroup, this.core.globalContainer, false, true);
+        this.core.navigation.clusterNavInstance.zoomToCluster(parentClusterGroup, this.core.globalContainer, false, true);
       } catch (error) {
         console.error("Error calling zoomToCluster from exitNodeNavigationMode:", error);
       }
@@ -6346,61 +6352,30 @@ class XDiagramsErrorManager {
     }
     const errorContainer = document.createElement("div");
     errorContainer.id = "xdiagrams-error";
-    errorContainer.style.cssText = `
-      position: fixed;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      background: #dc3545;
-      color: white;
-      padding: 20px;
-      border-radius: 8px;
-      font-family: Arial, sans-serif;
-      font-size: 14px;
-      max-width: 500px;
-      z-index: 10000;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.3);
-      text-align: center;
-    `;
+    errorContainer.className = "xdiagrams-error-dialog";
     const title = document.createElement("h3");
-    title.textContent = "Error al cargar el diagrama";
-    title.style.cssText = "margin: 0 0 15px 0; font-size: 18px;";
+    title.textContent = "No se pudo cargar el diagrama";
+    title.className = "xdiagrams-error-title";
     errorContainer.appendChild(title);
     const message = document.createElement("p");
     message.textContent = error.message || "Error desconocido al cargar los datos";
-    message.style.cssText = "margin: 0 0 15px 0; line-height: 1.4;";
+    message.className = "xdiagrams-error-message";
     errorContainer.appendChild(message);
     const retryButton = document.createElement("button");
     retryButton.textContent = "Reintentar";
-    retryButton.style.cssText = `
-      background: white;
-      color: #dc3545;
-      border: none;
-      padding: 8px 16px;
-      border-radius: 4px;
-      cursor: pointer;
-      font-size: 14px;
-      margin-right: 10px;
-    `;
+    retryButton.className = "xdiagrams-error-retry-btn";
     retryButton.onclick = () => {
       errorContainer.remove();
       window.dispatchEvent(new CustomEvent("xdiagrams-retry"));
     };
     const closeButton = document.createElement("button");
     closeButton.textContent = "Cerrar";
-    closeButton.style.cssText = `
-      background: transparent;
-      color: white;
-      border: 1px solid white;
-      padding: 8px 16px;
-      border-radius: 4px;
-      cursor: pointer;
-      font-size: 14px;
-    `;
+    closeButton.className = "xdiagrams-error-close-btn";
     closeButton.onclick = () => {
       errorContainer.remove();
     };
     const buttonContainer = document.createElement("div");
+    buttonContainer.className = "xdiagrams-error-buttons";
     buttonContainer.appendChild(retryButton);
     buttonContainer.appendChild(closeButton);
     errorContainer.appendChild(buttonContainer);
@@ -6564,319 +6539,12 @@ class XDiagramsInfoPanel {
     };
     this.isClosing = false;
     this.infoPanelElements = /* @__PURE__ */ new Map();
+    this.thumbsSystem = options.thumbsSystem || null;
     this.ensureStylesInjected();
     this.ensurePanel();
   }
   // ===== GESTIÓN DEL PANEL =====
   ensureStylesInjected() {
-    if (document.getElementById("xdiagrams-infopanel-styles"))
-      return;
-    const style = document.createElement("style");
-    style.id = "xdiagrams-infopanel-styles";
-    style.textContent = `
-      .side-panel { 
-        position: fixed; 
-        top: 0; 
-        right: 0; 
-        width: 360px; 
-        height: 100%;
-        background: var(--ui-panel-bg); 
-        color: var(--ui-panel-text); 
-        box-shadow: var(--side-panel-shadow);
-        z-index: 10050; 
-        transform: translateX(100%); 
-        transition: transform var(--transition-normal);
-      }
-      .side-panel.open { transform: translateX(0); }
-      
-      .side-panel-header { 
-        display: flex; 
-        align-items: center; 
-        justify-content: space-between;
-        padding: 28px 20px 24px; 
-        border-bottom: 1px solid var(--ui-panel-border); 
-      }
-      
-      .side-panel-title { 
-        margin: 0; 
-        font-size: 18px; 
-        font-weight: 600; 
-        display: flex; 
-        gap: 16px; 
-        align-items: flex-start; 
-        flex: 1;
-        min-width: 0;
-        position: relative;
-      }
-      
-
-      
-      .side-panel-title-content {
-        display: flex;
-        flex-direction: column;
-        gap: 4px;
-        flex: 1;
-        min-width: 0;
-      }
-      
-      .side-panel-title-text {
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        flex: 1;
-      }
-      
-      .side-panel-title-id {
-        font-size: 11px;
-        color: var(--ui-panel-text-muted);
-        font-weight: normal;
-        opacity: 0.8;
-      }
-      
-      .side-panel-title-text {
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        flex: 1;
-      }
-      
-      .side-panel-title-thumbnail {
-        width: 36px;
-        height: 36px;
-        object-fit: contain;
-        flex-shrink: 0;
-        border-radius: 8px;
-        background: var(--ui-control-bg);
-        border: 1px solid var(--ui-control-border);
-        margin-left: 8px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        padding-top: 2px;
-      }
-      
-      .side-panel-title-thumbnail.embedded-thumbnail {
-        background: transparent;
-        border: none;
-      }
-      
-      .side-panel-title-thumbnail.custom-image {
-        border-radius: 6px;
-      }
-      
-      .side-panel-title-thumbnail .detail:before {
-        content: "\\e900";
-        font-family: 'xdiagrams-icons';
-      }
-      
-      .side-panel-title-thumbnail .document:before {
-        content: "\\e901";
-        font-family: 'xdiagrams-icons';
-      }
-      
-      .side-panel-title-thumbnail .form:before {
-        content: "\\e934";
-        font-family: 'xdiagrams-icons';
-      }
-      
-      .side-panel-title-thumbnail .grid:before {
-        content: "\\e938";
-        font-family: 'xdiagrams-icons';
-      }
-      
-      .side-panel-title-thumbnail .home:before {
-        content: "\\e939";
-        font-family: 'xdiagrams-icons';
-      }
-      
-      .side-panel-title-thumbnail .list:before {
-        content: "\\e93b";
-        font-family: 'xdiagrams-icons';
-      }
-      
-      .side-panel-title-thumbnail .modal:before {
-        content: "\\e93c";
-        font-family: 'xdiagrams-icons';
-      }
-      
-      .side-panel-title-thumbnail .profile:before {
-        content: "\\e941";
-        font-family: 'xdiagrams-icons';
-      }
-      
-      .side-panel-title-thumbnail .report:before {
-        content: "\\e942";
-        font-family: 'xdiagrams-icons';
-      }
-      
-      .side-panel-title-thumbnail .settings:before {
-        content: "\\e943";
-        font-family: 'xdiagrams-icons';
-      }
-      
-      .side-panel-close { 
-        cursor: pointer; 
-        font-size: 24px; 
-        line-height: 1; 
-        opacity: .8; 
-        color: var(--ui-panel-text);
-        transition: opacity var(--transition-fast);
-      }
-      .side-panel-close:hover { opacity: 1; }
-      
-      .side-panel-id-tag { 
-        padding: 6px 16px; 
-        font-size: 12px; 
-        opacity: .8; 
-        color: var(--ui-panel-text-muted);
-      }
-      
-      .side-panel-content { 
-        padding: 20px 32px 28px; 
-        overflow: auto; 
-        height: calc(100% - 92px); 
-      }
-      
-      .side-panel-fields-table { 
-        display: grid; 
-        grid-template-columns: 1fr; 
-        gap: 10px; 
-      }
-      
-      .side-panel-field { 
-        display: grid; 
-        grid-template-columns: 30% 70%; 
-        gap: 8px; 
-        align-items: start; 
-      }
-      
-      .side-panel-label { 
-        color: var(--ui-panel-text-muted); 
-        font-size: 12px; 
-      }
-      
-      .side-panel-value { 
-        color: var(--ui-panel-text); 
-        font-size: 12px; 
-        word-break: break-word; 
-      }
-      
-      .side-panel-value.empty { 
-        opacity: .5; 
-        font-style: italic; 
-      }
-      
-      .side-panel-url-link {
-        color: var(--ui-focus);
-        text-decoration: none;
-        transition: color var(--transition-fast);
-      }
-      
-      .side-panel-url-link:hover {
-        text-decoration: underline;
-      }
-      
-      /* ===== SECCIÓN DE URL ===== */
-      .side-panel-url-section {
-        padding: 16px 20px;
-        border-bottom: 1px solid var(--ui-panel-border);
-        background: var(--ui-panel-bg);
-      }
-      
-      .side-panel-url-input-container {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-      }
-      
-      .side-panel-url-input {
-        flex: 1;
-        padding: 8px 12px;
-        border: 1px solid var(--ui-panel-border);
-        border-radius: 4px;
-        background: var(--ui-panel-bg);
-        color: var(--ui-panel-text-muted);
-        font-size: 10px;
-        font-family: monospace;
-        outline: none;
-        transition: border-color var(--transition-fast);
-        opacity: 0.7;
-      }
-      
-      .side-panel-url-input:focus {
-        opacity: 1;
-      }
-      
-      .side-panel-url-input:read-only {
-        background: var(--ui-panel-bg-muted);
-        color: var(--ui-panel-text-muted);
-        cursor: default;
-      }
-      
-      .side-panel-url-button {
-        background: hsl(var(--color-base) 15% / 1);
-        border: none;
-        border-radius: 50%;
-        color: var(--ui-panel-text);
-        font-size: 14px;
-        font-weight: bold;
-        width: 28px;
-        height: 28px;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        transition: all 0.2s ease;
-        user-select: none;
-      }
-      
-      .side-panel-url-button:hover {
-        background: hsl(var(--color-base) 10% / 1);
-        transform: scale(1.05);
-      }
-      
-      .side-panel-url-button:active {
-        background: hsl(var(--color-base) 10% / 1);
-        transform: scale(0.95);
-      }
-      
-      .side-panel-url-button-icon {
-        width: 14px;
-        height: 14px;
-        color: currentColor;
-        display: block;
-      }
-      
-      /* ===== BOTÓN DE COLAPSAR ===== */
-      .side-panel-collapse-btn {
-        position: fixed;
-        bottom: 12px;
-        right: 318px;
-        background: transparent;
-        border: none;
-        border-radius: 6px;
-        color: var(--ui-control-text);
-        width: 40px;
-        height: 40px;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        transition: all 0.2s ease;
-        z-index: 10051;
-      }
-      
-      .side-panel-collapse-btn:hover {
-        background: var(--ui-control-bg-hover);
-        transform: scale(1.05);
-      }
-      
-      .side-panel-collapse-btn:active {
-        background: var(--ui-control-bg-active);
-        transform: scale(0.95);
-      }
-    `;
-    document.head.appendChild(style);
   }
   ensurePanel() {
     if (document.getElementById(this.options.panelId))
@@ -6905,12 +6573,7 @@ class XDiagramsInfoPanel {
         </div>
       </div>
       <div class="side-panel-content" id="side-panel-content"></div>
-      <button class="side-panel-collapse-btn" id="side-panel-collapse-btn" type="button" aria-label="Colapsar panel">
-        <svg width="24" height="24" viewBox="0 0 30 30" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M13.7695 19.0498C13.7273 19.425 13.7305 19.8043 13.7812 20.1787H8.56445C8.25269 20.1786 8 19.926 8 19.6143C8.00008 19.3025 8.25274 19.0499 8.56445 19.0498H13.7695ZM18.7002 19.96C18.4806 20.1796 18.125 20.1795 17.9053 19.96C17.6856 19.7403 17.6856 19.3847 17.9053 19.165L18.0205 19.0498H19.6104L18.7002 19.96ZM16.3506 15.0625L15.751 15.6621H8.56445C8.25269 15.662 8 15.4085 8 15.0967C8.00023 14.7851 8.25284 14.5323 8.56445 14.5322H15.8203L16.3506 15.0625ZM13.7734 10.0156C13.7283 10.3906 13.7295 10.7699 13.7773 11.1445H8.56445C8.25279 11.1444 8.00015 10.8917 8 10.5801C8 10.2683 8.25269 10.0157 8.56445 10.0156H13.7734ZM18.4268 10.0156C18.5267 10.0383 18.6223 10.0872 18.7002 10.165L19.6797 11.1445H18.0898L17.9053 10.96C17.6856 10.7403 17.6856 10.3847 17.9053 10.165C17.9833 10.0871 18.0786 10.0382 18.1787 10.0156H18.4268Z" fill="currentColor"/>
-          <path fill-rule="evenodd" clip-rule="evenodd" d="M17.905 10.1648C17.6853 10.3844 17.6853 10.7406 17.905 10.9602L22.0072 15.0625L17.905 19.1648C17.6853 19.3844 17.6853 19.7406 17.905 19.9602C18.1247 20.1799 18.4808 20.1799 18.7005 19.9602L23.2005 15.4602C23.4202 15.2406 23.4202 14.8844 23.2005 14.6648L18.7005 10.1648C18.4808 9.94508 18.1247 9.94508 17.905 10.1648Z" fill="currentColor"/>
-        </svg>
-      </button>
+      <button class="side-panel-collapse-btn" id="side-panel-collapse-btn" type="button" aria-label="Colapsar panel"></button>
     `;
     document.body.appendChild(panel);
     panel.querySelector("#side-panel-collapse-btn")?.addEventListener("click", () => this.close());
@@ -6929,11 +6592,9 @@ class XDiagramsInfoPanel {
       return;
     const title = nodeData?.name || nodeData?.Name || nodeData.data && nodeData.data.name || nodeData.data && nodeData.data.Name || nodeData?.title || "Nodo";
     const nodeIdValue = nodeData?.id ?? nodeData?.ID ?? nodeData?.Node ?? (nodeData.data && nodeData.data.id) ?? (nodeData.data && nodeData.data.ID) ?? (nodeData.data && nodeData.data.Node) ?? "";
-    console.log("[InfoPanel] nodeData:", JSON.stringify(nodeData, null, 2));
     titleEl.textContent = String(title);
     titleIdEl.textContent = nodeIdValue || "";
     const url = this.findUrl(nodeData);
-    console.log("[InfoPanel] URL encontrada:", url);
     if (url && urlSection && urlInput) {
       urlInput.value = url;
       urlSection.style.display = "block";
@@ -6955,17 +6616,44 @@ class XDiagramsInfoPanel {
   }
   async createThumbnail(thumbnailEl, nodeData, diagramConfig = {}) {
     try {
+      let thumbnailResolver = null;
+      if (this.thumbsSystem && this.thumbsSystem.resolverInstance) {
+        thumbnailResolver = this.thumbsSystem.resolverInstance;
+      } else {
+        if (window.xDiagramsLoader && window.xDiagramsLoader.instance && window.xDiagramsLoader.instance.thumbs) {
+          thumbnailResolver = window.xDiagramsLoader.instance.thumbs.resolverInstance;
+        } else if (window.XDiagrams && window.XDiagrams.instance && window.XDiagrams.instance.thumbs) {
+          thumbnailResolver = window.XDiagrams.instance.thumbs.resolverInstance;
+        }
+      }
+      if (thumbnailResolver) {
+        const thumbnail = thumbnailResolver.resolveThumbnail(nodeData);
+        if (thumbnail.type === "external-image") {
+          thumbnailEl.innerHTML = `<img src="${thumbnail.value}" class="custom-image" width="36" height="36" style="opacity: 1; transition: opacity 0.2s ease-in-out;" onerror="this.style.display='none'">`;
+          return;
+        } else if (thumbnail.type === "custom-icon") {
+          const iconUnicode2 = this.getIconUnicode(thumbnail.value);
+          thumbnailEl.innerHTML = `<span style="display: flex; align-items: center; justify-content: center; font-family: 'xdiagrams-icons'; font-size: 18px; color: var(--ui-panel-text);">${iconUnicode2}</span>`;
+          return;
+        }
+      }
       const imgVal = nodeData.img || nodeData.data && nodeData.data.img || "";
       if (imgVal && imgVal.trim() !== "") {
         thumbnailEl.innerHTML = `<img src="${imgVal}" class="custom-image" width="36" height="36" style="opacity: 1; transition: opacity 0.2s ease-in-out;" onerror="this.style.display='none'">`;
         return;
       }
-      const defaultIcon = this.getDefaultIcon(nodeData, diagramConfig);
-      thumbnailEl.innerHTML = defaultIcon;
+      const iconElement = this.getNodeIconFromDiagram(nodeData);
+      if (iconElement) {
+        thumbnailEl.innerHTML = iconElement;
+        return;
+      }
+      const defaultIconName = diagramConfig.defaultIcon || "detail";
+      const iconUnicode = this.getIconUnicode(defaultIconName);
+      thumbnailEl.innerHTML = `<span style="display: flex; align-items: center; justify-content: center; font-family: 'xdiagrams-icons'; font-size: 18px; color: var(--ui-panel-text);">${iconUnicode}</span>`;
     } catch (error) {
       console.error("[InfoPanel] Error creating thumbnail:", error);
-      const defaultIcon = this.getDefaultIcon(nodeData, diagramConfig);
-      thumbnailEl.innerHTML = defaultIcon;
+      const iconUnicode = this.getIconUnicode("detail");
+      thumbnailEl.innerHTML = `<span style="display: flex; align-items: center; justify-content: center; font-family: 'xdiagrams-icons'; font-size: 18px; color: var(--ui-panel-text);">${iconUnicode}</span>`;
     }
   }
   // Método simplificado para resolver imagen del nodo
@@ -6987,9 +6675,15 @@ class XDiagramsInfoPanel {
   }
   getNodeIconFromDiagram(nodeData) {
     try {
-      const iconName = nodeData.icon || nodeData.Icon || nodeData.data && nodeData.data.icon || nodeData.data && nodeData.data.Icon;
+      const iconName = nodeData.icon || nodeData.Icon || nodeData.type || nodeData.Type || nodeData.data && nodeData.data.icon || nodeData.data && nodeData.data.Icon || nodeData.data && nodeData.data.type || nodeData.data && nodeData.data.Type;
       if (iconName) {
         const iconUnicode = this.getIconUnicode(iconName);
+        return `<span style="display: flex; align-items: center; justify-content: center; font-family: 'xdiagrams-icons'; font-size: 18px; color: var(--ui-panel-text);">${iconUnicode}</span>`;
+      }
+      const nodeName = nodeData.name || nodeData.Name || nodeData.data && nodeData.data.name || nodeData.data && nodeData.data.Name || "";
+      const inferredIcon = this.inferIconFromName(nodeName);
+      if (inferredIcon) {
+        const iconUnicode = this.getIconUnicode(inferredIcon);
         return `<span style="display: flex; align-items: center; justify-content: center; font-family: 'xdiagrams-icons'; font-size: 18px; color: var(--ui-panel-text);">${iconUnicode}</span>`;
       }
       return null;
@@ -7020,6 +6714,64 @@ class XDiagramsInfoPanel {
     let normalized = iconName.toLowerCase().trim();
     normalized = normalized.replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "-").replace(/-+/g, "-").replace(/^-|-$/g, "");
     return normalized;
+  }
+  inferIconFromName(nodeName) {
+    if (!nodeName || typeof nodeName !== "string")
+      return null;
+    const name = nodeName.toLowerCase();
+    const iconMappings = {
+      // Formularios y entradas
+      "form": "form",
+      "formulario": "form",
+      "input": "form",
+      "entrada": "form",
+      // Documentos y archivos
+      "document": "document",
+      "documento": "document",
+      "file": "document",
+      "archivo": "document",
+      "pdf": "document",
+      "report": "report",
+      "reporte": "report",
+      // Listas y tablas
+      "list": "list",
+      "lista": "list",
+      "table": "list",
+      "tabla": "list",
+      "grid": "grid",
+      "cuadricula": "grid",
+      // Navegación
+      "home": "home",
+      "inicio": "home",
+      "dashboard": "home",
+      "panel": "home",
+      // Usuarios y perfiles
+      "profile": "profile",
+      "perfil": "profile",
+      "user": "profile",
+      "usuario": "profile",
+      // Configuración
+      "settings": "settings",
+      "configuracion": "settings",
+      "config": "settings",
+      "ajustes": "settings",
+      // Modales y ventanas
+      "modal": "modal",
+      "popup": "modal",
+      "ventana": "modal",
+      "dialog": "modal",
+      // Detalles y información
+      "detail": "detail",
+      "detalle": "detail",
+      "info": "detail",
+      "informacion": "detail"
+    };
+    for (const [keyword, icon] of Object.entries(iconMappings)) {
+      if (name.includes(keyword)) {
+        return icon;
+      }
+    }
+    return null;
   }
   close() {
     this.isClosing = true;
@@ -7057,7 +6809,6 @@ class XDiagramsInfoPanel {
         const urlFields = ["url", "URL", "Url"];
         const isUrlField = urlFields.includes(key);
         if (headerFields.includes(key) || idFields.includes(key) || internalFields.includes(key) || isUrlField) {
-          console.log(`[InfoPanel] Excluyendo campo: ${key} (valor: ${value})`);
           continue;
         }
         if (!showAllColumns) {
@@ -7131,14 +6882,12 @@ class XDiagramsInfoPanel {
     const data = nodeData.data || nodeData;
     const urlValue = data["url"] || data["URL"] || data["Url"];
     if (urlValue && this.isUrl(urlValue)) {
-      console.log(`[InfoPanel] URL encontrada en campo URL: ${urlValue}`);
       return urlValue;
     }
     return null;
   }
   // ===== MÉTODOS DE COMPATIBILIDAD =====
   updateInfoPanel(transform2) {
-    console.warn("[InfoPanel] updateInfoPanel is deprecated, use open() instead");
   }
   getInfoPanelData() {
     return {};
@@ -7162,32 +6911,16 @@ class XDiagramsFloatingTitlePill {
    * Inicializa el pill flotante
    */
   init() {
-    if (this.isInitialized)
-      return;
-    console.log("[Floating Title Pill] Iniciando...");
     this.createPillElement();
-    this.isInitialized = true;
-    console.log("[Floating Title Pill] Inicializado correctamente");
   }
   /**
    * Crea el elemento del pill flotante
    */
   createPillElement() {
-    console.log("[Floating Title Pill] Creando elemento...");
     this.pillElement = document.createElement("div");
-    this.pillElement.className = "floating-title-pill";
     this.pillElement.id = "xdiagrams-floating-title-pill";
-    this.pillElement.style.cssText = `
-      position: fixed !important;
-      top: 20px !important;
-      left: 20px !important;
-      z-index: 9999 !important;
-      visibility: visible !important;
-      opacity: 1 !important;
-      pointer-events: auto !important;
-    `;
+    this.pillElement.className = "floating-title-pill";
     document.body.appendChild(this.pillElement);
-    console.log("[Floating Title Pill] Elemento creado y agregado al DOM");
   }
   /**
    * Actualiza el contenido del pill flotante
@@ -7196,10 +6929,8 @@ class XDiagramsFloatingTitlePill {
    */
   update(title, logoUrl) {
     if (!this.pillElement || !document.body.contains(this.pillElement)) {
-      console.log("[Floating Title Pill] Elemento no encontrado en DOM, reinicializando...");
       this.init();
     }
-    console.log("[Floating Title Pill] Actualizando con título:", title, "y logo:", logoUrl);
     this.pillElement.innerHTML = "";
     if (logoUrl) {
       const logoElement = document.createElement("img");
@@ -7207,6 +6938,22 @@ class XDiagramsFloatingTitlePill {
       logoElement.src = logoUrl;
       logoElement.alt = "Logo";
       this.pillElement.appendChild(logoElement);
+    } else {
+      const svgElement = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+      svgElement.setAttribute("width", "24");
+      svgElement.setAttribute("height", "24");
+      svgElement.setAttribute("viewBox", "0 0 24 24");
+      svgElement.className = "floating-logo";
+      const outerDiamond = document.createElementNS("http://www.w3.org/2000/svg", "path");
+      outerDiamond.setAttribute("d", "M12 2L22 12L12 22L2 12L12 2Z");
+      outerDiamond.setAttribute("fill", "currentColor");
+      outerDiamond.setAttribute("opacity", "0.8");
+      const innerDiamond = document.createElementNS("http://www.w3.org/2000/svg", "path");
+      innerDiamond.setAttribute("d", "M12 6L18 12L12 18L6 12L12 6Z");
+      innerDiamond.setAttribute("fill", "var(--ui-panel-bg)");
+      svgElement.appendChild(outerDiamond);
+      svgElement.appendChild(innerDiamond);
+      this.pillElement.appendChild(svgElement);
     }
     if (title) {
       const titleElement = document.createElement("h2");
@@ -7218,8 +6965,6 @@ class XDiagramsFloatingTitlePill {
     this.pillElement.style.visibility = "visible";
     this.pillElement.style.opacity = "1";
     this.forceApplyStyles();
-    console.log("[Floating Title Pill] Actualizado correctamente");
-    console.log("[Floating Title Pill] Elemento HTML:", this.pillElement.outerHTML);
   }
   /**
    * Obtiene el título del diagrama desde la configuración
@@ -7286,13 +7031,11 @@ class XDiagramsFloatingTitlePill {
    */
   ensureVisible() {
     if (!this.pillElement || !document.body.contains(this.pillElement)) {
-      console.log("[Floating Title Pill] Elemento perdido, restaurando...");
       this.init();
       return;
     }
     const rect = this.pillElement.getBoundingClientRect();
     if (rect.width === 0 || rect.height === 0 || this.pillElement.style.display === "none") {
-      console.log("[Floating Title Pill] Elemento no visible, restaurando...");
       this.pillElement.style.display = "flex";
       this.pillElement.style.visibility = "visible";
       this.pillElement.style.opacity = "1";
@@ -7313,7 +7056,6 @@ class XDiagramsFloatingTitlePill {
     const observer = new MutationObserver((mutations) => {
       mutations.forEach((mutation) => {
         if (mutation.type === "attributes" && mutation.attributeName === "data-theme") {
-          console.log("[Floating Title Pill] Tema cambiado, actualizando estilos...");
           this.updateThemeStyles();
         }
       });
@@ -7329,15 +7071,6 @@ class XDiagramsFloatingTitlePill {
   updateThemeStyles() {
     if (!this.pillElement)
       return;
-    const currentTheme = document.body.getAttribute("data-theme") || "light";
-    const bodyClasses = document.body.className;
-    console.log("[Floating Title Pill] Tema actual:", currentTheme);
-    console.log("[Floating Title Pill] Clases del body:", bodyClasses);
-    console.log("[Floating Title Pill] Variables CSS aplicadas:", {
-      "--ui-panel-bg": getComputedStyle(this.pillElement).getPropertyValue("--ui-panel-bg"),
-      "--ui-panel-text": getComputedStyle(this.pillElement).getPropertyValue("--ui-panel-text"),
-      "--ui-panel-border": getComputedStyle(this.pillElement).getPropertyValue("--ui-panel-border")
-    });
     this.ensureVisible();
   }
   /**
@@ -7347,26 +7080,15 @@ class XDiagramsFloatingTitlePill {
     if (!this.pillElement)
       return;
     this.pillElement.offsetHeight;
-    const computedStyle = getComputedStyle(this.pillElement);
-    console.log("[Floating Title Pill] Estilos computados:", {
-      background: computedStyle.background,
-      color: computedStyle.color,
-      border: computedStyle.border,
-      display: computedStyle.display,
-      visibility: computedStyle.visibility,
-      opacity: computedStyle.opacity
-    });
   }
 }
 class XDiagramsUIManager {
-  constructor() {
-    console.log("[UI Manager] Inicializando...");
-    this.loadingManager = new XDiagramsLoadingManager();
+  constructor(options = {}) {
     this.errorManager = new XDiagramsErrorManager();
+    this.loadingManager = new XDiagramsLoadingManager();
     this.notificationManager = new XDiagramsNotificationManager();
-    this.infoPanel = new XDiagramsInfoPanel();
+    this.infoPanel = new XDiagramsInfoPanel({ thumbsSystem: options.thumbsSystem });
     this.floatingTitlePill = new XDiagramsFloatingTitlePill();
-    console.log("[UI Manager] Inicializado correctamente");
   }
   // Métodos de coordinación esencial
   showLoading() {
@@ -7425,10 +7147,14 @@ class XDiagramsUIManager {
   }
   // Métodos del Floating Title Pill
   updateFloatingTitlePill(config) {
-    console.log("[UI Manager] Actualizando pill flotante con config:", config);
-    this.floatingTitlePill.updateFromConfig(config);
-    this.floatingTitlePill.startVisibilityMonitoring();
-    this.floatingTitlePill.setupThemeListener();
+    const showTitle = config.showTitle !== false;
+    if (showTitle) {
+      this.floatingTitlePill.updateFromConfig(config);
+      this.floatingTitlePill.startVisibilityMonitoring();
+      this.floatingTitlePill.setupThemeListener();
+    } else {
+      this.floatingTitlePill.hide();
+    }
   }
   showFloatingTitlePill() {
     return this.floatingTitlePill.show();
@@ -7490,7 +7216,6 @@ class XDiagramsDiagramRenderer {
       const paddingX = 120;
       const paddingY = 90;
       largeTitleBg.attr("x", largeTitleBBox.x - paddingX).attr("y", largeTitleBBox.y - paddingY).attr("width", largeTitleBBox.width + paddingX * 2).attr("height", largeTitleBBox.height + paddingY * 2);
-      console.log("🔍 [DiagramRenderer] Texto grande creado para cluster:", tree2.name, largeTitleText.node());
       let hideLargeTitlePermanently = false;
       clusterGroup.on("mouseenter", () => {
         if (hideLargeTitlePermanently)
@@ -7747,6 +7472,8 @@ class XDiagramsDiagramRenderer {
           return;
         }
         this.selectNodeAndZoomToIt(nodeGroup, node);
+      } else {
+        this.selectNodeAndZoomToIt(nodeGroup, node);
       }
     }).on("dblclick", (event2) => {
       event2.stopPropagation();
@@ -7870,7 +7597,7 @@ class XDiagramsDiagramRenderer {
               return;
             }
             if (clusterGroup && !clusterGroup.empty()) {
-              this.core.navigation.clusterNavInstance.zoomToCluster(clusterGroup, container, false, false);
+              this.core.navigation.clusterNavInstance.zoomToCluster(clusterGroup, container, false, true);
             }
           }
           startX = 0;
@@ -8034,6 +7761,8 @@ class XDiagramsDiagramRenderer {
       }
       duration = baseDuration + (maxDuration - baseDuration) * Math.min(distance / 800, 1);
     }
+    if (this.core.config && this.core.config.enableNavigationLogs !== false)
+      ;
     if (this.core.navigation && this.core.navigation.zoomManagerInstance) {
       this.core.navigation.zoomManagerInstance.zoomTo(newTransform, duration);
     } else {
@@ -8046,7 +7775,6 @@ class XDiagramsDiagramRenderer {
     });
   }
   updateClusterBorderRadius() {
-    console.log("Theme changed, CSS should handle border-radius automatically");
   }
 }
 class XDiagramsHierarchyBuilder {
@@ -8188,12 +7916,8 @@ class XDiagramsDiagramManager {
       this.core.globalTrees = trees;
       this.core.globalContainer = container;
       this.core.diagramRenderer.renderTrees(trees, container);
-      console.log("[Diagram Manager] Inicializando generador de datos LLM...");
       await this.core.llmDataGenerator.initialize(data, this.core.config);
-      console.log("[Diagram Manager] Generador de datos LLM inicializado");
-      console.log("[Diagram Manager] Inicializando pill flotante...");
       this.core.uiManager.updateFloatingTitlePill(this.core.config);
-      console.log("[Diagram Manager] Pill flotante inicializado");
     } catch (error) {
       console.error("XDiagrams: Error de inicialización:", error);
       this.core.uiManager.hideLoading();
@@ -8212,7 +7936,7 @@ class XDiagramsDiagramManager {
             data = result;
             resolve();
           }
-        });
+        }, { privateApi: this.core.config.privateApi });
       });
     } else {
       const response = await fetch(this.core.config.url);
@@ -8265,17 +7989,19 @@ class XDiagramsLLMDataGenerator {
    * @param {Array} csvData - Datos del CSV
    * @param {Object} config - Configuración del diagrama
    */
-  async initialize(csvData, config = {}) {
+  async initialize(data, config) {
+    const lastUpdate = localStorage.getItem("xdiagrams_llm_last_update");
+    const now2 = Date.now();
+    const timeSinceLastUpdate = now2 - (lastUpdate ? parseInt(lastUpdate) : 0);
+    if (lastUpdate && timeSinceLastUpdate < 36e5) {
+      return;
+    }
     try {
-      console.log("[LLMDataGenerator] Inicializando generador de datos LLM...");
-      if (this.shouldUpdateData()) {
-        await this.generateLLMData(csvData, config);
-      } else {
-        console.log("[LLMDataGenerator] Datos LLM actualizados recientemente, usando caché");
-      }
-      this.scheduleBackgroundUpdate(csvData, config);
+      const llmData = this.generateLLMData(data, config);
+      localStorage.setItem("xdiagrams_llm_data", JSON.stringify(llmData));
+      localStorage.setItem("xdiagrams_llm_last_update", now2.toString());
     } catch (error) {
-      console.error("[LLMDataGenerator] Error inicializando:", error);
+      console.error("[LLMDataGenerator] Error generando datos LLM:", error);
     }
   }
   /**
@@ -8726,17 +8452,21 @@ class XDiagrams {
         strokeWidth: 6,
         fill: "#E0FFFF"
       },
+      enableNavigationLogs: false,
+      // Desactivar logs de navegación por defecto (mejor performance)
+      privateApi: false,
+      // Indicar si la API es privada/protegida
       ...config
     };
     this.globalTrees = [];
     this.globalContainer = null;
     this.clusterPositions = /* @__PURE__ */ new Map();
-    this.uiManager = new XDiagramsUIManager();
-    this.svgManager = new XDiagramsSVGManager();
-    this.textHandler = new XDiagramsTextHandler(this.config.textConfig);
     this.thumbs = new XDiagramsThumbs({
       defaultIcon: this.config.defaultIcon
     });
+    this.uiManager = new XDiagramsUIManager({ thumbsSystem: this.thumbs });
+    this.svgManager = new XDiagramsSVGManager();
+    this.textHandler = new XDiagramsTextHandler(this.config.textConfig);
     this.navigation = new XDiagramsNavigation(this);
     this.loader = new XDiagramsLoader();
     this.diagramRenderer = new XDiagramsDiagramRenderer(this);
@@ -9044,15 +8774,10 @@ if (typeof window !== "undefined") {
 }
 if (typeof window !== "undefined") {
   let initializeDiagram = function() {
-    console.log("🚀 [XDiagrams] initializeDiagram llamado");
     const config2 = window.$xDiagrams || {};
-    console.log("📋 [XDiagrams] Configuración encontrada:", config2);
-    console.log("📋 [XDiagrams] Configuración tiene keys:", Object.keys(config2));
     if (Object.keys(config2).length > 0) {
-      console.log("✅ [XDiagrams] Configuración válida, creando diagrama...");
       try {
         const diagram = new XDiagrams(config2);
-        console.log("✅ [XDiagrams] Diagrama creado, inicializando...");
         diagram.initDiagram();
         window.$xDiagrams = {
           ...config2,
@@ -9079,19 +8804,18 @@ if (typeof window !== "undefined") {
   window.XDiagramsNavigation = XDiagramsNavigation;
   window.XDiagramsUIManager = XDiagramsUIManager;
   window.XDiagrams = XDiagrams;
-  window.xDiagramsLoader = new XDiagramsLoader();
   const config = window.$xDiagrams || {};
+  window.xDiagramsLoader = new XDiagramsLoader({
+    disableCache: config.disableCache || false
+  });
   const themeOptions = {
     showThemeToggle: config.showThemeToggle !== false
   };
   const themeManager = initThemes(themeOptions);
   window.ThemeManager = themeManager;
-  console.log("📋 [XDiagrams] Estado del DOM:", document.readyState);
   if (document.readyState === "loading") {
-    console.log("⏳ [XDiagrams] DOM cargando, esperando DOMContentLoaded...");
     document.addEventListener("DOMContentLoaded", initializeDiagram);
   } else {
-    console.log("✅ [XDiagrams] DOM ya cargado, inicializando inmediatamente...");
     initializeDiagram();
   }
 }

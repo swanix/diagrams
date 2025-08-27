@@ -13,36 +13,20 @@ class XDiagramsFloatingTitlePill {
    * Inicializa el pill flotante
    */
   init() {
-    if (this.isInitialized) return;
-    
-    console.log('[Floating Title Pill] Iniciando...');
     this.createPillElement();
-    this.isInitialized = true;
-    console.log('[Floating Title Pill] Inicializado correctamente');
   }
 
   /**
    * Crea el elemento del pill flotante
    */
   createPillElement() {
-    console.log('[Floating Title Pill] Creando elemento...');
+    // Crear el elemento pill
     this.pillElement = document.createElement('div');
-    this.pillElement.className = 'floating-title-pill';
     this.pillElement.id = 'xdiagrams-floating-title-pill';
+    this.pillElement.className = 'floating-title-pill';
     
-    // Estilos básicos inline para posicionamiento y visibilidad
-    this.pillElement.style.cssText = `
-      position: fixed !important;
-      top: 20px !important;
-      left: 20px !important;
-      z-index: 9999 !important;
-      visibility: visible !important;
-      opacity: 1 !important;
-      pointer-events: auto !important;
-    `;
-    
+    // Agregar al DOM
     document.body.appendChild(this.pillElement);
-    console.log('[Floating Title Pill] Elemento creado y agregado al DOM');
   }
 
   /**
@@ -53,22 +37,41 @@ class XDiagramsFloatingTitlePill {
   update(title, logoUrl) {
     // Verificar si el elemento existe en el DOM
     if (!this.pillElement || !document.body.contains(this.pillElement)) {
-      console.log('[Floating Title Pill] Elemento no encontrado en DOM, reinicializando...');
       this.init();
     }
-
-    console.log('[Floating Title Pill] Actualizando con título:', title, 'y logo:', logoUrl);
     
     // Limpiar contenido existente
     this.pillElement.innerHTML = '';
     
-    // Agregar logo si está disponible
+    // Agregar logo si está disponible, o SVG de rombo si no hay logo
     if (logoUrl) {
       const logoElement = document.createElement('img');
       logoElement.className = 'floating-logo';
       logoElement.src = logoUrl;
       logoElement.alt = 'Logo';
       this.pillElement.appendChild(logoElement);
+    } else {
+      // Crear SVG de rombo con agujero interno
+      const svgElement = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      svgElement.setAttribute('width', '24');
+      svgElement.setAttribute('height', '24');
+      svgElement.setAttribute('viewBox', '0 0 24 24');
+      svgElement.className = 'floating-logo';
+      
+      // Rombo exterior
+      const outerDiamond = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      outerDiamond.setAttribute('d', 'M12 2L22 12L12 22L2 12L12 2Z');
+      outerDiamond.setAttribute('fill', 'currentColor');
+      outerDiamond.setAttribute('opacity', '0.8');
+      
+      // Rombo interior (agujero)
+      const innerDiamond = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      innerDiamond.setAttribute('d', 'M12 6L18 12L12 18L6 12L12 6Z');
+      innerDiamond.setAttribute('fill', 'var(--ui-panel-bg)');
+      
+      svgElement.appendChild(outerDiamond);
+      svgElement.appendChild(innerDiamond);
+      this.pillElement.appendChild(svgElement);
     }
     
     // Agregar título
@@ -86,9 +89,6 @@ class XDiagramsFloatingTitlePill {
     
     // Forzar la aplicación de estilos CSS
     this.forceApplyStyles();
-    
-    console.log('[Floating Title Pill] Actualizado correctamente');
-    console.log('[Floating Title Pill] Elemento HTML:', this.pillElement.outerHTML);
   }
 
   /**
@@ -163,7 +163,6 @@ class XDiagramsFloatingTitlePill {
    */
   ensureVisible() {
     if (!this.pillElement || !document.body.contains(this.pillElement)) {
-      console.log('[Floating Title Pill] Elemento perdido, restaurando...');
       this.init();
       return;
     }
@@ -171,7 +170,6 @@ class XDiagramsFloatingTitlePill {
     // Verificar si el elemento está visible
     const rect = this.pillElement.getBoundingClientRect();
     if (rect.width === 0 || rect.height === 0 || this.pillElement.style.display === 'none') {
-      console.log('[Floating Title Pill] Elemento no visible, restaurando...');
       this.pillElement.style.display = 'flex';
       this.pillElement.style.visibility = 'visible';
       this.pillElement.style.opacity = '1';
@@ -196,7 +194,6 @@ class XDiagramsFloatingTitlePill {
     const observer = new MutationObserver((mutations) => {
       mutations.forEach((mutation) => {
         if (mutation.type === 'attributes' && mutation.attributeName === 'data-theme') {
-          console.log('[Floating Title Pill] Tema cambiado, actualizando estilos...');
           this.updateThemeStyles();
         }
       });
@@ -214,16 +211,6 @@ class XDiagramsFloatingTitlePill {
   updateThemeStyles() {
     if (!this.pillElement) return;
 
-    const currentTheme = document.body.getAttribute('data-theme') || 'light';
-    const bodyClasses = document.body.className;
-    console.log('[Floating Title Pill] Tema actual:', currentTheme);
-    console.log('[Floating Title Pill] Clases del body:', bodyClasses);
-    console.log('[Floating Title Pill] Variables CSS aplicadas:', {
-      '--ui-panel-bg': getComputedStyle(this.pillElement).getPropertyValue('--ui-panel-bg'),
-      '--ui-panel-text': getComputedStyle(this.pillElement).getPropertyValue('--ui-panel-text'),
-      '--ui-panel-border': getComputedStyle(this.pillElement).getPropertyValue('--ui-panel-border')
-    });
-
     // Los estilos CSS ya se aplican automáticamente a través de las variables CSS
     // Solo necesitamos asegurar que el pill esté visible
     this.ensureVisible();
@@ -237,17 +224,6 @@ class XDiagramsFloatingTitlePill {
 
     // Forzar el recálculo de estilos
     this.pillElement.offsetHeight;
-    
-    // Aplicar estilos CSS críticos
-    const computedStyle = getComputedStyle(this.pillElement);
-    console.log('[Floating Title Pill] Estilos computados:', {
-      background: computedStyle.background,
-      color: computedStyle.color,
-      border: computedStyle.border,
-      display: computedStyle.display,
-      visibility: computedStyle.visibility,
-      opacity: computedStyle.opacity
-    });
   }
 }
 

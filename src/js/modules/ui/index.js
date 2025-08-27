@@ -10,14 +10,12 @@ import { XDiagramsInfoPanel } from './infopanel.js';
 import { XDiagramsFloatingTitlePill } from './floating-title-pill.js';
 
 class XDiagramsUIManager {
-  constructor() {
-    console.log('[UI Manager] Inicializando...');
-    this.loadingManager = new XDiagramsLoadingManager();
+  constructor(options = {}) {
     this.errorManager = new XDiagramsErrorManager();
+    this.loadingManager = new XDiagramsLoadingManager();
     this.notificationManager = new XDiagramsNotificationManager();
-    this.infoPanel = new XDiagramsInfoPanel();
+    this.infoPanel = new XDiagramsInfoPanel({ thumbsSystem: options.thumbsSystem });
     this.floatingTitlePill = new XDiagramsFloatingTitlePill();
-    console.log('[UI Manager] Inicializado correctamente');
   }
 
   // Métodos de coordinación esencial
@@ -94,12 +92,19 @@ class XDiagramsUIManager {
 
   // Métodos del Floating Title Pill
   updateFloatingTitlePill(config) {
-    console.log('[UI Manager] Actualizando pill flotante con config:', config);
-    this.floatingTitlePill.updateFromConfig(config);
-    // Iniciar monitoreo de visibilidad
-    this.floatingTitlePill.startVisibilityMonitoring();
-    // Iniciar listener de tema
-    this.floatingTitlePill.setupThemeListener();
+    // Verificar si se debe mostrar el floating title pill
+    const showTitle = config.showTitle !== false; // Por defecto true
+    
+    if (showTitle) {
+      this.floatingTitlePill.updateFromConfig(config);
+      // Iniciar monitoreo de visibilidad
+      this.floatingTitlePill.startVisibilityMonitoring();
+      // Iniciar listener de tema
+      this.floatingTitlePill.setupThemeListener();
+    } else {
+      // Ocultar el floating title pill si está configurado para no mostrarse
+      this.floatingTitlePill.hide();
+    }
   }
 
   showFloatingTitlePill() {

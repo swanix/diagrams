@@ -121,7 +121,7 @@ class XDiagramsDiagramRenderer {
         .attr('width', largeTitleBBox.width + (paddingX * 2))
         .attr('height', largeTitleBBox.height + (paddingY * 2));
       
-      console.log('🔍 [DiagramRenderer] Texto grande creado para cluster:', tree.name, largeTitleText.node());
+
       
       // Variable para controlar si el texto gigante debe estar oculto permanentemente
       let hideLargeTitlePermanently = false;
@@ -501,6 +501,9 @@ class XDiagramsDiagramRenderer {
           }
           // Cluster ya activo: seleccionando nodo y haciendo zoom
           this.selectNodeAndZoomToIt(nodeGroup, node);
+        } else {
+          // No se encontró cluster, seleccionando nodo directamente
+          this.selectNodeAndZoomToIt(nodeGroup, node);
         }
       })
       .on('dblclick', (event) => {
@@ -669,7 +672,7 @@ class XDiagramsDiagramRenderer {
               }
               
               if (clusterGroup && !clusterGroup.empty()) {
-                this.core.navigation.clusterNavInstance.zoomToCluster(clusterGroup, container, false, false);
+                this.core.navigation.clusterNavInstance.zoomToCluster(clusterGroup, container, false, true);
               }
             }
             
@@ -845,7 +848,7 @@ class XDiagramsDiagramRenderer {
 
   selectNodeAndZoomToIt(nodeGroup, node) {
     // Selecting node and zooming to it
-            this.core.navigation.nodeNavInstance.selectNode(nodeGroup, true);
+    this.core.navigation.nodeNavInstance.selectNode(nodeGroup, true);
     this.zoomToNode(nodeGroup, node, true);
   }
 
@@ -913,7 +916,10 @@ class XDiagramsDiagramRenderer {
       // Zooming to node with distance-proportional duration
     }
     
-    // Zooming to node
+    // Zooming to node (log solo si está habilitado)
+    if (this.core.config && this.core.config.enableNavigationLogs !== false) {
+      // Log silencioso para debugging
+    }
     
     // Aplicar transición usando el módulo de navegación
     if (this.core.navigation && this.core.navigation.zoomManagerInstance) {
@@ -936,7 +942,6 @@ class XDiagramsDiagramRenderer {
   }
 
   updateClusterBorderRadius() {
-    console.log('Theme changed, CSS should handle border-radius automatically');
     // La CSS con !important debería manejar el border-radius automáticamente
   }
 }

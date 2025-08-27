@@ -159,10 +159,16 @@ class XDiagramsZoomManager {
     // Zoom > 10% (0.10) = vista detallada (color verde)
     if (zoomLevel <= 0.10) {
       clusterBgs.classed('zoom-out', true);
-      console.log('[ZoomClasses] Applied zoom-out class (zoom <= 10%):', zoomLevel);
+      // Solo log si no está desactivado
+      if (this.navigation && this.navigation.core && this.navigation.core.config && this.navigation.core.config.enableNavigationLogs !== false) {
+        console.log('[ZoomClasses] Applied zoom-out class (zoom <= 10%):', zoomLevel);
+      }
     } else {
       clusterBgs.classed('zoom-in', true);
-      console.log('[ZoomClasses] Applied zoom-in class (zoom > 10%):', zoomLevel);
+      // Solo log si no está desactivado
+      if (this.navigation && this.navigation.core && this.navigation.core.config && this.navigation.core.config.enableNavigationLogs !== false) {
+        console.log('[ZoomClasses] Applied zoom-in class (zoom > 10%):', zoomLevel);
+      }
     }
   }
 

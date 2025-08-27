@@ -26,9 +26,8 @@ class XDiagramsSourceDetector {
         '.json'
       ],
       protectedApi: [
-        'sheet.best',
-        'sheetbest.com',
-        'api.sheetbest.com'
+        'sheet.best'
+        // Removido sheetbest.com y api.sheetbest.com para permitir URLs públicas
       ]
     };
   }
@@ -36,15 +35,12 @@ class XDiagramsSourceDetector {
   /**
    * Detecta el tipo de fuente de datos
    * @param {string|Array|Object} source - La fuente de datos
+   * @param {Object} options - Opciones adicionales (ej: privateApi)
    * @returns {string} El tipo de fuente detectado
    */
-  detectSourceType(source) {
-    console.log(`🔍 [SourceDetector] detectSourceType llamado con:`, source);
-    console.log(`🔍 [SourceDetector] Tipo de source:`, typeof source);
-    
+  detectSourceType(source, options = {}) {
     if (typeof source === 'string') {
-      const result = this.detectStringSource(source);
-      console.log(`🔍 [SourceDetector] Resultado para string: ${result}`);
+      const result = this.detectStringSource(source, options);
       return result;
     }
     
@@ -62,18 +58,19 @@ class XDiagramsSourceDetector {
   /**
    * Detecta el tipo de fuente cuando es un string (URL)
    * @param {string} source - La URL o string fuente
+   * @param {Object} options - Opciones adicionales (ej: privateApi)
    * @returns {string} El tipo de fuente detectado
    */
-  detectStringSource(source) {
+  detectStringSource(source, options = {}) {
     const url = source.toLowerCase();
     
-    console.log(`🔍 [SourceDetector] Analizando URL: ${source}`);
-    console.log(`🔍 [SourceDetector] URL en minúsculas: ${url}`);
-    console.log(`🔍 [SourceDetector] Patrones protegidos:`, this.sourcePatterns.protectedApi);
+    // Si privateApi está habilitado y es una URL de SheetBest, tratarla como protegida
+    if (options.privateApi && (url.includes('sheetbest.com') || url.includes('api.sheetbest.com'))) {
+      return 'protected-api';
+    }
     
     // Detectar APIs protegidas primero (más específico)
     if (this.sourcePatterns.protectedApi.some(pattern => url.includes(pattern))) {
-      console.log(`✅ [SourceDetector] Detectada como API protegida`);
       return 'protected-api';
     }
     

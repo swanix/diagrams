@@ -14,7 +14,6 @@ let d3;
 if (typeof window !== 'undefined' && window.d3) {
   // Usar D3 desde CDN (GitHub Pages)
   d3 = window.d3;
-  console.log('✅ Usando D3 desde CDN (GitHub Pages)');
 } else {
   // Usar módulos ES6 (desarrollo local)
   try {
@@ -29,8 +28,6 @@ if (typeof window !== 'undefined' && window.d3) {
       tree,
       easeCubicOut
     };
-    
-    console.log('✅ Usando D3 desde módulos ES6 (desarrollo)');
   } catch (error) {
     console.error('❌ Error cargando D3:', error);
     throw new Error('D3 no está disponible ni globalmente ni como módulo ES6');

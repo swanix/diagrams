@@ -38,14 +38,10 @@ class XDiagramsDiagramManager {
       this.core.diagramRenderer.renderTrees(trees, container);
 
       // Inicializar generador de datos LLM en segundo plano
-      console.log('[Diagram Manager] Inicializando generador de datos LLM...');
       await this.core.llmDataGenerator.initialize(data, this.core.config);
-      console.log('[Diagram Manager] Generador de datos LLM inicializado');
 
       // Inicializar pill flotante con la configuración del diagrama
-      console.log('[Diagram Manager] Inicializando pill flotante...');
       this.core.uiManager.updateFloatingTitlePill(this.core.config);
-      console.log('[Diagram Manager] Pill flotante inicializado');
 
     } catch (error) {
       console.error('XDiagrams: Error de inicialización:', error);
@@ -66,7 +62,7 @@ class XDiagramsDiagramManager {
             data = result;
             resolve();
           }
-        });
+        }, { privateApi: this.core.config.privateApi });
       });
     } else {
       const response = await fetch(this.core.config.url);

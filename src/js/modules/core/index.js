@@ -64,6 +64,8 @@ class XDiagrams {
         strokeWidth: 6,
         fill: '#E0FFFF'
       },
+      enableNavigationLogs: false, // Desactivar logs de navegación por defecto (mejor performance)
+      privateApi: false, // Indicar si la API es privada/protegida
       ...config
     };
     
@@ -72,12 +74,12 @@ class XDiagrams {
     this.clusterPositions = new Map();
     
     // Inicializar submódulos
-    this.uiManager = new XDiagramsUIManager();
-    this.svgManager = new XDiagramsSVGManager();
-    this.textHandler = new XDiagramsTextHandler(this.config.textConfig);
     this.thumbs = new XDiagramsThumbs({
       defaultIcon: this.config.defaultIcon
     });
+    this.uiManager = new XDiagramsUIManager({ thumbsSystem: this.thumbs });
+    this.svgManager = new XDiagramsSVGManager();
+    this.textHandler = new XDiagramsTextHandler(this.config.textConfig);
     
     this.navigation = new XDiagramsNavigation(this);
     this.loader = new XDiagramsLoader();

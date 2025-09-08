@@ -24,14 +24,7 @@
     "dev": "vite",
     "docs": "VITE_SERVER=docs vite",
     "build": "vite build",
-    "build:lib": "vite build --mode production",
-    "build:docs": "VITE_SERVER=docs vite build",
-    "preview": "vite preview",
-    "preview:docs": "VITE_SERVER=docs vite preview",
-    "build:analyze": "vite build --mode analyze",
-    "serve:prod": "npm run build && vite preview --port 8001",
-    "serve:demo": "npm run build && vite serve --config vite.demo.config.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "demo": "npm run build && vite serve --config vite.demo.config.js"
   },
   "repository": {
     "type": "git",

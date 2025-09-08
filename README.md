@@ -173,7 +173,7 @@ netlify dev
 npm run build
 
 # Servir demo de producción
-npm run serve:demo
+npm run demo
 ```
 
 ## 🔧 Desarrollo
@@ -200,9 +200,9 @@ docs/
 ### Scripts Disponibles
 ```bash
 npm run dev          # Desarrollo local
+npm run docs         # Documentación completa
 npm run build        # Build de producción
-npm run serve:demo   # Servir demo
-npm run preview      # Preview del build
+npm run demo         # Servir demo
 ```
 
 ## 🚨 Breaking Changes v2.0.0

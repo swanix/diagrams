@@ -2,12 +2,14 @@
 
 # Swanix Diagrams
 
+Examples
 
 ### Tree Diagram (CSV files & Google Sheets)
 
 <div style="width: 780px; height: 500px; margin: 10px; position: relative;"><iframe allowfullscreen frameborder="0" style="width:780px; height:480px" src="./demo/d3"></iframe></div>
 
 Diagram showcasing multiple examples including:
+
 - A Google Sheets integration that loads data directly from a published spreadsheet
 - Simple one-cluster and multi-cluster layouts with customizable grid sizes
 - Complex cluster layouts with custom spacing and row thresholds
@@ -26,17 +28,18 @@ Example showing different ways to configure cluster layouts per row using single
 
 [View Fullscreen](https://swanix.org/diagrams/demo)
 
-
 ## Node Images
 
-There are two ways to set images for nodes:
+There are two ways to set images for ![nodes]():
 
 1. **Custom Images (Highest Priority)**
+   
    - Use the `img` column to specify a direct URL to any image
    - Example: `https://example.com/images/my-image.jpg`
    - This takes precedence over any thumbnail setting
 
 2. **Predefined Thumbnails**
+   
    - Use the `type` column to specify a predefined thumbnail
    - If no custom image is set in `img`, the system will use the thumbnail based on the type
    - If no type is specified, the default 'detail' thumbnail will be used

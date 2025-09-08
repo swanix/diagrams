@@ -43,7 +43,7 @@ npm run build
 
 1. Ejecuta el servidor:
    ```bash
-   npm run serve:demo
+   npm run demo
    ```
 
 2. Abre en tu navegador:

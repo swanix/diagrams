@@ -7,7 +7,7 @@ export default defineConfig({
   server: {
     port: 8002,
     host: true,
-    open: false,
+    open: true,
     fs: {
       allow: ['..']
     }
@@ -15,5 +15,8 @@ export default defineConfig({
   build: {
     outDir: 'docs/demo',
     emptyOutDir: false
+  },
+  optimizeDeps: {
+    include: ['d3', 'papaparse']
   }
 })

@@ -161,11 +161,11 @@ class XDiagramsDataLoader {
    */
   async loadFromProtectedApi(url, options = {}) {
     try {
-      console.log(`🔐 [DataLoader] Cargando desde API protegida via Netlify Function: ${url}`);
+      console.log(`[DataLoader] Cargando desde API protegida via Netlify Function: ${url}`);
       
       // Usar Netlify Function como proxy
       const proxyUrl = `/api/sheetbest-proxy?url=${encodeURIComponent(url)}`;
-      console.log(`🌐 [DataLoader] Proxy URL: ${proxyUrl}`);
+      console.log(`[DataLoader] Proxy URL: ${proxyUrl}`);
       
       const response = await fetch(proxyUrl, {
         method: 'GET',
@@ -183,7 +183,7 @@ class XDiagramsDataLoader {
       }
 
       const data = await response.json();
-      console.log(`✅ [DataLoader] Datos cargados exitosamente desde proxy`);
+      console.log(`[DataLoader] Datos cargados exitosamente desde proxy`);
       
       // Convertir a formato CSV si es necesario
       if (Array.isArray(data)) {
@@ -193,7 +193,7 @@ class XDiagramsDataLoader {
       }
       
     } catch (error) {
-      console.error(`❌ [DataLoader] Error cargando desde API protegida:`, error);
+      console.error(`[DataLoader] Error cargando desde API protegida:`, error);
       throw new Error(`Error cargando API protegida: ${error.message}`);
     }
   }

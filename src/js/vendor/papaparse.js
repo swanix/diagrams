@@ -16,7 +16,7 @@ if (typeof window !== 'undefined' && window.Papa) {
   try {
     PapaInstance = Papa;
   } catch (error) {
-    console.error('❌ Error cargando PapaParse:', error);
+    console.error('Error cargando PapaParse:', error);
     throw new Error('PapaParse no está disponible ni globalmente ni como módulo ES6');
   }
 }

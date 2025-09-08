@@ -29,7 +29,7 @@ if (typeof window !== 'undefined' && window.d3) {
       easeCubicOut
     };
   } catch (error) {
-    console.error('❌ Error cargando D3:', error);
+    console.error('Error cargando D3:', error);
     throw new Error('D3 no está disponible ni globalmente ni como módulo ES6');
   }
 }

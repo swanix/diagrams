@@ -92,10 +92,10 @@ class XDiagramsNotificationManager {
 
   getIcon(type) {
     const icons = {
-      'info': 'ℹ️',
-      'success': '✅',
-      'warning': '⚠️',
-      'error': '❌'
+      'info': 'i',
+      'success': '✓',
+      'warning': '!',
+      'error': '✗'
     };
     return icons[type] || icons.info;
   }

@@ -1,255 +1,175 @@
-# 🎯 XDiagrams - Librería de Diagramas Interactivos
+<p align="center">
+    <img alt="Swanix" title="Swanix Diagrams" src="https://swanix.org/assets/images/apple-touch-icon.png">
+</p>
+<h1 align="center">Swanix Diagrams</h1>
+<p align="center">
+    Experimental Diagrams library <br>
+    https://swanix.org/diagrams
+</p>
 
-[![Netlify Status](https://api.netlify.com/api/v1/badges/your-site-id/deploy-status)](https://app.netlify.com/sites/your-site/deploys)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-
-**XDiagrams** es una librería JavaScript moderna para crear diagramas interactivos y visualizaciones de datos desde múltiples fuentes, incluyendo **APIs protegidas** con seguridad de nivel empresarial.
-
-## ✨ Características Principales
-
-### 🎨 Visualización
-- **Diagramas interactivos** con navegación por clusters
-- **Temas personalizables** (claro/oscuro)
-- **Responsive design** para todos los dispositivos
-- **Animaciones suaves** y transiciones fluidas
-
-### 📊 Fuentes de Datos
-- **CSV/JSON** - Datos locales y remotos
-- **APIs públicas** - Cualquier endpoint público
-- **🔐 APIs protegidas** - SheetBest, Google Sheets, y más (NUEVO)
-- **Datos dinámicos** - Carga en tiempo real
-
-### 🛡️ Seguridad Avanzada (NUEVO)
-- **Cero exposición de credenciales** en el frontend
-- **Netlify Functions** como proxy seguro
-- **Variables de entorno** solo en el servidor
-- **Arquitectura serverless** escalable
-
-## 🚀 Instalación
-
-### CDN (Recomendado)
-```html
-<link href="https://cdn.jsdelivr.net/npm/xdiagrams@2.0.0/dist/xdiagrams.min.css" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/xdiagrams@2.0.0/dist/xdiagrams.min.js"></script>
-```
-
-### NPM
-```bash
-npm install xdiagrams
-```
-
-## 📝 Uso Básico
-
-### HTML Simple
-```html
-<!DOCTYPE html>
-<html>
-<head>
-  <link href="xdiagrams.min.css" rel="stylesheet">
-</head>
-<body>
-  <div id="app"></div>
-  
-  <script>
-    window.$xDiagrams = {
-      url: "datos.csv",
-      title: "Mi Diagrama",
-      clustersPerRow: "6 3 7 6 3"
-    };
-  </script>
-  
-  <script src="xdiagrams.min.js"></script>
-</body>
-</html>
-```
-
-## 🔐 APIs Protegidas (NUEVO)
-
-### Configuración Rápida
-```html
-<script>
-  window.$xDiagrams = {
-    url: "https://api.sheetbest.com/sheets/tu-sheet-id/tabs/TuTab",
-    title: "Diagrama desde SheetBest",
-    clustersPerRow: "6 3 7 6 3"
-  };
-</script>
-```
-
-### Configuración de Seguridad
-1. **Crear Netlify Function** (automático)
-2. **Configurar variable de entorno** en Netlify
-3. **¡Listo!** - La librería maneja todo automáticamente
-
-```bash
-# En Netlify Dashboard > Environment Variables
-SHEETBEST_API_KEY = tu_api_key_real_aqui
-```
-
-## ⚙️ Configuración Avanzada
-
-### Opciones Completas
-```javascript
-window.$xDiagrams = {
-  // Fuente de datos
-  url: "https://api.sheetbest.com/sheets/...",
-  
-  // Configuración visual
-  title: "Diagrama Interactivo",
-  clustersPerRow: "6 3 7 6 3",
-  spacing: 80,
-  verticalSpacing: 170,
-  nodeWidth: 100,
-  nodeHeight: 125,
-  
-  // Funcionalidades
-  showThemeToggle: true,
-  enableZoom: true,
-  enablePan: true,
-  
-  // Personalización
-  theme: "light", // "light" | "dark" | "auto"
-  customStyles: {
-    nodeBackground: "#ffffff",
-    nodeBorder: "#e0e0e0"
-  }
-};
-```
-
-### Configuración por URL
-```javascript
-// Detección automática del tipo de fuente
-window.$xDiagrams = {
-  url: "companies-board.csv",        // CSV local
-  // url: "https://api.example.com/data", // API pública
-  // url: "https://api.sheetbest.com/...", // API protegida (automático)
-};
-```
-
-## 🏗️ Arquitectura de Seguridad
-
-### Flujo Seguro de Datos
-```
-Frontend → Netlify Function → API Externa → Netlify Function → Frontend
-```
-
-### Principios de Seguridad
-- ✅ **Cero credenciales** en el frontend
-- ✅ **Variables de entorno** solo en servidor
-- ✅ **Proxy serverless** para APIs protegidas
-- ✅ **CORS automático** manejado por Netlify
-- ✅ **Escalabilidad** automática
-
-## 📚 Documentación
-
-### Guías Principales
-- **[APIs Protegidas](docs/readme/PROTECTED_APIS.md)** - Configuración segura
-- **[Configuración de Netlify](NETLIFY_SETUP.md)** - Setup completo
-- **[API Keys Setup](docs/readme/API_KEYS_SETUP.md)** - Variables de entorno
-- **[Troubleshooting](docs/readme/TROUBLESHOOTING.md)** - Solución de problemas
-
-### Ejemplos
-- **[Demo de Producción](docs/demo/sheetbest.html)** - APIs protegidas
-- **[Test Local](docs/demo/test-local.html)** - Datos locales
-- **[Configuración Básica](src/sheetbest.html)** - Desarrollo
-
-## 🧪 Testing
-
-### Desarrollo Local
-```bash
-# Instalar dependencias
-npm install
-
-# Servidor de desarrollo
-npm run dev
-
-# Testing con Netlify Functions
-netlify dev
-```
-
-### Producción
-```bash
-# Build de producción
-npm run build
-
-# Servir demo de producción
-npm run demo
-```
-
-## 🔧 Desarrollo
-
-### Estructura del Proyecto
-```
-src/
-  js/
-    modules/
-      core/           # Funcionalidad principal
-      loader/         # Carga de datos
-      navigation/     # Navegación y zoom
-      themes/         # Sistema de temas
-      thumbs/         # Miniaturas
-      ui/             # Componentes UI
-      utils/          # Utilidades
-netlify/
-  functions/          # APIs protegidas (serverless)
-docs/
-  demo/              # Demos de producción
-  readme/            # Documentación
-```
-
-### Scripts Disponibles
-```bash
-npm run dev          # Desarrollo local
-npm run docs         # Documentación completa
-npm run build        # Build de producción
-npm run demo         # Servir demo
-```
-
-## 🚨 Breaking Changes v2.0.0
-
-### Cambios de Seguridad
-- ❌ **Eliminado**: Archivos `api-keys.js` del frontend
-- ❌ **Eliminado**: Inyección de variables de entorno en bundle
-- ✅ **Nuevo**: Netlify Functions para APIs protegidas
-- ✅ **Nuevo**: Proxy seguro automático
-
-### Migración
-1. **Configurar** Netlify Functions
-2. **Migrar** variables de entorno a Netlify
-3. **Actualizar** código para usar proxy
-4. **Probar** en entorno de desarrollo
-
-## 🤝 Contribuir
-
-### Reportar Issues
-- 🐛 **Bugs**: [Issues](https://github.com/tu-repo/xdiagrams/issues)
-- 💡 **Feature Requests**: [Discussions](https://github.com/tu-repo/xdiagrams/discussions)
-- 🔒 **Security**: [Security Policy](SECURITY.md)
-
-### Desarrollo
-1. **Fork** el repositorio
-2. **Crear** rama feature (`git checkout -b feature/nueva-funcionalidad`)
-3. **Commit** cambios (`git commit -am 'Agregar nueva funcionalidad'`)
-4. **Push** a la rama (`git push origin feature/nueva-funcionalidad`)
-5. **Crear** Pull Request
-
-## 📄 Licencia
-
-Este proyecto está bajo la Licencia MIT. Ver [LICENSE](LICENSE) para más detalles.
-
-## 🆘 Soporte
-
-### Recursos
-- 📖 **[Documentación Completa](docs/readme/)**
-- 🎯 **[Demos Interactivos](docs/demo/)**
-- 🔧 **[Troubleshooting](docs/readme/TROUBLESHOOTING.md)**
-- 💬 **[Discussions](https://github.com/tu-repo/xdiagrams/discussions)**
-
-### Comunidad
-- 🌐 **Website**: [xdiagrams.com](https://xdiagrams.com)
-- 📧 **Email**: support@xdiagrams.com
-- 🐦 **Twitter**: [@xdiagrams](https://twitter.com/xdiagrams)
+<p align="center">
+    <img alt="Swanix" title="Swanix" src="https://img.shields.io/badge/status-beta-mediumpurple">
+    <img alt="Swanix" title="Swanix" src="https://img.shields.io/badge/version-v0.9.0-blue">
+    <img alt="Swanix" title="Swanix" src="https://img.shields.io/github/license/swanix/diagrams?color=blue">
+    <a href="https://github.com/swanix/diagrams/blob/master/README.md"><img alt="Swanix" title="Swanix" src="https://img.shields.io/badge/lang-EN-grey.svg"></a>
+    <a href="https://github.com/swanix/diagrams/blob/master/docs/i18n/README_es.md"><img alt="Swanix" title="Swanix" src="https://img.shields.io/badge/lang-ES-grey.svg"></a>
+</p>
 
 ---
 
-**XDiagrams v2.0.0** - Seguridad de nivel empresarial para tus diagramas interactivos 🚀
+## Requirements
+
+Before starting, you must have the following installed:
+
+- [Git](https://git-scm.com/)
+- [Node.js](https://nodejs.org/)
+
+## Installation
+
+In an empty folder on your computer, type the following command in the terminal:
+
+```
+git clone https://github.com/swanix/diagrams.git
+```
+
+When the project finishes cloning, type the command:
+
+```
+npm install
+```
+This command will install the Node.js dependencies specified in the `package.json` file (essentially [Vite](https://vite.dev/) and a series of plugins necessary to automate development tasks).
+
+### Development Server
+
+The dependencies are installed in the `node_modules` folder (created automatically with the `npm install` command) and after installation, we can use Vite to view our development server with:
+
+```
+npm run dev
+```
+This command runs a server that points to the `src` folder. It will automatically open the browser at `localhost:3000` showing the test site with examples of the library and monitoring for changes in the `src` folder files to perform hot reload.
+
+### Documentation Server
+
+```
+npm run docs
+```
+This command runs a server that points to the `docs` folder. It will automatically open the browser at `localhost:4000` showing the test site with examples of the library and monitoring for changes in the `docs` folder files to perform hot reload.
+
+### Generate Production Build
+
+```
+npm run build
+```
+This command runs a series of processes in Vite to package the code for production in the `dist` folder and in the `docs/demo` folder for the documentation example files that should use the production files.
+
+### Demo Server
+
+```
+npm run demo
+```
+This command builds the production files and serves the demo at `localhost:8002` with production-ready bundles.
+
+## Configuration Options
+
+The library supports several configuration options to customize its behavior:
+
+### Cache and API Configuration
+
+```javascript
+window.$xDiagrams = {
+  // ... other options
+  privateApi: true,     // Enable private API mode for secure data loading
+  disableCache: true,   // Disable browser caching for real-time data updates
+  showTitle: false,     // Hide the diagram title in the top-left corner
+};
+```
+
+**Configuration Parameters:**
+
+- **`privateApi`** (boolean): When set to `true`, enables secure API mode that uses serverless functions to protect API keys and sensitive data. This prevents API credentials from being exposed in the client-side code.
+
+- **`disableCache`** (boolean): When set to `true`, disables browser caching to ensure real-time data updates. This is particularly useful when working with dynamic data sources that change frequently.
+
+- **`showTitle`** (boolean): When set to `false`, hides the diagram title that appears in the top-left corner of the diagram. This provides a cleaner interface when the title is not needed or when you want to reduce visual clutter.
+
+
+## Directory Structure
+
+
+```sh
+diagrams/  # Repository root folder
+│
+├── dist/                     # Generated code for production         
+│   ├── xdiagrams.css  
+│   ├── xdiagrams.js          # ES6 bundle
+│   ├── xdiagrams.min.css  
+│   ├── xdiagrams.min.js      # Minified UMD bundle
+│   └── xdiagrams.woff
+│
+├── docs/                     # Documentation and demos     
+│   ├── assets/
+│   ├── content/
+│   ├── demo/                 # Demo examples
+│   └── index.html
+│       
+├── src/                     # Source code for development   
+│   │  
+│   ├── data/                # Local data folder
+│   │   ├── complex.csv    
+│   │   └── simple.csv  
+│   │ 
+│   ├── icons/                # Icons folder
+│   │   ├── thumbs/    
+│   │   └── xdiagrams.woff  
+│   │              
+│   ├── img/                  # Images folder
+│   │   ├── logo.svg   
+│   │   └── favicon.ico       
+│   │  
+│   ├── js/                   # JavaScript folder
+│   │   ├── modules/          # ES6 modules   
+│   │   │   ├── core/
+│   │   │   ├── loader/
+│   │   │   ├── navigation/   
+│   │   │   ├── thumbs/
+│   │   │   └── ui/ 
+│   │   ├── vendor/           # External libraries config
+│   │   │   ├── d3.js
+│   │   │   └── papaparse.js   
+│   │   └── xdiagrams.js      # JavaScript entry point   
+│   │         
+│   ├── styles/               # Styles folder
+│   │   └── xdiagrams.css   
+│   │
+│   ├── dev.html              # Demo with ES6 source files
+│   └── index.html            # Demo with production bundle file
+│       
+├── LICENSE                   # License
+├── README.md                 # Initial README file
+├── vite.config.js            # Vite Config
+└── package.json              # Node.js dependencies
+│
+└---------------------------------------------------------
+
+```
+
+## Node.js Modules
+
+The following Node.js modules are used for development
+
+|Module|Version|Description|
+|--- |--- |--- |
+|vite|5.0.0|Development tool that allows compiling and serving web projects quickly and efficiently.|
+|cssnano|7.1.0|CSS file minifier to optimize the size and performance of styles.|
+|terser|5.0.0|JavaScript file minifier that reduces code size for production.|
+|d3|7.9.0|Library for data manipulation and creation of dynamic and interactive visualizations on the web.|
+|papaparse|5.5.3|Library for parsing CSV files and manipulating tabular data easily in JavaScript.|
+
+
+## License
+
+The MIT License (MIT)
+
+Copyright (c) 2025 - Swanix
+
+The source code in this repository was created partially or entirely with the assistance of Cursor, a code editor powered by artificial intelligence that employs advanced language models (LLMs) such as Claude, GPT, Gemini, among others. The use of this tool has been carefully guided and supervised by the author of the project.

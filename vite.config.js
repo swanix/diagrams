@@ -49,7 +49,7 @@ export default defineConfig(({ mode, command }) => {
         .replace(/\s*,\s*/g, ',') // Remover espacios alrededor de ,
         .trim() // Remover espacios al inicio y final
     } catch (error) {
-      console.error('❌ Error minificando CSS:', error)
+      console.error('Error minificando CSS:', error)
       return cssContent
     }
   }
@@ -59,11 +59,11 @@ export default defineConfig(({ mode, command }) => {
     try {
       const csvPath = 'src/data/companies-board.csv'
       if (!existsSync(csvPath)) {
-        console.log('⚠️  Archivo CSV no encontrado, saltando generación de LLM estático')
+        console.log('Archivo CSV no encontrado, saltando generación de LLM estático')
         return
       }
 
-      console.log('📝 Generando archivo de contexto LLM...')
+      console.log('Generando archivo de contexto LLM...')
       
       // Leer el CSV
       const csvContent = readFileSync(csvPath, 'utf8')
@@ -76,10 +76,10 @@ export default defineConfig(({ mode, command }) => {
       const outputPath = 'src/data/context.md'
       writeFileSync(outputPath, llmContent, 'utf8')
       
-      console.log('✅ Archivo de contexto LLM generado:', outputPath)
+      console.log('Archivo de contexto LLM generado:', outputPath)
       
     } catch (error) {
-      console.error('❌ Error generando archivo LLM estático:', error)
+      console.error('Error generando archivo LLM estático:', error)
     }
   }
 
@@ -258,14 +258,14 @@ export default defineConfig(({ mode, command }) => {
             const missingFiles = requiredFiles.filter(file => !existsSync(file));
             
             if (missingFiles.length > 0) {
-              console.log('🔨 Archivos de producción no encontrados. Ejecutando build...');
-              console.log('📁 Archivos faltantes:', missingFiles.join(', '));
+              console.log('Archivos de producción no encontrados. Ejecutando build...');
+              console.log('Archivos faltantes:', missingFiles.join(', '));
               
               try {
                 execSync('npm run build', { stdio: 'inherit' });
-                console.log('✅ Build completado exitosamente');
+                console.log('Build completado exitosamente');
               } catch (error) {
-                console.error('❌ Error durante el build:', error.message);
+                console.error('Error durante el build:', error.message);
                 res.statusCode = 500;
                 res.end('Error: Build failed');
                 return;
@@ -294,7 +294,7 @@ export default defineConfig(({ mode, command }) => {
         // Forzar recarga cuando cambian archivos Markdown
         server.watcher.on('change', (file) => {
           if (file.includes('docs/content/') && file.endsWith('.md')) {
-            console.log(`📝 Archivo Markdown modificado: ${file}`)
+            console.log(`Archivo Markdown modificado: ${file}`)
             // Forzar recarga completa del navegador
             setTimeout(() => {
               server.ws.send({
@@ -339,7 +339,7 @@ export default defineConfig(({ mode, command }) => {
               const content = readFileSync(sourcePath, 'utf8')
               const header = generateJSHeader()
               writeFileSync(destPath, header + content)
-              console.log(`✅ Copiado con encabezado: ${sourcePath} → ${destPath}`)
+              console.log(`Copiado con encabezado: ${sourcePath} → ${destPath}`)
             }
           })
           
@@ -350,7 +350,7 @@ export default defineConfig(({ mode, command }) => {
               const content = readFileSync(distPath, 'utf8')
               const header = generateJSHeader()
               writeFileSync(distPath, header + content)
-              console.log(`✅ Agregado encabezado a: ${distPath}`)
+              console.log(`Agregado encabezado a: ${distPath}`)
             }
           })
           
@@ -366,14 +366,14 @@ export default defineConfig(({ mode, command }) => {
             )
             const cssHeader = generateCSSHeader()
             writeFileSync(cssDestPath, cssHeader + cssContent)
-            console.log(`✅ Copiado y ajustado con encabezado: ${cssSourcePath} → ${cssDestPath}`)
+            console.log(`Copiado y ajustado con encabezado: ${cssSourcePath} → ${cssDestPath}`)
             
             // Generar versión minificada para docs/demo
             const cssMinContent = minifyCSS(cssContent)
             const cssMinDestPath = join(demoDir, 'xdiagrams.min.css')
             const cssMinHeader = generateCSSHeader()
             writeFileSync(cssMinDestPath, cssMinHeader + cssMinContent)
-            console.log(`✅ Generado CSS minificado con encabezado: ${cssMinDestPath}`)
+            console.log(`Generado CSS minificado con encabezado: ${cssMinDestPath}`)
           }
           
           // Copiar y ajustar archivo CSS a dist/ principal para CDN
@@ -387,14 +387,14 @@ export default defineConfig(({ mode, command }) => {
             )
             const distCssHeader = generateCSSHeader()
             writeFileSync(cssDistPath, distCssHeader + cssContent)
-            console.log(`✅ Copiado y ajustado con encabezado: ${cssSourcePath} → ${cssDistPath}`)
+            console.log(`Copiado y ajustado con encabezado: ${cssSourcePath} → ${cssDistPath}`)
             
             // Generar versión minificada para dist/
             const cssMinContent = minifyCSS(cssContent)
             const cssMinDistPath = join('dist', 'xdiagrams.min.css')
             const distCssMinHeader = generateCSSHeader()
             writeFileSync(cssMinDistPath, distCssMinHeader + cssMinContent)
-            console.log(`✅ Generado CSS minificado con encabezado: ${cssMinDistPath}`)
+            console.log(`Generado CSS minificado con encabezado: ${cssMinDistPath}`)
           }
           
           // Copiar archivo de fuente de iconos a docs/demo
@@ -402,14 +402,14 @@ export default defineConfig(({ mode, command }) => {
           const fontDemoPath = join(demoDir, 'xdiagrams.woff')
           if (existsSync(fontSourcePath)) {
             copyFileSync(fontSourcePath, fontDemoPath)
-            console.log(`✅ Copiado: ${fontSourcePath} → ${fontDemoPath}`)
+            console.log(`Copiado: ${fontSourcePath} → ${fontDemoPath}`)
           }
           
           // Copiar archivo de fuente de iconos a dist/ principal para CDN
           const fontDistPath = join('dist', 'xdiagrams.woff')
           if (existsSync(fontSourcePath)) {
             copyFileSync(fontSourcePath, fontDistPath)
-            console.log(`✅ Copiado: ${fontSourcePath} → ${fontDistPath}`)
+            console.log(`Copiado: ${fontSourcePath} → ${fontDistPath}`)
           }
           
           // Copiar archivo CSV de datos a docs/demo para el demo de SheetBest
@@ -417,11 +417,11 @@ export default defineConfig(({ mode, command }) => {
           const csvDemoPath = join(demoDir, 'companies-board.csv')
           if (existsSync(csvSourcePath)) {
             copyFileSync(csvSourcePath, csvDemoPath)
-            console.log(`✅ Copiado: ${csvSourcePath} → ${csvDemoPath}`)
+            console.log(`Copiado: ${csvSourcePath} → ${csvDemoPath}`)
           }
           
           // Verificar configuración de API Keys (ahora solo variables de entorno)
-          console.log(`✅ Configuración de API Keys: Variables de entorno del archivo .env`)
+          console.log(`Configuración de API Keys: Variables de entorno del archivo .env`)
           
           // El módulo de temas ahora está integrado en xdiagrams.js, no necesita copiarse por separado
           
@@ -463,11 +463,11 @@ export default defineConfig(({ mode, command }) => {
             )
             
             writeFileSync(demoHtmlPath, htmlContent)
-            console.log(`✅ Generado automáticamente: ${originalHtmlPath} → ${demoHtmlPath}`)
+            console.log(`Generado automáticamente: ${originalHtmlPath} → ${demoHtmlPath}`)
           }
           
         } catch (error) {
-          console.error('❌ Error copiando archivos a docs/demo:', error)
+          console.error('Error copiando archivos a docs/demo:', error)
         }
       }
     }

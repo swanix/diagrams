@@ -67,7 +67,7 @@ if (typeof window !== 'undefined') {
         // Configurar listener de resize con debounce
         diagram.navigation.setupResizeHandler();
       } catch (error) {
-        console.error('❌ [XDiagrams] Error al inicializar diagrama:', error);
+        console.error('[XDiagrams] Error al inicializar diagrama:', error);
       }
     }
   }

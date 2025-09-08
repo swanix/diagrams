@@ -28,7 +28,7 @@ exports.handler = async (event, context) => {
     // Obtener API Key desde variables de entorno de Netlify
     const apiKey = process.env.SHEETBEST_API_KEY;
     
-    console.log('🔍 [Netlify Function] Environment check:', {
+    console.log('[Netlify Function] Environment check:', {
       hasApiKey: !!apiKey,
       apiKeyLength: apiKey ? apiKey.length : 0,
       apiKeyPreview: apiKey ? `${apiKey.substring(0, 10)}...` : 'undefined',
@@ -36,7 +36,7 @@ exports.handler = async (event, context) => {
     });
     
     if (!apiKey) {
-      console.error('❌ [Netlify Function] API Key no configurada');
+      console.error('[Netlify Function] API Key no configurada');
       return {
         statusCode: 500,
         headers,
@@ -61,7 +61,7 @@ exports.handler = async (event, context) => {
       };
     }
 
-    console.log(`🔐 [Netlify Function] Proxying request to: ${url}`);
+    console.log(`[Netlify Function] Proxying request to: ${url}`);
 
     const response = await fetch(url, {
       headers: {
@@ -72,7 +72,7 @@ exports.handler = async (event, context) => {
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error(`❌ [Netlify Function] Error from SheetBest: ${response.status} - ${errorText}`);
+      console.error(`[Netlify Function] Error from SheetBest: ${response.status} - ${errorText}`);
       return {
         statusCode: response.status,
         headers,
@@ -84,7 +84,7 @@ exports.handler = async (event, context) => {
     }
 
     const data = await response.json();
-    console.log(`✅ [Netlify Function] Successfully proxied data from SheetBest`);
+    console.log(`[Netlify Function] Successfully proxied data from SheetBest`);
     
     return {
       statusCode: 200,
@@ -93,7 +93,7 @@ exports.handler = async (event, context) => {
     };
 
   } catch (error) {
-    console.error('❌ [Netlify Function] Error proxying request:', error);
+    console.error('[Netlify Function] Error proxying request:', error);
     return {
       statusCode: 500,
       headers,

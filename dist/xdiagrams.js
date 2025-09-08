@@ -1,5 +1,5 @@
 /**
- * @swanix/diagrams v0.9.3
+ * @swanix/diagrams v0.9.2
  */
 var xhtml = "http://www.w3.org/1999/xhtml";
 const namespaces = {
@@ -3030,7 +3030,7 @@ if (typeof window !== "undefined" && window.d3) {
       easeCubicOut: cubicOut
     };
   } catch (error) {
-    console.error("❌ Error cargando D3:", error);
+    console.error("Error cargando D3:", error);
     throw new Error("D3 no está disponible ni globalmente ni como módulo ES6");
   }
 }
@@ -3521,7 +3521,7 @@ if (typeof window !== "undefined" && window.Papa) {
   try {
     PapaInstance = Papa$1;
   } catch (error) {
-    console.error("❌ Error cargando PapaParse:", error);
+    console.error("Error cargando PapaParse:", error);
     throw new Error("PapaParse no está disponible ni globalmente ni como módulo ES6");
   }
 }
@@ -3925,9 +3925,9 @@ class XDiagramsDataLoader {
    */
   async loadFromProtectedApi(url, options = {}) {
     try {
-      console.log(`🔐 [DataLoader] Cargando desde API protegida via Netlify Function: ${url}`);
+      console.log(`[DataLoader] Cargando desde API protegida via Netlify Function: ${url}`);
       const proxyUrl = `/api/sheetbest-proxy?url=${encodeURIComponent(url)}`;
-      console.log(`🌐 [DataLoader] Proxy URL: ${proxyUrl}`);
+      console.log(`[DataLoader] Proxy URL: ${proxyUrl}`);
       const response = await fetch(proxyUrl, {
         method: "GET",
         headers: {
@@ -3941,14 +3941,14 @@ class XDiagramsDataLoader {
         throw new Error(errorData.error || `Error HTTP: ${response.status}`);
       }
       const data = await response.json();
-      console.log(`✅ [DataLoader] Datos cargados exitosamente desde proxy`);
+      console.log(`[DataLoader] Datos cargados exitosamente desde proxy`);
       if (Array.isArray(data)) {
         return data;
       } else {
         return this.convertJsonToCsvFormat(data, options);
       }
     } catch (error) {
-      console.error(`❌ [DataLoader] Error cargando desde API protegida:`, error);
+      console.error(`[DataLoader] Error cargando desde API protegida:`, error);
       throw new Error(`Error cargando API protegida: ${error.message}`);
     }
   }
@@ -5306,7 +5306,7 @@ class XDiagramsClusterNav {
   zoomToCluster(clusterGroup, container, isTabNavigation = false, shouldDeselectNode = true) {
     try {
       if (this.core.config && this.core.config.enableNavigationLogs !== false) {
-        console.log("🔍 [ClusterNav] zoomToCluster llamado:", {
+        console.log("[ClusterNav] zoomToCluster llamado:", {
           isTabNavigation,
           shouldDeselectNode,
           clusterTitle: clusterGroup.select(".cluster-title").text()
@@ -5384,7 +5384,7 @@ class XDiagramsClusterNav {
         this.removeNodeBlockerOverlay();
         this.applySelectedClusterStyle(clusterGroup);
         if (this.core.config && this.core.config.enableNavigationLogs !== false) {
-          console.log("🎯 [ClusterNav] zoomToCluster completado para:", clusterGroup.select(".cluster-title").text());
+          console.log("[ClusterNav] zoomToCluster completado para:", clusterGroup.select(".cluster-title").text());
         }
       }
     } catch (error) {
@@ -5605,7 +5605,7 @@ class XDiagramsClusterNav {
       clusterBg.style("outline", "none");
       clusterBg.node().focus();
       if (this.core.config && this.core.config.enableNavigationLogs !== false) {
-        console.log("✅ [ClusterNav] Cluster seleccionado:", clusterGroup.select(".cluster-title").text());
+        console.log("[ClusterNav] Cluster seleccionado:", clusterGroup.select(".cluster-title").text());
       }
     }
   }
@@ -6507,10 +6507,10 @@ class XDiagramsNotificationManager {
   }
   getIcon(type) {
     const icons = {
-      "info": "ℹ️",
-      "success": "✅",
-      "warning": "⚠️",
-      "error": "❌"
+      "info": "i",
+      "success": "✓",
+      "warning": "!",
+      "error": "✗"
     };
     return icons[type] || icons.info;
   }
@@ -8796,7 +8796,7 @@ if (typeof window !== "undefined") {
         };
         diagram.navigation.setupResizeHandler();
       } catch (error) {
-        console.error("❌ [XDiagrams] Error al inicializar diagrama:", error);
+        console.error("[XDiagrams] Error al inicializar diagrama:", error);
       }
     }
   };

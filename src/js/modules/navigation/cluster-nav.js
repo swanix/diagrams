@@ -18,7 +18,7 @@ class XDiagramsClusterNav {
     try {
       // Log para debugging
       if (this.core.config && this.core.config.enableNavigationLogs !== false) {
-        console.log('🔍 [ClusterNav] zoomToCluster llamado:', {
+        console.log('[ClusterNav] zoomToCluster llamado:', {
           isTabNavigation,
           shouldDeselectNode,
           clusterTitle: clusterGroup.select('.cluster-title').text()
@@ -127,7 +127,7 @@ class XDiagramsClusterNav {
       
       // Log para debugging
       if (this.core.config && this.core.config.enableNavigationLogs !== false) {
-        console.log('🎯 [ClusterNav] zoomToCluster completado para:', clusterGroup.select('.cluster-title').text());
+        console.log('[ClusterNav] zoomToCluster completado para:', clusterGroup.select('.cluster-title').text());
       }
       }
       
@@ -431,7 +431,7 @@ class XDiagramsClusterNav {
       
       // Log para debugging
       if (this.core.config && this.core.config.enableNavigationLogs !== false) {
-        console.log('✅ [ClusterNav] Cluster seleccionado:', clusterGroup.select('.cluster-title').text());
+        console.log('[ClusterNav] Cluster seleccionado:', clusterGroup.select('.cluster-title').text());
       }
     }
   }

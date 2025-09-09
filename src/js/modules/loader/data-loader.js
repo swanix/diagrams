@@ -194,7 +194,7 @@ class XDiagramsDataLoader {
       
     } catch (error) {
       console.error(`[DataLoader] Error cargando desde API protegida:`, error);
-      throw new Error(`Error cargando API protegida: ${error.message}`);
+      throw new Error(`API Privada: ${error.message}`);
     }
   }
 
@@ -407,9 +407,9 @@ class XDiagramsDataLoader {
       let errorMessage = error.message;
       
       if (error.isAuthError) {
-        errorMessage = `Error de autenticación: ${error.message}\n\nSugerencias:\n- Verifica que tu API Key esté configurada correctamente\n- Asegúrate de que la API Key tenga los permisos necesarios\n- Verifica que la URL sea correcta\n- Revisa la documentación de la API para más detalles`;
+        errorMessage = `Error de autenticación. Verifica tu configuración.`;
       } else if (sourceType === 'protected-api') {
-        errorMessage = `Error cargando API protegida: ${error.message}\n\nSugerencias:\n- Verifica que tu API Key esté configurada\n- Asegúrate de que la URL sea correcta\n- Verifica los permisos de tu API Key\n- Revisa la documentación de la API`;
+        errorMessage = `API Privada. Verifica si tienes la API Key del servicio en tus variables de entorno.`;
       } else if (sourceType === 'google-sheets') {
         errorMessage = `Error cargando Google Sheets: ${error.message}\n\nSugerencias:\n- Verifica que la URL sea correcta\n- Asegúrate de que el archivo esté publicado públicamente\n- Verifica tu conexión a internet\n- Intenta usar un archivo CSV local como alternativa`;
       } else if (sourceType === 'csv-url') {

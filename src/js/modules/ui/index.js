@@ -8,6 +8,8 @@ import { XDiagramsErrorManager } from './error-manager.js';
 import { XDiagramsNotificationManager } from './notification-manager.js';
 import { XDiagramsInfoPanel } from './infopanel.js';
 import { XDiagramsFloatingTitlePill } from './floating-title-pill.js';
+import { XDiagramsFloatingFiltersPill } from './floating-filters-pill.js';
+import { XDiagramsFloatingSectionsCountPill } from './floating-sections-count-pill.js';
 
 class XDiagramsUIManager {
   constructor(options = {}) {
@@ -16,6 +18,8 @@ class XDiagramsUIManager {
     this.notificationManager = new XDiagramsNotificationManager();
     this.infoPanel = new XDiagramsInfoPanel({ thumbsSystem: options.thumbsSystem });
     this.floatingTitlePill = new XDiagramsFloatingTitlePill();
+    this.floatingFiltersPill = new XDiagramsFloatingFiltersPill();
+    this.floatingSectionsCountPill = new XDiagramsFloatingSectionsCountPill();
   }
 
   // Métodos de coordinación esencial
@@ -122,6 +126,60 @@ class XDiagramsUIManager {
   // Acceso directo al Floating Title Pill
   get floatingTitlePillInstance() {
     return this.floatingTitlePill;
+  }
+
+
+  // Métodos del Floating Filters Pill
+  initFloatingFiltersPill(filters) {
+    return this.floatingFiltersPill.init(filters);
+  }
+
+  updateFloatingFiltersPill(filterConfigs) {
+    return this.floatingFiltersPill.updateFilters(filterConfigs);
+  }
+
+
+  showFloatingFiltersPill() {
+    return this.floatingFiltersPill.show();
+  }
+
+  hideFloatingFiltersPill() {
+    return this.floatingFiltersPill.hide();
+  }
+
+  destroyFloatingFiltersPill() {
+    return this.floatingFiltersPill.destroy();
+  }
+
+  // Acceso directo al Floating Filters Pill
+  get floatingFiltersPillInstance() {
+    return this.floatingFiltersPill;
+  }
+
+  // Métodos del Floating Sections Count Pill
+  initFloatingSectionsCountPill() {
+    return this.floatingSectionsCountPill.init();
+  }
+
+  updateFloatingSectionsCount(visibleCount) {
+    return this.floatingSectionsCountPill.updateSectionsCount(visibleCount);
+  }
+
+  showFloatingSectionsCountPill() {
+    return this.floatingSectionsCountPill.show();
+  }
+
+  hideFloatingSectionsCountPill() {
+    return this.floatingSectionsCountPill.hide();
+  }
+
+  destroyFloatingSectionsCountPill() {
+    return this.floatingSectionsCountPill.destroy();
+  }
+
+  // Acceso directo al Floating Sections Count Pill
+  get floatingSectionsCountPillInstance() {
+    return this.floatingSectionsCountPill;
   }
 }
 

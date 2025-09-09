@@ -10,8 +10,8 @@ class XDiagramsDiagramManager {
 
   async initDiagram() {
     try {
-      if (!this.core.config.url) {
-        console.error('XDiagrams: URL de datos no configurada');
+      if (!this.core.config.url && !this.core.config.data) {
+        console.error('XDiagrams: URL o datos no configurados');
         this.core.uiManager.hideLoading();
         return;
       }
@@ -28,6 +28,16 @@ class XDiagramsDiagramManager {
 
       // Cargar datos
       const data = await this.loadData();
+      
+      // Logging temporal para debug
+      console.log('XDiagrams: DEBUG - diagram-manager - Datos cargados:', data);
+      if (data && data.length > 0) {
+        console.log('XDiagrams: DEBUG - diagram-manager - Primer registro:', data[0]);
+        console.log('XDiagrams: DEBUG - diagram-manager - Claves del primer registro:', Object.keys(data[0]));
+        console.log('XDiagrams: DEBUG - diagram-manager - Technology:', data[0].Technology);
+        console.log('XDiagrams: DEBUG - diagram-manager - Country:', data[0].Country);
+        console.log('XDiagrams: DEBUG - diagram-manager - Responsive:', data[0].Responsive);
+      }
 
       // Construir jerarquía
       const trees = this.core.hierarchyBuilder.buildHierarchy(data);
@@ -36,6 +46,9 @@ class XDiagramsDiagramManager {
 
       // Renderizar árboles
       this.core.diagramRenderer.renderTrees(trees, container);
+
+      // Inicializar sistema de filtros
+      await this.core.filters.initialize(data);
 
       // Inicializar generador de datos LLM en segundo plano
       await this.core.llmDataGenerator.initialize(data, this.core.config);
@@ -52,29 +65,40 @@ class XDiagramsDiagramManager {
 
   async loadData() {
     let data;
-    if (window.xDiagramsLoader) {
-      await new Promise((resolve, reject) => {
-        window.xDiagramsLoader.loadData(this.core.config.url, (result, error) => {
-          if (error) {
-            console.error('XDiagrams: Error en loader:', error);
-            reject(error);
-          } else {
-            data = result;
-            resolve();
-          }
-        }, { privateApi: this.core.config.privateApi });
-      });
-    } else {
-      const response = await fetch(this.core.config.url);
-      const csvText = await response.text();
-      data = await new Promise((resolve, reject) => {
-        Papa.parse(csvText, {
-          header: true,
-          complete: (results) => resolve(results.data),
-          error: (error) => reject(error)
-        });
-      });
+    
+    // Si se proporciona data directamente, usarla
+    if (this.core.config.data) {
+      console.log('[DiagramManager] Usando datos proporcionados directamente');
+      return this.core.config.data;
     }
+    
+    // Si se proporciona URL, cargar desde la fuente
+    if (this.core.config.url) {
+      if (window.xDiagramsLoader) {
+        await new Promise((resolve, reject) => {
+          window.xDiagramsLoader.loadData(this.core.config.url, (result, error) => {
+            if (error) {
+              console.error('XDiagrams: Error en loader:', error);
+              reject(error);
+            } else {
+              data = result;
+              resolve();
+            }
+          }, { privateApi: this.core.config.privateApi });
+        });
+      } else {
+        const response = await fetch(this.core.config.url);
+        const csvText = await response.text();
+        data = await new Promise((resolve, reject) => {
+          Papa.parse(csvText, {
+            header: true,
+            complete: (results) => resolve(results.data),
+            error: (error) => reject(error)
+          });
+        });
+      }
+    }
+    
     return data;
   }
 

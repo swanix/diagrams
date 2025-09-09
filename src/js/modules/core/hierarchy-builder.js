@@ -21,7 +21,16 @@ class XDiagramsHierarchyBuilder {
     };
     
     // Primera pasada: crear todos los nodos
-    data.forEach(row => {
+    data.forEach((row, index) => {
+      // Logging temporal para debug - solo los primeros 3 registros
+      if (index < 3) {
+        console.log(`XDiagrams: DEBUG - hierarchy-builder - Registro ${index}:`, row);
+        console.log(`XDiagrams: DEBUG - hierarchy-builder - Claves del registro ${index}:`, Object.keys(row));
+        console.log(`XDiagrams: DEBUG - hierarchy-builder - Technology:`, row.Technology);
+        console.log(`XDiagrams: DEBUG - hierarchy-builder - Country:`, row.Country);
+        console.log(`XDiagrams: DEBUG - hierarchy-builder - Responsive:`, row.Responsive);
+      }
+      
       const id = getColumnValue(row, ['ID', 'id', 'Node', 'node', 'Id'], null);
       const name = getColumnValue(row, ['Name', 'name', 'Title', 'title'], null);
       const parent = getColumnValue(row, ['Parent', 'parent', 'Manager', 'manager', 'Leader', 'leader'], null);
@@ -37,6 +46,12 @@ class XDiagramsHierarchyBuilder {
           data: row,
           children: []
         };
+        
+        // Logging temporal para debug - solo los primeros 3 nodos
+        if (index < 3) {
+          console.log(`XDiagrams: DEBUG - hierarchy-builder - Nodo creado ${index}:`, node);
+          console.log(`XDiagrams: DEBUG - hierarchy-builder - Nodo.data ${index}:`, node.data);
+        }
         
         nodeMap.set(id, node);
       }

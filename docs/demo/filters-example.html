@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>XDiagrams - Sistema de Filtros Dinámicos</title>
+    <link rel="stylesheet" href="xdiagrams.css">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+            background: #f5f5f5;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .header h1 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            color: #666;
+            font-size: 16px;
+        }
+        
+        .config-examples {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .config-card {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .config-card h3 {
+            color: #333;
+            margin-top: 0;
+            margin-bottom: 15px;
+        }
+        
+        .config-card pre {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 4px;
+            padding: 15px;
+            overflow-x: auto;
+            font-size: 12px;
+            line-height: 1.4;
+        }
+        
+        .diagram-container {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            min-height: 600px;
+        }
+        
+        .features {
+            margin-top: 30px;
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .features h3 {
+            color: #333;
+            margin-top: 0;
+        }
+        
+        .features ul {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .features li {
+            padding: 8px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        
+        .features li:before {
+            content: "✅ ";
+            margin-right: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔍 Sistema de Filtros Dinámicos</h1>
+            <p>Filtros automáticos basados en las columnas de tus datos</p>
+        </div>
+
+        <div class="config-examples">
+            <div class="config-card">
+                <h3>🚀 Configuración Básica</h3>
+                <pre><code>window.$xDiagrams = {
+  url: "data/companies-board.csv",
+  filters: {
+    auto: true,  // Detección automática
+    ui: {
+      position: 'top',  // 'top' o 'side'
+      showCount: true,
+      showReset: true
+    }
+  }
+};</code></pre>
+            </div>
+
+            <div class="config-card">
+                <h3>🎯 Filtros Custom</h3>
+                <pre><code>window.$xDiagrams = {
+  url: "data/companies-board.csv",
+  filters: {
+    auto: true,
+    custom: {
+      'Department': {
+        type: 'select',
+        label: 'Departamento',
+        priority: 1
+      },
+      'Name': {
+        type: 'search',
+        label: 'Buscar Empleado',
+        priority: 2
+      }
+    },
+    exclude: ['ID', 'Parent', 'Img']
+  }
+};</code></pre>
+            </div>
+
+            <div class="config-card">
+                <h3>⚙️ Configuración Avanzada</h3>
+                <pre><code>window.$xDiagrams = {
+  url: "data/companies-board.csv",
+  filters: {
+    auto: true,
+    custom: {
+      'Position': {
+        type: 'multi-select',
+        label: 'Cargos',
+        priority: 1
+      },
+      'Level': {
+        type: 'range',
+        label: 'Nivel',
+        priority: 2
+      }
+    },
+    ui: {
+      position: 'side',
+      maxFilters: 3,
+      showByDefault: false
+    }
+  }
+};</code></pre>
+            </div>
+        </div>
+
+        <div class="diagram-container">
+            <div id="xdiagrams"></div>
+        </div>
+
+        <div class="features">
+            <h3>🌟 Características del Sistema de Filtros</h3>
+            <ul>
+                <li><strong>Detección Automática:</strong> Analiza tus columnas y crea filtros automáticamente</li>
+                <li><strong>Tipos de Filtro:</strong> Select, Search, Range, Multi-select según el tipo de dato</li>
+                <li><strong>Configuración Flexible:</strong> Personaliza filtros por proyecto</li>
+                <li><strong>Interfaz Adaptable:</strong> Barra superior o panel lateral</li>
+                <li><strong>Búsqueda en Tiempo Real:</strong> Filtros con debounce para mejor performance</li>
+                <li><strong>Contador Dinámico:</strong> Muestra nodos visibles vs total</li>
+                <li><strong>Responsive:</strong> Se adapta a dispositivos móviles</li>
+                <li><strong>Integración Nativa:</strong> Funciona con la navegación existente</li>
+            </ul>
+        </div>
+    </div>
+
+    <script src="xdiagrams.js"></script>
+    <script>
+        // Configuración de ejemplo con filtros dinámicos
+        window.$xDiagrams = {
+            url: "data/companies-board.csv",
+            title: "Organigrama con Filtros",
+            filters: {
+                // Detección automática de filtros
+                auto: true,
+                
+                // Filtros custom personalizados
+                custom: {
+                    'Department': {
+                        type: 'select',
+                        label: 'Departamento',
+                        priority: 1
+                    },
+                    'Position': {
+                        type: 'select',
+                        label: 'Cargo',
+                        priority: 2
+                    },
+                    'Name': {
+                        type: 'search',
+                        label: 'Buscar Empleado',
+                        priority: 3,
+                        placeholder: 'Escribe el nombre...'
+                    }
+                },
+                
+                // Excluir columnas específicas
+                exclude: ['ID', 'Parent', 'Img', 'Icon'],
+                
+                // Configuración de UI
+                ui: {
+                    position: 'top',  // 'top' o 'side'
+                    showCount: true,
+                    showReset: true,
+                    maxFilters: 5,
+                    showByDefault: true
+                }
+            }
+        };
+
+        // Inicializar diagrama
+        document.addEventListener('DOMContentLoaded', function() {
+            const diagram = new XDiagrams(window.$xDiagrams);
+            diagram.initDiagram();
+        });
+    </script>
+</body>
+</html>

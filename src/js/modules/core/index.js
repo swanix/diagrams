@@ -13,6 +13,7 @@ import { XDiagramsTextHandler } from './text-handler.js';
 import { XDiagramsDiagramManager } from './diagram-manager.js';
 import { XDiagramsUIManager } from '../ui/index.js';
 import { XDiagramsLLMDataGenerator } from '../utils/llm-data-generator.js';
+import { XDiagramsFilters } from '../filters/index.js';
 
 class XDiagrams {
   constructor(config) {
@@ -87,6 +88,7 @@ class XDiagrams {
     this.hierarchyBuilder = new XDiagramsHierarchyBuilder();
     this.diagramManager = new XDiagramsDiagramManager(this);
     this.llmDataGenerator = new XDiagramsLLMDataGenerator();
+    this.filters = new XDiagramsFilters(this);
     
     this.svgManager.ensureDiagramHidden();
     this.diagramManager.setupEventListeners();
@@ -95,6 +97,13 @@ class XDiagrams {
   // Métodos delegados al Diagram Manager
   async initDiagram() {
     return this.diagramManager.initDiagram();
+  }
+
+  // Callback para cuando se aplican filtros
+  onFiltersApplied(filteredData, activeFilters) {
+    // Ya no necesitamos re-renderizar el diagrama
+    // Los filtros ahora solo cambian la opacidad de los nodos existentes
+    // El diagrama mantiene su estructura original
   }
 
   clearCacheAndReload() {

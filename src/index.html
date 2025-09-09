@@ -21,13 +21,38 @@
 
 <script>
   window.$xDiagrams = {
-    url: "data/companies-board.csv",
-    title: "Diagrams",
+    url: "https://api.sheetbest.com/sheets/28f15681-b2ab-47a0-bbcb-205d142d9ef7/tabs/All",
+    title: "Diagrams - Con Filtros Dinámicos",
     showTitle: true,
     clustersPerRow: "6 3 7 6 3",
-    privateApi: true,
+    privateApi: false,
     disableCache: true,
-    showThemeToggle: false 
+    showThemeToggle: false,
+    
+    // Sistema de Filtros Dinámicos
+    filters: {
+      // Detección automática de filtros
+      auto: true,
+      
+      // Filtros custom personalizados
+
+      
+        // Incluir columnas específicas (solo estas se mostrarán en los filtros)
+        // Si no se define include, se mostrarán todas las columnas excepto las del sistema
+        include: ['Layout', 'Technology', 'Country'],
+
+
+      
+      // Configuración de UI
+      ui: {
+        position: 'top',        // Barra superior
+        showCount: true,        // Mostrar contador de nodos
+        showReset: true,        // Botón limpiar filtros
+        maxFilters: 4,          // Máximo filtros visibles
+        showByDefault: true,    // Mostrar filtros al cargar
+        useFloatingPill: true   // Usar pill flotante compacto
+      }
+    }
   };
 </script>
 

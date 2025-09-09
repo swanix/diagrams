@@ -46,15 +46,33 @@ class XDiagramsKeyboardNav {
           this.navigation.clusterNavInstance.handleTabNavigation();
         }
       } else if (event.key === 'Enter') {
+        // Verificar si el Enter viene de un input, textarea o select
+        const target = event.target;
+        const isInputElement = target && (
+          target.tagName === 'INPUT' || 
+          target.tagName === 'TEXTAREA' || 
+          target.tagName === 'SELECT' ||
+          target.contentEditable === 'true'
+        );
+        
+        if (isInputElement) {
+          // Permitir que el Enter se maneje normalmente en inputs
+          return;
+        }
+        
+        // Solo manejar Enter si hay un nodo seleccionado (navegación por nodos)
+        // No interferir con filtros o inputs de zoom
+        const selectedNode = d3.select('.node-selected');
+        if (selectedNode.empty()) {
+          // Sin nodo seleccionado: no hacer nada para evitar interferir con filtros
+          return;
+        }
+        
+        // Con nodo seleccionado: permitir navegación por nodos
         event.preventDefault();
         event.stopPropagation();
         event.stopImmediatePropagation();
         this.navigation.escapeLevel = 0;
-        
-        const selectedNode = d3.select('.node-selected');
-        if (!selectedNode.empty()) {
-          return;
-        }
         
         const allClusters = d3.selectAll('.cluster-bg');
         if (allClusters.empty()) {

@@ -216,6 +216,7 @@ class XDiagramsFloatingTitlePill {
     this.ensureVisible();
   }
 
+
   /**
    * Fuerza la aplicación de estilos CSS
    */
